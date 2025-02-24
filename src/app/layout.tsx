@@ -20,7 +20,7 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-full flex flex-col bg-gradient-to-b from-gray-50 to-white`}
       >
-        <div className="flex-1">{children}</div>
+        <div className="flex-1 pb-16">{children}</div>
         <Footer />
       </body>
     </html>
