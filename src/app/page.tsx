@@ -41,7 +41,7 @@ export default function Home() {
                 type="text"
                 value={newBookTitle}
                 onChange={(e) => setNewBookTitle(e.target.value)}
-                placeholder="Název knihy..."
+                placeholder="Název knihy + autor..."
                 className="flex-1 px-4 py-2 border text-black border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
               <button

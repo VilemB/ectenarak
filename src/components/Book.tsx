@@ -122,9 +122,9 @@ export default function BookComponent({ book }: BookProps) {
             <textarea
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Add a note..."
+              placeholder="Napiš poznámku..."
               rows={3}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition resize-none"
+              className="text-black w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition resize-none"
             />
             <div className="mt-2 flex justify-end">
               <button
