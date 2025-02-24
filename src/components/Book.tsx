@@ -3,28 +3,40 @@
 import { useState } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
-import { PenLine, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  PenLine,
+  Sparkles,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { generateId, formatDate } from "@/lib/utils";
 
 interface BookProps {
   book: Book;
 }
 
 export default function BookComponent({ book }: BookProps) {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useLocalStorage<Note[]>(
+    `book-${book.id}-notes`,
+    []
+  );
   const [newNote, setNewNote] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [error, setError] = useState("");
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
 
     const note: Note = {
-      id: Date.now().toString(),
+      id: generateId(),
       bookId: book.id,
       content: newNote,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
 
     setNotes([...notes, note]);
@@ -34,8 +46,18 @@ export default function BookComponent({ book }: BookProps) {
 
   const handleGenerateSummary = async () => {
     setIsGenerating(true);
+    setError("");
     try {
-      const notesText = notes.map((note) => note.content).join("\n\n");
+      const notesText = notes
+        .filter((note) => !note.isAISummary)
+        .map((note) => note.content)
+        .join("\n\n");
+
+      if (!notesText.trim()) {
+        throw new Error(
+          "Pro generování shrnutí je potřeba mít alespoň jednu poznámku."
+        );
+      }
 
       const response = await fetch("/api/generate-summary", {
         method: "POST",
@@ -49,27 +71,37 @@ export default function BookComponent({ book }: BookProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate summary");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Nepodařilo se vygenerovat shrnutí");
       }
 
       const data = await response.json();
 
       const summaryNote: Note = {
-        id: Date.now().toString(),
+        id: generateId(),
         bookId: book.id,
         content: data.summary,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         isAISummary: true,
       };
 
-      setNotes([...notes, summaryNote]);
+      // Remove any existing AI summaries
+      const filteredNotes = notes.filter((note) => !note.isAISummary);
+      setNotes([...filteredNotes, summaryNote]);
     } catch (error) {
       console.error("Failed to generate summary:", error);
-      alert("Nepodařilo se vygenerovat shrnutí. Zkuste to prosím znovu.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se vygenerovat shrnutí. Zkuste to prosím znovu."
+      );
     } finally {
       setIsGenerating(false);
     }
   };
+
+  const regularNotes = notes.filter((note) => !note.isAISummary);
+  const aiSummary = notes.find((note) => note.isAISummary);
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
@@ -83,7 +115,7 @@ export default function BookComponent({ book }: BookProps) {
               {book.title}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {notes.length} poznámek
+              {regularNotes.length} poznámek
             </p>
           </div>
           <span className="text-gray-400">
@@ -109,14 +141,24 @@ export default function BookComponent({ book }: BookProps) {
             </Button>
             <Button
               onClick={handleGenerateSummary}
-              disabled={isGenerating || notes.length === 0}
+              disabled={isGenerating || regularNotes.length === 0}
               variant="outline"
               className="flex-1"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
+              {isGenerating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
               {isGenerating ? "Generuji shrnutí..." : "Generovat shrnutí"}
             </Button>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
 
           {isAddingNote && (
             <form onSubmit={handleAddNote} className="mb-6">
@@ -140,29 +182,32 @@ export default function BookComponent({ book }: BookProps) {
             </form>
           )}
 
+          {aiSummary && (
+            <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-100">
+              <div className="flex items-center mb-2 text-blue-600">
+                <Sparkles className="w-4 h-4 mr-1" />
+                <span className="text-sm font-medium">Shrnutí knihy</span>
+              </div>
+              <p className="text-gray-800 whitespace-pre-wrap">
+                {aiSummary.content}
+              </p>
+              <div className="text-xs text-gray-400 mt-2">
+                {formatDate(aiSummary.createdAt)}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
-            {notes.map((note) => (
+            {regularNotes.map((note) => (
               <div
                 key={note.id}
-                className={`p-4 rounded-lg ${
-                  note.isAISummary
-                    ? "bg-blue-50 border border-blue-100"
-                    : "bg-gray-50 border border-gray-100"
-                }`}
+                className="p-4 rounded-lg bg-gray-50 border border-gray-100"
               >
                 <p className="text-gray-800 whitespace-pre-wrap">
                   {note.content}
                 </p>
-                {note.isAISummary && (
-                  <div className="flex items-center mt-2 text-blue-600">
-                    <Sparkles className="w-4 h-4 mr-1" />
-                    <span className="text-sm font-medium">
-                      Generované shrnutí
-                    </span>
-                  </div>
-                )}
                 <div className="text-xs text-gray-400 mt-2">
-                  {new Date(note.createdAt).toLocaleDateString()}
+                  {formatDate(note.createdAt)}
                 </div>
               </div>
             ))}
