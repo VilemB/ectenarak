@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Book } from "@/types";
 import BookComponent from "@/components/Book";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -44,12 +46,10 @@ export default function Home() {
                 placeholder="Název knihy + autor..."
                 className="flex-1 px-4 py-2 border text-black border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
-              <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out"
-              >
+              <Button type="submit">
+                <PlusCircle className="w-4 h-4 mr-2" />
                 Přidej knihu
-              </button>
+              </Button>
             </div>
           </form>
         </div>
