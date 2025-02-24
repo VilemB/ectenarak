@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 interface BookProps {
   book: Book;
@@ -103,6 +104,12 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     ) {
       window.localStorage.removeItem(`book-${book.id}-notes`);
       onDelete(book.id);
+    }
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    if (window.confirm("Opravdu chcete smazat tuto poznámku?")) {
+      setNotes(notes.filter((note) => note.id !== noteId));
     }
   };
 
@@ -209,13 +216,23 @@ export default function BookComponent({ book, onDelete }: BookProps) {
 
           {aiSummary && (
             <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-100">
-              <div className="flex items-center mb-2 text-blue-600">
-                <Sparkles className="w-4 h-4 mr-1" />
-                <span className="text-sm font-medium">Shrnutí knihy</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center text-blue-600">
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  <span className="text-sm font-medium">Shrnutí knihy</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 w-7"
+                  onClick={() => handleDeleteNote(aiSummary.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
-              <p className="text-gray-800 whitespace-pre-wrap">
-                {aiSummary.content}
-              </p>
+              <div className="prose prose-sm max-w-none text-gray-800">
+                <ReactMarkdown>{aiSummary.content}</ReactMarkdown>
+              </div>
               <div className="text-xs text-gray-400 mt-2">
                 {formatDate(aiSummary.createdAt)}
               </div>
@@ -228,12 +245,22 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                 key={note.id}
                 className="p-4 rounded-lg bg-gray-50 border border-gray-100"
               >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-400">
+                    {formatDate(note.createdAt)}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 w-7"
+                    onClick={() => handleDeleteNote(note.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
                 <p className="text-gray-800 whitespace-pre-wrap">
                   {note.content}
                 </p>
-                <div className="text-xs text-gray-400 mt-2">
-                  {formatDate(note.createdAt)}
-                </div>
               </div>
             ))}
           </div>
