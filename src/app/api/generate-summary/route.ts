@@ -7,10 +7,10 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    const { bookTitle, notes } = await request.json();
+    const { bookTitle, author, notes } = await request.json();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         },
         {
           role: "user",
-          content: `Vytvoř strukturované shrnutí knihy "${bookTitle}". Zaměř se na:
+          content: `Vytvoř strukturované shrnutí knihy "${bookTitle}" od autora ${author}. Zaměř se na:
 
 1. Hlavní dějovou linii
 2. Klíčové postavy a jejich charakteristiku

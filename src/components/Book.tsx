@@ -63,6 +63,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         },
         body: JSON.stringify({
           bookTitle: book.title,
+          author: book.author,
           notes: notesText || undefined,
         }),
       });
@@ -127,9 +128,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <h2 className="text-xl font-semibold text-gray-900">
               {book.title}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {regularNotes.length} poznámek
-            </p>
+            <p className="text-sm text-gray-500 mt-1">{book.author}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button

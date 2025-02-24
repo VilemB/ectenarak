@@ -11,6 +11,7 @@ import { generateId } from "@/lib/utils";
 export default function Home() {
   const [books, setBooks] = useLocalStorage<Book[]>("books", []);
   const [newBookTitle, setNewBookTitle] = useState("");
+  const [newBookAuthor, setNewBookAuthor] = useState("");
   const [error, setError] = useState("");
 
   const handleAddBook = (e: React.FormEvent) => {
@@ -18,27 +19,35 @@ export default function Home() {
     setError("");
 
     const title = newBookTitle.trim();
-    if (!title) {
-      setError("Prosím zadejte název knihy");
+    const author = newBookAuthor.trim();
+
+    if (!title || !author) {
+      setError("Prosím vyplňte název knihy a autora");
       return;
     }
 
     // Check for duplicates
     if (
-      books.some((book) => book.title.toLowerCase() === title.toLowerCase())
+      books.some(
+        (book) =>
+          book.title.toLowerCase() === title.toLowerCase() &&
+          book.author.toLowerCase() === author.toLowerCase()
+      )
     ) {
-      setError("Tato kniha již existuje");
+      setError("Tato kniha od tohoto autora již existuje");
       return;
     }
 
     const newBook: Book = {
       id: generateId(),
       title: title,
+      author: author,
       createdAt: new Date().toISOString(),
     };
 
     setBooks([...books, newBook]);
     setNewBookTitle("");
+    setNewBookAuthor("");
   };
 
   const handleDeleteBook = (bookId: string) => {
@@ -59,34 +68,64 @@ export default function Home() {
             Přidej novou knihu
           </h2>
           <form onSubmit={handleAddBook} className="space-y-4">
-            <div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={newBookTitle}
-                  onChange={(e) => {
-                    setNewBookTitle(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="Název knihy + autor..."
-                  className={`w-full px-4 py-2 border ${
-                    error ? "border-red-300" : "border-gray-200"
-                  } text-black rounded-lg focus:outline-none focus:ring-2 ${
-                    error ? "focus:ring-red-500" : "focus:ring-blue-500"
-                  } focus:border-transparent transition`}
-                />
-                {error && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                  </div>
-                )}
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Název knihy
+                </label>
+                <div className="relative">
+                  <input
+                    id="title"
+                    type="text"
+                    value={newBookTitle}
+                    onChange={(e) => {
+                      setNewBookTitle(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="Název knihy..."
+                    className={`w-full px-4 py-2 border ${
+                      error ? "border-red-300" : "border-gray-200"
+                    } text-black rounded-lg focus:outline-none focus:ring-2 ${
+                      error ? "focus:ring-red-500" : "focus:ring-blue-500"
+                    } focus:border-transparent transition`}
+                  />
+                </div>
               </div>
-              {error && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  {error}
-                </p>
-              )}
+              <div>
+                <label
+                  htmlFor="author"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Autor
+                </label>
+                <div className="relative">
+                  <input
+                    id="author"
+                    type="text"
+                    value={newBookAuthor}
+                    onChange={(e) => {
+                      setNewBookAuthor(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="Jméno autora..."
+                    className={`w-full px-4 py-2 border ${
+                      error ? "border-red-300" : "border-gray-200"
+                    } text-black rounded-lg focus:outline-none focus:ring-2 ${
+                      error ? "focus:ring-red-500" : "focus:ring-blue-500"
+                    } focus:border-transparent transition`}
+                  />
+                </div>
+              </div>
             </div>
+            {error && (
+              <p className="text-sm text-red-500 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </p>
+            )}
             <div className="flex justify-end">
               <Button
                 type="submit"
