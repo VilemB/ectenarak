@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 
 interface SummaryPreferencesModalProps {
   isOpen: boolean;
@@ -51,116 +51,244 @@ export function SummaryPreferencesModal({
       confirmText={isLoading ? "Generuji..." : "Generovat shrnutí"}
       confirmDisabled={isLoading}
     >
-      <div className="space-y-6 py-4">
-        <div className="space-y-4">
-          <h3 className="font-medium text-sm text-gray-700">Obsah shrnutí</h3>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-medium text-base text-gray-900 mb-3">
+            Obsah shrnutí
+          </h3>
+          <div className="grid grid-cols-1 gap-2">
+            <motion.label
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                preferences.includeCharacterAnalysis
+                  ? "bg-blue-50 border-blue-200"
+                  : "hover:bg-gray-50 border-gray-200"
+              }`}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <div
+                className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
+                  preferences.includeCharacterAnalysis
+                    ? "bg-blue-600 border-blue-600"
+                    : "border-gray-300"
+                }`}
+              >
+                {preferences.includeCharacterAnalysis && (
+                  <Check className="w-3.5 h-3.5 text-white" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900">
+                  Analýza postav
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  Rozbor hlavních postav a jejich vývoje v díle
+                </div>
+              </div>
               <input
                 type="checkbox"
                 checked={preferences.includeCharacterAnalysis}
                 onChange={() => handleToggle("includeCharacterAnalysis")}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="sr-only"
               />
-              <span className="text-sm text-gray-600">Analýza postav</span>
-            </label>
-            <label className="flex items-center gap-2">
+            </motion.label>
+
+            <motion.label
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                preferences.includeHistoricalContext
+                  ? "bg-blue-50 border-blue-200"
+                  : "hover:bg-gray-50 border-gray-200"
+              }`}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <div
+                className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
+                  preferences.includeHistoricalContext
+                    ? "bg-blue-600 border-blue-600"
+                    : "border-gray-300"
+                }`}
+              >
+                {preferences.includeHistoricalContext && (
+                  <Check className="w-3.5 h-3.5 text-white" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900">
+                  Historický kontext
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  Zasazení díla do historického a kulturního kontextu
+                </div>
+              </div>
               <input
                 type="checkbox"
                 checked={preferences.includeHistoricalContext}
                 onChange={() => handleToggle("includeHistoricalContext")}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="sr-only"
               />
-              <span className="text-sm text-gray-600">Historický kontext</span>
-            </label>
-            <label className="flex items-center gap-2">
+            </motion.label>
+
+            <motion.label
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                preferences.includeThemes
+                  ? "bg-blue-50 border-blue-200"
+                  : "hover:bg-gray-50 border-gray-200"
+              }`}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <div
+                className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
+                  preferences.includeThemes
+                    ? "bg-blue-600 border-blue-600"
+                    : "border-gray-300"
+                }`}
+              >
+                {preferences.includeThemes && (
+                  <Check className="w-3.5 h-3.5 text-white" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900">
+                  Témata a motivy
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  Rozbor hlavních témat a motivů díla
+                </div>
+              </div>
               <input
                 type="checkbox"
                 checked={preferences.includeThemes}
                 onChange={() => handleToggle("includeThemes")}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="sr-only"
               />
-              <span className="text-sm text-gray-600">Témata a motivy</span>
-            </label>
+            </motion.label>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-medium text-sm text-gray-700">Styl textu</h3>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-600">Jazyk</label>
-              <div className="flex gap-2">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    setPreferences((prev) => ({ ...prev, language: "formal" }))
-                  }
-                  className={`px-3 py-1 rounded-lg text-sm flex-1 ${
-                    preferences.language === "formal"
-                      ? "bg-blue-100 text-blue-700 border-blue-200"
-                      : "bg-gray-50 text-gray-600 border-gray-200"
-                  } border`}
-                >
-                  Formální
-                </motion.button>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    setPreferences((prev) => ({ ...prev, language: "casual" }))
-                  }
-                  className={`px-3 py-1 rounded-lg text-sm flex-1 ${
-                    preferences.language === "casual"
-                      ? "bg-blue-100 text-blue-700 border-blue-200"
-                      : "bg-gray-50 text-gray-600 border-gray-200"
-                  } border`}
-                >
-                  Neformální
-                </motion.button>
-              </div>
-            </div>
+          <h3 className="font-medium text-base text-gray-900">Styl textu</h3>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-600">Přístup</label>
-              <div className="flex gap-2">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    setPreferences((prev) => ({ ...prev, style: "academic" }))
-                  }
-                  className={`px-3 py-1 rounded-lg text-sm flex-1 ${
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Jazyk
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() =>
+                  setPreferences((prev) => ({ ...prev, language: "formal" }))
+                }
+                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
+                  preferences.language === "formal"
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    preferences.language === "formal"
+                      ? "border-blue-600"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {preferences.language === "formal" && (
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
+                  )}
+                </div>
+                <span>Formální</span>
+              </motion.button>
+
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() =>
+                  setPreferences((prev) => ({ ...prev, language: "casual" }))
+                }
+                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
+                  preferences.language === "casual"
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    preferences.language === "casual"
+                      ? "border-blue-600"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {preferences.language === "casual" && (
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
+                  )}
+                </div>
+                <span>Neformální</span>
+              </motion.button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Přístup
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() =>
+                  setPreferences((prev) => ({ ...prev, style: "academic" }))
+                }
+                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
+                  preferences.style === "academic"
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                     preferences.style === "academic"
-                      ? "bg-blue-100 text-blue-700 border-blue-200"
-                      : "bg-gray-50 text-gray-600 border-gray-200"
-                  } border`}
+                      ? "border-blue-600"
+                      : "border-gray-300"
+                  }`}
                 >
-                  Akademický
-                </motion.button>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    setPreferences((prev) => ({
-                      ...prev,
-                      style: "storytelling",
-                    }))
-                  }
-                  className={`px-3 py-1 rounded-lg text-sm flex-1 ${
+                  {preferences.style === "academic" && (
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
+                  )}
+                </div>
+                <span>Akademický</span>
+              </motion.button>
+
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() =>
+                  setPreferences((prev) => ({ ...prev, style: "storytelling" }))
+                }
+                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
+                  preferences.style === "storytelling"
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                     preferences.style === "storytelling"
-                      ? "bg-blue-100 text-blue-700 border-blue-200"
-                      : "bg-gray-50 text-gray-600 border-gray-200"
-                  } border`}
+                      ? "border-blue-600"
+                      : "border-gray-300"
+                  }`}
                 >
-                  Vyprávěcí
-                </motion.button>
-              </div>
+                  {preferences.style === "storytelling" && (
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
+                  )}
+                </div>
+                <span>Vyprávěcí</span>
+              </motion.button>
             </div>
           </div>
         </div>
