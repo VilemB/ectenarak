@@ -10,16 +10,16 @@ export async function POST(request: Request) {
     const { bookTitle, notes } = await request.json();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-0125-preview",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are a helpful assistant that generates book summaries based on user notes.",
+            "Jsi užitečný pomocník, který generuje shrnutí knihy na základě uživatelských poznámek.",
         },
         {
           role: "user",
-          content: `Please generate a summary for the book "${bookTitle}" based on the following notes:\n\n${notes}`,
+          content: `Vygeneruj shrnutí knihy "${bookTitle}" na základě následujících poznámek:\n\n${notes}`,
         },
       ],
       temperature: 0.7,
@@ -28,12 +28,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       summary:
-        response.choices[0].message.content || "Unable to generate summary.",
+        response.choices[0].message.content ||
+        "Nepodařilo se vygenerovat shrnutí.",
     });
   } catch (error) {
     console.error("Error generating summary:", error);
     return NextResponse.json(
-      { error: "Failed to generate summary" },
+      { error: "Nepodařilo se vygenerovat shrnutí" },
       { status: 500 }
     );
   }
