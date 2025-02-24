@@ -7,6 +7,30 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, AlertCircle } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const formVariants = {
+  hidden: { opacity: 0, y: -20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+    },
+  },
+};
 
 export default function Home() {
   const [books, setBooks] = useLocalStorage<Book[]>("books", []);
@@ -56,14 +80,23 @@ export default function Home() {
 
   return (
     <>
-      <nav className="bg-white shadow-sm">
+      <motion.nav
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white shadow-sm"
+      >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <h1 className="text-3xl font-bold text-gray-900">Čtenářský deník</h1>
         </div>
-      </nav>
+      </motion.nav>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <motion.div
+          variants={formVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white rounded-xl shadow-sm p-6 mb-8"
+        >
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
             Přidej novou knihu
           </h2>
@@ -120,13 +153,24 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            {error && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </p>
-            )}
-            <div className="flex justify-end">
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-sm text-red-500 flex items-center gap-1"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+            <motion.div
+              className="flex justify-end"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <Button
                 type="submit"
                 size="lg"
@@ -135,27 +179,41 @@ export default function Home() {
                 <PlusCircle className="w-5 h-5 mr-2" />
                 Přidat knihu
               </Button>
-            </div>
+            </motion.div>
           </form>
-        </div>
+        </motion.div>
 
-        {books.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-lg">
-              Žádné knihy nejsou přidány. Začněte přidáváním své první knihy!
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {books.map((book) => (
-              <BookComponent
-                key={book.id}
-                book={book}
-                onDelete={handleDeleteBook}
-              />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {books.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center py-12"
+            >
+              <div className="text-gray-400 text-lg">
+                Žádné knihy nejsou přidány. Začněte přidáváním své první knihy!
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-6"
+            >
+              <AnimatePresence>
+                {books.map((book) => (
+                  <BookComponent
+                    key={book.id}
+                    book={book}
+                    onDelete={handleDeleteBook}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </>
   );
