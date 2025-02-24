@@ -15,21 +15,14 @@ interface ModalProps {
   confirmDisabled?: boolean;
 }
 
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
 const modalVariants = {
   hidden: {
     opacity: 0,
     scale: 0.95,
-    y: 20,
   },
   visible: {
     opacity: 1,
     scale: 1,
-    y: 0,
     transition: {
       type: "spring",
       stiffness: 300,
@@ -39,7 +32,6 @@ const modalVariants = {
   exit: {
     opacity: 0,
     scale: 0.95,
-    y: 20,
     transition: {
       duration: 0.2,
     },
@@ -72,44 +64,34 @@ export function Modal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <motion.div
-            className="fixed inset-0 bg-black/50"
-            variants={overlayVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            onClick={onClose}
-          />
-          <motion.div
-            className="relative bg-white rounded-lg shadow-lg w-full max-w-md"
+            className="bg-white rounded-xl shadow-xl w-full max-w-md"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            <div className="p-6">
-              <motion.div
-                className="flex items-center justify-between mb-4"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+            {/* Header */}
+            <motion.div
+              className="flex items-center justify-between p-4 border-b border-gray-100"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-gray-500 hover:text-gray-700"
+                onClick={onClose}
               >
-                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-gray-500 hover:text-gray-700"
-                  onClick={onClose}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </motion.div>
+                <X className="h-4 w-4" />
+              </Button>
+            </motion.div>
+
+            {/* Content */}
+            <div className="p-4">
               <motion.p
                 className="text-sm text-gray-600 mb-4"
                 initial={{ opacity: 0 }}
@@ -119,34 +101,36 @@ export function Modal({
                 {description}
               </motion.p>
               {children}
-              <motion.div
-                className="flex justify-end gap-2 mt-6"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Button
-                  variant="default"
-                  onClick={onClose}
-                  className="bg-black hover:bg-gray-800"
-                >
-                  {cancelText}
-                </Button>
-                <Button
-                  variant="default"
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={() => {
-                    onConfirm();
-                    onClose();
-                  }}
-                  disabled={confirmDisabled}
-                >
-                  {confirmText}
-                </Button>
-              </motion.div>
             </div>
+
+            {/* Footer */}
+            <motion.div
+              className="border-t border-gray-100 p-4 flex justify-end gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Button
+                variant="default"
+                onClick={onClose}
+                className="bg-black hover:bg-gray-800"
+              >
+                {cancelText}
+              </Button>
+              <Button
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  onConfirm();
+                  onClose();
+                }}
+                disabled={confirmDisabled}
+              >
+                {confirmText}
+              </Button>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

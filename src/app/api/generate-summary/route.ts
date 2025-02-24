@@ -36,10 +36,6 @@ function generatePrompt(
       ? "Piš formálním jazykem."
       : "Piš neformálním, přístupným jazykem.";
 
-  const opinion = preferences.includePersonalOpinion
-    ? "\n\nNa závěr přidej subjektivní hodnocení díla a jeho významu v kontextu literatury."
-    : "";
-
   return `Jsi literární expert, který vytváří kvalitní shrnutí knih. ${style} ${language}
 
 Vytvoř strukturované shrnutí knihy "${bookTitle}" od autora ${author}. Zaměř se na:
@@ -47,7 +43,7 @@ Vytvoř strukturované shrnutí knihy "${bookTitle}" od autora ${author}. Zamě�
 - Hlavní dějovou linii a strukturu díla
 ${sections.join("\n")}
 
-${notes ? `\nPoznámky čtenáře k dílu:\n${notes}` : ""}${opinion}`;
+${notes ? `\nPoznámky čtenáře k dílu:\n${notes}` : ""}`;
 }
 
 export async function POST(request: Request) {
@@ -55,7 +51,7 @@ export async function POST(request: Request) {
     const { bookTitle, author, notes, preferences } = await request.json();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",

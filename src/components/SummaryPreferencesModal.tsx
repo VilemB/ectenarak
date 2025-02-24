@@ -14,7 +14,6 @@ export interface SummaryPreferences {
   includeCharacterAnalysis: boolean;
   includeHistoricalContext: boolean;
   includeThemes: boolean;
-  includePersonalOpinion: boolean;
   language: "formal" | "casual";
   style: "academic" | "storytelling";
 }
@@ -23,7 +22,6 @@ const defaultPreferences: SummaryPreferences = {
   includeCharacterAnalysis: true,
   includeHistoricalContext: true,
   includeThemes: true,
-  includePersonalOpinion: false,
   language: "formal",
   style: "academic",
 };
@@ -83,17 +81,6 @@ export function SummaryPreferencesModal({
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-600">Témata a motivy</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={preferences.includePersonalOpinion}
-                onChange={() => handleToggle("includePersonalOpinion")}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-600">
-                Osobní hodnocení díla
-              </span>
             </label>
           </div>
         </div>
