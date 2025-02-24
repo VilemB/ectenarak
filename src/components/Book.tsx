@@ -133,8 +133,8 @@ export default function BookComponent({ book }: BookProps) {
           <div className="flex gap-3 mb-6">
             <Button
               onClick={() => setIsAddingNote(true)}
-              variant="outline"
-              className="flex-1"
+              variant="default"
+              className="flex-1 bg-black hover:bg-gray-800"
             >
               <PenLine className="w-4 h-4 mr-2" />
               Přidat poznámku
@@ -142,8 +142,8 @@ export default function BookComponent({ book }: BookProps) {
             <Button
               onClick={handleGenerateSummary}
               disabled={isGenerating || regularNotes.length === 0}
-              variant="outline"
-              className="flex-1"
+              variant="default"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
             >
               {isGenerating ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -177,7 +177,13 @@ export default function BookComponent({ book }: BookProps) {
                 >
                   Zrušit
                 </Button>
-                <Button type="submit">Uložit poznámku</Button>
+                <Button
+                  type="submit"
+                  variant="default"
+                  className="bg-black hover:bg-gray-800"
+                >
+                  Uložit poznámku
+                </Button>
               </div>
             </form>
           )}

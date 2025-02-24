@@ -84,7 +84,11 @@ export default function Home() {
               )}
             </div>
             <div className="flex justify-end">
-              <Button type="submit" size="lg" className="min-w-[200px]">
+              <Button
+                type="submit"
+                size="lg"
+                className="min-w-[200px] bg-black hover:bg-gray-800"
+              >
                 <PlusCircle className="w-5 h-5 mr-2" />
                 Přidat knihu
               </Button>
