@@ -41,6 +41,10 @@ export default function Home() {
     setNewBookTitle("");
   };
 
+  const handleDeleteBook = (bookId: string) => {
+    setBooks(books.filter((book) => book.id !== bookId));
+  };
+
   return (
     <>
       <nav className="bg-white shadow-sm">
@@ -105,7 +109,11 @@ export default function Home() {
         ) : (
           <div className="space-y-6">
             {books.map((book) => (
-              <BookComponent key={book.id} book={book} />
+              <BookComponent
+                key={book.id}
+                book={book}
+                onDelete={handleDeleteBook}
+              />
             ))}
           </div>
         )}

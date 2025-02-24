@@ -9,15 +9,17 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
 
 interface BookProps {
   book: Book;
+  onDelete: (bookId: string) => void;
 }
 
-export default function BookComponent({ book }: BookProps) {
+export default function BookComponent({ book, onDelete }: BookProps) {
   const [notes, setNotes] = useLocalStorage<Note[]>(
     `book-${book.id}-notes`,
     []
@@ -70,12 +72,11 @@ export default function BookComponent({ book }: BookProps) {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Nepodařilo se vygenerovat shrnutí");
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Nepodařilo se vygenerovat shrnutí");
+      }
 
       const summaryNote: Note = {
         id: generateId(),
@@ -100,17 +101,28 @@ export default function BookComponent({ book }: BookProps) {
     }
   };
 
+  const handleDelete = () => {
+    if (
+      window.confirm(
+        "Opravdu chcete smazat tuto knihu a všechny její poznámky?"
+      )
+    ) {
+      window.localStorage.removeItem(`book-${book.id}-notes`);
+      onDelete(book.id);
+    }
+  };
+
   const regularNotes = notes.filter((note) => !note.isAISummary);
   const aiSummary = notes.find((note) => note.isAISummary);
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-      <div
-        className="p-6 cursor-pointer hover:bg-gray-50 transition"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+      <div className="p-6 hover:bg-gray-50 transition">
         <div className="flex items-center justify-between">
-          <div>
+          <div
+            className="flex-1 cursor-pointer"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
             <h2 className="text-xl font-semibold text-gray-900">
               {book.title}
             </h2>
@@ -118,13 +130,26 @@ export default function BookComponent({ book }: BookProps) {
               {regularNotes.length} poznámek
             </p>
           </div>
-          <span className="text-gray-400">
-            {isExpanded ? (
-              <ChevronDown className="w-5 h-5" />
-            ) : (
-              <ChevronRight className="w-5 h-5" />
-            )}
-          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleDelete}
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+            <span
+              className="text-gray-400 cursor-pointer"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? (
+                <ChevronDown className="w-5 h-5" />
+              ) : (
+                <ChevronRight className="w-5 h-5" />
+              )}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -141,7 +166,7 @@ export default function BookComponent({ book }: BookProps) {
             </Button>
             <Button
               onClick={handleGenerateSummary}
-              disabled={isGenerating || regularNotes.length === 0}
+              disabled={isGenerating}
               variant="default"
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
             >
