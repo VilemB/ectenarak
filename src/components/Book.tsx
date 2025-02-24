@@ -56,7 +56,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   );
   const [newNote, setNewNote] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [error, setError] = useState("");
   const [deleteModal, setDeleteModal] = useState<{
