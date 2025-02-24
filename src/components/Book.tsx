@@ -55,12 +55,6 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         .map((note) => note.content)
         .join("\n\n");
 
-      if (!notesText.trim()) {
-        throw new Error(
-          "Pro generování shrnutí je potřeba mít alespoň jednu poznámku."
-        );
-      }
-
       const response = await fetch("/api/generate-summary", {
         method: "POST",
         headers: {
@@ -68,7 +62,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         },
         body: JSON.stringify({
           bookTitle: book.title,
-          notes: notesText,
+          notes: notesText || undefined,
         }),
       });
 
@@ -192,7 +186,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Napiš poznámku..."
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none mb-2"
+                className="w-full text-black px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none mb-2"
               />
               <div className="flex justify-end gap-2">
                 <Button

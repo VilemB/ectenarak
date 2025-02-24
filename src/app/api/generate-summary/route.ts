@@ -10,25 +10,24 @@ export async function POST(request: Request) {
     const { bookTitle, notes } = await request.json();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "Jsi literární expert, který vytváří kvalitní shrnutí knih na základě čtenářských poznámek. Tvým úkolem je vytvořit strukturované shrnutí, které zachytí hlavní myšlenky, témata a klíčové momenty knihy. Shrnutí by mělo být informativní a užitečné pro pozdější reference.",
+            "Jsi literární expert, který vytváří kvalitní shrnutí knih. Tvým úkolem je vytvořit strukturované shrnutí knihy, které zachytí hlavní dějovou linii, postavy, témata a poselství díla. Pokud jsou k dispozici poznámky čtenáře, zahrň je do kontextu.",
         },
         {
           role: "user",
-          content: `Vytvoř strukturované shrnutí knihy "${bookTitle}" na základě následujících čtenářských poznámek. Zaměř se na:
+          content: `Vytvoř strukturované shrnutí knihy "${bookTitle}". Zaměř se na:
 
 1. Hlavní dějovou linii
-2. Klíčové postavy a jejich vývoj
+2. Klíčové postavy a jejich charakteristiku
 3. Hlavní témata a motivy
-4. Důležité momenty a zvraty
+4. Historický a kulturní kontext
 5. Celkové poselství nebo význam díla
 
-Poznámky k dílu:
-${notes}`,
+${notes ? `\nPoznámky čtenáře k dílu:\n${notes}` : ""}`,
         },
       ],
       temperature: 0.7,
