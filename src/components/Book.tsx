@@ -9,6 +9,10 @@ import { generateId, formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { Modal } from "@/components/ui/modal";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  SummaryPreferencesModal,
+  SummaryPreferences,
+} from "./SummaryPreferencesModal";
 
 interface BookProps {
   book: Book;
@@ -60,6 +64,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     type: "book" | "note";
     noteId?: string;
   }>({ isOpen: false, type: "book" });
+  const [summaryModal, setSummaryModal] = useState(false);
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +82,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     setIsAddingNote(false);
   };
 
-  const handleGenerateSummary = async () => {
+  const handleGenerateSummary = async (preferences: SummaryPreferences) => {
     setIsGenerating(true);
     setError("");
     try {
@@ -95,6 +100,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           bookTitle: book.title,
           author: book.author,
           notes: notesText || undefined,
+          preferences,
         }),
       });
 
@@ -124,6 +130,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       );
     } finally {
       setIsGenerating(false);
+      setSummaryModal(false);
     }
   };
 
@@ -225,7 +232,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                     className="flex-1"
                   >
                     <Button
-                      onClick={handleGenerateSummary}
+                      onClick={() => setSummaryModal(true)}
                       disabled={isGenerating}
                       variant="default"
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
@@ -389,6 +396,13 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         confirmText={
           deleteModal.type === "book" ? "Smazat knihu" : "Smazat poznámku"
         }
+      />
+
+      <SummaryPreferencesModal
+        isOpen={summaryModal}
+        onClose={() => setSummaryModal(false)}
+        onConfirm={handleGenerateSummary}
+        isLoading={isGenerating}
       />
     </>
   );

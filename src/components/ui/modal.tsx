@@ -12,6 +12,7 @@ interface ModalProps {
   confirmText?: string;
   cancelText?: string;
   children?: ReactNode;
+  confirmDisabled?: boolean;
 }
 
 const overlayVariants = {
@@ -54,6 +55,7 @@ export function Modal({
   confirmText = "Potvrdit",
   cancelText = "Zrušit",
   children,
+  confirmDisabled,
 }: ModalProps) {
   // Close on escape key
   useEffect(() => {
@@ -137,6 +139,7 @@ export function Modal({
                     onConfirm();
                     onClose();
                   }}
+                  disabled={confirmDisabled}
                 >
                   {confirmText}
                 </Button>
