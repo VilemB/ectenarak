@@ -2,6 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Portal } from "./portal";
 
 interface ModalProps {
   isOpen: boolean;
@@ -34,32 +35,42 @@ export function Modal({
       }
     };
 
+    // Lock body scroll when modal is open
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
     document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen, onClose]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50">
-          {/* Backdrop */}
-          <motion.div
-            className="absolute inset-0 bg-black/5 backdrop-blur-[1px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-8 pointer-events-none">
+    <Portal>
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            {/* Backdrop */}
             <motion.div
-              className="bg-white rounded-xl shadow-xl w-full max-w-md pointer-events-auto"
+              className="fixed inset-0 bg-black/50 backdrop-blur-[2px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              className="relative w-full max-w-md mx-4 z-[10000]"
               variants={{
                 hidden: {
                   opacity: 0,
                   scale: 0.95,
-                  y: 10,
+                  y: 20,
                 },
                 visible: {
                   opacity: 1,
@@ -68,13 +79,13 @@ export function Modal({
                   transition: {
                     type: "spring",
                     stiffness: 300,
-                    damping: 30,
+                    damping: 25,
                   },
                 },
                 exit: {
                   opacity: 0,
                   scale: 0.95,
-                  y: 10,
+                  y: 20,
                   transition: {
                     duration: 0.2,
                   },
@@ -84,67 +95,71 @@ export function Modal({
               animate="visible"
               exit="exit"
             >
-              {/* Header */}
-              <motion.div
-                className="flex items-center justify-between p-3 border-b border-gray-100"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-gray-500 hover:text-gray-700"
-                  onClick={onClose}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </motion.div>
-
-              {/* Content */}
-              <div className="p-3">
-                <motion.p
-                  className="text-sm text-gray-600 mb-3"
+              <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+                {/* Header */}
+                <motion.div
+                  className="flex items-center justify-between p-4 border-b border-gray-100"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.1 }}
                 >
-                  {description}
-                </motion.p>
-                {children}
-              </div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {title}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+                    onClick={onClose}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </motion.div>
 
-              {/* Footer */}
-              <motion.div
-                className="border-t border-gray-100 p-3 flex justify-end gap-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Button
-                  variant="default"
-                  onClick={onClose}
-                  className="bg-black hover:bg-gray-800"
+                {/* Content */}
+                <div className="p-4">
+                  <motion.p
+                    className="text-sm text-gray-600 mb-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {description}
+                  </motion.p>
+                  {children}
+                </div>
+
+                {/* Footer */}
+                <motion.div
+                  className="border-t border-gray-100 p-4 flex justify-end gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  {cancelText}
-                </Button>
-                <Button
-                  variant="default"
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => {
-                    onConfirm();
-                    onClose();
-                  }}
-                  disabled={confirmDisabled}
-                >
-                  {confirmText}
-                </Button>
-              </motion.div>
+                  <Button
+                    variant="default"
+                    onClick={onClose}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  >
+                    {cancelText}
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => {
+                      onConfirm();
+                      onClose();
+                    }}
+                    disabled={confirmDisabled}
+                  >
+                    {confirmText}
+                  </Button>
+                </motion.div>
+              </div>
             </motion.div>
           </div>
-        </div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </Portal>
   );
 }
