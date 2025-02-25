@@ -14,10 +14,15 @@ import {
   Library,
   BookText,
   X,
+  Keyboard,
+  Info,
+  PenLine,
+  Sparkles,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Modal } from "@/components/ui/modal";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -51,10 +56,58 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showWelcome, setShowWelcome] = useLocalStorage("welcome-shown", true);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    bookId: string;
+    bookTitle: string;
+  } | null>(null);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only respond to keyboard shortcuts when not in an input field
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      // Ctrl/Cmd + / to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+        e.preventDefault();
+        const searchInput = document.querySelector(
+          'input[placeholder="Hledat knihy..."]'
+        ) as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+
+      // Ctrl/Cmd + N to add new book
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault();
+        setShowAddForm(true);
+      }
+
+      // Escape to close add form
+      if (e.key === "Escape" && showAddForm) {
+        e.preventDefault();
+        setShowAddForm(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showAddForm]);
 
   const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +158,21 @@ export default function Home() {
   };
 
   const handleDeleteBook = (bookId: string) => {
-    setBooks(books.filter((book) => book.id !== bookId));
+    const bookToDelete = books.find((book) => book.id === bookId);
+    if (bookToDelete) {
+      setDeleteConfirmation({
+        isOpen: true,
+        bookId,
+        bookTitle: bookToDelete.title,
+      });
+    }
+  };
+
+  const confirmDeleteBook = () => {
+    if (deleteConfirmation) {
+      setBooks(books.filter((book) => book.id !== deleteConfirmation.bookId));
+      setDeleteConfirmation(null);
+    }
   };
 
   const filteredBooks = books.filter(
@@ -157,6 +224,15 @@ export default function Home() {
               >
                 Přidat testovací knihu
               </Button>
+              <Button
+                onClick={() => setShowKeyboardShortcuts(true)}
+                variant="ghost"
+                size="icon"
+                className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground"
+                title="Klávesové zkratky"
+              >
+                <Keyboard className="h-5 w-5" />
+              </Button>
             </div>
 
             <div className="md:hidden flex items-center space-x-2">
@@ -164,12 +240,14 @@ export default function Home() {
                 onClick={() => setShowAddForm(!showAddForm)}
                 className="p-2 rounded-full text-primary hover:bg-primary/20 transition-colors"
                 style={{ backgroundColor: "rgba(59, 130, 246, 0.1)" }}
+                aria-label="Add book"
               >
                 <Plus className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-full text-foreground hover:bg-secondary transition-colors bg-secondary/50"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -197,12 +275,27 @@ export default function Home() {
                     className="py-2 pl-10 pr-4 block w-full rounded-full border border-border text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary"
                   />
                 </div>
-                <Button
-                  onClick={addTestBook}
-                  className="w-full rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-colors mb-2"
-                >
-                  Přidat testovací knihu
-                </Button>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <Button
+                    onClick={() => {
+                      setShowAddForm(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Přidat knihu
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      addTestBook();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-colors"
+                  >
+                    Testovací kniha
+                  </Button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -375,6 +468,157 @@ export default function Home() {
           </>
         )}
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteConfirmation}
+        onClose={() => setDeleteConfirmation(null)}
+        title="Smazat knihu"
+      >
+        <div className="p-6">
+          <p className="text-foreground mb-4">
+            {deleteConfirmation &&
+              `Opravdu chceš smazat knihu "${deleteConfirmation.bookTitle}" a všechny její poznámky?`}
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmation(null)}
+            >
+              Zrušit
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteBook}>
+              Smazat
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Welcome Modal */}
+      <Modal
+        isOpen={showWelcome && isLoaded}
+        onClose={() => setShowWelcome(false)}
+        title="Vítej v Čtenářském deníku!"
+      >
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-primary/10 p-4 rounded-full">
+                <BookOpen className="h-10 w-10 text-primary" />
+              </div>
+            </div>
+
+            <h3 className="text-lg font-medium text-center">
+              Tvůj osobní čtenářský deník
+            </h3>
+
+            <p className="text-muted-foreground text-center">
+              Vítej v aplikaci, která ti pomůže sledovat knihy, které čteš, a
+              zaznamenávat si k nim poznámky.
+            </p>
+
+            <div className="space-y-3 mt-6">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <PlusCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Přidej své knihy</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Začni přidáním knih, které čteš nebo jsi přečetl(a).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <PenLine className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Zaznamenávej poznámky</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Ke každé knize si můžeš přidat libovolné množství poznámek.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Generuj AI shrnutí</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Nech si vygenerovat shrnutí tvých poznámek pomocí umělé
+                    inteligence.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={() => setShowWelcome(false)}
+                className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
+              >
+                Začít používat aplikaci
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Keyboard Shortcuts Modal */}
+      <Modal
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+        title="Klávesové zkratky"
+      >
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-secondary/80 p-2 rounded-md">
+                <Keyboard className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium mb-1">Klávesové zkratky</h3>
+                <p className="text-sm text-muted-foreground">
+                  Používejte klávesové zkratky pro rychlejší práci s aplikací.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 mt-4">
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-sm">Vyhledávání</span>
+                <kbd className="px-2 py-1 bg-secondary rounded-md text-xs font-mono">
+                  Ctrl + /
+                </kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-sm">Přidat novou knihu</span>
+                <kbd className="px-2 py-1 bg-secondary rounded-md text-xs font-mono">
+                  Ctrl + N
+                </kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-sm">Zavřít formulář</span>
+                <kbd className="px-2 py-1 bg-secondary rounded-md text-xs font-mono">
+                  Esc
+                </kbd>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 mt-4 bg-primary/10 p-3 rounded-md">
+              <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-sm">
+                Klávesové zkratky fungují pouze když není aktivní žádné textové
+                pole.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

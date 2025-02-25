@@ -11,4 +11,5 @@ export interface Note {
   content: string;
   createdAt: string;
   isAISummary?: boolean;
+  isError?: boolean;
 }

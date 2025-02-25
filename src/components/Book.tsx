@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Plus,
   BookOpen,
+  AlertCircle,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
@@ -102,6 +103,31 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         .map((note) => note.content)
         .join("\n\n");
 
+      if (!notesText.trim()) {
+        // Show a message if there are no notes to generate a summary from
+        setIsGenerating(false);
+        setSummaryModal(false);
+
+        // Set a temporary error message
+        const errorNote: Note = {
+          id: generateId(),
+          bookId: book.id,
+          content:
+            "Pro generování shrnutí je potřeba nejprve přidat alespoň jednu poznámku k této knize.",
+          createdAt: new Date().toISOString(),
+          isError: true,
+        };
+
+        setNotes([...notes, errorNote]);
+
+        // Remove the error message after 5 seconds
+        setTimeout(() => {
+          setNotes((notes) => notes.filter((note) => !note.isError));
+        }, 5000);
+
+        return;
+      }
+
       const response = await fetch("/api/generate-summary", {
         method: "POST",
         headers: {
@@ -129,11 +155,32 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       };
 
       // Remove previous AI summaries
-      const filteredNotes = notes.filter((note) => !note.isAISummary);
+      const filteredNotes = notes.filter(
+        (note) => !note.isAISummary && !note.isError
+      );
       setNotes([...filteredNotes, summary]);
       setSummaryModal(false);
     } catch (error) {
       console.error("Error generating summary:", error);
+
+      // Add an error note
+      const errorNote: Note = {
+        id: generateId(),
+        bookId: book.id,
+        content:
+          "Nastala chyba při generování shrnutí. Zkuste to prosím znovu později.",
+        createdAt: new Date().toISOString(),
+        isError: true,
+      };
+
+      setNotes([...notes.filter((note) => !note.isError), errorNote]);
+
+      // Remove the error message after 5 seconds
+      setTimeout(() => {
+        setNotes((notes) => notes.filter((note) => !note.isError));
+      }, 5000);
+
+      setSummaryModal(false);
     } finally {
       setIsGenerating(false);
     }
@@ -311,6 +358,8 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                     className={`p-4 rounded-lg border ${
                       note.isAISummary
                         ? "border-amber-300/30 bg-amber-50/10"
+                        : note.isError
+                        ? "border-red-300/30 bg-red-50/10"
                         : "border-border bg-secondary/30"
                     }`}
                   >
@@ -323,21 +372,28 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                               AI Shrnutí
                             </span>
                           </div>
+                        ) : note.isError ? (
+                          <div className="flex items-center text-red-500">
+                            <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                            <span className="text-xs font-medium">Chyba</span>
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             {formatDate(note.createdAt)}
                           </span>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-6 w-6 p-0"
-                        onClick={() => handleDeleteNote(note.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        <span className="sr-only">Delete note</span>
-                      </Button>
+                      {!note.isError && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-6 w-6 p-0"
+                          onClick={() => handleDeleteNote(note.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span className="sr-only">Delete note</span>
+                        </Button>
+                      )}
                     </div>
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       <ReactMarkdown>{note.content}</ReactMarkdown>
