@@ -146,17 +146,6 @@ export default function Home() {
     setShowAddForm(false);
   };
 
-  // Add a test book for debugging
-  const addTestBook = () => {
-    const testBook: Book = {
-      id: generateId(),
-      title: "Testovací kniha",
-      author: "Test Autor",
-      createdAt: new Date().toISOString(),
-    };
-    setBooks([...books, testBook]);
-  };
-
   const handleDeleteBook = (bookId: string) => {
     const bookToDelete = books.find((book) => book.id === bookId);
     if (bookToDelete) {
@@ -219,12 +208,6 @@ export default function Home() {
                 Přidat knihu
               </Button>
               <Button
-                onClick={addTestBook}
-                className="rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-colors"
-              >
-                Přidat testovací knihu
-              </Button>
-              <Button
                 onClick={() => setShowKeyboardShortcuts(true)}
                 variant="ghost"
                 size="icon"
@@ -275,7 +258,7 @@ export default function Home() {
                     className="py-2 pl-10 pr-4 block w-full rounded-full border border-border text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="flex justify-center">
                   <Button
                     onClick={() => {
                       setShowAddForm(true);
@@ -285,15 +268,6 @@ export default function Home() {
                   >
                     <Plus className="w-4 h-4 mr-1.5" />
                     Přidat knihu
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      addTestBook();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-colors"
-                  >
-                    Testovací kniha
                   </Button>
                 </div>
               </motion.div>

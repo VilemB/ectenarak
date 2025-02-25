@@ -1,6 +1,6 @@
 "use client";
 
-import { Github, Heart, BookOpen } from "lucide-react";
+import { Github, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Footer() {
@@ -37,20 +37,7 @@ export default function Footer() {
               className="text-sm text-muted-foreground flex items-center gap-1.5"
               whileHover={{ color: "rgba(255, 255, 255, 0.9)" }}
             >
-              Made by Vilém Barnet{" "}
-              <motion.span
-                initial={{ scale: 1 }}
-                animate={{
-                  scale: [1, 1.1, 1],
-                  transition: {
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    duration: 1.5,
-                  },
-                }}
-              >
-                <Heart className="h-3.5 w-3.5 text-red-400" />
-              </motion.span>
+              Made by Vilém Barnet
             </motion.span>
           </div>
         </div>
