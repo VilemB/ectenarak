@@ -1,297 +1,416 @@
+"use client";
+
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import {
+  Sparkles,
+  Loader2,
+  Languages,
+  BookText,
+  AlignJustify,
+} from "lucide-react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
-
-interface SummaryPreferencesModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (preferences: SummaryPreferences) => void;
-  isLoading: boolean;
-}
 
 export interface SummaryPreferences {
-  includeCharacterAnalysis: boolean;
-  includeHistoricalContext: boolean;
-  includeThemes: boolean;
-  language: "formal" | "casual";
-  style: "academic" | "storytelling";
+  style: "academic" | "casual" | "creative";
+  length: "short" | "medium" | "long";
+  focus: "plot" | "characters" | "themes" | "balanced";
+  language: "cs" | "en";
 }
 
-const defaultPreferences: SummaryPreferences = {
-  includeCharacterAnalysis: true,
-  includeHistoricalContext: true,
-  includeThemes: true,
-  language: "formal",
-  style: "academic",
+export interface SummaryPreferencesModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onGenerate: (preferences: SummaryPreferences) => Promise<void>;
+  isGenerating: boolean;
+}
+
+const optionVariants = {
+  selected: {
+    scale: 1.02,
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+    transition: { type: "spring", stiffness: 300, damping: 20 },
+  },
+  notSelected: {
+    scale: 1,
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    transition: { type: "spring", stiffness: 300, damping: 20 },
+  },
 };
 
 export function SummaryPreferencesModal({
   isOpen,
   onClose,
-  onConfirm,
-  isLoading,
+  onGenerate,
+  isGenerating,
 }: SummaryPreferencesModalProps) {
-  const [preferences, setPreferences] =
-    useState<SummaryPreferences>(defaultPreferences);
+  const [preferences, setPreferences] = useState<SummaryPreferences>({
+    style: "academic",
+    length: "medium",
+    focus: "balanced",
+    language: "cs",
+  });
 
-  const handleToggle = (key: keyof SummaryPreferences) => {
-    if (typeof preferences[key] === "boolean") {
-      setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onGenerate(preferences);
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      onConfirm={() => onConfirm(preferences)}
-      title="Nastavení shrnutí"
-      description="Vyberte, co všechno má shrnutí obsahovat a jak má být napsáno."
-      confirmText={isLoading ? "Generuji..." : "Generovat shrnutí"}
-      confirmDisabled={isLoading}
-    >
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-medium text-base text-gray-900 mb-3">
-            Obsah shrnutí
-          </h3>
-          <div className="grid grid-cols-1 gap-2">
-            <motion.label
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                preferences.includeCharacterAnalysis
-                  ? "bg-blue-50 border-blue-200"
-                  : "hover:bg-gray-50 border-gray-200"
-              }`}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              <div
-                className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
-                  preferences.includeCharacterAnalysis
-                    ? "bg-blue-600 border-blue-600"
-                    : "border-gray-300"
-                }`}
-              >
-                {preferences.includeCharacterAnalysis && (
-                  <Check className="w-3.5 h-3.5 text-white" />
-                )}
+    <Modal isOpen={isOpen} onClose={onClose} title="Nastavení shrnutí">
+      <div className="p-6 bg-card rounded-b-lg">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-5">
+            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <BookText className="h-4 w-4 text-primary" />
+                <label className="text-sm font-medium text-foreground">
+                  Styl shrnutí
+                </label>
               </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-900">
-                  Analýza postav
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  Rozbor hlavních postav a jejich vývoje v díle
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={preferences.includeCharacterAnalysis}
-                onChange={() => handleToggle("includeCharacterAnalysis")}
-                className="sr-only"
-              />
-            </motion.label>
-
-            <motion.label
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                preferences.includeHistoricalContext
-                  ? "bg-blue-50 border-blue-200"
-                  : "hover:bg-gray-50 border-gray-200"
-              }`}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              <div
-                className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
-                  preferences.includeHistoricalContext
-                    ? "bg-blue-600 border-blue-600"
-                    : "border-gray-300"
-                }`}
-              >
-                {preferences.includeHistoricalContext && (
-                  <Check className="w-3.5 h-3.5 text-white" />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-900">
-                  Historický kontext
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  Zasazení díla do historického a kulturního kontextu
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={preferences.includeHistoricalContext}
-                onChange={() => handleToggle("includeHistoricalContext")}
-                className="sr-only"
-              />
-            </motion.label>
-
-            <motion.label
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                preferences.includeThemes
-                  ? "bg-blue-50 border-blue-200"
-                  : "hover:bg-gray-50 border-gray-200"
-              }`}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              <div
-                className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
-                  preferences.includeThemes
-                    ? "bg-blue-600 border-blue-600"
-                    : "border-gray-300"
-                }`}
-              >
-                {preferences.includeThemes && (
-                  <Check className="w-3.5 h-3.5 text-white" />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-900">
-                  Témata a motivy
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  Rozbor hlavních témat a motivů díla
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={preferences.includeThemes}
-                onChange={() => handleToggle("includeThemes")}
-                className="sr-only"
-              />
-            </motion.label>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="font-medium text-base text-gray-900">Styl textu</h3>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Jazyk
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() =>
-                  setPreferences((prev) => ({ ...prev, language: "formal" }))
-                }
-                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
-                  preferences.language === "formal"
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    preferences.language === "formal"
-                      ? "border-blue-600"
-                      : "border-gray-300"
-                  }`}
-                >
-                  {preferences.language === "formal" && (
-                    <div className="w-2 h-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <span>Formální</span>
-              </motion.button>
-
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() =>
-                  setPreferences((prev) => ({ ...prev, language: "casual" }))
-                }
-                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
-                  preferences.language === "casual"
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    preferences.language === "casual"
-                      ? "border-blue-600"
-                      : "border-gray-300"
-                  }`}
-                >
-                  {preferences.language === "casual" && (
-                    <div className="w-2 h-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <span>Neformální</span>
-              </motion.button>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Přístup
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() =>
-                  setPreferences((prev) => ({ ...prev, style: "academic" }))
-                }
-                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
-                  preferences.style === "academic"
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <motion.div
+                  variants={optionVariants}
+                  animate={
                     preferences.style === "academic"
-                      ? "border-blue-600"
-                      : "border-gray-300"
-                  }`}
+                      ? "selected"
+                      : "notSelected"
+                  }
                 >
-                  {preferences.style === "academic" && (
-                    <div className="w-2 h-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <span>Akademický</span>
-              </motion.button>
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.style === "academic" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.style === "academic"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, style: "academic" })
+                    }
+                  >
+                    Akademický
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.style === "casual" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.style === "casual" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.style === "casual"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, style: "casual" })
+                    }
+                  >
+                    Neformální
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.style === "creative"
+                      ? "selected"
+                      : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.style === "creative" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.style === "creative"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, style: "creative" })
+                    }
+                  >
+                    Kreativní
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
 
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() =>
-                  setPreferences((prev) => ({ ...prev, style: "storytelling" }))
-                }
-                className={`p-3 rounded-lg text-sm flex items-center justify-center gap-2 border transition-colors ${
-                  preferences.style === "storytelling"
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    preferences.style === "storytelling"
-                      ? "border-blue-600"
-                      : "border-gray-300"
-                  }`}
+            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <AlignJustify className="h-4 w-4 text-primary" />
+                <label className="text-sm font-medium text-foreground">
+                  Délka shrnutí
+                </label>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.length === "short" ? "selected" : "notSelected"
+                  }
                 >
-                  {preferences.style === "storytelling" && (
-                    <div className="w-2 h-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <span>Vyprávěcí</span>
-              </motion.button>
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.length === "short" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.length === "short"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, length: "short" })
+                    }
+                  >
+                    Krátké
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.length === "medium" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.length === "medium" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.length === "medium"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, length: "medium" })
+                    }
+                  >
+                    Střední
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.length === "long" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.length === "long" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.length === "long"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, length: "long" })
+                    }
+                  >
+                    Dlouhé
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <label className="text-sm font-medium text-foreground">
+                  Zaměření
+                </label>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.focus === "plot" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.focus === "plot" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.focus === "plot"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, focus: "plot" })
+                    }
+                  >
+                    Děj
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.focus === "characters"
+                      ? "selected"
+                      : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.focus === "characters" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.focus === "characters"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, focus: "characters" })
+                    }
+                  >
+                    Postavy
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.focus === "themes" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.focus === "themes" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.focus === "themes"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, focus: "themes" })
+                    }
+                  >
+                    Témata
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.focus === "balanced"
+                      ? "selected"
+                      : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.focus === "balanced" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.focus === "balanced"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, focus: "balanced" })
+                    }
+                  >
+                    Vyvážené
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Languages className="h-4 w-4 text-primary" />
+                <label className="text-sm font-medium text-foreground">
+                  Jazyk
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.language === "cs" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.language === "cs" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.language === "cs"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, language: "cs" })
+                    }
+                  >
+                    Čeština
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={optionVariants}
+                  animate={
+                    preferences.language === "en" ? "selected" : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.language === "en" ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.language === "en"
+                        ? "bg-primary text-primary-foreground"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() =>
+                      setPreferences({ ...preferences, language: "en" })
+                    }
+                  >
+                    Angličtina
+                  </Button>
+                </motion.div>
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={isGenerating}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generuji...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generovat shrnutí
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </Modal>
   );

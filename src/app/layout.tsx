@@ -1,13 +1,25 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const poppins = Poppins({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-heading",
+});
 
 export const metadata: Metadata = {
   title: "Čtenářský deník",
   description: "Vytvořte si deník a zaznamenejte si své čtení",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -16,9 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="cs" className="h-full">
+    <html lang="cs" className="h-full scroll-smooth">
       <body
-        className={`${inter.className} min-h-full flex flex-col bg-gradient-to-b from-gray-50 to-white`}
+        className={`${inter.variable} ${poppins.variable} font-sans min-h-full flex flex-col bg-background antialiased`}
       >
         <div className="flex-1 pb-16">{children}</div>
         <Footer />
