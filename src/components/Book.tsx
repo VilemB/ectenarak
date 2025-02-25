@@ -7,7 +7,6 @@ import {
   PenLine,
   Sparkles,
   ChevronDown,
-  ChevronUp,
   Trash2,
   Calendar,
   User,
@@ -59,6 +58,26 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
+    },
+  },
+};
+
+// Add new animation variants for the expand/collapse
+const expandVariants = {
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    transition: {
+      height: { duration: 0.3 },
+      opacity: { duration: 0.2 },
+    },
+  },
+  expanded: {
+    height: "auto",
+    opacity: 1,
+    transition: {
+      height: { duration: 0.3 },
+      opacity: { duration: 0.3, delay: 0.1 },
     },
   },
 };
@@ -204,7 +223,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       variants={listItemVariants}
       className="bg-card rounded-xl shadow-lg border border-border overflow-hidden transition-all duration-300 hover:shadow-xl"
     >
-      <div className="p-6">
+      <div
+        className={`p-6 ${notes.length > 0 ? "cursor-pointer group" : ""}`}
+        onClick={() => (notes.length > 0 ? setIsExpanded(!isExpanded) : null)}
+      >
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -212,6 +234,16 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               <h2 className="text-xl font-bold text-foreground line-clamp-1">
                 {book.title}
               </h2>
+              {notes.length > 0 && (
+                <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+                  {notes.length}{" "}
+                  {notes.length === 1
+                    ? "poznámka"
+                    : notes.length > 1 && notes.length < 5
+                    ? "poznámky"
+                    : "poznámek"}
+                </span>
+              )}
             </div>
             <div className="flex items-center text-muted-foreground mb-3">
               <User className="h-4 w-4 mr-1" />
@@ -226,26 +258,34 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8 p-0"
-              onClick={() => setDeleteModal({ isOpen: true, type: "book" })}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteModal({ isOpen: true, type: "book" });
+              }}
             >
               <Trash2 className="h-4 w-4" />
               <span className="sr-only">Delete book</span>
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
+            {notes.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                } ${notes.length > 0 ? "group-hover:bg-primary/5" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(!isExpanded);
+                }}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
+              >
                 <ChevronDown className="h-4 w-4" />
-              )}
-              <span className="sr-only">
-                {isExpanded ? "Collapse" : "Expand"}
-              </span>
-            </Button>
+                <span className="sr-only">
+                  {isExpanded ? "Collapse" : "Expand"}
+                </span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -254,7 +294,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             variant="outline"
             size="sm"
             className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full"
-            onClick={() => setIsAddingNote(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsAddingNote(true);
+            }}
           >
             <PenLine className="h-3.5 w-3.5 mr-1.5" />
             Přidat poznámku
@@ -263,12 +306,50 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             variant="outline"
             size="sm"
             className="bg-secondary/80 text-foreground border-border hover:bg-secondary rounded-full"
-            onClick={() => setSummaryModal(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSummaryModal(true);
+            }}
           >
             <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
             Generovat shrnutí
           </Button>
+          {notes.length > 0 && !isExpanded && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-primary rounded-full ml-auto"
+              onClick={() => setIsExpanded(true)}
+            >
+              <span className="text-sm">Zobrazit poznámky</span>
+              <ChevronDown className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+          )}
         </div>
+
+        {notes.length > 0 && !isExpanded && (
+          <div className="mt-3 pt-3 border-t border-border/50">
+            <div className="flex items-center text-muted-foreground">
+              <MessageSquare className="h-4 w-4 mr-1.5" />
+              <span className="text-sm font-medium">
+                {notes.length}{" "}
+                {notes.length === 1
+                  ? "poznámka"
+                  : notes.length > 1 && notes.length < 5
+                  ? "poznámky"
+                  : "poznámek"}
+              </span>
+              <div className="ml-2 flex-1 h-0.5 bg-border/30 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-primary/30 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -316,12 +397,13 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            variants={expandVariants}
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
             className="border-t border-border bg-card/50 px-6 py-4"
           >
             <h3 className="text-sm font-medium text-foreground flex items-center mb-3">
@@ -338,7 +420,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                   variant="outline"
                   size="sm"
                   className="mt-2 rounded-full"
-                  onClick={() => setIsAddingNote(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAddingNote(true);
+                  }}
                 >
                   <Plus className="h-3.5 w-3.5 mr-1.5" />
                   Přidat první poznámku
@@ -388,7 +473,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                           variant="ghost"
                           size="sm"
                           className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-6 w-6 p-0"
-                          onClick={() => handleDeleteNote(note.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNote(note.id);
+                          }}
                         >
                           <Trash2 className="h-3 w-3" />
                           <span className="sr-only">Delete note</span>
