@@ -314,17 +314,6 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
             Generovat shrnutí
           </Button>
-          {notes.length > 0 && !isExpanded && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-primary rounded-full ml-auto"
-              onClick={() => setIsExpanded(true)}
-            >
-              <span className="text-sm">Zobrazit poznámky</span>
-              <ChevronDown className="h-3.5 w-3.5 ml-1.5" />
-            </Button>
-          )}
         </div>
       </div>
 
