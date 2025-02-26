@@ -326,30 +326,6 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             </Button>
           )}
         </div>
-
-        {notes.length > 0 && !isExpanded && (
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <div className="flex items-center text-muted-foreground">
-              <MessageSquare className="h-4 w-4 mr-1.5" />
-              <span className="text-sm font-medium">
-                {notes.length}{" "}
-                {notes.length === 1
-                  ? "poznámka"
-                  : notes.length > 1 && notes.length < 5
-                  ? "poznámky"
-                  : "poznámek"}
-              </span>
-              <div className="ml-2 flex-1 h-0.5 bg-border/30 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-primary/30 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <AnimatePresence>
