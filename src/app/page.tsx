@@ -90,8 +90,8 @@ export default function Home() {
         }
       }
 
-      // Ctrl/Cmd + N to add new book
-      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+      // Ctrl/Cmd + B to add new book (changed from N to avoid browser new window conflict)
+      if ((e.ctrlKey || e.metaKey) && e.key === "b") {
         e.preventDefault();
         setShowAddForm(true);
       }
@@ -572,7 +572,7 @@ export default function Home() {
               <div className="flex justify-between items-center py-2 border-b border-border">
                 <span className="text-sm">Přidat novou knihu</span>
                 <kbd className="px-2 py-1 bg-secondary rounded-md text-xs font-mono">
-                  Ctrl + N
+                  Ctrl + B
                 </kbd>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-border">
