@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,12 @@ import {
   Languages,
   BookText,
   AlignJustify,
+  Info,
+  Save,
+  RotateCcw,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export interface SummaryPreferences {
   style: "academic" | "casual" | "creative";
@@ -39,36 +43,183 @@ const optionVariants = {
   },
 };
 
+const tooltipVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 30,
+    },
+  },
+};
+
+// Descriptions for each option to help users understand what they do
+const optionDescriptions = {
+  style: {
+    academic:
+      "Formální styl s důrazem na analýzu a strukturu. Vhodné pro školní práce.",
+    casual: "Přátelský, konverzační styl. Snadno čitelný a přístupný.",
+    creative: "Barvitý a expresivní styl s důrazem na zajímavé formulace.",
+  },
+  length: {
+    short: "Stručné shrnutí (cca 100-150 slov).",
+    medium: "Středně dlouhé shrnutí (cca 200-300 slov).",
+    long: "Podrobné shrnutí (cca 400-500 slov).",
+  },
+  focus: {
+    plot: "Zaměření na hlavní dějovou linii a události.",
+    characters: "Zaměření na postavy, jejich vývoj a vztahy.",
+    themes: "Zaměření na hlavní témata, motivy a poselství díla.",
+    balanced: "Vyvážené pokrytí děje, postav i témat.",
+  },
+  language: {
+    cs: "Shrnutí bude vygenerováno v češtině.",
+    en: "Shrnutí bude vygenerováno v angličtině.",
+  },
+};
+
 export function SummaryPreferencesModal({
   isOpen,
   onClose,
   onGenerate,
   isGenerating,
 }: SummaryPreferencesModalProps) {
-  const [preferences, setPreferences] = useState<SummaryPreferences>({
-    style: "academic",
-    length: "medium",
-    focus: "balanced",
-    language: "cs",
-  });
+  // Load saved preferences from localStorage
+  const [savedPreferences, setSavedPreferences] =
+    useLocalStorage<SummaryPreferences>("summary-preferences", {
+      style: "academic",
+      length: "medium",
+      focus: "balanced",
+      language: "cs",
+    });
+
+  const [preferences, setPreferences] =
+    useState<SummaryPreferences>(savedPreferences);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [showSavedMessage, setShowSavedMessage] = useState(false);
+
+  // Update preferences when savedPreferences change
+  useEffect(() => {
+    setPreferences(savedPreferences);
+  }, [savedPreferences]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onGenerate(preferences);
   };
 
+  const saveAsDefault = () => {
+    setSavedPreferences(preferences);
+    setShowSavedMessage(true);
+    setTimeout(() => setShowSavedMessage(false), 2000);
+  };
+
+  const resetToDefaults = () => {
+    const defaults: SummaryPreferences = {
+      style: "academic",
+      length: "medium",
+      focus: "balanced",
+      language: "cs",
+    };
+    setPreferences(defaults);
+    setSavedPreferences(defaults);
+    setShowSavedMessage(true);
+    setTimeout(() => setShowSavedMessage(false), 2000);
+  };
+
+  // Preview text based on current preferences
+  const getPreviewText = () => {
+    const style =
+      preferences.style === "academic"
+        ? "akademickém"
+        : preferences.style === "casual"
+        ? "neformálním"
+        : "kreativním";
+
+    const length =
+      preferences.length === "short"
+        ? "krátké"
+        : preferences.length === "medium"
+        ? "středně dlouhé"
+        : "dlouhé";
+
+    const focus =
+      preferences.focus === "plot"
+        ? "děj"
+        : preferences.focus === "characters"
+        ? "postavy"
+        : preferences.focus === "themes"
+        ? "témata"
+        : "vyvážený obsah";
+
+    const language = preferences.language === "cs" ? "češtině" : "angličtině";
+
+    return `Shrnutí bude v ${style} stylu, ${length}, zaměřené na ${focus}, v ${language}.`;
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nastavení shrnutí">
       <div className="p-6 bg-card rounded-b-lg">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Preview section */}
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
+            <h3 className="text-sm font-medium text-foreground mb-2 flex items-center">
+              <Sparkles className="h-4 w-4 mr-2 text-primary" />
+              Náhled nastavení
+            </h3>
+            <p className="text-sm text-muted-foreground">{getPreviewText()}</p>
+          </div>
+
           <div className="space-y-5">
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <BookText className="h-4 w-4 text-primary" />
-                <label className="text-sm font-medium text-foreground">
-                  Styl shrnutí
-                </label>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <BookText className="h-4 w-4 text-primary" />
+                  <label className="text-sm font-medium text-foreground">
+                    Styl shrnutí
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 rounded-full"
+                  onClick={() =>
+                    setActiveTooltip(activeTooltip === "style" ? null : "style")
+                  }
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
               </div>
+
+              <AnimatePresence>
+                {activeTooltip === "style" && (
+                  <motion.div
+                    variants={tooltipVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                  >
+                    <p>
+                      <strong>Akademický:</strong>{" "}
+                      {optionDescriptions.style.academic}
+                    </p>
+                    <p>
+                      <strong>Neformální:</strong>{" "}
+                      {optionDescriptions.style.casual}
+                    </p>
+                    <p>
+                      <strong>Kreativní:</strong>{" "}
+                      {optionDescriptions.style.creative}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <motion.div
                   variants={optionVariants}
@@ -147,12 +298,51 @@ export function SummaryPreferencesModal({
             </div>
 
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <AlignJustify className="h-4 w-4 text-primary" />
-                <label className="text-sm font-medium text-foreground">
-                  Délka shrnutí
-                </label>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <AlignJustify className="h-4 w-4 text-primary" />
+                  <label className="text-sm font-medium text-foreground">
+                    Délka shrnutí
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 rounded-full"
+                  onClick={() =>
+                    setActiveTooltip(
+                      activeTooltip === "length" ? null : "length"
+                    )
+                  }
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
               </div>
+
+              <AnimatePresence>
+                {activeTooltip === "length" && (
+                  <motion.div
+                    variants={tooltipVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                  >
+                    <p>
+                      <strong>Krátké:</strong> {optionDescriptions.length.short}
+                    </p>
+                    <p>
+                      <strong>Střední:</strong>{" "}
+                      {optionDescriptions.length.medium}
+                    </p>
+                    <p>
+                      <strong>Dlouhé:</strong> {optionDescriptions.length.long}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <motion.div
                   variants={optionVariants}
@@ -227,12 +417,53 @@ export function SummaryPreferencesModal({
             </div>
 
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <label className="text-sm font-medium text-foreground">
-                  Zaměření
-                </label>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <label className="text-sm font-medium text-foreground">
+                    Zaměření
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 rounded-full"
+                  onClick={() =>
+                    setActiveTooltip(activeTooltip === "focus" ? null : "focus")
+                  }
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
               </div>
+
+              <AnimatePresence>
+                {activeTooltip === "focus" && (
+                  <motion.div
+                    variants={tooltipVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                  >
+                    <p>
+                      <strong>Děj:</strong> {optionDescriptions.focus.plot}
+                    </p>
+                    <p>
+                      <strong>Postavy:</strong>{" "}
+                      {optionDescriptions.focus.characters}
+                    </p>
+                    <p>
+                      <strong>Témata:</strong> {optionDescriptions.focus.themes}
+                    </p>
+                    <p>
+                      <strong>Vyvážené:</strong>{" "}
+                      {optionDescriptions.focus.balanced}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <motion.div
                   variants={optionVariants}
@@ -334,12 +565,48 @@ export function SummaryPreferencesModal({
             </div>
 
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Languages className="h-4 w-4 text-primary" />
-                <label className="text-sm font-medium text-foreground">
-                  Jazyk
-                </label>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Languages className="h-4 w-4 text-primary" />
+                  <label className="text-sm font-medium text-foreground">
+                    Jazyk
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 rounded-full"
+                  onClick={() =>
+                    setActiveTooltip(
+                      activeTooltip === "language" ? null : "language"
+                    )
+                  }
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
               </div>
+
+              <AnimatePresence>
+                {activeTooltip === "language" && (
+                  <motion.div
+                    variants={tooltipVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                  >
+                    <p>
+                      <strong>Čeština:</strong> {optionDescriptions.language.cs}
+                    </p>
+                    <p>
+                      <strong>Angličtina:</strong>{" "}
+                      {optionDescriptions.language.en}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="grid grid-cols-2 gap-3">
                 <motion.div
                   variants={optionVariants}
@@ -391,7 +658,41 @@ export function SummaryPreferencesModal({
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-muted-foreground rounded-full"
+                onClick={saveAsDefault}
+              >
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+                Uložit jako výchozí
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-muted-foreground rounded-full"
+                onClick={resetToDefaults}
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                Obnovit výchozí
+              </Button>
+              <AnimatePresence>
+                {showSavedMessage && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs text-primary"
+                  >
+                    Nastavení uloženo!
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
             <Button
               type="submit"
               disabled={isGenerating}
