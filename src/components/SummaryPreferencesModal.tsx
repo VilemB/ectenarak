@@ -201,12 +201,12 @@ export function SummaryPreferencesModal({
                       při velkém množství poznámek. Poznámky delší než 6000
                       znaků budou automaticky zkráceny. Pokud bude shrnutí i
                       přesto neúplné, doporučujeme:
-                      <ul className="mt-1 ml-4 list-disc space-y-1">
-                        <li>Zvolit kratší délku shrnutí</li>
-                        <li>Rozdělit poznámky do více knih</li>
-                        <li>Ručně zkrátit nejdůležitější poznámky</li>
-                      </ul>
                     </p>
+                    <ul className="mt-1 ml-4 list-disc space-y-1 text-sm text-muted-foreground">
+                      <li>Zvolit kratší délku shrnutí</li>
+                      <li>Rozdělit poznámky do více knih</li>
+                      <li>Ručně zkrátit nejdůležitější poznámky</li>
+                    </ul>
                   </div>
                 </div>
               </motion.div>

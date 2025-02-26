@@ -64,7 +64,7 @@ function checkIfSummaryIsCutOff(summary: string): string {
     if (isTooShort) {
       return (
         summary +
-        "\n\n*Poznámka: Toto shrnutí bylo zkráceno kvůli omezení délky. Pro úplné shrnutí doporučujeme:\n- Zvolit kratší délku shrnutí\n- Rozdělit poznámky do více knih\n- Ručně zkrátit nejdůležitější poznámky*"
+        "\n\n*Poznámka: Toto shrnutí bylo zkráceno kvůli omezení délky.*\n\n*Pro úplné shrnutí doporučujeme:*\n- Zvolit kratší délku shrnutí\n- Rozdělit poznámky do více knih\n- Ručně zkrátit nejdůležitější poznámky"
       );
     }
   }
