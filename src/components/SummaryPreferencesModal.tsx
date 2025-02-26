@@ -65,9 +65,10 @@ const optionDescriptions = {
     creative: "Barvitý a expresivní styl s důrazem na zajímavé formulace.",
   },
   length: {
-    short: "Stručné shrnutí (cca 100-150 slov).",
-    medium: "Středně dlouhé shrnutí (cca 200-300 slov).",
-    long: "Podrobné shrnutí (cca 400-500 slov).",
+    short: "Stručné shrnutí (cca 100-150 slov). Vhodné pro krátké poznámky.",
+    medium:
+      "Středně dlouhé shrnutí (cca 200-300 slov). Vhodné pro běžné poznámky.",
+    long: "Podrobné shrnutí (cca 400-500 slov). Vhodné pro rozsáhlé poznámky. Může spotřebovat více tokenů.",
   },
   focus: {
     plot: "Zaměření na hlavní dějovou linii a události.",
@@ -100,11 +101,17 @@ export function SummaryPreferencesModal({
     useState<SummaryPreferences>(savedPreferences);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
+  const [showLongWarning, setShowLongWarning] = useState(false);
 
   // Update preferences when savedPreferences change
   useEffect(() => {
     setPreferences(savedPreferences);
   }, [savedPreferences]);
+
+  // Show warning when "long" length is selected
+  useEffect(() => {
+    setShowLongWarning(preferences.length === "long");
+  }, [preferences.length]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +179,32 @@ export function SummaryPreferencesModal({
             </h3>
             <p className="text-sm text-muted-foreground">{getPreviewText()}</p>
           </div>
+
+          {/* Warning for long summaries */}
+          <AnimatePresence>
+            {showLongWarning && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-4"
+              >
+                <div className="flex items-start">
+                  <Info className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-foreground">
+                      Upozornění na délku
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Dlouhé shrnutí může být zkráceno, pokud máte mnoho
+                      poznámek. Pokud se to stane, zkuste použít kratší
+                      nastavení nebo rozdělit poznámky do více knih.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="space-y-5">
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
