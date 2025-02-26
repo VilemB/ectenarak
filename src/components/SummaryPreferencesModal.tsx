@@ -65,10 +65,11 @@ const optionDescriptions = {
     creative: "Barvitý a expresivní styl s důrazem na zajímavé formulace.",
   },
   length: {
-    short: "Stručné shrnutí (cca 100-150 slov). Vhodné pro krátké poznámky.",
+    short:
+      "Stručné shrnutí (cca 150-200 slov). Nejefektivnější využití tokenů, vhodné pro krátké poznámky.",
     medium:
-      "Středně dlouhé shrnutí (cca 200-300 slov). Vhodné pro běžné poznámky.",
-    long: "Podrobné shrnutí (cca 400-500 slov). Vhodné pro rozsáhlé poznámky. Může spotřebovat více tokenů.",
+      "Středně dlouhé shrnutí (cca 300-400 slov). Vyvážený poměr mezi detaily a využitím tokenů.",
+    long: "Podrobné shrnutí (cca 500-700 slov). Nejvíce detailů, ale vyžaduje více tokenů a může být zkráceno při velkém množství poznámek.",
   },
   focus: {
     plot: "Zaměření na hlavní dějovou linii a události.",
@@ -196,9 +197,15 @@ export function SummaryPreferencesModal({
                       Upozornění na délku
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      Dlouhé shrnutí může být zkráceno, pokud máte mnoho
-                      poznámek. Pokud se to stane, zkuste použít kratší
-                      nastavení nebo rozdělit poznámky do více knih.
+                      Dlouhé shrnutí vyžaduje více tokenů, což může být problém
+                      při velkém množství poznámek. Poznámky delší než 6000
+                      znaků budou automaticky zkráceny. Pokud bude shrnutí i
+                      přesto neúplné, doporučujeme:
+                      <ul className="mt-1 ml-4 list-disc space-y-1">
+                        <li>Zvolit kratší délku shrnutí</li>
+                        <li>Rozdělit poznámky do více knih</li>
+                        <li>Ručně zkrátit nejdůležitější poznámky</li>
+                      </ul>
                     </p>
                   </div>
                 </div>

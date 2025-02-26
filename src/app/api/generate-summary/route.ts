@@ -12,76 +12,61 @@ function generatePrompt(
   notes: string | undefined,
   preferences: SummaryPreferences
 ) {
-  const sections = [];
+  // Simplified section generation
+  const focusMap = {
+    plot: "děj a strukturu díla",
+    characters: "hlavní postavy a jejich vývoj",
+    themes: "hlavní témata a motivy díla",
+    balanced: "děj, postavy i témata vyváženě",
+  };
 
-  // Add sections based on focus
-  if (preferences.focus === "characters" || preferences.focus === "balanced") {
-    sections.push("- Detailní analýza hlavních postav a jejich vývoje");
-  }
+  // Simplified style instructions
+  const styleMap = {
+    academic: "akademický, analytický",
+    casual: "neformální, přístupný",
+    creative: "kreativní, poutavý",
+  };
 
-  if (preferences.focus === "themes" || preferences.focus === "balanced") {
-    sections.push("- Hlavní témata a motivy díla");
-  }
+  // Simplified length instructions with word counts
+  const lengthMap = {
+    short: "stručné (150-200 slov)",
+    medium: "středně dlouhé (300-400 slov)",
+    long: "podrobné (500-700 slov)",
+  };
 
-  if (preferences.focus === "plot" || preferences.focus === "balanced") {
-    sections.push("- Podrobný rozbor děje a struktury díla");
-  }
+  // Language is simplified to a single word
+  const language = preferences.language === "cs" ? "česky" : "anglicky";
 
-  // Determine style
-  let style = "";
-  if (preferences.style === "academic") {
-    style =
-      "Používej akademický styl psaní s důrazem na analýzu a kritické hodnocení.";
-  } else if (preferences.style === "casual") {
-    style = "Používej neformální, přístupný styl psaní.";
-  } else if (preferences.style === "creative") {
-    style = "Používej kreativní, poutavý styl vyprávění.";
-  }
+  // Create a more compact prompt
+  return `Vytvoř ${
+    lengthMap[preferences.length]
+  } shrnutí knihy "${bookTitle}" od ${author} ve stylu ${
+    styleMap[preferences.style]
+  }. Zaměř se na ${focusMap[preferences.focus]}. Piš ${language}.
 
-  // Determine length
-  let lengthInstruction = "";
-  if (preferences.length === "short") {
-    lengthInstruction =
-      "Vytvoř stručné shrnutí (přibližně 150-200 slov). Ujisti se, že shrnutí bude kompletní a nebude náhle ukončeno.";
-  } else if (preferences.length === "medium") {
-    lengthInstruction =
-      "Vytvoř středně dlouhé shrnutí (přibližně 300-400 slov). Ujisti se, že shrnutí bude kompletní a nebude náhle ukončeno.";
-  } else if (preferences.length === "long") {
-    lengthInstruction =
-      "Vytvoř podrobné shrnutí (přibližně 500-700 slov). Ujisti se, že shrnutí bude kompletní a nebude náhle ukončeno.";
-  }
+Shrnutí musí být kompletní s jasným závěrem. Při nedostatku tokenů zkrať obsah, ale neukončuj náhle.
 
-  // Determine language
-  const language =
-    preferences.language === "cs" ? "Piš v češtině." : "Piš v angličtině.";
-
-  return `Jsi literární expert, který vytváří kvalitní shrnutí knih. ${style} ${lengthInstruction} ${language}
-
-Vytvoř strukturované shrnutí knihy "${bookTitle}" od autora ${author}. Zaměř se na:
-
-${sections.join("\n")}
-
-Důležité: Vždy dokončuj své myšlenky a zajisti, že shrnutí bude mít jasný závěr. Pokud se blížíš k limitu tokenů, raději některé části zkrať, ale nikdy nenechávej shrnutí nedokončené.
-
-${notes ? `\nPoznámky čtenáře k dílu:\n${notes}` : ""}`;
+${notes ? `Poznámky čtenáře:\n${notes}` : ""}`;
 }
 
 function checkIfSummaryIsCutOff(summary: string): string {
-  // Check if the summary ends abruptly with no punctuation
+  // Simple check for proper ending
   const lastChar = summary.trim().slice(-1);
   const properEndingPunctuation = [".", "!", "?", '"', ")", "]", "}"].includes(
     lastChar
   );
 
-  // Check if the last sentence is complete (has a subject and verb)
-  const lastSentence = summary.split(/[.!?]/).pop()?.trim() || "";
-  const isTooShort = lastSentence.split(" ").length < 3;
+  // Only check last sentence if ending punctuation is missing
+  if (!properEndingPunctuation) {
+    const lastSentence = summary.split(/[.!?]/).pop()?.trim() || "";
+    const isTooShort = lastSentence.split(" ").length < 3;
 
-  if (!properEndingPunctuation || isTooShort) {
-    return (
-      summary +
-      "\n\n*Poznámka: Toto shrnutí mohlo být zkráceno kvůli omezení délky. Pro úplné shrnutí zvažte použití kratšího nastavení nebo rozdělení poznámek do více knih.*"
-    );
+    if (isTooShort) {
+      return (
+        summary +
+        "\n\n*Poznámka: Toto shrnutí bylo zkráceno kvůli omezení délky. Pro úplné shrnutí doporučujeme:\n- Zvolit kratší délku shrnutí\n- Rozdělit poznámky do více knih\n- Ručně zkrátit nejdůležitější poznámky*"
+      );
+    }
   }
 
   return summary;
@@ -98,26 +83,44 @@ export async function POST(request: Request) {
       );
     }
 
-    const prompt = generatePrompt(bookTitle, bookAuthor, notes, preferences);
+    // Truncate notes if they're too long to save on input tokens
+    let processedNotes = notes;
+    if (notes && notes.length > 6000) {
+      // If notes are very long, truncate them to save tokens
+      // This keeps approximately the first 6000 characters which is enough context
+      processedNotes =
+        notes.substring(0, 6000) +
+        "\n\n[...]\n\nPoznámka: Vaše poznámky byly zkráceny na 6000 znaků pro optimalizaci využití tokenů. Zobrazeny jsou pouze první části poznámek.";
+    }
+
+    const prompt = generatePrompt(
+      bookTitle,
+      bookAuthor,
+      processedNotes,
+      preferences
+    );
 
     // Set max_tokens based on the length preference
     let maxTokens;
+    // Use the same model for all lengths to maintain quality
+    const model = "gpt-4o-mini";
+
     switch (preferences.length) {
       case "short":
-        maxTokens = 800; // For short summaries (150-200 words)
+        maxTokens = 800;
         break;
       case "medium":
-        maxTokens = 1500; // For medium summaries (300-400 words)
+        maxTokens = 1500;
         break;
       case "long":
-        maxTokens = 2500; // For long summaries (500-700 words)
+        maxTokens = 2500;
         break;
       default:
-        maxTokens = 1500; // Default to medium
+        maxTokens = 1500;
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model,
       messages: [
         {
           role: "system",
