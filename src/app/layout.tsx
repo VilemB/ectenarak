@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
+import { SummaryPreferencesProvider } from "@/contexts/SummaryPreferencesContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,8 +33,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} font-sans min-h-full flex flex-col bg-background antialiased`}
       >
-        <div className="flex-1 pb-16">{children}</div>
-        <Footer />
+        <SummaryPreferencesProvider>
+          <div className="flex-1 pb-16">{children}</div>
+          <Footer />
+        </SummaryPreferencesProvider>
       </body>
     </html>
   );

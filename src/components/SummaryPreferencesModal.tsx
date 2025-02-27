@@ -14,7 +14,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useSummaryPreferences } from "@/contexts/SummaryPreferencesContext";
 
 export interface SummaryPreferences {
   style: "academic" | "casual" | "creative";
@@ -89,25 +89,22 @@ export function SummaryPreferencesModal({
   onGenerate,
   isGenerating,
 }: SummaryPreferencesModalProps) {
-  // Load saved preferences from localStorage
-  const [savedPreferences, setSavedPreferences] =
-    useLocalStorage<SummaryPreferences>("summary-preferences", {
-      style: "academic",
-      length: "medium",
-      focus: "balanced",
-      language: "cs",
-    });
+  // Use global preferences instead of local storage directly
+  const {
+    preferences: globalPreferences,
+    setPreferences: setGlobalPreferences,
+  } = useSummaryPreferences();
 
   const [preferences, setPreferences] =
-    useState<SummaryPreferences>(savedPreferences);
+    useState<SummaryPreferences>(globalPreferences);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
   const [showLongWarning, setShowLongWarning] = useState(false);
 
-  // Update preferences when savedPreferences change
+  // Update local preferences when global preferences change
   useEffect(() => {
-    setPreferences(savedPreferences);
-  }, [savedPreferences]);
+    setPreferences(globalPreferences);
+  }, [globalPreferences]);
 
   // Show warning when "long" length is selected
   useEffect(() => {
@@ -120,7 +117,7 @@ export function SummaryPreferencesModal({
   };
 
   const saveAsDefault = () => {
-    setSavedPreferences(preferences);
+    setGlobalPreferences(preferences);
     setShowSavedMessage(true);
     setTimeout(() => setShowSavedMessage(false), 2000);
   };
@@ -133,7 +130,7 @@ export function SummaryPreferencesModal({
       language: "cs",
     };
     setPreferences(defaults);
-    setSavedPreferences(defaults);
+    setGlobalPreferences(defaults);
     setShowSavedMessage(true);
     setTimeout(() => setShowSavedMessage(false), 2000);
   };

@@ -9,13 +9,13 @@ import {
   ChevronDown,
   Trash2,
   Calendar,
-  User,
   X,
   Check,
   MessageSquare,
   Plus,
   BookOpen,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
@@ -26,6 +26,7 @@ import {
   SummaryPreferencesModal,
   SummaryPreferences,
 } from "./SummaryPreferencesModal";
+import { useSummaryPreferences } from "@/contexts/SummaryPreferencesContext";
 
 interface BookProps {
   book: Book;
@@ -98,6 +99,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   }>({ isOpen: false, type: "book" });
   const [summaryModal, setSummaryModal] = useState(false);
 
+  // Get global preferences
+  const { preferences } = useSummaryPreferences();
+
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
@@ -114,7 +118,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     setIsAddingNote(false);
   };
 
-  const handleGenerateSummary = async (preferences: SummaryPreferences) => {
+  const handleGenerateSummary = async (
+    preferencesToUse: SummaryPreferences
+  ) => {
     setIsGenerating(true);
     try {
       const notesText = notes
@@ -156,7 +162,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           bookTitle: book.title,
           bookAuthor: book.author,
           notes: notesText,
-          preferences,
+          preferences: preferencesToUse,
         }),
       });
 
@@ -205,6 +211,11 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     }
   };
 
+  // Add a function to generate summary with current global preferences
+  const handleQuickGenerateSummary = async () => {
+    await handleGenerateSummary(preferences);
+  };
+
   const handleDeleteNote = (noteId: string) => {
     setDeleteModal({ isOpen: true, type: "note", noteId });
   };
@@ -221,71 +232,60 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   return (
     <motion.div
       variants={listItemVariants}
-      className="bg-card rounded-xl shadow-lg border border-border overflow-hidden transition-all duration-300 hover:shadow-xl"
+      className="bg-card rounded-lg border border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl"
     >
-      <div
-        className={`p-6 ${notes.length > 0 ? "cursor-pointer group" : ""}`}
-        onClick={() => (notes.length > 0 ? setIsExpanded(!isExpanded) : null)}
-      >
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground line-clamp-1">
-                {book.title}
-              </h2>
-              {notes.length > 0 && (
-                <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
-                  {notes.length}{" "}
-                  {notes.length === 1
-                    ? "poznámka"
-                    : notes.length > 1 && notes.length < 5
-                    ? "poznámky"
-                    : "poznámek"}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center text-muted-foreground mb-3">
-              <User className="h-4 w-4 mr-1" />
-              <span className="text-sm">{book.author}</span>
-              <span className="mx-2">•</span>
-              <Calendar className="h-4 w-4 mr-1" />
-              <span className="text-sm">{formatDate(book.createdAt)}</span>
-            </div>
+      <div className="px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-primary" />
+          <div>
+            <h3 className="text-base font-medium text-foreground">
+              {book.title}
+            </h3>
+            <p className="text-sm text-muted-foreground">{book.author}</p>
           </div>
-          <div className="flex gap-2">
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteModal({ isOpen: true, type: "book" });
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Delete book</span>
+          </Button>
+          {notes.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8 p-0"
+              className={`text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0 transition-transform duration-200 ${
+                isExpanded ? "rotate-180" : ""
+              } ${notes.length > 0 ? "group-hover:bg-primary/5" : ""}`}
               onClick={(e) => {
                 e.stopPropagation();
-                setDeleteModal({ isOpen: true, type: "book" });
+                setIsExpanded(!isExpanded);
               }}
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
             >
-              <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Delete book</span>
+              <ChevronDown className="h-4 w-4" />
+              <span className="sr-only">
+                {isExpanded ? "Collapse" : "Expand"}
+              </span>
             </Button>
-            {notes.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0 transition-transform duration-200 ${
-                  isExpanded ? "rotate-180" : ""
-                } ${notes.length > 0 ? "group-hover:bg-primary/5" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExpanded(!isExpanded);
-                }}
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
-              >
-                <ChevronDown className="h-4 w-4" />
-                <span className="sr-only">
-                  {isExpanded ? "Collapse" : "Expand"}
-                </span>
-              </Button>
-            )}
+          )}
+        </div>
+      </div>
+
+      <div className="px-6 pb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" />
+            <span className="text-xs">{formatDate(book.createdAt)}</span>
           </div>
         </div>
 
@@ -312,7 +312,29 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             }}
           >
             <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
-            Generovat shrnutí
+            Nastavení shrnutí
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20 rounded-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleQuickGenerateSummary();
+            }}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                Generuji...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                Rychlé shrnutí
+              </>
+            )}
           </Button>
         </div>
       </div>
