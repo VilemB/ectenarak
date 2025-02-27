@@ -232,7 +232,8 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   return (
     <motion.div
       variants={listItemVariants}
-      className="bg-card rounded-lg border border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl"
+      className="bg-card rounded-lg border border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer"
+      onClick={() => notes.length > 0 && setIsExpanded(!isExpanded)}
     >
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -305,13 +306,13 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           <Button
             variant="outline"
             size="sm"
-            className="bg-secondary/80 text-foreground border-border hover:bg-secondary rounded-full"
+            className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-600 border-violet-200 hover:bg-gradient-to-r hover:from-violet-500/20 hover:to-purple-500/20 rounded-full transition-all duration-300 shadow-sm hover:shadow"
             onClick={(e) => {
               e.stopPropagation();
               setSummaryModal(true);
             }}
           >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
+            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-violet-500" />
             Nastavení shrnutí
           </Button>
           <Button
@@ -392,6 +393,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             animate="expanded"
             exit="collapsed"
             className="border-t border-border bg-card/50 px-6 py-4"
+            onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-medium text-foreground flex items-center mb-3">
               <MessageSquare className="h-4 w-4 mr-1.5" />
