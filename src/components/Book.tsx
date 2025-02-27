@@ -16,6 +16,7 @@ import {
   BookOpen,
   AlertCircle,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
@@ -290,53 +291,58 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsAddingNote(true);
-            }}
-          >
-            <PenLine className="h-3.5 w-3.5 mr-1.5" />
-            Přidat poznámku
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-600 border-violet-200 hover:bg-gradient-to-r hover:from-violet-500/20 hover:to-purple-500/20 rounded-full transition-all duration-300 shadow-sm hover:shadow"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSummaryModal(true);
-            }}
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-violet-500" />
-            Nastavení shrnutí
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20 rounded-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleQuickGenerateSummary();
-            }}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                Generuji...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                Rychlé shrnutí
-              </>
-            )}
-          </Button>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full transition-all duration-200 shadow-sm hover:shadow flex-grow md:flex-grow-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAddingNote(true);
+              }}
+            >
+              <PenLine className="h-3.5 w-3.5 mr-1.5" />
+              Přidat poznámku
+            </Button>
+
+            <div className="flex gap-2 ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="group bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/90 hover:border-slate-300 hover:text-slate-800 rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSummaryModal(true);
+                }}
+              >
+                <Settings className="h-3.5 w-3.5 mr-1.5 text-slate-600 transition-transform duration-300 ease-in-out group-hover:rotate-90" />
+                Nastavení shrnutí
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-gradient-to-r from-amber-400/20 to-amber-500/20 text-amber-700 border-amber-200 hover:from-amber-400/30 hover:to-amber-500/30 rounded-full transition-all duration-200 shadow-sm hover:shadow"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleQuickGenerateSummary();
+                }}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    Generuji...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    Generovat shrnutí
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -347,6 +353,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="px-6 pb-6"
+            onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleAddNote} className="space-y-3">
               <div className="relative">
@@ -363,7 +370,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="rounded-full"
+                  className="rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
                   onClick={() => setIsAddingNote(false)}
                 >
                   <X className="h-4 w-4 mr-1" />
@@ -373,7 +380,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                   type="submit"
                   variant="default"
                   size="sm"
-                  className="rounded-full"
+                  className="rounded-full bg-primary hover:bg-primary/90 transition-colors"
                   disabled={!newNote.trim()}
                 >
                   <Check className="h-4 w-4 mr-1" />
