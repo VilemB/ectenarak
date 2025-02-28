@@ -18,6 +18,7 @@ import {
   Loader2,
   Settings,
   User,
+  Info,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
@@ -92,14 +93,17 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   );
   const [newNote, setNewNote] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingAuthorInfo, setIsGeneratingAuthorInfo] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note";
     noteId?: string;
   }>({ isOpen: false, type: "book" });
   const [summaryModal, setSummaryModal] = useState(false);
+  const [books, setBooks] = useLocalStorage<Book[]>("books", []);
 
   // Get global preferences
   const { preferences } = useSummaryPreferences();
@@ -231,6 +235,46 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     setDeleteModal({ isOpen: false, type: "book" });
   };
 
+  // Add a function to generate author summary
+  const handleGenerateAuthorInfo = async () => {
+    setIsGeneratingAuthorInfo(true);
+    try {
+      const response = await fetch("/api/generate-author-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          author: book.author,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate author summary");
+      }
+
+      const data = await response.json();
+
+      // Update the book with the author summary
+      const updatedBooks = books.map((b) => {
+        if (b.id === book.id) {
+          return { ...b, authorSummary: data.summary };
+        }
+        return b;
+      });
+
+      setBooks(updatedBooks);
+
+      // Show the author info panel
+      setIsAuthorInfoVisible(true);
+    } catch (error) {
+      console.error("Error generating author summary:", error);
+      // You could add error handling here
+    } finally {
+      setIsGeneratingAuthorInfo(false);
+    }
+  };
+
   return (
     <motion.div
       variants={listItemVariants}
@@ -244,7 +288,23 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <h3 className="text-base font-medium text-foreground">
               {book.title}
             </h3>
-            <p className="text-sm text-muted-foreground">{book.author}</p>
+            <p className="text-sm text-muted-foreground flex items-center">
+              {book.author}
+              {book.authorSummary && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 p-0 h-5 text-amber-500 hover:text-amber-600 hover:bg-transparent"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAuthorInfoVisible(!isAuthorInfoVisible);
+                  }}
+                  title="Informace o autorovi"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </p>
           </div>
         </div>
 
@@ -292,19 +352,40 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           </div>
         </div>
 
-        {book.authorSummary && (
-          <div className="mt-3 p-3 bg-amber-50/10 border border-amber-200/30 rounded-lg">
-            <div className="flex items-center mb-2">
-              <User className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-              <span className="text-xs font-medium text-amber-700">
-                O autorovi
-              </span>
-            </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-muted-foreground">
-              <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {isAuthorInfoVisible && book.authorSummary && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative p-4 bg-gradient-to-r from-amber-50/20 to-amber-100/20 border border-amber-200/30 rounded-lg shadow-sm">
+                <div className="absolute top-3 right-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 rounded-full hover:bg-amber-200/20 text-amber-700"
+                    onClick={() => setIsAuthorInfoVisible(false)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="flex items-center mb-2">
+                  <User className="h-4 w-4 mr-2 text-amber-600" />
+                  <h4 className="text-sm font-medium text-amber-800">
+                    O autorovi {book.author}
+                  </h4>
+                </div>
+                <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-amber-900/80">
+                  <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex flex-wrap gap-2 mt-3">
           <div className="flex flex-wrap gap-2 w-full">
@@ -320,6 +401,31 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               <PenLine className="h-3.5 w-3.5 mr-1.5" />
               Přidat poznámku
             </Button>
+
+            {!book.authorSummary && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-amber-50/30 text-amber-700 border-amber-200 hover:bg-amber-100/40 rounded-full transition-all duration-200 shadow-sm hover:shadow"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGenerateAuthorInfo();
+                }}
+                disabled={isGeneratingAuthorInfo}
+              >
+                {isGeneratingAuthorInfo ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    Generuji...
+                  </>
+                ) : (
+                  <>
+                    <User className="h-3.5 w-3.5 mr-1.5" />
+                    Info o autorovi
+                  </>
+                )}
+              </Button>
+            )}
 
             <div className="flex gap-2 ml-auto">
               <Button
