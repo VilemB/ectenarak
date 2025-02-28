@@ -18,6 +18,7 @@ import {
   Info,
   PenLine,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId } from "@/lib/utils";
@@ -63,6 +64,9 @@ export default function Home() {
     bookId: string;
     bookTitle: string;
   } | null>(null);
+  const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
+    useState(false);
+  const [includeAuthorSummary, setIncludeAuthorSummary] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -109,7 +113,7 @@ export default function Home() {
     };
   }, [showAddForm]);
 
-  const handleAddBook = (e: React.FormEvent) => {
+  const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -133,16 +137,50 @@ export default function Home() {
       return;
     }
 
+    let authorSummary: string | undefined;
+
+    if (includeAuthorSummary) {
+      try {
+        setIsGeneratingAuthorSummary(true);
+        const response = await fetch("/api/generate-author-summary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            author: author,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate author summary");
+        }
+
+        const data = await response.json();
+        authorSummary = data.summary;
+      } catch (error) {
+        console.error("Error generating author summary:", error);
+        setError(
+          "Nepodařilo se vygenerovat shrnutí autora. Kniha bude přidána bez shrnutí."
+        );
+        // Continue without author summary
+      } finally {
+        setIsGeneratingAuthorSummary(false);
+      }
+    }
+
     const newBook: Book = {
       id: generateId(),
       title: title,
       author: author,
       createdAt: new Date().toISOString(),
+      ...(authorSummary && { authorSummary }),
     };
 
     setBooks([...books, newBook]);
     setNewBookTitle("");
     setNewBookAuthor("");
+    setIncludeAuthorSummary(false);
     setShowAddForm(false);
   };
 
@@ -354,6 +392,23 @@ export default function Home() {
                   </div>
                 </div>
 
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeAuthorSummary"
+                    checked={includeAuthorSummary}
+                    onChange={(e) => setIncludeAuthorSummary(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label
+                    htmlFor="includeAuthorSummary"
+                    className="text-sm text-foreground flex items-center"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                    Vygenerovat shrnutí o autorovi
+                  </label>
+                </div>
+
                 {error && (
                   <div className="bg-red-500/10 text-red-500 p-3 rounded-lg flex items-start">
                     <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
@@ -365,9 +420,19 @@ export default function Home() {
                   <Button
                     type="submit"
                     className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+                    disabled={isGeneratingAuthorSummary}
                   >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Přidat knihu
+                    {isGeneratingAuthorSummary ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generuji shrnutí...
+                      </>
+                    ) : (
+                      <>
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Přidat knihu
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

@@ -3,6 +3,7 @@ export interface Book {
   title: string;
   author: string;
   createdAt: string;
+  authorSummary?: string;
 }
 
 export interface Note {

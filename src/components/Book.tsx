@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Loader2,
   Settings,
+  User,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
@@ -290,6 +291,20 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <span className="text-xs">{formatDate(book.createdAt)}</span>
           </div>
         </div>
+
+        {book.authorSummary && (
+          <div className="mt-3 p-3 bg-amber-50/10 border border-amber-200/30 rounded-lg">
+            <div className="flex items-center mb-2">
+              <User className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+              <span className="text-xs font-medium text-amber-700">
+                O autorovi
+              </span>
+            </div>
+            <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-muted-foreground">
+              <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2 mt-3">
           <div className="flex flex-wrap gap-2 w-full">
