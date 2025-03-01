@@ -25,6 +25,8 @@ export function SummaryPreferencesProvider({
       length: "medium",
       focus: "balanced",
       language: "cs",
+      examFocus: false,
+      literaryContext: false,
     }
   );
 

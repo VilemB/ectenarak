@@ -37,16 +37,46 @@ function generatePrompt(
   // Language is simplified to a single word
   const language = preferences.language === "cs" ? "česky" : "anglicky";
 
-  // Create a more compact prompt
-  return `Vytvoř ${
+  // Build the prompt with optional exam focus and literary context
+  let prompt = `Vytvoř ${
     lengthMap[preferences.length]
   } shrnutí knihy "${bookTitle}" od ${author} ve stylu ${
     styleMap[preferences.style]
-  }. Zaměř se na ${focusMap[preferences.focus]}. Piš ${language}.
+  }. Zaměř se na ${focusMap[preferences.focus]}. Piš ${language}.`;
+
+  // Add exam focus instructions if enabled
+  if (preferences.examFocus) {
+    prompt += `
+
+Strukturuj shrnutí podle požadavků maturitní zkoušky z českého jazyka a literatury. Zahrň:
+1. Základní informace o díle (žánr, literární druh)
+2. Časoprostor díla
+3. Kompozici a vypravěčskou perspektivu
+4. Hlavní postavy a jejich charakteristiku
+5. Hlavní témata a motivy
+6. Jazykové prostředky a styl
+7. Význam díla v kontextu autorovy tvorby`;
+  }
+
+  // Add literary context instructions if enabled
+  if (preferences.literaryContext) {
+    prompt += `
+
+Přidej odstavec o literárním kontextu díla, který zahrnuje:
+- Literární období a směr, do kterého dílo patří
+- Charakteristické znaky tohoto období/směru v díle
+- Srovnání s jinými významnými díly stejného období/žánru
+- Historický a společenský kontext vzniku díla`;
+  }
+
+  // Add general instructions
+  prompt += `
 
 Shrnutí musí být kompletní s jasným závěrem. Při nedostatku tokenů zkrať obsah, ale neukončuj náhle.
 
 ${notes ? `Poznámky čtenáře:\n${notes}` : ""}`;
+
+  return prompt;
 }
 
 function checkIfSummaryIsCutOff(summary: string): string {

@@ -29,6 +29,7 @@ import {
   SummaryPreferences,
 } from "./SummaryPreferencesModal";
 import { useSummaryPreferences } from "@/contexts/SummaryPreferencesContext";
+import { ExportButton } from "./ExportButton";
 
 interface BookProps {
   book: Book;
@@ -316,6 +317,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         </div>
 
         <div className="flex gap-2">
+          <ExportButton book={book} notes={notes} />
           <Button
             variant="ghost"
             size="sm"

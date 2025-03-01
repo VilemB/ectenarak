@@ -21,6 +21,8 @@ export interface SummaryPreferences {
   length: "short" | "medium" | "long";
   focus: "plot" | "characters" | "themes" | "balanced";
   language: "cs" | "en";
+  examFocus: boolean;
+  literaryContext: boolean;
 }
 
 export interface SummaryPreferencesModalProps {
@@ -81,6 +83,10 @@ const optionDescriptions = {
     cs: "Shrnutí bude vygenerováno v češtině.",
     en: "Shrnutí bude vygenerováno v angličtině.",
   },
+  examFocus:
+    "Zaměření na aspekty důležité pro maturitní zkoušku z českého jazyka a literatury.",
+  literaryContext:
+    "Přidá informace o literárním kontextu, období a zařazení díla.",
 };
 
 export function SummaryPreferencesModal({
@@ -128,6 +134,8 @@ export function SummaryPreferencesModal({
       length: "medium",
       focus: "balanced",
       language: "cs",
+      examFocus: false,
+      literaryContext: false,
     };
     setPreferences(defaults);
     setGlobalPreferences(defaults);
@@ -162,7 +170,17 @@ export function SummaryPreferencesModal({
 
     const language = preferences.language === "cs" ? "češtině" : "angličtině";
 
-    return `Shrnutí bude v ${style} stylu, ${length}, zaměřené na ${focus}, v ${language}.`;
+    let previewText = `Shrnutí bude v ${style} stylu, ${length}, zaměřené na ${focus}, v ${language}.`;
+
+    if (preferences.examFocus) {
+      previewText += " Strukturováno pro maturitní zkoušku.";
+    }
+
+    if (preferences.literaryContext) {
+      previewText += " Obsahuje literární kontext a zařazení díla.";
+    }
+
+    return previewText;
   };
 
   return (
@@ -188,27 +206,178 @@ export function SummaryPreferencesModal({
                 className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-4"
               >
                 <div className="flex items-start">
-                  <Info className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+                  <Info className="h-5 w-5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="text-sm font-medium text-foreground">
+                    <h4 className="text-sm font-medium text-amber-700 mb-1">
                       Upozornění na délku
                     </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Dlouhé shrnutí vyžaduje více tokenů, což může být problém
-                      při velkém množství poznámek. Poznámky delší než 6000
-                      znaků budou automaticky zkráceny. Pokud bude shrnutí i
-                      přesto neúplné, doporučujeme:
+                    <p className="text-xs text-amber-600">
+                      Dlouhá shrnutí vyžadují více tokenů a mohou být zkrácena,
+                      pokud máte hodně poznámek. Pro nejlepší výsledky zvažte
+                      kratší délku nebo rozdělte poznámky do více knih.
                     </p>
-                    <ul className="mt-1 ml-4 list-disc space-y-1 text-sm text-muted-foreground">
-                      <li>Zvolit kratší délku shrnutí</li>
-                      <li>Rozdělit poznámky do více knih</li>
-                      <li>Ručně zkrátit nejdůležitější poznámky</li>
-                    </ul>
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Maturita Exam Features */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-foreground mb-3 flex items-center">
+              <BookText className="h-4 w-4 mr-2 text-primary" />
+              Funkce pro maturanty
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="relative">
+                <motion.div
+                  variants={optionVariants}
+                  initial="notSelected"
+                  animate={preferences.examFocus ? "selected" : "notSelected"}
+                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    preferences.examFocus
+                      ? "bg-primary/10 border-primary/30"
+                      : "bg-card border-border hover:bg-secondary/50"
+                  }`}
+                  onClick={() =>
+                    setPreferences({
+                      ...preferences,
+                      examFocus: !preferences.examFocus,
+                    })
+                  }
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${
+                          preferences.examFocus
+                            ? "bg-primary border-primary"
+                            : "border-muted-foreground"
+                        }`}
+                      >
+                        {preferences.examFocus && (
+                          <div className="w-3 h-3 rounded-full bg-white" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">
+                          Zaměření na maturitu
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          Strukturuje shrnutí podle požadavků maturitní zkoušky
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(
+                          activeTooltip === "examFocus" ? null : "examFocus"
+                        );
+                      }}
+                    >
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+                <AnimatePresence>
+                  {activeTooltip === "examFocus" && (
+                    <motion.div
+                      variants={tooltipVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="absolute right-0 mt-2 p-3 bg-popover border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
+                    >
+                      <p className="text-xs text-popover-foreground">
+                        {optionDescriptions.examFocus}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="relative">
+                <motion.div
+                  variants={optionVariants}
+                  initial="notSelected"
+                  animate={
+                    preferences.literaryContext ? "selected" : "notSelected"
+                  }
+                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    preferences.literaryContext
+                      ? "bg-primary/10 border-primary/30"
+                      : "bg-card border-border hover:bg-secondary/50"
+                  }`}
+                  onClick={() =>
+                    setPreferences({
+                      ...preferences,
+                      literaryContext: !preferences.literaryContext,
+                    })
+                  }
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${
+                          preferences.literaryContext
+                            ? "bg-primary border-primary"
+                            : "border-muted-foreground"
+                        }`}
+                      >
+                        {preferences.literaryContext && (
+                          <div className="w-3 h-3 rounded-full bg-white" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">
+                          Literární kontext
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          Přidá informace o literárním období a zařazení díla
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(
+                          activeTooltip === "literaryContext"
+                            ? null
+                            : "literaryContext"
+                        );
+                      }}
+                    >
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+                <AnimatePresence>
+                  {activeTooltip === "literaryContext" && (
+                    <motion.div
+                      variants={tooltipVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="absolute right-0 mt-2 p-3 bg-popover border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
+                    >
+                      <p className="text-xs text-popover-foreground">
+                        {optionDescriptions.literaryContext}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-5">
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
