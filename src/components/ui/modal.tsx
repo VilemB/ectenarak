@@ -4,15 +4,25 @@ import { useEffect, useState, useRef } from "react";
 import { X } from "lucide-react";
 import { Portal } from "./portal";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "./button";
 
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  description?: string;
   children: React.ReactNode;
+  showCloseButton?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  children,
+  showCloseButton = true,
+}: ModalProps) {
   const [isMounted, setIsMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -36,9 +46,6 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         onClose();
       }
     };
-
-    // We'll rely on the backdrop click handler instead of this mousedown event
-    // as it can sometimes interfere with interactions inside the modal
 
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
@@ -79,25 +86,36 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                   damping: 25,
                   stiffness: 300,
                 }}
-                className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()} // Prevent clicks from reaching the backdrop
               >
                 {title && (
-                  <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-                    <h2 className="text-lg font-semibold text-foreground">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                       {title}
-                    </h2>
-                    <button
-                      onClick={onClose}
-                      className="text-muted-foreground hover:text-foreground rounded-full p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-                      aria-label="Close modal"
-                    >
-                      <X className="h-5 w-5" />
-                      <span className="sr-only">Close</span>
-                    </button>
+                    </h3>
+                    {showCloseButton && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={onClose}
+                        aria-label="Close modal"
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Zavřít</span>
+                      </Button>
+                    )}
                   </div>
                 )}
                 <div className="overflow-auto max-h-[calc(90vh-4rem)]">
+                  {description && (
+                    <div className="p-4 pt-6">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {description}
+                      </p>
+                    </div>
+                  )}
                   {children}
                 </div>
               </motion.div>

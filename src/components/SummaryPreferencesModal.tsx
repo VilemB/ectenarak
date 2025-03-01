@@ -185,8 +185,13 @@ export function SummaryPreferencesModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nastavení shrnutí">
-      <div className="p-6 bg-card rounded-b-lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nastavení shrnutí"
+      showCloseButton={true}
+    >
+      <div className="p-4 max-w-full overflow-x-hidden">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Preview section */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
@@ -865,26 +870,26 @@ export function SummaryPreferencesModal({
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-between items-center gap-2">
-            <div className="flex gap-2">
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-muted-foreground rounded-full"
+                className="flex items-center gap-1"
                 onClick={saveAsDefault}
               >
-                <Save className="h-3.5 w-3.5 mr-1.5" />
+                <Save className="h-3.5 w-3.5" />
                 Uložit jako výchozí
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="text-muted-foreground rounded-full"
+                className="flex items-center gap-1"
                 onClick={resetToDefaults}
               >
-                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Obnovit výchozí
               </Button>
               <AnimatePresence>
@@ -893,30 +898,32 @@ export function SummaryPreferencesModal({
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
-                    className="text-xs text-primary"
+                    className="text-xs text-green-600 dark:text-green-400"
                   >
-                    Nastavení uloženo!
+                    Uloženo!
                   </motion.span>
                 )}
               </AnimatePresence>
             </div>
-            <Button
-              type="submit"
-              disabled={isGenerating}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generuji...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generovat shrnutí
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="submit"
+                disabled={isGenerating}
+                className="flex items-center gap-1"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generuji...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Generovat shrnutí
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

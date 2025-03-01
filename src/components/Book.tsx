@@ -22,7 +22,6 @@ import {
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
-import { Modal } from "@/components/ui/modal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   SummaryPreferencesModal,
@@ -30,6 +29,7 @@ import {
 } from "./SummaryPreferencesModal";
 import { useSummaryPreferences } from "@/contexts/SummaryPreferencesContext";
 import { ExportButton } from "./ExportButton";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface BookProps {
   book: Book;
@@ -628,31 +628,25 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         )}
       </AnimatePresence>
 
-      <Modal
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, type: "book" })}
+        onConfirm={handleConfirmDelete}
         title={deleteModal.type === "book" ? "Smazat knihu" : "Smazat poznámku"}
-      >
-        <div className="p-6">
-          <p className="text-foreground mb-4">
-            {deleteModal.type === "book"
-              ? `Opravdu chceš smazat knihu "${book.title}" a všechny její poznámky?`
-              : "Opravdu chceš smazat tuto poznámku?"}
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteModal({ isOpen: false, type: "book" })}
-            >
-              Zrušit
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Smazat
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        description={
+          deleteModal.type === "book"
+            ? `Opravdu chceš smazat knihu "${book.title}" a všechny její poznámky?`
+            : "Opravdu chceš smazat tuto poznámku?"
+        }
+        confirmText="Smazat"
+        cancelText="Zrušit"
+        variant="destructive"
+        showCancelButton={false}
+        showCloseButton={true}
+      />
 
+      {/* Summary Preferences Modal */}
       <SummaryPreferencesModal
         isOpen={summaryModal}
         onClose={() => setSummaryModal(false)}
