@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Book, Note } from "@/types";
-import { Download, FileText, FileIcon } from "lucide-react";
+import { Download, FileText, FileIcon, BookText } from "lucide-react";
 import jsPDF from "jspdf";
 import { Modal } from "@/components/ui/modal";
 
@@ -13,6 +13,8 @@ interface ExportButtonProps {
 export function ExportButton({ book, notes }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportType, setExportType] = useState<string | null>(null);
+  const [exportSuccess, setExportSuccess] = useState<boolean | null>(null);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -53,6 +55,42 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
     }
 
     return content;
+  };
+
+  const handleExport = async (exportFunction: () => void, type: string) => {
+    setExportType(type);
+    setIsExporting(true);
+    setExportSuccess(null);
+
+    try {
+      // Small delay to allow UI to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      exportFunction();
+
+      // Show success status
+      setExportSuccess(true);
+
+      // Close modal after success
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportType(null);
+        setExportSuccess(null);
+        setIsExportModalOpen(false);
+      }, 1500);
+    } catch (error) {
+      console.error(`Error exporting ${type}:`, error);
+
+      // Show error status
+      setExportSuccess(false);
+
+      // Reset after error
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportType(null);
+        setExportSuccess(null);
+      }, 2000);
+    }
   };
 
   const exportAsText = () => {
@@ -410,9 +448,9 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
   return (
     <div>
       <Button
-        variant="icon"
+        variant="ghost"
         size="sm"
-        className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8"
+        className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 gap-1 px-2 rounded-md transition-all duration-200 ease-in-out"
         onClick={(e) => {
           e.stopPropagation();
           setIsExportModalOpen(true);
@@ -420,95 +458,231 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
         aria-label="Export options"
       >
         <Download className="h-4 w-4" />
+        <span className="hidden sm:inline">Export</span>
       </Button>
 
       <Modal
         isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
+        onClose={() => !isExporting && setIsExportModalOpen(false)}
         title="Exportovat poznámky"
-        showCloseButton={true}
+        showCloseButton={!isExporting}
       >
-        <div className="p-5 max-w-full overflow-x-hidden">
-          <div className="grid grid-cols-1 gap-3">
-            <Button
-              variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                exportAsText();
-              }}
-              disabled={isExporting}
-            >
-              <div className="flex items-center">
-                <FileText className="h-5 w-5 mr-3 text-blue-500" />
-                <div>
-                  <div className="font-medium">Textový formát</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    Jednoduchý textový soubor s poznámkami a shrnutím
-                  </div>
-                </div>
-              </div>
-            </Button>
+        <div className="p-6 max-w-full overflow-x-hidden">
+          {exportSuccess === true && (
+            <div className="mb-4 p-2 bg-green-500/10 border border-green-500/20 rounded text-sm text-green-400 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Export byl úspěšně dokončen
+            </div>
+          )}
 
-            <Button
-              variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                exportAsPDF();
-              }}
-              disabled={isExporting}
-            >
-              <div className="flex items-center">
-                <FileIcon className="h-5 w-5 mr-3 text-red-500" />
-                <div>
-                  <div className="font-medium">PDF formát</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    Formátovaný PDF dokument s poznámkami a shrnutím
-                  </div>
-                </div>
-              </div>
-            </Button>
+          {exportSuccess === false && (
+            <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-400 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              Při exportu došlo k chybě
+            </div>
+          )}
 
-            <Button
-              variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                exportForMaturita();
+                if (!isExporting) handleExport(exportAsText, "TXT");
               }}
               disabled={isExporting}
+              className={`
+                group flex flex-col items-start p-4 rounded-lg border border-gray-800 bg-gray-900/50
+                transition-all duration-200 ease-in-out
+                ${
+                  isExporting
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:border-blue-500/30 hover:bg-gray-800/50"
+                }
+                ${
+                  isExporting && exportType === "TXT"
+                    ? "border-blue-500/30 bg-blue-500/5"
+                    : ""
+                }
+              `}
             >
-              <div className="flex items-center">
-                <FileText className="h-5 w-5 mr-3 text-amber-500" />
-                <div>
-                  <div className="font-medium">Maturitní formát (TXT)</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    Textový soubor strukturovaný pro přípravu k maturitě
+              <div className="flex items-center w-full mb-2">
+                <div className="flex-shrink-0 mr-3">
+                  {isExporting && exportType === "TXT" ? (
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                  ) : (
+                    <div className="text-blue-500">
+                      <FileText className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-base font-medium text-white group-hover:text-blue-400 transition-colors">
+                    Textový formát
                   </div>
                 </div>
               </div>
-            </Button>
+              <div className="text-xs text-gray-400 ml-11">
+                Jednoduchý textový soubor s poznámkami a shrnutím
+              </div>
+            </button>
 
-            <Button
-              variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                exportForMaturitaPDF();
+                if (!isExporting) handleExport(exportAsPDF, "PDF");
               }}
               disabled={isExporting}
+              className={`
+                group flex flex-col items-start p-4 rounded-lg border border-gray-800 bg-gray-900/50
+                transition-all duration-200 ease-in-out
+                ${
+                  isExporting
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:border-red-500/30 hover:bg-gray-800/50"
+                }
+                ${
+                  isExporting && exportType === "PDF"
+                    ? "border-red-500/30 bg-red-500/5"
+                    : ""
+                }
+              `}
             >
-              <div className="flex items-center">
-                <FileIcon className="h-5 w-5 mr-3 text-amber-500" />
-                <div>
-                  <div className="font-medium">Maturitní formát (PDF)</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    PDF dokument strukturovaný pro přípravu k maturitě
+              <div className="flex items-center w-full mb-2">
+                <div className="flex-shrink-0 mr-3">
+                  {isExporting && exportType === "PDF" ? (
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                  ) : (
+                    <div className="text-red-500">
+                      <FileIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-base font-medium text-white group-hover:text-red-400 transition-colors">
+                    PDF formát
                   </div>
                 </div>
               </div>
-            </Button>
+              <div className="text-xs text-gray-400 ml-11">
+                Formátovaný PDF dokument s poznámkami a shrnutím
+              </div>
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isExporting)
+                  handleExport(exportForMaturita, "Maturita TXT");
+              }}
+              disabled={isExporting}
+              className={`
+                group flex flex-col items-start p-4 rounded-lg border border-gray-800 bg-gray-900/50
+                transition-all duration-200 ease-in-out
+                ${
+                  isExporting
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:border-amber-500/30 hover:bg-gray-800/50"
+                }
+                ${
+                  isExporting && exportType === "Maturita TXT"
+                    ? "border-amber-500/30 bg-amber-500/5"
+                    : ""
+                }
+              `}
+            >
+              <div className="flex items-center w-full mb-2">
+                <div className="flex-shrink-0 mr-3">
+                  {isExporting && exportType === "Maturita TXT" ? (
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                  ) : (
+                    <div className="text-amber-500">
+                      <BookText className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-base font-medium text-white group-hover:text-amber-400 transition-colors">
+                    Maturitní formát (TXT)
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-gray-400 ml-11">
+                Textový soubor strukturovaný pro přípravu k maturitě
+              </div>
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isExporting)
+                  handleExport(exportForMaturitaPDF, "Maturita PDF");
+              }}
+              disabled={isExporting}
+              className={`
+                group flex flex-col items-start p-4 rounded-lg border border-gray-800 bg-gray-900/50
+                transition-all duration-200 ease-in-out
+                ${
+                  isExporting
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:border-amber-500/30 hover:bg-gray-800/50"
+                }
+                ${
+                  isExporting && exportType === "Maturita PDF"
+                    ? "border-amber-500/30 bg-amber-500/5"
+                    : ""
+                }
+              `}
+            >
+              <div className="flex items-center w-full mb-2">
+                <div className="flex-shrink-0 mr-3">
+                  {isExporting && exportType === "Maturita PDF" ? (
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                  ) : (
+                    <div className="text-amber-500">
+                      <FileIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-base font-medium text-white group-hover:text-amber-400 transition-colors">
+                    Maturitní formát (PDF)
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-gray-400 ml-11">
+                PDF dokument strukturovaný pro přípravu k maturitě
+              </div>
+            </button>
+          </div>
+
+          <div className="mt-5 text-xs text-gray-500 italic text-center">
+            Exportované soubory se stáhnou do složky stahování vašeho
+            prohlížeče.
           </div>
         </div>
       </Modal>
