@@ -33,18 +33,18 @@
 
   /* Enhanced book card styles for better visibility */
   .book-card {
-    background-color: #3b82f6;
-    border: 2px solid #63b3ed;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7), 0 0 15px rgba(66, 153, 225, 0.5);
-    transition: all 0.2s ease-in-out;
+    background-color: #1e293b;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
     position: relative;
     z-index: 10;
   }
 
   .book-card:hover {
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(66, 153, 225, 0.6);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
     transform: translateY(-2px);
-    border-color: #90cdf4;
+    border-color: rgba(59, 130, 246, 0.5);
   }
 
   .note-card {
@@ -87,12 +87,33 @@
     border-color: rgba(59, 130, 246, 0.3);
     background-color: rgba(59, 130, 246, 0.1);
   }
+
+  /* Button styles */
+  .btn {
+    @apply rounded-full transition-all duration-200 inline-flex items-center justify-center;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 shadow hover:shadow-md;
+  }
+
+  .btn-outline {
+    @apply border border-border bg-transparent hover:bg-primary/10 text-foreground hover:text-primary hover:border-primary/30;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-primary/10 text-foreground hover:text-primary;
+  }
+
+  .btn-icon {
+    @apply p-0 h-9 w-9 flex items-center justify-center rounded-full;
+  }
 }
 
 /* Modern scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -140,7 +161,7 @@ textarea:focus {
 }
 
 .card-shadow {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 12px 25px -5px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .card-hover {
@@ -149,5 +170,31 @@ textarea:focus {
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4), 0 20px 30px -5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+
+  .btn {
+    @apply text-sm;
+  }
+
+  .flex-wrap-mobile {
+    @apply flex-wrap;
+  }
+
+  .full-width-mobile {
+    @apply w-full;
+  }
+}
+
+/* Consistent form elements */
+input,
+textarea,
+select {
+  @apply rounded-lg border border-border bg-secondary/50 px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
 }

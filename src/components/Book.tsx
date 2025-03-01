@@ -278,7 +278,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   return (
     <motion.div
       variants={listItemVariants}
-      className="bg-card rounded-lg border border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer"
+      className="bg-card rounded-lg border border-border/50 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer"
       onClick={() => {
         // Only toggle expansion if there are notes and no modal is open
         if (notes.length > 0 && !deleteModal.isOpen && !summaryModal) {
@@ -286,20 +286,20 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         }
       }}
     >
-      <div className="px-6 py-4 flex justify-between items-center">
+      <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
+          <BookOpen className="h-5 w-5 text-primary flex-shrink-0" />
           <div>
             <h3 className="text-base font-medium text-foreground">
               {book.title}
             </h3>
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <p className="text-sm text-muted-foreground">{book.author}</p>
               {book.authorSummary && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="relative group px-2 py-0.5 h-auto rounded-full bg-amber-100/30 text-amber-700 hover:bg-amber-100/50 hover:text-amber-800 transition-all duration-200"
+                  className="relative group px-2 py-0.5 h-auto rounded-full bg-amber-100/10 text-amber-500 hover:bg-amber-100/20 hover:text-amber-400 transition-all duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsAuthorInfoVisible(!isAuthorInfoVisible);
@@ -321,12 +321,12 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-1 sm:mt-0">
           <ExportButton book={book} notes={notes} />
           <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8 p-0"
+            variant="icon"
+            size="icon"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
               setDeleteModal({ isOpen: true, type: "book" });
@@ -337,11 +337,11 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           </Button>
           {notes.length > 0 && (
             <Button
-              variant="ghost"
-              size="sm"
-              className={`text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0 transition-transform duration-200 ${
+              variant="icon"
+              size="icon"
+              className={`text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8 transition-transform duration-200 ${
                 isExpanded ? "rotate-180" : ""
-              } ${notes.length > 0 ? "group-hover:bg-primary/5" : ""}`}
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
@@ -358,7 +358,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         </div>
       </div>
 
-      <div className="px-6 pb-6">
+      <div className="px-4 sm:px-6 pb-4 sm:pb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
@@ -381,26 +381,26 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               className="mt-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative p-5 bg-gradient-to-br from-amber-50/40 via-amber-100/30 to-amber-50/20 border border-amber-200/50 rounded-lg shadow-md">
+              <div className="relative p-4 sm:p-5 bg-gradient-to-br from-amber-900/20 via-amber-800/15 to-amber-900/10 border border-amber-700/30 rounded-lg shadow-md">
                 <div className="absolute -top-3 left-5 bg-amber-500 text-white px-3 py-1 rounded-full shadow-sm flex items-center">
                   <User className="h-3.5 w-3.5 mr-1.5" />
                   <span className="text-xs font-medium">O autorovi</span>
                 </div>
                 <div className="absolute top-3 right-3">
                   <Button
-                    variant="ghost"
+                    variant="icon"
                     size="sm"
-                    className="h-7 w-7 p-0 rounded-full hover:bg-amber-200/30 text-amber-700"
+                    className="h-7 w-7 p-0 hover:bg-amber-700/20 text-amber-500"
                     onClick={() => setIsAuthorInfoVisible(false)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="pt-3">
-                  <h4 className="text-lg font-medium text-amber-900 mb-3">
+                  <h4 className="text-lg font-medium text-amber-500 mb-3">
                     {book.author}
                   </h4>
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed text-amber-950/90 prose-p:my-2 prose-headings:text-amber-900 prose-strong:text-amber-900 prose-strong:font-medium">
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed text-amber-200/90 prose-p:my-2 prose-headings:text-amber-400 prose-strong:text-amber-300 prose-strong:font-medium">
                     <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
                   </div>
                 </div>
@@ -414,7 +414,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <Button
               variant="outline"
               size="sm"
-              className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full transition-all duration-200 shadow-sm hover:shadow flex-grow md:flex-grow-0"
+              className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-all duration-200 shadow-sm hover:shadow flex-grow sm:flex-grow-0"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsAddingNote(true);
@@ -428,7 +428,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-gradient-to-r from-amber-100/50 to-amber-200/50 text-amber-700 border-amber-200 hover:from-amber-200/60 hover:to-amber-300/60 rounded-full transition-all duration-200 shadow-sm hover:shadow-md"
+                className="bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200 shadow-sm hover:shadow flex-grow sm:flex-grow-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleGenerateAuthorInfo();
@@ -449,23 +449,23 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               </Button>
             )}
 
-            <div className="flex gap-2 ml-auto">
+            <div className="flex flex-wrap gap-2 ml-auto mt-2 sm:mt-0">
               <Button
                 variant="outline"
                 size="sm"
-                className="group bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/90 hover:border-slate-300 hover:text-slate-800 rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
+                className="group bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-slate-200 transition-all duration-300 shadow-sm hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
                   setSummaryModal(true);
                 }}
               >
-                <Settings className="h-3.5 w-3.5 mr-1.5 text-slate-600 transition-transform duration-300 ease-in-out group-hover:rotate-90" />
+                <Settings className="h-3.5 w-3.5 mr-1.5 text-slate-400 transition-transform duration-300 ease-in-out group-hover:rotate-90" />
                 Nastavení shrnutí
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-gradient-to-r from-amber-400/20 to-amber-500/20 text-amber-700 border-amber-200 hover:from-amber-400/30 hover:to-amber-500/30 rounded-full transition-all duration-200 shadow-sm hover:shadow"
+                className="bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200 shadow-sm hover:shadow"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleQuickGenerateSummary();
@@ -495,7 +495,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="px-6 pb-6"
+            className="px-4 sm:px-6 pb-4 sm:pb-6"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleAddNote} className="space-y-3">
@@ -513,7 +513,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  className="hover:bg-destructive/10 hover:text-destructive transition-colors"
                   onClick={() => setIsAddingNote(false)}
                 >
                   <X className="h-4 w-4 mr-1" />
@@ -523,7 +523,6 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                   type="submit"
                   variant="default"
                   size="sm"
-                  className="rounded-full bg-primary hover:bg-primary/90 transition-colors"
                   disabled={!newNote.trim()}
                 >
                   <Check className="h-4 w-4 mr-1" />
@@ -542,7 +541,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             initial="collapsed"
             animate="expanded"
             exit="collapsed"
-            className="border-t border-border bg-card/50 px-6 py-4"
+            className="border-t border-border/50 bg-card/50 px-4 sm:px-6 py-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-medium text-foreground flex items-center mb-3">
@@ -558,7 +557,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 rounded-full"
+                  className="mt-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsAddingNote(true);
@@ -579,12 +578,12 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                   <motion.div
                     key={note.id}
                     variants={listItemVariants}
-                    className={`p-4 rounded-lg border ${
+                    className={`p-3 sm:p-4 rounded-lg border ${
                       note.isAISummary
-                        ? "border-amber-300/30 bg-amber-50/10"
+                        ? "border-amber-500/30 bg-amber-500/5"
                         : note.isError
-                        ? "border-red-300/30 bg-red-50/10"
-                        : "border-border bg-secondary/30"
+                        ? "border-red-500/30 bg-red-500/5"
+                        : "border-border/50 bg-secondary/20"
                     }`}
                   >
                     <div className="flex justify-between items-start mb-2">
@@ -609,9 +608,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                       </div>
                       {!note.isError && (
                         <Button
-                          variant="ghost"
+                          variant="icon"
                           size="sm"
-                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-6 w-6 p-0"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-6 w-6"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteNote(note.id);

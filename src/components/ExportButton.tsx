@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Book, Note } from "@/types";
-import { Download, FileText, Loader2, FileIcon } from "lucide-react";
+import { Download, FileText, FileIcon } from "lucide-react";
 import jsPDF from "jspdf";
 import { Modal } from "@/components/ui/modal";
 
@@ -12,7 +12,7 @@ interface ExportButtonProps {
 
 export function ExportButton({ book, notes }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -72,7 +72,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting notes:", error);
     } finally {
       setIsExporting(false);
-      setShowModal(false);
+      setIsExportModalOpen(false);
     }
   };
 
@@ -175,7 +175,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting PDF:", error);
     } finally {
       setIsExporting(false);
-      setShowModal(false);
+      setIsExportModalOpen(false);
     }
   };
 
@@ -234,7 +234,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting maturita format:", error);
     } finally {
       setIsExporting(false);
-      setShowModal(false);
+      setIsExportModalOpen(false);
     }
   };
 
@@ -403,46 +403,36 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting maturita PDF:", error);
     } finally {
       setIsExporting(false);
-      setShowModal(false);
+      setIsExportModalOpen(false);
     }
   };
 
   return (
-    <div className="relative">
+    <div>
       <Button
-        variant="outline"
+        variant="icon"
         size="sm"
-        className="bg-blue-50/30 text-blue-700 border-blue-200 hover:bg-blue-100/40 rounded-full transition-all duration-200 shadow-sm hover:shadow flex items-center gap-1"
+        className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8"
         onClick={(e) => {
           e.stopPropagation();
-          setShowModal(true);
+          setIsExportModalOpen(true);
         }}
-        disabled={isExporting}
+        aria-label="Export options"
       >
-        {isExporting ? (
-          <>
-            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-            Exportuji...
-          </>
-        ) : (
-          <>
-            <Download className="h-3.5 w-3.5 mr-1" />
-            Export
-          </>
-        )}
+        <Download className="h-4 w-4" />
       </Button>
 
       <Modal
-        isOpen={showModal}
-        onClose={() => !isExporting && setShowModal(false)}
-        title={`Exportovat ${book.title}`}
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        title="Exportovat poznámky"
         showCloseButton={true}
       >
         <div className="p-5 max-w-full overflow-x-hidden">
           <div className="grid grid-cols-1 gap-3">
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportAsText();
@@ -462,7 +452,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
 
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportAsPDF();
@@ -482,7 +472,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
 
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportForMaturita();
@@ -502,7 +492,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
 
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700/50 text-gray-300 hover:bg-gray-800/70 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportForMaturitaPDF();

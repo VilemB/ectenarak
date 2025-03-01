@@ -214,14 +214,14 @@ export default function Home() {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-10 border-b border-border shadow-sm backdrop-blur-md"
-        style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
+        className="sticky top-0 z-10 border-b border-border/50 shadow-sm backdrop-blur-md"
+        style={{ backgroundColor: "rgba(15, 23, 42, 0.9)" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <BookOpen className="h-7 w-7 text-primary mr-3" />
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                 Čtenářský deník
               </h1>
             </div>
@@ -236,21 +236,21 @@ export default function Home() {
                   placeholder="Hledat knihy..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="py-2 pl-10 pr-4 block w-64 rounded-full border border-border text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm transition-all bg-secondary"
+                  className="py-2 pl-10 pr-4 block w-64 rounded-full border border-border/50 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm transition-all bg-secondary/50"
                 />
               </div>
               <Button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors"
+                className="shadow-sm transition-colors"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Přidat knihu
               </Button>
               <Button
                 onClick={() => setShowKeyboardShortcuts(true)}
-                variant="ghost"
+                variant="icon"
                 size="icon"
-                className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground"
                 title="Klávesové zkratky"
               >
                 <Keyboard className="h-5 w-5" />
@@ -258,21 +258,24 @@ export default function Home() {
             </div>
 
             <div className="md:hidden flex items-center space-x-2">
-              <button
+              <Button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="p-2 rounded-full text-primary hover:bg-primary/20 transition-colors"
-                style={{ backgroundColor: "rgba(59, 130, 246, 0.1)" }}
+                variant="icon"
+                size="icon"
+                className="bg-primary/10 text-primary hover:bg-primary/20"
                 aria-label="Add book"
               >
                 <Plus className="w-5 h-5" />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-full text-foreground hover:bg-secondary transition-colors bg-secondary/50"
+                variant="icon"
+                size="icon"
+                className="text-foreground hover:bg-secondary/70 bg-secondary/50"
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               >
                 <Menu className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -294,7 +297,7 @@ export default function Home() {
                     placeholder="Hledat knihy..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="py-2 pl-10 pr-4 block w-full rounded-full border border-border text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary"
+                    className="py-2 pl-10 pr-4 block w-full rounded-full border border-border/50 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary/50"
                   />
                 </div>
                 <div className="flex justify-center">
@@ -303,7 +306,7 @@ export default function Home() {
                       setShowAddForm(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors"
+                    className="w-full shadow-sm transition-colors"
                   >
                     <Plus className="w-4 h-4 mr-1.5" />
                     Přidat knihu
@@ -323,17 +326,17 @@ export default function Home() {
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0, y: -20 }}
-              className="bg-card rounded-lg shadow-md border border-border p-6 mb-8"
+              className="bg-card rounded-lg shadow-md border border-border/50 p-4 sm:p-6 mb-8"
             >
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-foreground flex items-center">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground flex items-center">
                   <BookText className="h-5 w-5 text-primary mr-2" />
                   Přidej novou knihu
                 </h2>
                 <Button
-                  variant="ghost"
+                  variant="icon"
                   size="sm"
-                  className="rounded-full h-8 w-8 p-0"
+                  className="h-8 w-8"
                   onClick={() => setShowAddForm(false)}
                 >
                   <X className="h-4 w-4" />
@@ -359,10 +362,10 @@ export default function Home() {
                         }}
                         placeholder="Název knihy..."
                         className={`w-full px-4 py-2 border ${
-                          error ? "border-red-300" : "border-border"
+                          error ? "border-red-500/50" : "border-border/50"
                         } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
                           error ? "focus:ring-red-500" : "focus:ring-primary"
-                        } focus:border-transparent transition shadow-sm bg-secondary`}
+                        } focus:border-transparent transition shadow-sm bg-secondary/50`}
                       />
                     </div>
                   </div>
@@ -384,10 +387,10 @@ export default function Home() {
                         }}
                         placeholder="Jméno autora..."
                         className={`w-full px-4 py-2 border ${
-                          error ? "border-red-300" : "border-border"
+                          error ? "border-red-500/50" : "border-border/50"
                         } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
                           error ? "focus:ring-red-500" : "focus:ring-primary"
-                        } focus:border-transparent transition shadow-sm bg-secondary`}
+                        } focus:border-transparent transition shadow-sm bg-secondary/50`}
                       />
                     </div>
                   </div>
@@ -411,18 +414,14 @@ export default function Home() {
                 </div>
 
                 {error && (
-                  <div className="bg-red-500/10 text-red-500 p-3 rounded-lg flex items-start">
+                  <div className="bg-red-500/10 text-red-400 p-3 rounded-lg flex items-start">
                     <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
                     <p className="text-sm">{error}</p>
                   </div>
                 )}
 
                 <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
-                    disabled={isGeneratingAuthorSummary}
-                  >
+                  <Button type="submit" disabled={isGeneratingAuthorSummary}>
                     {isGeneratingAuthorSummary ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -460,7 +459,7 @@ export default function Home() {
                 </p>
                 <Button
                   onClick={() => setShowAddForm(true)}
-                  className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
+                  className="shadow-md"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Přidat první knihu
@@ -484,7 +483,7 @@ export default function Home() {
                 </p>
                 <Button
                   onClick={() => setSearchQuery("")}
-                  className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
+                  className="shadow-md"
                 >
                   Zobrazit všechny knihy
                 </Button>
@@ -595,10 +594,7 @@ export default function Home() {
           </div>
 
           <div className="pt-4 border-t border-gray-700/50 flex justify-center mt-6">
-            <Button
-              onClick={() => setShowWelcome(false)}
-              className="rounded-full bg-primary hover:bg-primary/90"
-            >
+            <Button onClick={() => setShowWelcome(false)}>
               Začít používat aplikaci
             </Button>
           </div>
