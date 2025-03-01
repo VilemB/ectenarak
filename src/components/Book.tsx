@@ -18,7 +18,6 @@ import {
   Loader2,
   Settings,
   User,
-  Info,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { generateId, formatDate } from "@/lib/utils";
@@ -288,23 +287,31 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <h3 className="text-base font-medium text-foreground">
               {book.title}
             </h3>
-            <p className="text-sm text-muted-foreground flex items-center">
-              {book.author}
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm text-muted-foreground">{book.author}</p>
               {book.authorSummary && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="ml-1 p-0 h-5 text-amber-500 hover:text-amber-600 hover:bg-transparent"
+                  className="relative group px-2 py-0.5 h-auto rounded-full bg-amber-100/30 text-amber-700 hover:bg-amber-100/50 hover:text-amber-800 transition-all duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsAuthorInfoVisible(!isAuthorInfoVisible);
                   }}
-                  title="Informace o autorovi"
                 >
-                  <Info className="h-3.5 w-3.5" />
+                  <User className="h-3 w-3 mr-1" />
+                  <span className="text-xs font-medium">O autorovi</span>
+                  <span
+                    className={`absolute -right-1 -top-1 flex h-3 w-3 ${
+                      isAuthorInfoVisible ? "opacity-0" : "opacity-100"
+                    }`}
+                  >
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                  </span>
                 </Button>
               )}
-            </p>
+            </div>
           </div>
         </div>
 
@@ -355,32 +362,40 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         <AnimatePresence>
           {isAuthorInfoVisible && book.authorSummary && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mt-3"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{
+                duration: 0.3,
+                type: "spring",
+                stiffness: 500,
+                damping: 30,
+              }}
+              className="mt-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative p-4 bg-gradient-to-r from-amber-50/20 to-amber-100/20 border border-amber-200/30 rounded-lg shadow-sm">
+              <div className="relative p-5 bg-gradient-to-br from-amber-50/40 via-amber-100/30 to-amber-50/20 border border-amber-200/50 rounded-lg shadow-md">
+                <div className="absolute -top-3 left-5 bg-amber-500 text-white px-3 py-1 rounded-full shadow-sm flex items-center">
+                  <User className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs font-medium">O autorovi</span>
+                </div>
                 <div className="absolute top-3 right-3">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 rounded-full hover:bg-amber-200/20 text-amber-700"
+                    className="h-7 w-7 p-0 rounded-full hover:bg-amber-200/30 text-amber-700"
                     onClick={() => setIsAuthorInfoVisible(false)}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex items-center mb-2">
-                  <User className="h-4 w-4 mr-2 text-amber-600" />
-                  <h4 className="text-sm font-medium text-amber-800">
-                    O autorovi {book.author}
+                <div className="pt-3">
+                  <h4 className="text-lg font-medium text-amber-900 mb-3">
+                    {book.author}
                   </h4>
-                </div>
-                <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-amber-900/80">
-                  <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed text-amber-950/90 prose-p:my-2 prose-headings:text-amber-900 prose-strong:text-amber-900 prose-strong:font-medium">
+                    <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -406,7 +421,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-amber-50/30 text-amber-700 border-amber-200 hover:bg-amber-100/40 rounded-full transition-all duration-200 shadow-sm hover:shadow"
+                className="bg-gradient-to-r from-amber-100/50 to-amber-200/50 text-amber-700 border-amber-200 hover:from-amber-200/60 hover:to-amber-300/60 rounded-full transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleGenerateAuthorInfo();
@@ -421,7 +436,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                 ) : (
                   <>
                     <User className="h-3.5 w-3.5 mr-1.5" />
-                    Info o autorovi
+                    Informace o autorovi
                   </>
                 )}
               </Button>
