@@ -46,10 +46,11 @@ const optionVariants = {
 };
 
 const tooltipVariants = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 10, backdropFilter: "blur(0px)" },
   visible: {
     opacity: 1,
     y: 0,
+    backdropFilter: "blur(4px)",
     transition: {
       type: "spring",
       stiffness: 500,
@@ -291,7 +292,7 @@ export function SummaryPreferencesModal({
                       initial="hidden"
                       animate="visible"
                       exit="hidden"
-                      className="absolute right-0 mt-2 p-3 bg-popover border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
+                      className="absolute right-0 mt-2 p-3 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
                     >
                       <p className="text-xs text-popover-foreground">
                         {optionDescriptions.examFocus}
@@ -367,7 +368,7 @@ export function SummaryPreferencesModal({
                       initial="hidden"
                       animate="visible"
                       exit="hidden"
-                      className="absolute right-0 mt-2 p-3 bg-popover border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
+                      className="absolute right-0 mt-2 p-3 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
                     >
                       <p className="text-xs text-popover-foreground">
                         {optionDescriptions.literaryContext}

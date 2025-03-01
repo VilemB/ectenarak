@@ -419,7 +419,10 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
         variant="outline"
         size="sm"
         className="bg-blue-50/30 text-blue-700 border-blue-200 hover:bg-blue-100/40 rounded-full transition-all duration-200 shadow-sm hover:shadow flex items-center gap-1"
-        onClick={() => setShowOptions(!showOptions)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowOptions(!showOptions);
+        }}
         disabled={isExporting}
       >
         {isExporting ? (
@@ -448,31 +451,44 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
             className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="py-1">
               <button
-                onClick={exportAsText}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportAsText();
+                }}
                 className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
               >
                 <FileText className="h-4 w-4 mr-2 text-blue-500" />
                 Exportovat jako text
               </button>
               <button
-                onClick={exportAsPDF}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportAsPDF();
+                }}
                 className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
               >
                 <FileIcon className="h-4 w-4 mr-2 text-red-500" />
                 Exportovat jako PDF
               </button>
               <button
-                onClick={exportForMaturita}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportForMaturita();
+                }}
                 className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
               >
                 <FileText className="h-4 w-4 mr-2 text-amber-500" />
                 Maturitní formát (TXT)
               </button>
               <button
-                onClick={exportForMaturitaPDF}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportForMaturitaPDF();
+                }}
                 className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
               >
                 <FileIcon className="h-4 w-4 mr-2 text-amber-500" />
