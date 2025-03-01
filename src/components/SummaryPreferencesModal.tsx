@@ -191,15 +191,15 @@ export function SummaryPreferencesModal({
       title="Nastavení shrnutí"
       showCloseButton={true}
     >
-      <div className="p-4 max-w-full overflow-x-hidden">
+      <div className="p-5 max-w-full overflow-x-hidden">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Preview section */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
-            <h3 className="text-sm font-medium text-foreground mb-2 flex items-center">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 mb-4">
+            <h3 className="text-sm font-medium text-white mb-2 flex items-center">
               <Sparkles className="h-4 w-4 mr-2 text-primary" />
               Náhled nastavení
             </h3>
-            <p className="text-sm text-muted-foreground">{getPreviewText()}</p>
+            <p className="text-sm text-gray-300">{getPreviewText()}</p>
           </div>
 
           {/* Warning for long summaries */}
@@ -214,10 +214,10 @@ export function SummaryPreferencesModal({
                 <div className="flex items-start">
                   <Info className="h-5 w-5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="text-sm font-medium text-amber-700 mb-1">
+                    <h4 className="text-sm font-medium text-amber-400 mb-1">
                       Upozornění na délku
                     </h4>
-                    <p className="text-xs text-amber-600">
+                    <p className="text-xs text-amber-300">
                       Dlouhá shrnutí vyžadují více tokenů a mohou být zkrácena,
                       pokud máte hodně poznámek. Pro nejlepší výsledky zvažte
                       kratší délku nebo rozdělte poznámky do více knih.
@@ -870,13 +870,13 @@ export function SummaryPreferencesModal({
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+          <div className="flex justify-between items-center pt-4 border-t border-gray-700/50 mt-6">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                 onClick={saveAsDefault}
               >
                 <Save className="h-3.5 w-3.5" />
@@ -886,7 +886,7 @@ export function SummaryPreferencesModal({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-gray-400 hover:text-white hover:bg-gray-700/50"
                 onClick={resetToDefaults}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -898,7 +898,7 @@ export function SummaryPreferencesModal({
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
-                    className="text-xs text-green-600 dark:text-green-400"
+                    className="text-xs text-green-400"
                   >
                     Uloženo!
                   </motion.span>
@@ -909,7 +909,7 @@ export function SummaryPreferencesModal({
               <Button
                 type="submit"
                 disabled={isGenerating}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 bg-primary hover:bg-primary/90"
               >
                 {isGenerating ? (
                   <>

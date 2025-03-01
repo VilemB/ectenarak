@@ -2,6 +2,7 @@
 
 import { Button } from "./button";
 import { Modal } from "./modal";
+import { AlertTriangle } from "lucide-react";
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -38,19 +39,49 @@ export function ConfirmationDialog({
       description={description}
       showCloseButton={showCloseButton}
     >
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-        {showCancelButton && (
-          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
-            {cancelText}
-          </Button>
+      <div className="p-5 space-y-4">
+        {variant === "destructive" && (
+          <div className="flex items-center justify-center mb-2">
+            <div className="bg-red-500/10 p-4 rounded-full">
+              <AlertTriangle className="h-8 w-8 text-red-500" />
+            </div>
+          </div>
         )}
-        <Button
-          variant={variant === "destructive" ? "destructive" : "default"}
-          onClick={onConfirm}
-          disabled={isLoading}
+
+        <p
+          className={`text-sm ${
+            variant === "destructive"
+              ? "text-center text-gray-300"
+              : "text-gray-300"
+          }`}
         >
-          {isLoading ? "Zpracovávám..." : confirmText}
-        </Button>
+          {description}
+        </p>
+
+        <div className="border-t border-gray-700/50 pt-4 flex justify-end gap-3 mt-4">
+          {showCancelButton && (
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              disabled={isLoading}
+              className="hover:bg-gray-700/50 text-gray-300 hover:text-white"
+            >
+              {cancelText}
+            </Button>
+          )}
+          <Button
+            variant={variant === "destructive" ? "destructive" : "default"}
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={
+              variant === "destructive"
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : ""
+            }
+          >
+            {isLoading ? "Zpracovávám..." : confirmText}
+          </Button>
+        </div>
       </div>
     </Modal>
   );

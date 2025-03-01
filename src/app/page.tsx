@@ -521,7 +521,6 @@ export default function Home() {
             : ""
         }
         confirmText="Smazat"
-        cancelText="Zrušit"
         variant="destructive"
         showCancelButton={false}
         showCloseButton={true}
@@ -534,18 +533,18 @@ export default function Home() {
         title="Vítej v Čtenářském deníku!"
         showCloseButton={true}
       >
-        <div className="p-6 space-y-4 max-w-full overflow-x-hidden">
+        <div className="p-5 max-w-full overflow-x-hidden">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-primary/10 p-4 rounded-full">
               <BookOpen className="h-10 w-10 text-primary" />
             </div>
           </div>
 
-          <h3 className="text-lg font-medium text-center">
+          <h3 className="text-lg font-medium text-center text-white">
             Tvůj osobní čtenářský deník
           </h3>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+          <p className="text-sm text-gray-300 text-center">
             Vítej v aplikaci, která ti pomůže sledovat knihy, které čteš, a
             zaznamenávat si k nim poznámky.
           </p>
@@ -556,8 +555,10 @@ export default function Home() {
                 <PlusCircle className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-medium">Přidej své knihy</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h4 className="text-sm font-medium text-white">
+                  Přidej své knihy
+                </h4>
+                <p className="text-sm text-gray-300">
                   Začni přidáním knih, které čteš nebo jsi přečetl(a).
                 </p>
               </div>
@@ -568,8 +569,10 @@ export default function Home() {
                 <PenLine className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-medium">Zaznamenávej poznámky</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h4 className="text-sm font-medium text-white">
+                  Zaznamenávej poznámky
+                </h4>
+                <p className="text-sm text-gray-300">
                   Ke každé knize si můžeš přidat libovolné množství poznámek.
                 </p>
               </div>
@@ -580,8 +583,10 @@ export default function Home() {
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-medium">Generuj AI shrnutí</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h4 className="text-sm font-medium text-white">
+                  Generuj AI shrnutí
+                </h4>
+                <p className="text-sm text-gray-300">
                   Nech si vygenerovat shrnutí tvých poznámek pomocí umělé
                   inteligence.
                 </p>
@@ -589,10 +594,10 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-center mt-6">
+          <div className="pt-4 border-t border-gray-700/50 flex justify-center mt-6">
             <Button
               onClick={() => setShowWelcome(false)}
-              className="rounded-full"
+              className="rounded-full bg-primary hover:bg-primary/90"
             >
               Začít používat aplikaci
             </Button>
@@ -607,24 +612,26 @@ export default function Home() {
         title="Klávesové zkratky"
         showCloseButton={true}
       >
-        <div className="p-6 max-w-full overflow-x-hidden">
+        <div className="p-5 max-w-full overflow-x-hidden">
           <div className="space-y-4">
             <div className="space-y-2">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-sm">Vyhledávání</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-mono">
+              <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
+                <span className="text-sm text-gray-300">Vyhledávání</span>
+                <kbd className="px-2 py-1 bg-gray-800 rounded-md text-xs font-mono text-gray-300">
                   Ctrl + /
                 </kbd>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-sm">Přidat novou knihu</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-mono">
+              <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
+                <span className="text-sm text-gray-300">
+                  Přidat novou knihu
+                </span>
+                <kbd className="px-2 py-1 bg-gray-800 rounded-md text-xs font-mono text-gray-300">
                   Ctrl + B
                 </kbd>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-sm">Zavřít formulář</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-mono">
+              <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
+                <span className="text-sm text-gray-300">Zavřít formulář</span>
+                <kbd className="px-2 py-1 bg-gray-800 rounded-md text-xs font-mono text-gray-300">
                   Esc
                 </kbd>
               </div>
@@ -632,7 +639,7 @@ export default function Home() {
 
             <div className="flex items-start gap-3 mt-4 bg-amber-500/10 p-3 rounded-md">
               <Info className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-700 dark:text-amber-400">
+              <p className="text-sm text-amber-400">
                 Klávesové zkratky fungují pouze když není aktivní žádné textové
                 pole.
               </p>

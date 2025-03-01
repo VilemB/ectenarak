@@ -63,57 +63,61 @@ export function Modal({
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="min-h-screen px-4 flex items-center justify-center">
+            <div
+              className="min-h-screen px-4 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm"
                 aria-hidden="true"
-                onClick={onClose} // Direct click handler on the backdrop
+                onClick={(e) => {
+                  e.stopPropagation(); // Stop propagation to prevent book toggle
+                  onClose();
+                }}
               />
 
               {/* Modal */}
               <motion.div
                 ref={modalRef}
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{
                   type: "spring",
-                  damping: 25,
-                  stiffness: 300,
+                  damping: 30,
+                  stiffness: 350,
                 }}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-200"
+                className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl border border-gray-700/50 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10"
                 onClick={(e) => e.stopPropagation()} // Prevent clicks from reaching the backdrop
               >
                 {title && (
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <div className="flex items-center justify-between p-5 border-b border-gray-700/50">
+                    <h3 className="text-xl font-semibold text-white">
                       {title}
                     </h3>
                     {showCloseButton && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-full"
+                        className="h-8 w-8 rounded-full hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
                         onClick={onClose}
                         aria-label="Close modal"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5" />
                         <span className="sr-only">Zavřít</span>
                       </Button>
                     )}
                   </div>
                 )}
-                <div className="overflow-auto max-h-[calc(90vh-4rem)]">
+                <div className="overflow-auto max-h-[calc(90vh-5rem)]">
                   {description && (
-                    <div className="p-4 pt-6">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {description}
-                      </p>
+                    <div className="px-5 pt-4">
+                      <p className="text-sm text-gray-300">{description}</p>
                     </div>
                   )}
                   {children}

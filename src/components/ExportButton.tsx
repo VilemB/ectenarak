@@ -438,11 +438,11 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
         title={`Exportovat ${book.title}`}
         showCloseButton={true}
       >
-        <div className="p-4 max-w-full overflow-x-hidden">
+        <div className="p-5 max-w-full overflow-x-hidden">
           <div className="grid grid-cols-1 gap-3">
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportAsText();
@@ -453,7 +453,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
                 <FileText className="h-5 w-5 mr-3 text-blue-500" />
                 <div>
                   <div className="font-medium">Textový formát</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-400 mt-0.5">
                     Jednoduchý textový soubor s poznámkami a shrnutím
                   </div>
                 </div>
@@ -462,7 +462,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
 
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportAsPDF();
@@ -473,7 +473,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
                 <FileIcon className="h-5 w-5 mr-3 text-red-500" />
                 <div>
                   <div className="font-medium">PDF formát</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-400 mt-0.5">
                     Formátovaný PDF dokument s poznámkami a shrnutím
                   </div>
                 </div>
@@ -482,7 +482,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
 
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportForMaturita();
@@ -493,7 +493,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
                 <FileText className="h-5 w-5 mr-3 text-amber-500" />
                 <div>
                   <div className="font-medium">Maturitní formát (TXT)</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-400 mt-0.5">
                     Textový soubor strukturovaný pro přípravu k maturitě
                   </div>
                 </div>
@@ -502,7 +502,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
 
             <Button
               variant="outline"
-              className="justify-start text-left h-auto py-3 px-4"
+              className="justify-start text-left h-auto py-3 px-4 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 exportForMaturitaPDF();
@@ -513,7 +513,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
                 <FileIcon className="h-5 w-5 mr-3 text-amber-500" />
                 <div>
                   <div className="font-medium">Maturitní formát (PDF)</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-400 mt-0.5">
                     PDF dokument strukturovaný pro přípravu k maturitě
                   </div>
                 </div>

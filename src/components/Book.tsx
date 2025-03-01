@@ -279,7 +279,12 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     <motion.div
       variants={listItemVariants}
       className="bg-card rounded-lg border border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer"
-      onClick={() => notes.length > 0 && setIsExpanded(!isExpanded)}
+      onClick={() => {
+        // Only toggle expansion if there are notes and no modal is open
+        if (notes.length > 0 && !deleteModal.isOpen && !summaryModal) {
+          setIsExpanded(!isExpanded);
+        }
+      }}
     >
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -640,7 +645,6 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             : "Opravdu chceš smazat tuto poznámku?"
         }
         confirmText="Smazat"
-        cancelText="Zrušit"
         variant="destructive"
         showCancelButton={false}
         showCloseButton={true}
