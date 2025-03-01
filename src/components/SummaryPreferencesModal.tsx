@@ -870,27 +870,29 @@ export function SummaryPreferencesModal({
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-gray-700/50 mt-6">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-4 pt-4 border-t border-gray-700/50 mt-6">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                className="flex items-center gap-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white text-xs sm:text-sm"
                 onClick={saveAsDefault}
               >
                 <Save className="h-3.5 w-3.5" />
-                Uložit jako výchozí
+                <span className="hidden sm:inline">Uložit jako výchozí</span>
+                <span className="sm:hidden">Uložit</span>
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1 text-gray-400 hover:text-white hover:bg-gray-700/50"
+                className="flex items-center gap-1 text-gray-400 hover:text-white hover:bg-gray-700/50 text-xs sm:text-sm"
                 onClick={resetToDefaults}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                Obnovit výchozí
+                <span className="hidden sm:inline">Obnovit výchozí</span>
+                <span className="sm:hidden">Obnovit</span>
               </Button>
               <AnimatePresence>
                 {showSavedMessage && (
@@ -905,11 +907,11 @@ export function SummaryPreferencesModal({
                 )}
               </AnimatePresence>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center w-full sm:w-auto">
               <Button
                 type="submit"
                 disabled={isGenerating}
-                className="flex items-center gap-1 bg-primary hover:bg-primary/90"
+                className="flex items-center gap-1 bg-primary hover:bg-primary/90 w-full sm:w-auto justify-center"
               >
                 {isGenerating ? (
                   <>
