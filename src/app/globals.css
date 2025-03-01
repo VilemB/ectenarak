@@ -52,6 +52,33 @@
     border: 1px solid var(--border);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
+
+  /* Search input styles for better visibility */
+  input[type="text"][placeholder="Hledat knihy..."] {
+    color: white;
+    background-color: rgba(30, 41, 59, 0.8);
+  }
+
+  input[type="text"][placeholder="Hledat knihy..."]:focus {
+    background-color: rgba(30, 41, 59, 0.95);
+  }
+
+  input[type="text"][placeholder="Hledat knihy..."]::placeholder {
+    color: rgba(148, 163, 184, 0.8);
+  }
+
+  /* Search icon styles with glow effect */
+  input[type="text"][placeholder="Hledat knihy..."] + div svg,
+  input[type="text"][placeholder="Hledat knihy..."] ~ div svg,
+  .group-focus-within svg {
+    color: var(--primary);
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+  }
+
+  /* Enhanced search icon on focus */
+  .group-focus-within svg {
+    filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.5));
+  }
 }
 
 @layer components {

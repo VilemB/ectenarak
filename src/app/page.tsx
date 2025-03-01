@@ -227,17 +227,31 @@ export default function Home() {
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-muted-foreground" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-200 group-focus-within:text-primary">
+                  <Search className="h-4 w-4 text-primary group-focus-within:text-primary transition-colors duration-200" />
                 </div>
                 <input
                   type="text"
                   placeholder="Hledat knihy..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="py-2 pl-10 pr-4 block w-64 rounded-full border border-border/50 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm transition-all bg-secondary/50"
+                  className="py-2.5 pl-10 pr-10 block w-full rounded-full border border-border/50 
+                  text-white placeholder:text-gray-400 
+                  focus:ring-2 focus:ring-primary focus:border-transparent 
+                  shadow-sm bg-secondary/70 focus:bg-secondary/90 
+                  transition-all duration-200
+                  focus:scale-[1.02] transform-gpu"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-primary hover:text-primary/80 transition-colors duration-200"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Clear search</span>
+                  </button>
+                )}
               </div>
               <Button
                 onClick={() => setShowAddForm(!showAddForm)}
@@ -250,7 +264,7 @@ export default function Home() {
                 onClick={() => setShowKeyboardShortcuts(true)}
                 variant="icon"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground"
+                className="text-primary hover:text-primary/80"
                 title="Klávesové zkratky"
               >
                 <Keyboard className="h-5 w-5" />
@@ -288,17 +302,26 @@ export default function Home() {
                 exit={{ opacity: 0, height: 0 }}
                 className="md:hidden py-3"
               >
-                <div className="relative mb-3">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-muted-foreground" />
+                <div className="relative mb-3 group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-200 group-focus-within:text-primary">
+                    <Search className="h-4 w-4 text-primary group-focus-within:text-primary transition-colors duration-200" />
                   </div>
                   <input
                     type="text"
                     placeholder="Hledat knihy..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="py-2 pl-10 pr-4 block w-full rounded-full border border-border/50 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary/50"
+                    className="text-white placeholder:text-gray-400 py-2.5 pl-10 pr-10 block w-full rounded-full border border-border/50 focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary/70 focus:bg-secondary/90 transition-all duration-200 focus:scale-[1.02] transform-gpu"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-primary hover:text-primary/80 transition-colors duration-200"
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Clear search</span>
+                    </button>
+                  )}
                 </div>
                 <div className="flex justify-center">
                   <Button
@@ -319,6 +342,40 @@ export default function Home() {
       </motion.header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {searchQuery && filteredBooks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-4 text-sm text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
+          >
+            <Search className="h-3.5 w-3.5 mr-2 text-primary" />
+            Nalezeno{" "}
+            <span className="font-medium text-primary mx-1">
+              {filteredBooks.length}
+            </span>
+            {filteredBooks.length === 1
+              ? "výsledek"
+              : filteredBooks.length >= 2 && filteredBooks.length <= 4
+              ? "výsledky"
+              : "výsledků"}
+            pro &quot;
+            <span className="text-white font-medium border-b border-primary/50 pb-0.5">
+              {searchQuery}
+            </span>
+            &quot;
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2 h-7 px-2 text-xs hover:bg-primary/10 hover:text-primary"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-3.5 w-3.5 mr-1" />
+              Zrušit
+            </Button>
+          </motion.div>
+        )}
+
         <AnimatePresence>
           {showAddForm && (
             <motion.div
@@ -494,6 +551,7 @@ export default function Home() {
                 initial="hidden"
                 animate="visible"
                 className="grid grid-cols-1 gap-6"
+                key={searchQuery}
               >
                 {filteredBooks.map((book) => (
                   <BookComponent
