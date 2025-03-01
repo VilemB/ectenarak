@@ -910,19 +910,27 @@ export function SummaryPreferencesModal({
             <div className="flex items-center w-full sm:w-auto">
               <Button
                 type="submit"
+                variant="outline"
+                size="sm"
                 disabled={isGenerating}
-                className="flex items-center gap-1 bg-primary hover:bg-primary/90 w-full sm:w-auto justify-center"
+                className={`
+                  flex items-center gap-2 w-full sm:w-auto justify-center 
+                  bg-amber-500/10 text-amber-500 border border-amber-500/20 
+                  hover:bg-amber-500/20 transition-all duration-200 
+                  shadow-sm hover:shadow
+                  ${isGenerating ? "opacity-70 cursor-not-allowed" : ""}
+                `}
               >
                 {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generuji...
-                  </>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    <span>Generuji...</span>
+                  </div>
                 ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Generovat shrnutí
-                  </>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Generovat shrnutí</span>
+                  </div>
                 )}
               </Button>
             </div>
