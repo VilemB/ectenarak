@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Book, Note } from "@/types";
-import {
-  Download,
-  FileText,
-  Loader2,
-  ChevronDown,
-  FileIcon,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Download, FileText, Loader2, X, FileIcon } from "lucide-react";
 import jsPDF from "jspdf";
 
 interface ExportButtonProps {
@@ -18,7 +11,7 @@ interface ExportButtonProps {
 
 export function ExportButton({ book, notes }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -78,7 +71,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting notes:", error);
     } finally {
       setIsExporting(false);
-      setShowOptions(false);
+      setShowModal(false);
     }
   };
 
@@ -181,7 +174,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting PDF:", error);
     } finally {
       setIsExporting(false);
-      setShowOptions(false);
+      setShowModal(false);
     }
   };
 
@@ -240,7 +233,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting maturita format:", error);
     } finally {
       setIsExporting(false);
-      setShowOptions(false);
+      setShowModal(false);
     }
   };
 
@@ -409,7 +402,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
       console.error("Error exporting maturita PDF:", error);
     } finally {
       setIsExporting(false);
-      setShowOptions(false);
+      setShowModal(false);
     }
   };
 
@@ -421,7 +414,7 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
         className="bg-blue-50/30 text-blue-700 border-blue-200 hover:bg-blue-100/40 rounded-full transition-all duration-200 shadow-sm hover:shadow flex items-center gap-1"
         onClick={(e) => {
           e.stopPropagation();
-          setShowOptions(!showOptions);
+          setShowModal(true);
         }}
         disabled={isExporting}
       >
@@ -434,70 +427,141 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
           <>
             <Download className="h-3.5 w-3.5 mr-1" />
             Export
-            <ChevronDown
-              className={`h-3.5 w-3.5 ml-1 transition-transform duration-200 ${
-                showOptions ? "rotate-180" : ""
-              }`}
-            />
           </>
         )}
       </Button>
 
-      <AnimatePresence>
-        {showOptions && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 overflow-hidden"
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isExporting) setShowModal(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="py-1">
-              <button
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                Exportovat {book.title}
+              </h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
                 onClick={(e) => {
                   e.stopPropagation();
-                  exportAsText();
+                  if (!isExporting) setShowModal(false);
                 }}
-                className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                disabled={isExporting}
               >
-                <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                Exportovat jako text
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  exportAsPDF();
-                }}
-                className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-              >
-                <FileIcon className="h-4 w-4 mr-2 text-red-500" />
-                Exportovat jako PDF
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  exportForMaturita();
-                }}
-                className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-              >
-                <FileText className="h-4 w-4 mr-2 text-amber-500" />
-                Maturitní formát (TXT)
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  exportForMaturitaPDF();
-                }}
-                className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-              >
-                <FileIcon className="h-4 w-4 mr-2 text-amber-500" />
-                Maturitní formát (PDF)
-              </button>
+                <X className="h-4 w-4" />
+                <span className="sr-only">Zavřít</span>
+              </Button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Vyberte formát pro export vašich poznámek a shrnutí.
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  variant="outline"
+                  className="justify-start text-left h-auto py-3 px-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportAsText();
+                  }}
+                  disabled={isExporting}
+                >
+                  <div className="flex items-center">
+                    <FileText className="h-5 w-5 mr-3 text-blue-500" />
+                    <div>
+                      <div className="font-medium">Textový formát</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Jednoduchý textový soubor s poznámkami a shrnutím
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="justify-start text-left h-auto py-3 px-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportAsPDF();
+                  }}
+                  disabled={isExporting}
+                >
+                  <div className="flex items-center">
+                    <FileIcon className="h-5 w-5 mr-3 text-red-500" />
+                    <div>
+                      <div className="font-medium">PDF formát</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Formátovaný PDF dokument s poznámkami a shrnutím
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="justify-start text-left h-auto py-3 px-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportForMaturita();
+                  }}
+                  disabled={isExporting}
+                >
+                  <div className="flex items-center">
+                    <FileText className="h-5 w-5 mr-3 text-amber-500" />
+                    <div>
+                      <div className="font-medium">Maturitní formát (TXT)</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Textový soubor strukturovaný pro přípravu k maturitě
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="justify-start text-left h-auto py-3 px-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportForMaturitaPDF();
+                  }}
+                  disabled={isExporting}
+                >
+                  <div className="flex items-center">
+                    <FileIcon className="h-5 w-5 mr-3 text-amber-500" />
+                    <div>
+                      <div className="font-medium">Maturitní formát (PDF)</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        PDF dokument strukturovaný pro přípravu k maturitě
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+              <Button
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isExporting) setShowModal(false);
+                }}
+                disabled={isExporting}
+              >
+                Zrušit
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
