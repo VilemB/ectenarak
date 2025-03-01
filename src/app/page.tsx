@@ -339,7 +339,7 @@ export default function Home() {
                   className="h-8 w-8"
                   onClick={() => setShowAddForm(false)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
               <form onSubmit={handleAddBook} className="space-y-4">
