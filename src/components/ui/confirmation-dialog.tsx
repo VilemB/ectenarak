@@ -36,7 +36,6 @@ export function ConfirmationDialog({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      description={description}
       showCloseButton={showCloseButton}
     >
       <div className="p-5 space-y-4">
