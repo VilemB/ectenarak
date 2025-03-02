@@ -17,9 +17,9 @@ const NoteSchema = new mongoose.Schema({
 
 const BookSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: String,
     required: true,
+    index: true,
   },
   title: {
     type: String,

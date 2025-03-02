@@ -20,7 +20,8 @@ import { motion } from "framer-motion";
 import { LogOut, Shield, User, AlertTriangle } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, loading, error, sessionStatus, isAuthenticated } = useAuth();
+  const { user, loading, error, sessionStatus, isAuthenticated, signOut } =
+    useAuth();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
@@ -54,6 +55,8 @@ export default function SettingsPage() {
       setIsDeleting(true);
       await deleteUser();
       toast.success("Your account has been deleted");
+      // Sign out the user after successful account deletion
+      await signOut();
       router.push("/");
     } catch (error) {
       console.error("Error deleting account:", error);

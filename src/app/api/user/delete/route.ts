@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
-import Book from "@/models/Book";
+import mongoose from "mongoose";
 
 export async function DELETE() {
   try {
@@ -18,16 +18,31 @@ export async function DELETE() {
     }
 
     const userId = session.user.id;
+    const userEmail = session.user.email;
+
+    if (!userEmail) {
+      return NextResponse.json(
+        { message: "Email uživatele nebyl nalezen" },
+        { status: 404 }
+      );
+    }
 
     await dbConnect();
 
-    // Delete user's books
-    await Book.deleteMany({ userId });
+    // Use the native MongoDB driver to bypass Mongoose's schema validation
+    const db = mongoose.connection.db;
+
+    if (!db) {
+      throw new Error("Database connection not established");
+    }
+
+    // Delete user's books using the native MongoDB collection
+    await db.collection("books").deleteMany({ userId: userId.toString() });
 
     // Delete user account
-    const result = await User.findByIdAndDelete(userId);
+    const userResult = await User.findOneAndDelete({ email: userEmail });
 
-    if (!result) {
+    if (!userResult) {
       return NextResponse.json(
         { message: "Uživatel nebyl nalezen" },
         { status: 404 }
