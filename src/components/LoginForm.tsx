@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FcGoogle } from "react-icons/fc";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, BookOpen, LogIn, UserPlus } from "lucide-react";
 
 export default function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -93,12 +93,15 @@ export default function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg border-border/60">
-      <CardHeader className="space-y-1">
+    <Card className="w-full max-w-md mx-auto shadow-lg border-border/60 animate-fadeIn">
+      <CardHeader className="space-y-2">
+        <div className="flex justify-center mb-2">
+          <BookOpen className="h-10 w-10 text-primary" />
+        </div>
         <CardTitle className="text-2xl font-bold text-center">
           Čtenářský deník
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-muted-foreground">
           Přihlaste se nebo si vytvořte účet pro přístup k vašemu čtenářskému
           deníku
         </CardDescription>
@@ -107,51 +110,67 @@ export default function LoginForm() {
         <Tabs
           defaultValue="login"
           onValueChange={(value: string) => setIsSignUp(value === "signup")}
+          className="w-full"
         >
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login">Přihlášení</TabsTrigger>
-            <TabsTrigger value="signup">Registrace</TabsTrigger>
+            <TabsTrigger value="login" className="transition-all duration-200">
+              Přihlášení
+            </TabsTrigger>
+            <TabsTrigger value="signup" className="transition-all duration-200">
+              Registrace
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="vas@email.cz"
+                    placeholder="jannovak@example.cz"
                     value={email}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setEmail(e.target.value)
                     }
+                    className="transition-all duration-200 focus:border-primary/50"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Heslo</Label>
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Heslo
+                  </Label>
                   <Input
                     id="password"
                     type="password"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setPassword(e.target.value)
                     }
+                    className="transition-all duration-200 focus:border-primary/50"
                     required
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && (
+                  <p className="text-sm text-destructive font-medium bg-destructive/10 p-2 rounded-md">
+                    {error}
+                  </p>
+                )}
                 <Button
                   type="submit"
-                  className="w-full font-medium"
+                  className="w-full font-medium transition-all duration-300 hover:shadow-md hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]"
                   size="lg"
                   disabled={loading}
                 >
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Mail className="mr-2 h-4 w-4" />
+                    <LogIn className="mr-2 h-4 w-4" />
                   )}
                   Přihlásit se
                 </Button>
@@ -163,54 +182,71 @@ export default function LoginForm() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Jméno</Label>
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Jméno
+                  </Label>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Vaše jméno"
+                    placeholder="Jan Novák"
                     value={name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setName(e.target.value)
                     }
+                    className="transition-all duration-200 focus:border-primary/50"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email-signup">Email</Label>
+                  <Label htmlFor="email-signup" className="text-sm font-medium">
+                    Email
+                  </Label>
                   <Input
                     id="email-signup"
                     type="email"
-                    placeholder="vas@email.cz"
+                    placeholder="jannovak@example.cz"
                     value={email}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setEmail(e.target.value)
                     }
+                    className="transition-all duration-200 focus:border-primary/50"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-signup">Heslo</Label>
+                  <Label
+                    htmlFor="password-signup"
+                    className="text-sm font-medium"
+                  >
+                    Heslo
+                  </Label>
                   <Input
                     id="password-signup"
                     type="password"
+                    placeholder="Minimálně 6 znaků"
                     value={password}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setPassword(e.target.value)
                     }
+                    className="transition-all duration-200 focus:border-primary/50"
                     required
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && (
+                  <p className="text-sm text-destructive font-medium bg-destructive/10 p-2 rounded-md">
+                    {error}
+                  </p>
+                )}
                 <Button
                   type="submit"
-                  className="w-full font-medium"
+                  className="w-full font-medium transition-all duration-300 hover:shadow-md hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]"
                   size="lg"
                   disabled={loading}
                 >
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Mail className="mr-2 h-4 w-4" />
+                    <UserPlus className="mr-2 h-4 w-4" />
                   )}
                   Registrovat se
                 </Button>
@@ -232,7 +268,7 @@ export default function LoginForm() {
         </div>
         <Button
           variant="outline"
-          className="w-full flex items-center justify-center gap-2 h-11 font-medium hover:bg-secondary/80 hover:text-foreground transition-all duration-200 border-border/60"
+          className="w-full flex items-center justify-center gap-2 h-11 font-medium transition-all duration-300 border-border/60 hover:bg-accent/20 hover:border-primary/60 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
           onClick={handleGoogleSignIn}
           disabled={loading}
           size="lg"
