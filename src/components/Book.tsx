@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -274,6 +274,21 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       setIsGeneratingAuthorInfo(false);
     }
   };
+
+  // Show author info automatically if it exists and was just added
+  useEffect(() => {
+    // If the book has an author summary, check if we should show it automatically
+    if (book.authorSummary) {
+      // Check if this book was recently added (within the last 5 seconds)
+      const bookAddedRecently =
+        new Date().getTime() - new Date(book.createdAt).getTime() < 5000;
+
+      if (bookAddedRecently) {
+        // Show the author info panel automatically for newly added books
+        setIsAuthorInfoVisible(true);
+      }
+    }
+  }, [book.id, book.authorSummary, book.createdAt]);
 
   return (
     <motion.div

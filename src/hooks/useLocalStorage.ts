@@ -29,10 +29,38 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 
       // Save to local storage
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
+
+      // Dispatch a custom event to notify other components using the same key
+      window.dispatchEvent(
+        new CustomEvent("local-storage-update", {
+          detail: { key, value: valueToStore },
+        })
+      );
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
     }
   };
+
+  // Listen for changes to localStorage from other components
+  useEffect(() => {
+    const handleStorageUpdate = (e: CustomEvent<{ key: string; value: T }>) => {
+      if (e.detail.key === key) {
+        setStoredValue(e.detail.value);
+      }
+    };
+
+    window.addEventListener(
+      "local-storage-update",
+      handleStorageUpdate as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "local-storage-update",
+        handleStorageUpdate as EventListener
+      );
+    };
+  }, [key]);
 
   return [storedValue, setValue] as const;
 }

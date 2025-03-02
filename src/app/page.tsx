@@ -170,6 +170,7 @@ export default function Home() {
       }
     }
 
+    // Create the new book with the current timestamp
     const newBook: Book = {
       id: generateId(),
       title: title,
@@ -178,7 +179,10 @@ export default function Home() {
       ...(authorSummary && { authorSummary }),
     };
 
+    // Update the books state with the new book
     setBooks([...books, newBook]);
+
+    // Reset form state
     setNewBookTitle("");
     setNewBookAuthor("");
     setIncludeAuthorSummary(false);
