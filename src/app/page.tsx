@@ -24,7 +24,6 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import LoginForm from "@/components/LoginForm";
-import Navbar from "@/components/Navbar";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,7 +49,7 @@ const formVariants = {
 };
 
 export default function Home() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const [books, setBooks] = useLocalStorage<Book[]>("books", []);
   const [newBookTitle, setNewBookTitle] = useState("");
   const [newBookAuthor, setNewBookAuthor] = useState("");
@@ -253,15 +252,6 @@ export default function Home() {
 
   return (
     <>
-      <Navbar
-        user={user}
-        signOut={signOut}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        setShowAddForm={setShowAddForm}
-        setShowKeyboardShortcuts={setShowKeyboardShortcuts}
-      />
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {searchQuery && filteredBooks.length > 0 && (
           <motion.div
