@@ -1,6 +1,54 @@
-# Reader's Journal
+# Čtenářský deník
 
-A simple Next.js application that helps you take notes about books and generate AI-powered summaries using OpenAI's GPT-4.
+Aplikace pro správu vašich knih a poznámek s podporou AI pro generování shrnutí.
+
+## Nové funkce
+
+### MongoDB integrace
+
+Aplikace nyní používá MongoDB pro ukládání dat:
+
+- **Uživatelé**: Každý uživatel má svůj vlastní účet a knihovnu knih
+- **Knihy**: Knihy jsou uloženy v MongoDB a propojeny s uživatelem
+- **Autoři**: Informace o autorech jsou sdíleny mezi uživateli
+- **Poznámky**: Poznámky jsou uloženy jako součást knih
+
+### Optimalizace využití tokenů
+
+Pro snížení nákladů na API volání OpenAI jsme implementovali následující optimalizace:
+
+1. **Sdílení shrnutí autorů**: Když uživatel požádá o shrnutí autora, systém nejprve zkontroluje, zda již existuje shrnutí tohoto autora v databázi. Pokud ano, použije se existující shrnutí místo generování nového.
+
+2. **Cachování výsledků**: Všechna vygenerovaná shrnutí jsou uložena v MongoDB pro budoucí použití.
+
+## Instalace
+
+1. Naklonujte repozitář
+2. Nainstalujte závislosti: `npm install`
+3. Vytvořte soubor `.env.local` s následujícími proměnnými:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/ctenarsky-denik
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+4. Spusťte vývojový server: `npm run dev`
+
+## Použití
+
+1. Přihlaste se pomocí e-mailu a jména
+2. Přidejte knihy do své knihovny
+3. Volitelně nechte vygenerovat shrnutí o autorovi
+4. Přidávejte poznámky ke knihám
+5. Generujte AI shrnutí vašich poznámek
+
+## Technologie
+
+- Next.js
+- React
+- TypeScript
+- MongoDB
+- Mongoose
+- OpenAI API
+- Tailwind CSS
 
 ## Features
 

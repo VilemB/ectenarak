@@ -21,10 +21,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { generateId } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useAuth } from "@/hooks/useAuth";
+import LoginForm from "@/components/LoginForm";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,6 +51,7 @@ const formVariants = {
 };
 
 export default function Home() {
+  const { user, loading, signOut } = useAuth();
   const [books, setBooks] = useLocalStorage<Book[]>("books", []);
   const [newBookTitle, setNewBookTitle] = useState("");
   const [newBookAuthor, setNewBookAuthor] = useState("");
@@ -126,67 +128,79 @@ export default function Home() {
       return;
     }
 
-    // Check for duplicates
-    if (
-      books.some(
-        (book) =>
-          book.title.toLowerCase() === title.toLowerCase() &&
-          book.author.toLowerCase() === author.toLowerCase()
-      )
-    ) {
-      setError("Tato kniha od tohoto autora již existuje");
-      return;
-    }
+    try {
+      // Create the book in MongoDB
+      const response = await fetch("/api/books", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          title,
+          author,
+        }),
+      });
 
-    let authorSummary: string | undefined;
-
-    if (includeAuthorSummary) {
-      try {
-        setIsGeneratingAuthorSummary(true);
-        const response = await fetch("/api/generate-author-summary", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            author: author,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to generate author summary");
-        }
-
+      if (!response.ok) {
         const data = await response.json();
-        authorSummary = data.summary;
-      } catch (error) {
-        console.error("Error generating author summary:", error);
-        setError(
-          "Nepodařilo se vygenerovat shrnutí autora. Kniha bude přidána bez shrnutí."
-        );
-        // Continue without author summary
-      } finally {
-        setIsGeneratingAuthorSummary(false);
+        throw new Error(data.error || "Failed to create book");
       }
+
+      const data = await response.json();
+      const newBook = data.book;
+
+      // If includeAuthorSummary is true, generate the author summary
+      if (includeAuthorSummary) {
+        try {
+          setIsGeneratingAuthorSummary(true);
+
+          // Check if the book already has an author summary
+          if (!newBook.authorSummary) {
+            const summaryResponse = await fetch(
+              "/api/generate-author-summary",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  author: author,
+                }),
+              }
+            );
+
+            if (!summaryResponse.ok) {
+              throw new Error("Failed to generate author summary");
+            }
+
+            const summaryData = await summaryResponse.json();
+            newBook.authorSummary = summaryData.summary;
+          }
+        } catch (error) {
+          console.error("Error generating author summary:", error);
+          setError(
+            "Nepodařilo se vygenerovat shrnutí autora. Kniha bude přidána bez shrnutí."
+          );
+        } finally {
+          setIsGeneratingAuthorSummary(false);
+        }
+      }
+
+      // Update the local state with the new book
+      setBooks([...books, newBook]);
+
+      // Reset form state
+      setNewBookTitle("");
+      setNewBookAuthor("");
+      setIncludeAuthorSummary(false);
+      setShowAddForm(false);
+    } catch (error) {
+      console.error("Error adding book:", error);
+      setError(
+        error instanceof Error ? error.message : "Nepodařilo se přidat knihu"
+      );
     }
-
-    // Create the new book with the current timestamp
-    const newBook: Book = {
-      id: generateId(),
-      title: title,
-      author: author,
-      createdAt: new Date().toISOString(),
-      ...(authorSummary && { authorSummary }),
-    };
-
-    // Update the books state with the new book
-    setBooks([...books, newBook]);
-
-    // Reset form state
-    setNewBookTitle("");
-    setNewBookAuthor("");
-    setIncludeAuthorSummary(false);
-    setShowAddForm(false);
   };
 
   const handleDeleteBook = (bookId: string) => {
@@ -212,6 +226,32 @@ export default function Home() {
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg">Načítání...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-center mb-8">
+            Čtenářský deník
+          </h1>
+          <div className="mt-8">
+            <LoginForm />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -273,6 +313,16 @@ export default function Home() {
               >
                 <Keyboard className="h-5 w-5" />
               </Button>
+              {user && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Odhlásit se
+                </Button>
+              )}
             </div>
 
             <div className="md:hidden flex items-center space-x-2">

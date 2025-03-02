@@ -254,11 +254,12 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       }
 
       const data = await response.json();
+      const summary = data.summary;
 
       // Update the book with the author summary
       const updatedBooks = books.map((b) => {
         if (b.id === book.id) {
-          return { ...b, authorSummary: data.summary };
+          return { ...b, authorSummary: summary };
         }
         return b;
       });

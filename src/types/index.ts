@@ -4,6 +4,8 @@ export interface Book {
   author: string;
   createdAt: string;
   authorSummary?: string;
+  authorId?: string;
+  userId?: string;
 }
 
 export interface Note {
@@ -13,4 +15,18 @@ export interface Note {
   createdAt: string;
   isAISummary?: boolean;
   isError?: boolean;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface Author {
+  id: string;
+  name: string;
+  summary?: string;
+  createdAt: string;
+  updatedAt: string;
 }
