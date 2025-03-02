@@ -4,22 +4,42 @@ import { getToken } from "next-auth/jwt";
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
+  // Log the request URL for debugging
+  console.log(`Middleware processing: ${request.nextUrl.pathname}`);
+
+  // Only protect specific routes
+  const protectedRoutes = ["/settings", "/api/user/delete"];
+  const isProtectedRoute = protectedRoutes.some(
+    (route) =>
+      request.nextUrl.pathname === route ||
+      request.nextUrl.pathname.startsWith(route)
+  );
+
+  // If it's not a protected route, allow access
+  if (!isProtectedRoute) {
+    console.log("Not a protected route, allowing access");
+    return NextResponse.next();
+  }
+
+  // For protected routes, check authentication
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET || "your-secret-key",
   });
 
-  // If the user is not logged in and trying to access a protected route
-  if (!token && !request.nextUrl.pathname.startsWith("/api/auth")) {
-    // Allow access to the home page for login
-    if (request.nextUrl.pathname === "/") {
-      return NextResponse.next();
-    }
+  // Log token status for debugging
+  console.log(`Token exists: ${!!token}`);
 
+  // If not authenticated and trying to access a protected route
+  if (!token) {
+    console.log(
+      `Redirecting from ${request.nextUrl.pathname} to home (not authenticated)`
+    );
     // Redirect to the home page for login
     return NextResponse.redirect(new URL("/", request.url));
   }
 
+  // User is authenticated, allow access to protected route
   return NextResponse.next();
 }
 

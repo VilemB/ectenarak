@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface NavbarProps {
   user: {
@@ -40,6 +41,11 @@ export default function Navbar({
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const router = useRouter();
+
+  const navigateToSettings = () => {
+    router.push("/settings");
+  };
 
   return (
     <motion.header
@@ -148,16 +154,20 @@ export default function Navbar({
                           </p>
                         </div>
 
-                        <Link
-                          href="/settings"
-                          className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/20 hover:text-primary transition-all duration-200 mb-1 rounded-md group"
-                          onClick={() => setUserMenuOpen(false)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-primary transition-all duration-200 mb-1 rounded-md group"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            navigateToSettings();
+                          }}
                         >
                           <Settings className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
                           <span className="group-hover:translate-x-0.5 transition-transform">
                             Nastavení
                           </span>
-                        </Link>
+                        </Button>
 
                         <Button
                           variant="ghost"
@@ -193,13 +203,15 @@ export default function Navbar({
 
             {/* User profile button (mobile) */}
             {user && (
-              <Link
-                href="/settings"
+              <Button
+                variant="ghost"
+                size="icon"
                 className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-200"
                 aria-label="User profile"
+                onClick={navigateToSettings}
               >
                 {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-              </Link>
+              </Button>
             )}
 
             {/* Mobile menu toggle */}
@@ -294,16 +306,20 @@ export default function Navbar({
                       </div>
                     </div>
 
-                    <Link
-                      href="/settings"
-                      className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/20 hover:text-primary transition-all duration-200 rounded-md group"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-primary transition-all duration-200 rounded-md group"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigateToSettings();
+                      }}
                     >
                       <Settings className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
                       <span className="group-hover:translate-x-0.5 transition-transform">
                         Nastavení
                       </span>
-                    </Link>
+                    </Button>
 
                     <Button
                       variant="ghost"
