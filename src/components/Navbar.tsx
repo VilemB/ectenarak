@@ -44,6 +44,7 @@ export default function Navbar({
   const router = useRouter();
 
   const navigateToSettings = () => {
+    console.log("Navigating to settings page");
     router.push("/settings");
   };
 

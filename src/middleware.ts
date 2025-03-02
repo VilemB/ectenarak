@@ -24,11 +24,11 @@ export async function middleware(request: NextRequest) {
   // For protected routes, check authentication
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET || "your-secret-key",
+    secret: process.env.NEXTAUTH_SECRET,
   });
 
   // Log token status for debugging
-  console.log(`Token exists: ${!!token}`);
+  console.log(`Token exists: ${!!token}`, token);
 
   // If not authenticated and trying to access a protected route
   if (!token) {
@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // User is authenticated, allow access to protected route
+  console.log("User is authenticated, allowing access to protected route");
   return NextResponse.next();
 }
 
