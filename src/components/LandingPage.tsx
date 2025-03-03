@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import LoginForm from "./LoginForm";
 import { useState, useEffect } from "react";
+import Footer from "./Footer";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -25,6 +26,13 @@ export default function LandingPage() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="w-full bg-gradient-to-b from-background via-background/95 to-background relative overflow-hidden">
@@ -41,9 +49,9 @@ export default function LandingPage() {
         ></div>
       </div>
 
-      {/* Landing page navbar - only shown when not logged in */}
+      {/* Landing page navbar - fixed position */}
       <motion.div
-        className="sticky top-0 z-50 backdrop-blur-md bg-background/70 border-b border-border/40 transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/70 border-b border-border/40 transition-all duration-300"
         style={{
           boxShadow: scrollY > 10 ? "0 4px 20px rgba(0, 0, 0, 0.1)" : "none",
           padding: scrollY > 10 ? "0.5rem 0" : "1rem 0",
@@ -55,21 +63,18 @@ export default function LandingPage() {
             <span className="text-xl font-bold">Čtenářský deník</span>
           </div>
           <Button
-            variant="ghost"
+            variant="secondary"
+            size="sm"
             className="hover:bg-primary/10 transition-all duration-300"
-            onClick={() =>
-              document
-                .getElementById("signup-section")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+            onClick={() => scrollToSection("signup-section")}
           >
             Přihlásit se
           </Button>
         </div>
       </motion.div>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+      {/* Hero Section - added padding-top to account for fixed navbar */}
+      <section className="relative overflow-hidden min-h-[90vh] flex items-center pt-16">
         <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* Hero Content */}
@@ -101,12 +106,8 @@ export default function LandingPage() {
               >
                 <Button
                   size="lg"
-                  className="rounded-full px-8 transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-primary/90"
-                  onClick={() =>
-                    document
-                      .getElementById("signup-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
+                  className="transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
+                  onClick={() => scrollToSection("signup-section")}
                 >
                   Začít zdarma
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -114,12 +115,8 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="rounded-full px-8 transition-all duration-300 hover:shadow-lg hover:bg-primary/10 active:scale-95"
-                  onClick={() =>
-                    document
-                      .getElementById("features-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
+                  className="transition-all duration-300 hover:shadow-md hover:bg-primary/10 active:scale-95"
+                  onClick={() => scrollToSection("features-section")}
                 >
                   Prozkoumat funkce
                 </Button>
@@ -132,10 +129,11 @@ export default function LandingPage() {
                 className="pt-4"
               >
                 <motion.div
-                  className="flex justify-center lg:justify-start items-center text-sm text-muted-foreground"
+                  className="flex justify-center lg:justify-start items-center text-sm text-muted-foreground cursor-pointer"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
+                  onClick={() => scrollToSection("features-section")}
                 >
                   <span>Posuňte dolů pro více informací</span>
                   <motion.div
@@ -366,12 +364,8 @@ export default function LandingPage() {
                 >
                   <Button
                     size="lg"
-                    className="rounded-full px-8 transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 bg-gradient-to-r from-primary to-primary/90"
-                    onClick={() =>
-                      document
-                        .getElementById("signup-section")
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
+                    className="transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
+                    onClick={() => scrollToSection("signup-section")}
                   >
                     Vyzkoušet Premium
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -448,31 +442,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-border/40">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <span className="font-medium">Čtenářský deník</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} Všechna práva vyhrazena
-            </div>
-            <div className="flex gap-4">
-              <Button variant="ghost" size="sm">
-                Podmínky
-              </Button>
-              <Button variant="ghost" size="sm">
-                Soukromí
-              </Button>
-              <Button variant="ghost" size="sm">
-                Kontakt
-              </Button>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Use the Footer component instead of inline footer */}
+      <Footer />
     </div>
   );
 }
