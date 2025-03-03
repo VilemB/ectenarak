@@ -50,7 +50,7 @@ const formVariants = {
 
 export default function Home() {
   const { user, loading } = useAuth();
-  const [books, setBooks] = useLocalStorage<Book[]>("books", []);
+  const [books, setBooks] = useState<Book[]>([]);
   const [newBookTitle, setNewBookTitle] = useState("");
   const [newBookAuthor, setNewBookAuthor] = useState("");
   const [error, setError] = useState("");
@@ -67,6 +67,61 @@ export default function Home() {
   const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
     useState(false);
   const [includeAuthorSummary, setIncludeAuthorSummary] = useState(false);
+  const [isLoadingBooks, setIsLoadingBooks] = useState(true);
+
+  // Fetch books from the database when the component mounts or user changes
+  useEffect(() => {
+    const fetchBooks = async () => {
+      if (!user) return;
+
+      setIsLoadingBooks(true);
+      try {
+        const response = await fetch(`/api/books?userId=${user.id}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch books");
+        }
+
+        const data = await response.json();
+
+        // Transform the data to match the Book interface
+        const formattedBooks = data.books.map(
+          (book: {
+            _id: string;
+            title: string;
+            author: string;
+            createdAt: string;
+            authorSummary?: string;
+            authorId?: string;
+            userId: string;
+            notes?: Array<{
+              _id: string;
+              content: string;
+              createdAt: string;
+              isAISummary?: boolean;
+            }>;
+          }) => ({
+            id: book._id,
+            title: book.title,
+            author: book.author,
+            createdAt: book.createdAt,
+            authorSummary: book.authorSummary || null,
+            authorId: book.authorId || null,
+            userId: book.userId,
+            notes: book.notes || [],
+          })
+        );
+
+        setBooks(formattedBooks);
+      } catch (error) {
+        console.error("Error fetching books:", error);
+      } finally {
+        setIsLoadingBooks(false);
+      }
+    };
+
+    fetchBooks();
+  }, [user]);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -145,7 +200,15 @@ export default function Home() {
       }
 
       const data = await response.json();
-      const newBook = data.book;
+      const newBook = {
+        id: data.book.id,
+        title: data.book.title,
+        author: data.book.author,
+        createdAt: data.book.createdAt,
+        authorSummary: data.book.authorSummary || null,
+        authorId: data.book.authorId || null,
+        userId: data.book.userId,
+      };
 
       // If includeAuthorSummary is true, generate the author summary
       if (includeAuthorSummary) {
@@ -200,7 +263,7 @@ export default function Home() {
     }
   };
 
-  const handleDeleteBook = (bookId: string) => {
+  const handleDeleteBook = async (bookId: string) => {
     const bookToDelete = books.find((book) => book.id === bookId);
     if (bookToDelete) {
       setDeleteConfirmation({
@@ -211,10 +274,27 @@ export default function Home() {
     }
   };
 
-  const confirmDeleteBook = () => {
+  const confirmDeleteBook = async () => {
     if (deleteConfirmation) {
-      setBooks(books.filter((book) => book.id !== deleteConfirmation.bookId));
-      setDeleteConfirmation(null);
+      try {
+        const response = await fetch(
+          `/api/books/${deleteConfirmation.bookId}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete book");
+        }
+
+        // Update local state after successful deletion
+        setBooks(books.filter((book) => book.id !== deleteConfirmation.bookId));
+        setDeleteConfirmation(null);
+      } catch (error) {
+        console.error("Error deleting book:", error);
+        setError("Failed to delete book. Please try again.");
+      }
     }
   };
 
@@ -229,7 +309,8 @@ export default function Home() {
     return <LandingPage />;
   }
 
-  if (loading) {
+  // If loading, show loading spinner
+  if (loading || isLoadingBooks) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
