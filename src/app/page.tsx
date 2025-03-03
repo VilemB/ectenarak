@@ -17,6 +17,9 @@ import {
   Sparkles,
   Loader2,
   Plus,
+  ChevronRight,
+  ChevronLeft,
+  User,
 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,6 +51,19 @@ const formVariants = {
   },
 };
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+    },
+  },
+};
+
 export default function Home() {
   const { user, loading } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
@@ -68,6 +84,11 @@ export default function Home() {
     useState(false);
   const [includeAuthorSummary, setIncludeAuthorSummary] = useState(false);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
+  const [formStep, setFormStep] = useState(1);
+  const [titleFocus, setTitleFocus] = useState(false);
+  const [authorFocus, setAuthorFocus] = useState(false);
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [authorTouched, setAuthorTouched] = useState(false);
 
   // Fetch books from the database when the component mounts or user changes
   useEffect(() => {
@@ -177,6 +198,8 @@ export default function Home() {
 
     if (!title || !author) {
       setError("Prosím vyplňte název knihy a autora");
+      setTitleTouched(true);
+      setAuthorTouched(true);
       return;
     }
 
@@ -248,22 +271,42 @@ export default function Home() {
       }
 
       // Update the local state with the new book
-      setBooks([...books, newBook]);
+      setBooks((prevBooks) => [newBook, ...prevBooks]);
 
-      // Reset form state
+      // Reset the form
       setNewBookTitle("");
       setNewBookAuthor("");
       setIncludeAuthorSummary(false);
       setShowAddForm(false);
+      setFormStep(1);
+      setTitleTouched(false);
+      setAuthorTouched(false);
     } catch (error) {
       console.error("Error adding book:", error);
-      setError(
-        error instanceof Error ? error.message : "Nepodařilo se přidat knihu"
-      );
+      setError("Nepodařilo se přidat knihu. Zkuste to prosím znovu.");
     }
   };
 
   const handleDeleteBook = async (bookId: string) => {
+    try {
+      const response = await fetch(`/api/books/${bookId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete book");
+      }
+
+      // Update local state after successful deletion
+      setBooks(books.filter((book) => book.id !== bookId));
+      setDeleteConfirmation(null);
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      setError("Failed to delete book. Please try again.");
+    }
+  };
+
+  const showDeleteConfirmation = (bookId: string) => {
     const bookToDelete = books.find((book) => book.id === bookId);
     if (bookToDelete) {
       setDeleteConfirmation({
@@ -274,34 +317,293 @@ export default function Home() {
     }
   };
 
-  const confirmDeleteBook = async () => {
-    if (deleteConfirmation) {
-      try {
-        const response = await fetch(
-          `/api/books/${deleteConfirmation.bookId}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete book");
-        }
-
-        // Update local state after successful deletion
-        setBooks(books.filter((book) => book.id !== deleteConfirmation.bookId));
-        setDeleteConfirmation(null);
-      } catch (error) {
-        console.error("Error deleting book:", error);
-        setError("Failed to delete book. Please try again.");
-      }
-    }
-  };
-
   const filteredBooks = books.filter(
     (book) =>
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Replace the form JSX with this enhanced version
+  const renderAddBookForm = () => (
+    <AnimatePresence>
+      {showAddForm && (
+        <motion.div
+          variants={formVariants}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          className="bg-card border border-border/40 rounded-xl shadow-lg p-6 mb-8 relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/80"></div>
+
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-foreground flex items-center">
+              <BookText className="h-5 w-5 mr-2 text-primary" />
+              Přidat novou knihu
+            </h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setShowAddForm(false);
+                setFormStep(1);
+                setError("");
+                setNewBookTitle("");
+                setNewBookAuthor("");
+                setIncludeAuthorSummary(false);
+                setTitleTouched(false);
+                setAuthorTouched(false);
+              }}
+              className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Progress indicator */}
+          <div className="w-full bg-muted/30 h-1 rounded-full mb-6 overflow-hidden">
+            <motion.div
+              className="h-full bg-primary"
+              initial={{ width: "50%" }}
+              animate={{ width: formStep === 1 ? "50%" : "100%" }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+
+          <form onSubmit={handleAddBook} className="space-y-5">
+            {formStep === 1 ? (
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-5"
+              >
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="flex items-center text-sm font-medium text-foreground mb-1.5"
+                  >
+                    <BookOpen className="h-4 w-4 mr-1.5 text-primary" />
+                    Název knihy
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="title"
+                      type="text"
+                      value={newBookTitle}
+                      onChange={(e) => {
+                        setNewBookTitle(e.target.value);
+                        setError("");
+                        if (!titleTouched) setTitleTouched(true);
+                      }}
+                      onFocus={() => setTitleFocus(true)}
+                      onBlur={() => setTitleFocus(false)}
+                      placeholder="Např. Hobit aneb Cesta tam a zase zpátky..."
+                      className={`w-full px-4 py-3 border ${
+                        titleTouched && !newBookTitle.trim()
+                          ? "border-red-500/50"
+                          : titleFocus
+                          ? "border-primary"
+                          : "border-border/50"
+                      } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
+                        titleTouched && !newBookTitle.trim()
+                          ? "focus:ring-red-500/20"
+                          : "focus:ring-primary/20"
+                      } focus:border-transparent transition-all duration-200 shadow-sm bg-card`}
+                    />
+                    <AnimatePresence>
+                      {titleTouched && !newBookTitle.trim() && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-xs text-red-500 mt-1 ml-1"
+                        >
+                          Prosím zadejte název knihy
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-6">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (!newBookTitle.trim()) {
+                        setTitleTouched(true);
+                        return;
+                      }
+                      setFormStep(2);
+                    }}
+                    className="group relative overflow-hidden"
+                  >
+                    <span className="relative z-10 flex items-center">
+                      Pokračovat
+                      <ChevronRight className="h-4 w-4 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                    <span className="absolute inset-0 bg-primary/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-5"
+              >
+                <div>
+                  <label
+                    htmlFor="author"
+                    className="flex items-center text-sm font-medium text-foreground mb-1.5"
+                  >
+                    <User className="h-4 w-4 mr-1.5 text-primary" />
+                    Autor
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="author"
+                      type="text"
+                      value={newBookAuthor}
+                      onChange={(e) => {
+                        setNewBookAuthor(e.target.value);
+                        setError("");
+                        if (!authorTouched) setAuthorTouched(true);
+                      }}
+                      onFocus={() => setAuthorFocus(true)}
+                      onBlur={() => setAuthorFocus(false)}
+                      placeholder="Např. J.R.R. Tolkien..."
+                      className={`w-full px-4 py-3 border ${
+                        authorTouched && !newBookAuthor.trim()
+                          ? "border-red-500/50"
+                          : authorFocus
+                          ? "border-primary"
+                          : "border-border/50"
+                      } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
+                        authorTouched && !newBookAuthor.trim()
+                          ? "focus:ring-red-500/20"
+                          : "focus:ring-primary/20"
+                      } focus:border-transparent transition-all duration-200 shadow-sm bg-card`}
+                    />
+                    <AnimatePresence>
+                      {authorTouched && !newBookAuthor.trim() && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-xs text-red-500 mt-1 ml-1"
+                        >
+                          Prosím zadejte jméno autora
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800/30"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-amber-500" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <label
+                        htmlFor="includeAuthorSummary"
+                        className="flex items-center cursor-pointer"
+                      >
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            id="includeAuthorSummary"
+                            checked={includeAuthorSummary}
+                            onChange={(e) =>
+                              setIncludeAuthorSummary(e.target.checked)
+                            }
+                            className="sr-only"
+                          />
+                          <div
+                            className={`block w-10 h-6 rounded-full transition-colors duration-200 ${
+                              includeAuthorSummary
+                                ? "bg-amber-500"
+                                : "bg-gray-300 dark:bg-gray-600"
+                            }`}
+                          ></div>
+                          <div
+                            className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${
+                              includeAuthorSummary
+                                ? "transform translate-x-4"
+                                : ""
+                            }`}
+                          ></div>
+                        </div>
+                        <div className="ml-3">
+                          <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                            Vygenerovat shrnutí o autorovi
+                          </span>
+                          <p className="text-xs text-amber-700 dark:text-amber-300/70 mt-0.5">
+                            AI vygeneruje stručné informace o autorovi knihy
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-4 rounded-lg flex items-start border border-red-200 dark:border-red-800/30"
+                  >
+                    <AlertCircle className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-red-500" />
+                    <p className="text-sm">{error}</p>
+                  </motion.div>
+                )}
+
+                <div className="flex justify-between pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setFormStep(1)}
+                    className="group"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1.5 group-hover:-translate-x-0.5 transition-transform" />
+                    Zpět
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isGeneratingAuthorSummary}
+                    className="relative overflow-hidden group"
+                  >
+                    <span className="relative z-10 flex items-center">
+                      {isGeneratingAuthorSummary ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generuji shrnutí...
+                        </>
+                      ) : (
+                        <>
+                          <PlusCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+                          Přidat knihu
+                        </>
+                      )}
+                    </span>
+                    <span className="absolute inset-0 bg-primary/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </form>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
   // If not logged in, show landing page
@@ -323,246 +625,139 @@ export default function Home() {
 
   return (
     <>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {searchQuery && filteredBooks.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="mb-4 text-sm text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
-          >
-            <Search className="h-3.5 w-3.5 mr-2 text-primary" />
-            Nalezeno{" "}
-            <span className="font-medium text-primary mx-1">
-              {filteredBooks.length}
-            </span>
-            {filteredBooks.length === 1
-              ? "výsledek"
-              : filteredBooks.length >= 2 && filteredBooks.length <= 4
-              ? "výsledky"
-              : "výsledků"}
-            pro &quot;
-            <span className="text-white font-medium border-b border-primary/50 pb-0.5">
-              {searchQuery}
-            </span>
-            &quot;
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 h-7 px-2 text-xs hover:bg-primary/10 hover:text-primary"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-3.5 w-3.5 mr-1" />
-              Zrušit
-            </Button>
-          </motion.div>
-        )}
-
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              variants={formVariants}
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-card rounded-lg shadow-md border border-border/50 p-4 sm:p-6 mb-8"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-foreground flex items-center">
-                  <BookText className="h-5 w-5 text-primary mr-2" />
-                  Přidej novou knihu
-                </h2>
-                <Button
-                  variant="icon"
-                  size="sm"
-                  className="h-8 w-8"
-                  onClick={() => setShowAddForm(false)}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
+      {!user && !loading ? (
+        <LandingPage />
+      ) : (
+        <main className="container max-w-5xl mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                Můj čtenářský deník
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Zaznamenej si své myšlenky a poznámky ke knihám, které čteš
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative flex-1 sm:flex-none sm:w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Hledat knihy..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-border/50 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm bg-secondary/50"
+                />
               </div>
-              <form onSubmit={handleAddBook} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="title"
-                      className="block text-sm font-medium text-foreground mb-1"
-                    >
-                      Název knihy
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="title"
-                        type="text"
-                        value={newBookTitle}
-                        onChange={(e) => {
-                          setNewBookTitle(e.target.value);
-                          setError("");
-                        }}
-                        placeholder="Název knihy..."
-                        className={`w-full px-4 py-2 border ${
-                          error ? "border-red-500/50" : "border-border/50"
-                        } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
-                          error ? "focus:ring-red-500" : "focus:ring-primary"
-                        } focus:border-transparent transition shadow-sm bg-secondary/50`}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="author"
-                      className="block text-sm font-medium text-foreground mb-1"
-                    >
-                      Autor
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="author"
-                        type="text"
-                        value={newBookAuthor}
-                        onChange={(e) => {
-                          setNewBookAuthor(e.target.value);
-                          setError("");
-                        }}
-                        placeholder="Jméno autora..."
-                        className={`w-full px-4 py-2 border ${
-                          error ? "border-red-500/50" : "border-border/50"
-                        } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
-                          error ? "focus:ring-red-500" : "focus:ring-primary"
-                        } focus:border-transparent transition shadow-sm bg-secondary/50`}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <Button
+                onClick={() => setShowAddForm(true)}
+                className="flex-none shadow-sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Přidat knihu
+              </Button>
+            </div>
+          </div>
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="includeAuthorSummary"
-                    checked={includeAuthorSummary}
-                    onChange={(e) => setIncludeAuthorSummary(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <label
-                    htmlFor="includeAuthorSummary"
-                    className="text-sm text-foreground flex items-center"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                    Vygenerovat shrnutí o autorovi
-                  </label>
-                </div>
-
-                {error && (
-                  <div className="bg-red-500/10 text-red-400 p-3 rounded-lg flex items-start">
-                    <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm">{error}</p>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isGeneratingAuthorSummary}>
-                    {isGeneratingAuthorSummary ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generuji shrnutí...
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Přidat knihu
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+          {searchQuery && filteredBooks.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mb-4 text-sm text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
+            >
+              <Search className="h-3.5 w-3.5 mr-2 text-primary" />
+              Nalezeno{" "}
+              <span className="font-medium text-primary mx-1">
+                {filteredBooks.length}
+              </span>
+              {filteredBooks.length === 1
+                ? "výsledek"
+                : filteredBooks.length >= 2 && filteredBooks.length <= 4
+                ? "výsledky"
+                : "výsledků"}
+              pro &quot;
+              <span className="text-white font-medium border-b border-primary/50 pb-0.5">
+                {searchQuery}
+              </span>
+              &quot;
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2 h-7 px-2 text-xs hover:bg-primary/10 hover:text-primary"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-3.5 w-3.5 mr-1" />
+                Zrušit
+              </Button>
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {isLoaded && (
-          <>
-            {books.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-16"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                  <Library className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">
-                  Zatím nemáš žádné knihy
-                </h2>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Začni přidáním své první knihy do čtenářského deníku.
-                </p>
-                <Button
-                  onClick={() => setShowAddForm(true)}
-                  className="shadow-md"
+          {renderAddBookForm()}
+
+          {isLoaded && (
+            <>
+              {books.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-16"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Přidat první knihu
-                </Button>
-              </motion.div>
-            ) : filteredBooks.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-16"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                  <Search className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">
-                  Žádné výsledky
-                </h2>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Pro hledaný výraz &quot;{searchQuery}&quot; nebyly nalezeny
-                  žádné knihy.
-                </p>
-                <Button
-                  onClick={() => setSearchQuery("")}
-                  className="shadow-md"
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                    <Library className="h-8 w-8 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">
+                    Zatím nemáš žádné knihy
+                  </h2>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Začni přidáním své první knihy do čtenářského deníku.
+                  </p>
+                  <Button
+                    onClick={() => setShowAddForm(true)}
+                    className="shadow-md"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Přidat první knihu
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="grid grid-cols-1 gap-6"
                 >
-                  Zobrazit všechny knihy
-                </Button>
-              </motion.div>
-            ) : (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 gap-6"
-                key={searchQuery}
-              >
-                {filteredBooks.map((book) => (
-                  <BookComponent
-                    key={book.id}
-                    book={book}
-                    onDelete={handleDeleteBook}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </>
-        )}
-      </main>
+                  {(searchQuery ? filteredBooks : books).map((book) => (
+                    <BookComponent
+                      key={book.id}
+                      book={book}
+                      onDelete={(bookId: string) =>
+                        showDeleteConfirmation(bookId)
+                      }
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </>
+          )}
+        </main>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
-        isOpen={!!deleteConfirmation}
+        isOpen={deleteConfirmation?.isOpen || false}
         onClose={() => setDeleteConfirmation(null)}
-        onConfirm={confirmDeleteBook}
+        onConfirm={() =>
+          deleteConfirmation && handleDeleteBook(deleteConfirmation.bookId)
+        }
         title="Smazat knihu"
         description={
           deleteConfirmation
-            ? `Opravdu chceš smazat knihu "${deleteConfirmation.bookTitle}" a všechny její poznámky?`
+            ? `Opravdu chcete smazat knihu "${deleteConfirmation.bookTitle}"? Tato akce je nevratná.`
             : ""
         }
-        confirmText="Smazat"
-        variant="destructive"
-        showCancelButton={false}
-        showCloseButton={true}
+        confirmText="Smazat knihu"
+        cancelText="Zrušit"
       />
 
       {/* Welcome Modal */}

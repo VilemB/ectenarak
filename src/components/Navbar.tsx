@@ -5,14 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   BookOpen,
-  Search,
   Menu,
-  Plus,
-  X,
   Keyboard,
   Settings,
   LogOut,
   LogIn,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,29 +24,24 @@ interface NavbarProps {
     image?: string | null;
   } | null;
   signOut?: () => void;
-  searchQuery?: string;
-  setSearchQuery?: (query: string) => void;
-  setShowAddForm?: (show: boolean) => void;
   setShowKeyboardShortcuts?: (show: boolean) => void;
-  showSearchBar?: boolean;
 }
 
 export default function Navbar({
   user,
   signOut,
-  searchQuery = "",
-  setSearchQuery = () => {},
-  setShowAddForm = () => {},
   setShowKeyboardShortcuts = () => {},
-  showSearchBar = true,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
 
   const navigateToSettings = () => {
-    console.log("Navigating to settings page");
     router.push("/settings");
+  };
+
+  const navigateToHome = () => {
+    router.push("/");
   };
 
   return (
@@ -70,44 +63,15 @@ export default function Navbar({
 
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Search input - only show when user is logged in and showSearchBar is true */}
-            {user && showSearchBar && (
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-200 group-focus-within:text-primary">
-                  <Search className="h-4 w-4 text-primary group-focus-within:text-primary transition-colors duration-200" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Hledat knihy..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="py-2.5 pl-10 pr-10 block w-full rounded-full border border-border/50 
-                  text-white placeholder:text-gray-400 
-                  focus:ring-2 focus:ring-primary focus:border-transparent 
-                  shadow-sm bg-secondary/70 focus:bg-secondary/90 
-                  transition-all duration-200
-                  focus:scale-[1.02] transform-gpu"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-primary hover:text-primary/80 transition-colors duration-200"
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Clear search</span>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Add book button - only show when user is logged in */}
+            {/* Home button - only show when user is logged in */}
             {user && (
               <Button
-                onClick={() => setShowAddForm(true)}
-                className="shadow-sm transition-all duration-300 hover:shadow-md hover:bg-primary/90"
+                onClick={navigateToHome}
+                variant="ghost"
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
               >
-                <Plus className="w-5 h-5 mr-2" />
-                Přidat knihu
+                <Home className="h-5 w-5 mr-2" />
+                Domů
               </Button>
             )}
 
@@ -115,12 +79,12 @@ export default function Navbar({
             {user && (
               <Button
                 onClick={() => setShowKeyboardShortcuts(true)}
-                variant="outline"
-                size="icon"
-                className="text-primary hover:text-primary/80 hover:bg-primary/10 transition-all duration-200"
+                variant="ghost"
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
                 title="Klávesové zkratky"
               >
-                <Keyboard className="h-5 w-5" />
+                <Keyboard className="h-5 w-5 mr-2" />
+                Zkratky
               </Button>
             )}
 
@@ -213,19 +177,6 @@ export default function Navbar({
 
           {/* Mobile navigation */}
           <div className="md:hidden flex items-center space-x-2">
-            {/* Add book button (mobile) - only when logged in */}
-            {user && (
-              <Button
-                onClick={() => setShowAddForm(true)}
-                variant="outline"
-                size="icon"
-                className="bg-primary/10 text-primary hover:bg-primary/20"
-                aria-label="Add book"
-              >
-                <Plus className="w-5 h-5" />
-              </Button>
-            )}
-
             {/* User profile button (mobile) - when logged in */}
             {user ? (
               <Button
@@ -275,46 +226,22 @@ export default function Navbar({
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-3"
             >
-              {/* Mobile search - only when logged in and showSearchBar is true */}
-              {user && showSearchBar && (
-                <div className="relative mb-3 group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-200 group-focus-within:text-primary">
-                    <Search className="h-4 w-4 text-primary group-focus-within:text-primary transition-colors duration-200" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Hledat knihy..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="text-white placeholder:text-gray-400 py-2.5 pl-10 pr-10 block w-full rounded-full border border-border/50 focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm bg-secondary/70 focus:bg-secondary/90 transition-all duration-200 focus:scale-[1.02] transform-gpu"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-primary hover:text-primary/80 transition-colors duration-200"
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Clear search</span>
-                    </button>
-                  )}
-                </div>
-              )}
-
               {/* Mobile menu buttons */}
               <div className="flex flex-col space-y-2">
                 {/* Mobile menu sections only for logged in users */}
                 {user ? (
                   <>
-                    {/* Add book button (mobile menu) */}
+                    {/* Home button (mobile menu) */}
                     <Button
                       onClick={() => {
-                        setShowAddForm(true);
+                        navigateToHome();
                         setMobileMenuOpen(false);
                       }}
-                      className="w-full shadow-sm transition-colors"
+                      variant="ghost"
+                      className="w-full justify-start"
                     >
-                      <Plus className="w-4 h-4 mr-1.5" />
-                      Přidat knihu
+                      <Home className="h-4 w-4 mr-2" />
+                      Domů
                     </Button>
 
                     {/* Keyboard shortcuts button (mobile menu) */}
@@ -323,7 +250,7 @@ export default function Navbar({
                         setShowKeyboardShortcuts(true);
                         setMobileMenuOpen(false);
                       }}
-                      variant="outline"
+                      variant="ghost"
                       className="w-full justify-start"
                     >
                       <Keyboard className="h-4 w-4 mr-2" />

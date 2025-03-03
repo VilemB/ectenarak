@@ -20,7 +20,7 @@ export async function DELETE(
     // Connect to the database
     await dbConnect();
 
-    const { bookId, noteId } = params;
+    const { bookId, noteId } = await params;
 
     if (!bookId || !noteId) {
       return NextResponse.json(

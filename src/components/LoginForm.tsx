@@ -124,7 +124,7 @@ export default function LoginForm() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl: "/" });
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError("Došlo k chybě při přihlašování přes Google.");
