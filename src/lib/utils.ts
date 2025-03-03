@@ -6,7 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateId() {
-  return Math.random().toString(36).substring(2, 10);
+  // Combine timestamp and random string for better uniqueness
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
 }
 
 export function formatDate(date: string | Date): string {

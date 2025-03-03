@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import LoginForm from "@/components/LoginForm";
+import LandingPage from "@/components/LandingPage";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -224,27 +224,17 @@ export default function Home() {
       book.author.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // If not logged in, show landing page
+  if (!loading && !user) {
+    return <LandingPage />;
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-lg">Načítání...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-8">
-            Čtenářský deník
-          </h1>
-          <div className="mt-8">
-            <LoginForm />
-          </div>
         </div>
       </div>
     );

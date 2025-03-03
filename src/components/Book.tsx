@@ -112,14 +112,18 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     e.preventDefault();
     if (!newNote.trim()) return;
 
+    const noteId = generateId();
+
     const note: Note = {
-      id: generateId(),
+      id: noteId,
       bookId: book.id,
       content: newNote,
       createdAt: new Date().toISOString(),
     };
 
-    setNotes([...notes, note]);
+    // Filter out any notes with the same ID (shouldn't happen with our improved generateId)
+    const filteredNotes = notes.filter((n) => n.id !== noteId);
+    setNotes([...filteredNotes, note]);
     setNewNote("");
     setIsAddingNote(false);
   };
@@ -140,8 +144,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         setSummaryModal(false);
 
         // Set a temporary error message
+        const errorId = generateId();
         const errorNote: Note = {
-          id: generateId(),
+          id: errorId,
           bookId: book.id,
           content:
             "Pro generování shrnutí je potřeba nejprve přidat alespoň jednu poznámku k této knize.",
@@ -149,7 +154,11 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           isError: true,
         };
 
-        setNotes([...notes, errorNote]);
+        // Filter out any existing error notes and notes with the same ID
+        const filteredNotes = notes.filter(
+          (n) => !n.isError && n.id !== errorId
+        );
+        setNotes([...filteredNotes, errorNote]);
 
         // Remove the error message after 5 seconds
         setTimeout(() => {
@@ -177,17 +186,18 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       }
 
       const data = await response.json();
+      const summaryId = generateId();
       const summary: Note = {
-        id: generateId(),
+        id: summaryId,
         bookId: book.id,
         content: data.summary,
         createdAt: new Date().toISOString(),
         isAISummary: true,
       };
 
-      // Remove previous AI summaries
+      // Remove previous AI summaries and notes with the same ID
       const filteredNotes = notes.filter(
-        (note) => !note.isAISummary && !note.isError
+        (note) => !note.isAISummary && !note.isError && note.id !== summaryId
       );
       setNotes([...filteredNotes, summary]);
       setSummaryModal(false);
@@ -195,8 +205,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
       console.error("Error generating summary:", error);
 
       // Add an error note
+      const errorId = generateId();
       const errorNote: Note = {
-        id: generateId(),
+        id: errorId,
         bookId: book.id,
         content:
           "Nastala chyba při generování shrnutí. Zkuste to prosím znovu později.",
@@ -204,7 +215,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         isError: true,
       };
 
-      setNotes([...notes.filter((note) => !note.isError), errorNote]);
+      // Filter out any existing error notes and notes with the same ID
+      const filteredNotes = notes.filter((n) => !n.isError && n.id !== errorId);
+      setNotes([...filteredNotes, errorNote]);
 
       // Remove the error message after 5 seconds
       setTimeout(() => {
@@ -590,58 +603,60 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                 animate="visible"
                 className="space-y-4"
               >
-                {notes.map((note) => (
-                  <motion.div
-                    key={note.id}
-                    variants={listItemVariants}
-                    className={`p-3 sm:p-4 rounded-lg border ${
-                      note.isAISummary
-                        ? "border-amber-500/30 bg-amber-500/5"
-                        : note.isError
-                        ? "border-red-500/30 bg-red-500/5"
-                        : "border-border/50 bg-secondary/20"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center">
-                        {note.isAISummary ? (
-                          <div className="flex items-center text-amber-500">
-                            <Sparkles className="h-3.5 w-3.5 mr-1" />
-                            <span className="text-xs font-medium">
-                              AI Shrnutí
+                {notes
+                  .filter((note) => note.id)
+                  .map((note) => (
+                    <motion.div
+                      key={note.id}
+                      variants={listItemVariants}
+                      className={`p-3 sm:p-4 rounded-lg border ${
+                        note.isAISummary
+                          ? "border-amber-500/30 bg-amber-500/5"
+                          : note.isError
+                          ? "border-red-500/30 bg-red-500/5"
+                          : "border-border/50 bg-secondary/20"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center">
+                          {note.isAISummary ? (
+                            <div className="flex items-center text-amber-500">
+                              <Sparkles className="h-3.5 w-3.5 mr-1" />
+                              <span className="text-xs font-medium">
+                                AI Shrnutí
+                              </span>
+                            </div>
+                          ) : note.isError ? (
+                            <div className="flex items-center text-red-500">
+                              <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                              <span className="text-xs font-medium">Chyba</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(note.createdAt)}
                             </span>
-                          </div>
-                        ) : note.isError ? (
-                          <div className="flex items-center text-red-500">
-                            <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                            <span className="text-xs font-medium">Chyba</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(note.createdAt)}
-                          </span>
+                          )}
+                        </div>
+                        {!note.isError && (
+                          <Button
+                            variant="icon"
+                            size="sm"
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNote(note.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            <span className="sr-only">Delete note</span>
+                          </Button>
                         )}
                       </div>
-                      {!note.isError && (
-                        <Button
-                          variant="icon"
-                          size="sm"
-                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteNote(note.id);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          <span className="sr-only">Delete note</span>
-                        </Button>
-                      )}
-                    </div>
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{note.content}</ReactMarkdown>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{note.content}</ReactMarkdown>
+                      </div>
+                    </motion.div>
+                  ))}
               </motion.div>
             )}
           </motion.div>
