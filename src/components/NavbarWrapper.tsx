@@ -16,6 +16,11 @@ export default function NavbarWrapper() {
   // We only show search bar on the home page where it's relevant
   const showSearchBar = true;
 
+  // Only render the navbar if the user is logged in
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
       <Navbar

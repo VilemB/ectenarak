@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { SummaryPreferencesProvider } from "@/contexts/SummaryPreferencesContext";
 import { SessionProvider } from "@/components/SessionProvider";
 import { Toaster } from "sonner";
-import Footer from "@/components/Footer";
 import NavbarWrapper from "@/components/NavbarWrapper";
 
 const inter = Inter({
@@ -21,14 +20,17 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "Čtenářský deník",
-  description: "Aplikace pro správu vašeho čtenářského deníku",
+  description: "Sledujte své čtenářské zážitky a pokrok",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="cs" className="h-full scroll-smooth" suppressHydrationWarning>
       <body
@@ -46,7 +48,6 @@ export default function RootLayout({
                 <NavbarWrapper />
                 <main className="flex-1 pb-16">{children}</main>
               </div>
-              <Footer />
               <Toaster position="top-center" />
             </SummaryPreferencesProvider>
           </SessionProvider>

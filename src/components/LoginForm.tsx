@@ -1,373 +1,437 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "@/lib/auth-helpers";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FcGoogle } from "react-icons/fc";
-import { Loader2, BookOpen, LogIn, UserPlus } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Loader2, User, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function LoginForm() {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("login");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear errors when user starts typing
+    if (error) setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Nesprávné přihlašovací údaje. Zkuste to znovu.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Došlo k chybě při přihlašování. Zkuste to znovu později.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
     setError("");
     setSuccess("");
-    setLoading(true);
 
-    if (!email || !password) {
-      setError("Prosím vyplňte všechna povinná pole");
-      setLoading(false);
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.password) {
+      setError("Vyplňte prosím všechna pole.");
+      setIsLoading(false);
       return;
     }
 
-    if (isSignUp && !name) {
-      setError("Prosím vyplňte jméno");
-      setLoading(false);
+    if (formData.password.length < 6) {
+      setError("Heslo musí mít alespoň 6 znaků.");
+      setIsLoading(false);
       return;
     }
 
     try {
-      if (isSignUp) {
-        // Register new user
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
-        });
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-        const data = await res.json();
+      const data = await response.json();
 
-        if (!res.ok) {
-          throw new Error(data.message || "Chyba při registraci");
-        }
-
-        setSuccess("Registrace proběhla úspěšně! Nyní se můžete přihlásit.");
-        setIsSignUp(false);
-        setPassword("");
-      } else {
-        // Login existing user
-        const result = await signIn("credentials", {
-          redirect: false,
-          email,
-          password,
-        });
-
-        if (result?.error) {
-          throw new Error(result.error);
-        }
-
-        // Refresh the page to update auth state
-        window.location.href = "/";
+      if (!response.ok) {
+        throw new Error(data.message || "Došlo k chybě při registraci.");
       }
-    } catch (err: unknown) {
+
+      setSuccess("Účet byl úspěšně vytvořen! Nyní se můžete přihlásit.");
+      setFormData({ name: "", email: "", password: "" });
+
+      // Switch to login tab after successful registration
+      setTimeout(() => {
+        setActiveTab("login");
+        setSuccess("");
+      }, 2000);
+    } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Něco se pokazilo";
+        err instanceof Error ? err.message : "Došlo k chybě při registraci.";
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setIsLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Něco se pokazilo";
-      setError(errorMessage);
-      setLoading(false);
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch (err) {
+      console.error("Google sign-in error:", err);
+      setError("Došlo k chybě při přihlašování přes Google.");
+      setIsLoading(false);
     }
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setError("");
+    setSuccess("");
+  };
+
+  // Animation variants
+  const formVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
+  };
+
+  const errorVariants = {
+    hidden: { opacity: 0, y: -10, height: 0 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      height: "auto",
+      transition: { duration: 0.3 },
+    },
+    exit: { opacity: 0, y: -10, height: 0, transition: { duration: 0.2 } },
+  };
+
+  const successVariants = {
+    hidden: { opacity: 0, y: -10, height: 0 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      height: "auto",
+      transition: { duration: 0.3 },
+    },
+    exit: { opacity: 0, y: -10, height: 0, transition: { duration: 0.2 } },
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full"
-    >
-      <Card className="w-full shadow-xl border-primary/10 backdrop-blur-sm bg-card/90">
-        <CardHeader className="space-y-4">
-          <div className="mx-auto bg-primary/10 p-3 rounded-full">
-            <BookOpen className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            Čtenářský deník
-          </CardTitle>
-          <CardDescription className="text-center text-muted-foreground">
-            Přihlaste se nebo si vytvořte účet pro přístup k vašemu čtenářskému
-            deníku
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs
-            defaultValue="login"
-            onValueChange={(value: string) => {
-              setIsSignUp(value === "signup");
-              setError("");
-              setSuccess("");
-            }}
-            className="w-full"
+    <div className="w-full max-w-md mx-auto">
+      <Tabs
+        defaultValue="login"
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsTrigger
+            value="login"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger
-                value="login"
-                className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                Přihlášení
-              </TabsTrigger>
-              <TabsTrigger
-                value="signup"
-                className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                Registrace
-              </TabsTrigger>
-            </TabsList>
+            Přihlášení
+          </TabsTrigger>
+          <TabsTrigger
+            value="signup"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+          >
+            Registrace
+          </TabsTrigger>
+        </TabsList>
 
-            <AnimatePresence mode="wait">
-              <TabsContent key="login-tab" value="login" className="mt-0">
-                <motion.form
-                  onSubmit={handleSubmit}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="jannovak@example.cz"
-                        value={email}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setEmail(e.target.value)
-                        }
-                        className="transition-all duration-200 focus:border-primary/50 bg-background/50"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-medium">
-                        Heslo
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setPassword(e.target.value)
-                        }
-                        className="transition-all duration-200 focus:border-primary/50 bg-background/50"
-                        required
-                      />
-                    </div>
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          key="error-message"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <p className="text-sm text-destructive font-medium bg-destructive/10 p-3 rounded-md">
-                            {error}
-                          </p>
-                        </motion.div>
-                      )}
-                      {success && (
-                        <motion.div
-                          key="success-message"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <p className="text-sm text-green-500 font-medium bg-green-500/10 p-3 rounded-md">
-                            {success}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+        <AnimatePresence mode="wait">
+          <TabsContent value="login" key="login-tab">
+            <motion.div
+              variants={formVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="space-y-6"
+            >
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">Vítejte zpět</h3>
+                <p className="text-sm text-muted-foreground">
+                  Přihlaste se ke svému účtu
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="vas@email.cz"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Heslo</Label>
                     <Button
-                      type="submit"
-                      className="w-full font-medium transition-all duration-300 hover:shadow-md hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]"
-                      size="lg"
-                      disabled={loading}
+                      variant="link"
+                      className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
+                      type="button"
                     >
-                      {loading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <LogIn className="mr-2 h-4 w-4" />
-                      )}
-                      Přihlásit se
+                      Zapomenuté heslo?
                     </Button>
                   </div>
-                </motion.form>
-              </TabsContent>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
 
-              <TabsContent key="signup-tab" value="signup" className="mt-0">
-                <motion.form
-                  onSubmit={handleSubmit}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-medium">
-                        Jméno
-                      </Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Jan Novák"
-                        value={name}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setName(e.target.value)
-                        }
-                        className="transition-all duration-200 focus:border-primary/50 bg-background/50"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="email-signup"
-                        className="text-sm font-medium"
-                      >
-                        Email
-                      </Label>
-                      <Input
-                        id="email-signup"
-                        type="email"
-                        placeholder="jannovak@example.cz"
-                        value={email}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setEmail(e.target.value)
-                        }
-                        className="transition-all duration-200 focus:border-primary/50 bg-background/50"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="password-signup"
-                        className="text-sm font-medium"
-                      >
-                        Heslo
-                      </Label>
-                      <Input
-                        id="password-signup"
-                        type="password"
-                        placeholder="Minimálně 6 znaků"
-                        value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setPassword(e.target.value)
-                        }
-                        className="transition-all duration-200 focus:border-primary/50 bg-background/50"
-                        required
-                      />
-                    </div>
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          key="error-message"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <p className="text-sm text-destructive font-medium bg-destructive/10 p-3 rounded-md">
-                            {error}
-                          </p>
-                        </motion.div>
-                      )}
-                      {success && (
-                        <motion.div
-                          key="success-message"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <p className="text-sm text-green-500 font-medium bg-green-500/10 p-3 rounded-md">
-                            {success}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    <Button
-                      type="submit"
-                      className="w-full font-medium transition-all duration-300 hover:shadow-md hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]"
-                      size="lg"
-                      disabled={loading}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      key="error-message"
+                      variants={errorVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2"
                     >
-                      {loading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <UserPlus className="mr-2 h-4 w-4" />
-                      )}
-                      Vytvořit účet
-                    </Button>
-                  </div>
-                </motion.form>
-              </TabsContent>
-            </AnimatePresence>
-          </Tabs>
+                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                nebo pokračujte s
-              </span>
-            </div>
-          </div>
+                <Button
+                  type="submit"
+                  className="w-full transition-all duration-300 hover:shadow-md"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
+                  Přihlásit se
+                </Button>
+              </form>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full font-medium transition-all duration-300 hover:shadow-md hover:bg-background/80 hover:scale-[1.02] active:scale-[0.98] bg-background/50"
-            size="lg"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <FcGoogle className="mr-2 h-5 w-5" />
-            )}
-            Google účtem
-          </Button>
-        </CardContent>
-      </Card>
-    </motion.div>
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative bg-background px-4 text-xs text-muted-foreground">
+                  nebo pokračujte s
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full transition-all duration-300 hover:shadow-md hover:bg-background"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <svg
+                    className="h-4 w-4 mr-2"
+                    aria-hidden="true"
+                    focusable="false"
+                    data-prefix="fab"
+                    data-icon="google"
+                    role="img"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 488 512"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                    ></path>
+                  </svg>
+                )}
+                Google
+              </Button>
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="signup" key="signup-tab">
+            <motion.div
+              variants={formVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="space-y-6"
+            >
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">Vytvořit účet</h3>
+                <p className="text-sm text-muted-foreground">
+                  Zaregistrujte se a začněte používat aplikaci
+                </p>
+              </div>
+
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Jméno</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Vaše jméno"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    placeholder="vas@email.cz"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Heslo</Label>
+                  <Input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Heslo musí mít alespoň 6 znaků
+                  </p>
+                </div>
+
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      key="error-message"
+                      variants={errorVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2"
+                    >
+                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+
+                  {success && (
+                    <motion.div
+                      key="success-message"
+                      variants={successVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="bg-green-100 text-green-800 text-sm p-3 rounded-md flex items-start gap-2"
+                    >
+                      <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>{success}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <Button
+                  type="submit"
+                  className="w-full transition-all duration-300 hover:shadow-md"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <User className="h-4 w-4 mr-2" />
+                  )}
+                  Vytvořit účet
+                </Button>
+              </form>
+
+              <div className="text-center text-sm text-muted-foreground">
+                Registrací souhlasíte s našimi{" "}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs text-primary hover:underline"
+                  type="button"
+                >
+                  podmínkami použití
+                </Button>{" "}
+                a{" "}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs text-primary hover:underline"
+                  type="button"
+                >
+                  zásadami ochrany osobních údajů
+                </Button>
+                .
+              </div>
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
+      </Tabs>
+    </div>
   );
 }
