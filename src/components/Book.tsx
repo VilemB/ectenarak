@@ -62,10 +62,42 @@ const noteVariants = {
   },
 };
 
-export default function BookComponent({ book, onDelete }: BookProps) {
+export default function BookComponent({
+  book: initialBook,
+  onDelete,
+}: BookProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Validate the book object
+  useEffect(() => {
+    if (!initialBook || Object.keys(initialBook).length === 0) {
+      console.error("Empty book object passed to BookComponent:", initialBook);
+    }
+
+    if (!initialBook.id) {
+      console.error("Book without ID passed to BookComponent:", initialBook);
+    }
+  }, [initialBook]);
+
+  // Create a safe book object with fallbacks for all properties
+  const safeBook = {
+    id: initialBook.id || `temp-${Math.random().toString(36).substring(2, 9)}`,
+    title: initialBook.title || "Untitled Book",
+    author: initialBook.author || "Unknown Author",
+    createdAt: initialBook.createdAt || new Date().toISOString(),
+    authorSummary: initialBook.authorSummary || "",
+    authorId: initialBook.authorId || "",
+    userId: initialBook.userId || "",
+    notes: initialBook.notes || [],
+  };
+
+  // Rest of the component uses safeBook instead of initialBook
+  const [book, setBook] = useState<Book>(safeBook);
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
+    useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
@@ -81,6 +113,18 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const bookRef = useRef<HTMLDivElement>(null);
+
+  // Update local book state when props change, with validation
+  useEffect(() => {
+    if (initialBook && Object.keys(initialBook).length > 0) {
+      setBook(initialBook);
+    } else {
+      console.error(
+        "Warning: Book component received empty book object in props update:",
+        initialBook
+      );
+    }
+  }, [initialBook]);
 
   // Fetch notes from the database when the component mounts or when expanded
   useEffect(() => {
@@ -318,47 +362,121 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   };
 
   const handleConfirmDelete = async () => {
-    if (deleteModal.type === "book") {
+    if (book.id) {
       onDelete(book.id);
-    } else if (deleteModal.type === "note" && deleteModal.noteId) {
-      try {
-        const response = await fetch(
-          `/api/books/${book.id}/notes/${deleteModal.noteId}`,
-          {
-            method: "DELETE",
-          }
+    }
+    setShowDeleteConfirm(false);
+  };
+
+  // Update the handleGenerateAuthorSummary function with better validation
+  const handleGenerateAuthorSummary = async () => {
+    setIsGeneratingAuthorSummary(true);
+
+    try {
+      // Debug the book object
+      console.log("Book object:", book);
+      console.log("Book ID:", book.id);
+
+      // Validate book data before proceeding
+      if (!book || Object.keys(book).length === 0) {
+        console.error("Cannot generate author summary: Book object is empty");
+        showErrorMessage(
+          "Chyba: Data knihy nejsou k dispozici. Zkuste obnovit stránku."
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete note");
-        }
-
-        const data = await response.json();
-
-        // Transform the notes data
-        const formattedNotes = data.notes.map(
-          (note: {
-            _id: string;
-            content: string;
-            createdAt: string;
-            isAISummary?: boolean;
-          }) => ({
-            id: note._id,
-            bookId: book.id,
-            content: note.content,
-            createdAt: new Date(note.createdAt).toISOString(),
-            isAISummary: note.isAISummary || false,
-          })
-        );
-
-        setNotes(formattedNotes);
-      } catch (error) {
-        console.error("Error deleting note:", error);
+        return;
       }
+
+      if (!book.author) {
+        console.error("Cannot generate author summary: Author is missing");
+        showErrorMessage("Chyba: Jméno autora chybí. Zkuste obnovit stránku.");
+        return;
+      }
+
+      // Call the API to generate author summary
+      const summaryResponse = await fetch("/api/generate-author-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          author: book.author,
+        }),
+      });
+
+      if (!summaryResponse.ok) {
+        throw new Error("Failed to generate author summary");
+      }
+
+      const summaryData = await summaryResponse.json();
+
+      // Make sure we have a valid book ID
+      if (!book.id) {
+        console.error("Book ID is missing from book object:", book);
+        showErrorMessage(
+          "Chyba: ID knihy chybí. Zkuste obnovit stránku a přidat knihu znovu."
+        );
+        return;
+      }
+
+      // Log the URL we're about to call
+      const updateUrl = `/api/books/${book.id}`;
+      console.log("Calling update API at:", updateUrl);
+
+      // Update the book with the new author summary
+      const updateResponse = await fetch(updateUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorSummary: summaryData.summary,
+        }),
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        console.error("API error:", errorData);
+        throw new Error(
+          `Failed to update book with author summary: ${
+            errorData.error || "Unknown error"
+          }`
+        );
+      }
+
+      // Process the response
+      const updateData = await updateResponse.json();
+      console.log("Update response:", updateData);
+
+      // Update the local book state with the new author summary
+      setBook((prevBook) => ({
+        ...prevBook,
+        authorSummary: summaryData.summary,
+      }));
+
+      // Show the author info after generation
+      setIsAuthorInfoVisible(true);
+    } catch (error) {
+      console.error("Error generating author summary:", error);
+      showErrorMessage(
+        "Nepodařilo se vygenerovat shrnutí autora. Zkuste to prosím znovu."
+      );
+    } finally {
+      setIsGeneratingAuthorSummary(false);
+    }
+  };
+
+  // Update the handleBookDelete function
+  const handleBookDelete = () => {
+    // Check if the book has a valid ID (not a temporary one)
+    if (!book.id || book.id.startsWith("temp-")) {
+      console.error("Cannot delete book without a valid ID:", book);
+      showErrorMessage(
+        "Nelze smazat knihu bez platného ID. Zkuste obnovit stránku."
+      );
+      return;
     }
 
-    // Close the modal
-    setDeleteModal({ isOpen: false, type: "book" });
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -400,6 +518,35 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                     <span className="sr-only">Author info</span>
                   </Button>
                 )}
+                {!book.authorSummary && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-1 text-xs h-6 px-2 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerateAuthorSummary();
+                    }}
+                    disabled={isGeneratingAuthorSummary || !book.id}
+                    title={
+                      !book.id
+                        ? "Nelze generovat - ID knihy chybí"
+                        : "Generovat informace o autorovi"
+                    }
+                  >
+                    {isGeneratingAuthorSummary ? (
+                      <>
+                        <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-primary rounded-full"></div>
+                        <span>Generuji...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3 w-3 mr-1.5 text-amber-500" />
+                        <span>Generovat info o autorovi</span>
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
               <div className="flex items-center">
                 <Calendar className="h-3.5 w-3.5 mr-1.5" />
@@ -429,14 +576,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             <Button
               variant="outline"
               size="sm"
-              className="text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors h-9"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteModal({ isOpen: true, type: "book" });
-              }}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={handleBookDelete}
             >
-              <Trash2 className="h-4 w-4 mr-1.5" />
-              <span>Smazat</span>
+              <Trash2 className="h-4 w-4" />
             </Button>
             <Button
               variant={isExpanded ? "default" : "outline"}
@@ -723,6 +866,17 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         onClose={() => setSummaryModal(false)}
         onGenerate={handleGenerateSummary}
         isGenerating={isGenerating}
+      />
+
+      {/* Add this new confirmation dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Smazat knihu"
+        description={`Opravdu chcete smazat knihu "${book.title}"? Tato akce je nevratná.`}
+        confirmText="Smazat knihu"
+        cancelText="Zrušit"
       />
     </div>
   );

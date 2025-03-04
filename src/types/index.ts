@@ -6,6 +6,7 @@ export interface Book {
   authorSummary?: string;
   authorId?: string;
   userId?: string;
+  notes?: Note[];
 }
 
 export interface Note {

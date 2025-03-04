@@ -93,45 +93,118 @@ export default function Home() {
   // Fetch books from the database when the component mounts or user changes
   useEffect(() => {
     const fetchBooks = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log("No user found, skipping book fetch");
+        setIsLoadingBooks(false);
+        return;
+      }
+
+      console.log("Fetching books for user:", user);
+
+      if (!user.id) {
+        console.error("User ID is missing:", user);
+        setIsLoadingBooks(false);
+        return;
+      }
 
       setIsLoadingBooks(true);
       try {
-        const response = await fetch(`/api/books?userId=${user.id}`);
+        const response = await fetch(
+          `/api/books?userId=${encodeURIComponent(user.id)}`
+        );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch books");
+          const errorData = await response.json();
+          console.error("API error:", errorData);
+          throw new Error(
+            `Failed to fetch books: ${errorData.error || response.statusText}`
+          );
         }
 
         const data = await response.json();
 
+        // Debug the raw data
+        console.log("Raw books data:", data);
+
+        if (!data.books || !Array.isArray(data.books)) {
+          console.error("Invalid books data format:", data);
+          setBooks([]);
+          return;
+        }
+
         // Transform the data to match the Book interface
-        const formattedBooks = data.books.map(
-          (book: {
-            _id: string;
-            title: string;
-            author: string;
-            createdAt: string;
-            authorSummary?: string;
-            authorId?: string;
-            userId: string;
-            notes?: Array<{
-              _id: string;
-              content: string;
-              createdAt: string;
-              isAISummary?: boolean;
-            }>;
-          }) => ({
-            id: book._id,
-            title: book.title,
-            author: book.author,
-            createdAt: book.createdAt,
-            authorSummary: book.authorSummary || null,
-            authorId: book.authorId || null,
-            userId: book.userId,
-            notes: book.notes || [],
-          })
-        );
+        const formattedBooks = data.books
+          .filter(
+            (
+              book:
+                | {
+                    _id?: string;
+                    title?: string;
+                    author?: string;
+                    createdAt?: string;
+                    authorSummary?: string;
+                    authorId?: string;
+                    userId?: string;
+                    notes?: Array<{
+                      _id: string;
+                      content: string;
+                      createdAt: string;
+                      isAISummary?: boolean;
+                    }>;
+                  }
+                | null
+                | undefined
+            ) => {
+              // Additional client-side validation to catch any invalid books
+              if (!book || Object.keys(book).length === 0) {
+                console.error("Empty book object received from API:", book);
+                return false;
+              }
+
+              if (!book._id) {
+                console.error("Book without _id received from API:", book);
+                return false;
+              }
+
+              if (!book.title || !book.author) {
+                console.error("Book missing required fields:", book);
+                return false;
+              }
+
+              return true;
+            }
+          )
+          .map(
+            (book: {
+              _id: string; // Now we can be sure _id exists after filtering
+              title: string; // Now we can be sure title exists after filtering
+              author: string; // Now we can be sure author exists after filtering
+              createdAt?: string;
+              authorSummary?: string;
+              authorId?: string;
+              userId?: string;
+              notes?: Array<{
+                _id: string;
+                content: string;
+                createdAt: string;
+                isAISummary?: boolean;
+              }>;
+            }) => {
+              return {
+                id: book._id,
+                title: book.title,
+                author: book.author,
+                createdAt: book.createdAt || new Date().toISOString(),
+                authorSummary: book.authorSummary || "",
+                authorId: book.authorId || "",
+                userId: book.userId || "",
+                notes: book.notes || [],
+              };
+            }
+          );
+
+        // Debug the formatted books
+        console.log("Formatted books:", formattedBooks);
 
         setBooks(formattedBooks);
       } catch (error) {
@@ -727,18 +800,29 @@ export default function Home() {
                   animate="visible"
                   className="grid grid-cols-1 gap-6"
                 >
-                  {(searchQuery ? filteredBooks : books).map((book) => (
-                    <BookComponent
-                      key={
-                        book.id ||
-                        `book-${Math.random().toString(36).substring(2, 11)}`
-                      }
-                      book={book}
-                      onDelete={(bookId: string) =>
-                        showDeleteConfirmation(bookId)
-                      }
-                    />
-                  ))}
+                  {(searchQuery ? filteredBooks : books).map((book) => {
+                    // Debug each book before rendering
+                    console.log("Rendering book:", book);
+
+                    // Check if book is valid
+                    if (!book || Object.keys(book).length === 0) {
+                      console.error("Warning: Empty book object in list");
+                      return null;
+                    }
+
+                    return (
+                      <BookComponent
+                        key={
+                          book.id ||
+                          `book-${Math.random().toString(36).substring(2, 11)}`
+                        }
+                        book={book}
+                        onDelete={(bookId: string) =>
+                          showDeleteConfirmation(bookId)
+                        }
+                      />
+                    );
+                  })}
                 </motion.div>
               )}
             </>
