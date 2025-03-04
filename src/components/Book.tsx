@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +11,6 @@ import {
   X,
   AlertCircle,
   User,
-  Info,
-  BookOpen,
   Calendar,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
@@ -38,26 +36,6 @@ const expandedContentVariants = {
     height: "auto",
     transition: {
       duration: 0.3,
-    },
-  },
-};
-
-const noteVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-    transition: {
-      duration: 0.2,
     },
   },
 };
@@ -102,7 +80,7 @@ export default function BookComponent({
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
   const [errorMessages, setErrorMessages] = useState<
-    { id: string; message: string }[]
+    Array<{ id: string; message: string }>
   >([]);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -110,9 +88,8 @@ export default function BookComponent({
     noteId?: string;
   }>({ isOpen: false, type: "book" });
   const [summaryModal, setSummaryModal] = useState(false);
-  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const bookRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Update local book state when props change, with validation
   useEffect(() => {
@@ -126,53 +103,60 @@ export default function BookComponent({
     }
   }, [initialBook]);
 
-  // Fetch notes from the database when the component mounts or when expanded
+  // Add a function to show error messages
+  const showErrorMessage = useCallback((message: string) => {
+    const id = Math.random().toString(36).substring(2, 11);
+    setErrorMessages((prev) => [...prev, { id, message }]);
+
+    // Auto-remove the error message after 5 seconds
+    setTimeout(() => {
+      setErrorMessages((prev) => prev.filter((msg) => msg.id !== id));
+    }, 5000);
+  }, []);
+
+  // Memoize fetchNotes with useCallback
+  const fetchNotes = useCallback(async () => {
+    if (!book.id || book.id.startsWith("temp-")) {
+      console.error("Cannot fetch notes: Invalid book ID", book.id);
+      showErrorMessage("Nelze načíst poznámky: Neplatné ID knihy");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/books/${book.id}/notes`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch notes");
+      }
+
+      const data = await response.json();
+
+      // Transform the data to match the Note interface
+      const formattedNotes = data.notes.map(
+        (note: {
+          _id: string;
+          content: string;
+          createdAt: string;
+          isAISummary?: boolean;
+        }) => ({
+          id: note._id || `note-${Math.random().toString(36).substring(2, 11)}`,
+          bookId: book.id,
+          content: note.content,
+          createdAt: new Date(note.createdAt).toISOString(),
+          isAISummary: note.isAISummary || false,
+        })
+      );
+
+      setNotes(formattedNotes);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    }
+  }, [book.id, showErrorMessage]);
+
+  // Add useEffect to call fetchNotes
   useEffect(() => {
-    const fetchNotes = async () => {
-      if (!book.id || !isExpanded) return;
-
-      // Only set loading state if we haven't fetched notes yet
-      if (!hasAttemptedFetch) {
-        setIsLoadingNotes(true);
-      }
-
-      try {
-        const response = await fetch(`/api/books/${book.id}/notes`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch notes");
-        }
-
-        const data = await response.json();
-
-        // Transform the data to match the Note interface
-        const formattedNotes = data.notes.map(
-          (note: {
-            _id: string;
-            content: string;
-            createdAt: string;
-            isAISummary?: boolean;
-          }) => ({
-            id:
-              note._id || `note-${Math.random().toString(36).substring(2, 11)}`,
-            bookId: book.id,
-            content: note.content,
-            createdAt: new Date(note.createdAt).toISOString(),
-            isAISummary: note.isAISummary || false,
-          })
-        );
-
-        setNotes(formattedNotes);
-        setHasAttemptedFetch(true);
-      } catch (error) {
-        console.error("Error fetching notes:", error);
-      } finally {
-        setIsLoadingNotes(false);
-      }
-    };
-
     fetchNotes();
-  }, [book.id, isExpanded, hasAttemptedFetch]);
+  }, [fetchNotes]);
 
   // Handle clicks outside the book component to close it
   useEffect(() => {
@@ -191,14 +175,6 @@ export default function BookComponent({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isExpanded]);
-
-  // Memoize the sorted notes to prevent unnecessary re-renders
-  const sortedNotes = useCallback(() => {
-    return [...notes].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }, [notes]);
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,22 +224,6 @@ export default function BookComponent({
   // Toggle expanded state when clicking on the book
   const handleBookClick = () => {
     setIsExpanded(!isExpanded);
-  };
-
-  // Prevent propagation for buttons inside the book
-  const handleButtonClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
-  // Add a function to show error messages
-  const showErrorMessage = (message: string) => {
-    const id = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setErrorMessages((prev) => [...prev, { id, message }]);
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      setErrorMessages((prev) => prev.filter((msg) => msg.id !== id));
-    }, 5000);
   };
 
   const handleGenerateSummary = async (
@@ -482,80 +442,60 @@ export default function BookComponent({
   return (
     <div
       ref={bookRef}
-      className={`bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-200 ${
-        isExpanded ? "shadow-md" : ""
-      }`}
+      className="bg-background rounded-xl border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
     >
+      {/* Book Header */}
       <div
-        className={`p-4 sm:p-5 cursor-pointer group ${
-          isExpanded ? "rounded-t-lg" : "rounded-lg"
+        className={`p-5 cursor-pointer ${
+          isExpanded ? "border-b border-border/40" : ""
         }`}
         onClick={handleBookClick}
       >
-        <div className="flex items-start gap-3">
-          <div className="hidden sm:flex h-10 w-10 rounded-full bg-primary/10 items-center justify-center flex-shrink-0">
-            <BookOpen className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-grow">
-            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-              {book.title}
-            </h3>
-            <div className="flex flex-wrap items-center text-muted-foreground gap-x-3 gap-y-1 mt-1">
-              <div className="flex items-center">
-                <User className="h-3.5 w-3.5 mr-1.5" />
-                <span className="text-sm">{book.author}</span>
-                {book.authorSummary && (
-                  <Button
-                    variant="icon"
-                    size="sm"
-                    className="ml-1 text-muted-foreground hover:text-primary hover:bg-primary/10 h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-grow space-y-3">
+            {/* Title and Author */}
+            <div>
+              <h3 className="text-xl font-medium text-foreground group-hover:text-primary transition-colors">
+                {book.title}
+              </h3>
+              <div className="flex items-center mt-1.5">
+                <div
+                  className="flex items-center relative group cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (book.authorSummary) {
                       setIsAuthorInfoVisible(!isAuthorInfoVisible);
-                    }}
-                  >
-                    <Info className="h-3.5 w-3.5" />
-                    <span className="sr-only">Author info</span>
-                  </Button>
-                )}
-                {!book.authorSummary && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-1 text-xs h-6 px-2 hover:bg-primary/10 hover:text-primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    } else if (!isGeneratingAuthorSummary && book.id) {
                       handleGenerateAuthorSummary();
-                    }}
-                    disabled={isGeneratingAuthorSummary || !book.id}
-                    title={
-                      !book.id
-                        ? "Nelze generovat - ID knihy chybí"
-                        : "Generovat informace o autorovi"
                     }
-                  >
-                    {isGeneratingAuthorSummary ? (
-                      <>
-                        <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-primary rounded-full"></div>
-                        <span>Generuji...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-3 w-3 mr-1.5 text-amber-500" />
-                        <span>Generovat info o autorovi</span>
-                      </>
-                    )}
-                  </Button>
-                )}
+                  }}
+                >
+                  <User className="h-4 w-4 mr-1.5 text-primary/70" />
+                  <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
+                    {book.author}
+                  </span>
+
+                  {/* Author Summary Indicator */}
+                  {book.authorSummary && (
+                    <span
+                      className="ml-2 h-2.5 w-2.5 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.5)] group-hover:shadow-[0_0_12px_rgba(251,191,36,0.7)] transition-all duration-300"
+                      title="Klikněte pro zobrazení informací o autorovi"
+                    />
+                  )}
+                </div>
               </div>
+            </div>
+
+            {/* Book Metadata */}
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
               <div className="flex items-center">
-                <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                <span className="text-xs">{formatDate(book.createdAt)}</span>
+                <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
+                <span>{formatDate(book.createdAt)}</span>
               </div>
               {notes.length > 0 && (
                 <div className="flex items-center">
-                  <PenLine className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-xs">
+                  <PenLine className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
+                  <span>
                     {notes.length}{" "}
                     {notes.length === 1
                       ? "poznámka"
@@ -568,268 +508,239 @@ export default function BookComponent({
             </div>
           </div>
 
-          <div
-            className="flex gap-2 mt-1 sm:mt-0 ml-auto"
-            onClick={handleButtonClick}
-          >
-            <ExportButton book={book} notes={notes} />
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={handleBookDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={isExpanded ? "default" : "outline"}
-              size="sm"
-              className={`transition-all duration-200 h-9 ${
-                isExpanded ? "" : "hover:bg-primary/10 hover:text-primary"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-              aria-expanded={isExpanded}
-              aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
-            >
-              <ChevronDown
-                className={`h-4 w-4 mr-1.5 transition-transform duration-200 ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
-              />
-              <span>{isExpanded ? "Skrýt" : "Zobrazit"}</span>
-            </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {!book.authorSummary && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGenerateAuthorSummary();
+                }}
+                disabled={isGeneratingAuthorSummary || !book.id}
+              >
+                {isGeneratingAuthorSummary ? (
+                  <>
+                    <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                    <span>Generuji...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                    <span>Info o autorovi</span>
+                  </>
+                )}
+              </Button>
+            )}
+
+            <div className="flex gap-1.5">
+              <ExportButton book={book} notes={notes} />
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBookDelete();
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant={isExpanded ? "default" : "outline"}
+                size="sm"
+                className="transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(!isExpanded);
+                }}
+                aria-expanded={isExpanded}
+              >
+                <ChevronDown
+                  className={`h-4 w-4 mr-1.5 transition-transform duration-200 ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+                <span>{isExpanded ? "Skrýt" : "Zobrazit"}</span>
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* Author Summary Panel */}
+      <AnimatePresence>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-4 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-md text-sm border border-amber-200/50 dark:border-amber-800/30"
-            onClick={handleButtonClick}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="mx-5 my-3 p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg text-sm border border-amber-200/50 dark:border-amber-800/30 shadow-inner"
           >
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center text-amber-700 dark:text-amber-500">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center text-amber-700 dark:text-amber-400">
                 <User className="h-4 w-4 mr-2" />
                 <span className="font-medium">O autorovi</span>
               </div>
               <Button
-                variant="icon"
+                variant="ghost"
                 size="sm"
-                className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6"
-                onClick={() => setIsAuthorInfoVisible(false)}
+                className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAuthorInfoVisible(false);
+                }}
               >
                 <X className="h-3 w-3" />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">Zavřít</span>
               </Button>
             </div>
-            <div className="prose prose-amber prose-sm dark:prose-invert max-w-none">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.2 }}
+              className="prose prose-amber prose-sm dark:prose-invert max-w-none"
+            >
               <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
-            </div>
+            </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
 
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              variants={expandedContentVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="mt-5 pt-5 border-t border-border/50"
-              onClick={handleButtonClick}
-            >
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-5">
-                <h4 className="text-base font-medium flex items-center">
-                  <PenLine className="h-4 w-4 mr-2 text-primary" />
-                  Poznámky a shrnutí
-                </h4>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 text-sm hover:border-primary/30 hover:bg-primary/5"
-                    onClick={() => setSummaryModal(true)}
+      {/* Expanded Content (Notes) */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            variants={expandedContentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="p-5"
+          >
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+              <h4 className="text-base font-medium flex items-center">
+                <PenLine className="h-4 w-4 mr-2 text-primary" />
+                Poznámky a shrnutí
+              </h4>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-primary border-primary/30 hover:bg-primary/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSummaryModal(true);
+                  }}
+                  disabled={isGenerating || !book.id}
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  <span>Generovat shrnutí</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Notes List */}
+            <div className="space-y-4 mb-6">
+              {notes.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  Zatím nemáte žádné poznámky. Přidejte první níže.
+                </div>
+              ) : (
+                notes.map((note) => (
+                  <div
+                    key={note.id}
+                    className={`relative p-4 rounded-lg border ${
+                      note.isAISummary
+                        ? "bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30"
+                        : "bg-background border-border/60"
+                    }`}
                   >
-                    <Sparkles className="h-4 w-4 mr-1.5 text-amber-500" />
-                    Generovat shrnutí
-                  </Button>
+                    {note.isAISummary && (
+                      <div className="absolute top-3 right-3 flex items-center text-xs text-primary/70">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        <span>AI shrnutí</span>
+                      </div>
+                    )}
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{note.content}</ReactMarkdown>
+                    </div>
+                    <div className="flex justify-between items-center mt-3">
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(note.createdAt)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteNote(note.id);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="sr-only">Smazat poznámku</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Add Note Form */}
+            <form onSubmit={handleAddNote} className="mt-4">
+              <div className="flex flex-col gap-3">
+                <div>
+                  <textarea
+                    ref={textareaRef}
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Přidat novou poznámku..."
+                    className="w-full p-3 rounded-lg border border-border/60 focus:border-primary focus:ring-1 focus:ring-primary bg-background resize-none transition-all duration-200"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end">
                   <Button
-                    variant="default"
-                    size="sm"
-                    className="h-9 text-sm"
-                    onClick={() => setIsAddingNote(true)}
+                    type="submit"
+                    disabled={!newNote.trim() || isAddingNote || !book.id}
+                    className="relative overflow-hidden"
                   >
-                    <PenLine className="h-4 w-4 mr-1.5" />
-                    Přidat poznámku
+                    {isAddingNote ? (
+                      <>
+                        <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-background rounded-full"></div>
+                        <span>Ukládám...</span>
+                      </>
+                    ) : (
+                      <>
+                        <PenLine className="h-4 w-4 mr-1.5" />
+                        <span>Přidat poznámku</span>
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              {isLoadingNotes ? (
-                <div className="flex justify-center items-center py-10">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-                </div>
-              ) : notes.length === 0 ? (
-                <div className="text-center py-10 px-4 border border-dashed border-border/50 rounded-lg bg-muted/30">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
-                    <PenLine className="h-6 w-6 text-primary" />
-                  </div>
-                  <p className="text-foreground font-medium">
-                    Zatím nemáte žádné poznámky k této knize
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                    Přidejte své myšlenky, citáty nebo poznámky o knize pro
-                    pozdější využití.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4 hover:border-primary/30"
-                    onClick={() => setIsAddingNote(true)}
-                  >
-                    <PenLine className="h-4 w-4 mr-1.5" />
-                    Přidat první poznámku
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {sortedNotes().map((note) => (
-                    <motion.div
-                      key={
-                        note.id ||
-                        `note-${Math.random().toString(36).substring(2, 11)}`
-                      }
-                      variants={noteVariants}
-                      className={`p-4 rounded-md border ${
-                        note.isAISummary
-                          ? "bg-amber-50/60 dark:bg-amber-950/30 border-amber-200/50 dark:border-amber-800/30"
-                          : note.isError
-                          ? "bg-red-50/60 dark:bg-red-950/30 border-red-200/50 dark:border-red-800/30"
-                          : "bg-muted/40 border-border/40"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-2.5">
-                        <div className="flex items-center">
-                          {note.isAISummary ? (
-                            <div className="flex items-center text-amber-600 dark:text-amber-500 bg-amber-100/50 dark:bg-amber-900/30 py-0.5 px-2 rounded-full">
-                              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                              <span className="text-xs font-medium">
-                                AI Shrnutí
-                              </span>
-                            </div>
-                          ) : note.isError ? (
-                            <div className="flex items-center text-red-600 dark:text-red-500 bg-red-100/50 dark:bg-red-900/30 py-0.5 px-2 rounded-full">
-                              <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
-                              <span className="text-xs font-medium">Chyba</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-muted-foreground bg-background/80 py-0.5 px-2 rounded-full border border-border/30">
-                              <Calendar className="h-3 w-3 mr-1.5" />
-                              <span className="text-xs">
-                                {formatDate(note.createdAt)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        {!note.isError && (
-                          <Button
-                            variant="icon"
-                            size="sm"
-                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteNote(note.id);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            <span className="sr-only">Delete note</span>
-                          </Button>
-                        )}
-                      </div>
-                      <div
-                        className={`prose prose-sm dark:prose-invert max-w-none ${
-                          note.isAISummary
-                            ? "prose-amber"
-                            : note.isError
-                            ? "prose-red"
-                            : ""
-                        }`}
-                      >
-                        <ReactMarkdown>{note.content}</ReactMarkdown>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-
-              <AnimatePresence>
-                {isAddingNote && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-5"
-                  >
-                    <form onSubmit={handleAddNote} className="space-y-4">
-                      <div className="border border-border/50 rounded-lg bg-muted/20 p-1">
-                        <textarea
-                          value={newNote}
-                          onChange={(e) => setNewNote(e.target.value)}
-                          placeholder="Napiš svou poznámku..."
-                          className="w-full p-3 rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y min-h-[150px]"
-                          autoFocus
-                        />
-                        <div className="flex justify-between items-center px-2 py-1.5">
-                          <div className="text-xs text-muted-foreground">
-                            Podporuje Markdown
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setIsAddingNote(false)}
-                              className="h-8 text-xs"
-                            >
-                              Zrušit
-                            </Button>
-                            <Button
-                              type="submit"
-                              variant="default"
-                              size="sm"
-                              disabled={!newNote.trim()}
-                              className="h-8 text-xs"
-                            >
-                              Uložit poznámku
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </form>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Display error messages */}
+      {/* Error Messages */}
       <AnimatePresence>
         {errorMessages.length > 0 && (
-          <div className="px-4 pb-4">
-            {errorMessages.map((error) => (
+          <div className="p-4 space-y-2">
+            {errorMessages.map((error, index) => (
               <motion.div
-                key={error.id}
+                key={index}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="p-4 rounded-md border bg-red-50/60 dark:bg-red-950/30 border-red-200/50 dark:border-red-800/30 mb-2"
+                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-md"
               >
                 <div className="flex items-center">
                   <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
@@ -843,7 +754,7 @@ export default function BookComponent({
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Confirmation Dialogs */}
       <ConfirmationDialog
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, type: "book" })}
@@ -860,15 +771,6 @@ export default function BookComponent({
         cancelText="Zrušit"
       />
 
-      {/* Summary Preferences Modal */}
-      <SummaryPreferencesModal
-        isOpen={summaryModal}
-        onClose={() => setSummaryModal(false)}
-        onGenerate={handleGenerateSummary}
-        isGenerating={isGenerating}
-      />
-
-      {/* Add this new confirmation dialog */}
       <ConfirmationDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
@@ -877,6 +779,14 @@ export default function BookComponent({
         description={`Opravdu chcete smazat knihu "${book.title}"? Tato akce je nevratná.`}
         confirmText="Smazat knihu"
         cancelText="Zrušit"
+      />
+
+      {/* Summary Preferences Modal */}
+      <SummaryPreferencesModal
+        isOpen={summaryModal}
+        onClose={() => setSummaryModal(false)}
+        onGenerate={handleGenerateSummary}
+        isGenerating={isGenerating}
       />
     </div>
   );
