@@ -71,7 +71,7 @@ export async function POST(
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = params;
+    const { bookId } = await params;
     const { content, isAISummary = false } = await request.json();
 
     if (!bookId || !content) {
