@@ -69,6 +69,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
+  const [errorMessages, setErrorMessages] = useState<
+    { id: string; message: string }[]
+  >([]);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note";
@@ -106,7 +109,8 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             createdAt: string;
             isAISummary?: boolean;
           }) => ({
-            id: note._id,
+            id:
+              note._id || `note-${Math.random().toString(36).substring(2, 11)}`,
             bookId: book.id,
             content: note.content,
             createdAt: new Date(note.createdAt).toISOString(),
@@ -207,6 +211,17 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     e.stopPropagation();
   };
 
+  // Add a function to show error messages
+  const showErrorMessage = (message: string) => {
+    const id = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setErrorMessages((prev) => [...prev, { id, message }]);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setErrorMessages((prev) => prev.filter((msg) => msg.id !== id));
+    }, 5000);
+  };
+
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
   ) => {
@@ -222,24 +237,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         setIsGenerating(false);
         setSummaryModal(false);
 
-        // Create a temporary error note
-        const errorNote: Note = {
-          id: `temp-error-${Date.now()}`, // Add timestamp to ensure unique key
-          bookId: book.id,
-          content:
-            "Pro generování shrnutí je potřeba nejprve přidat alespoň jednu poznámku k této knize.",
-          createdAt: new Date().toISOString(),
-          isError: true,
-        };
-
-        // Add the error note to the local state
-        setNotes([...notes, errorNote]);
-
-        // Remove the error message after 5 seconds
-        setTimeout(() => {
-          setNotes((notes) => notes.filter((note) => !note.isError));
-        }, 5000);
-
+        // Use the new error message function instead of creating a temporary note
+        showErrorMessage(
+          "Pro generování shrnutí je potřeba nejprve přidat alespoň jednu poznámku k této knize."
+        );
         return;
       }
 
@@ -301,23 +302,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     } catch (error) {
       console.error("Error generating summary:", error);
 
-      // Add an error note with a unique ID
-      const errorNote: Note = {
-        id: `temp-error-${Date.now()}`, // Add timestamp to ensure unique key
-        bookId: book.id,
-        content:
-          "Nastala chyba při generování shrnutí. Zkuste to prosím znovu později.",
-        createdAt: new Date().toISOString(),
-        isError: true,
-      };
-
-      // Add the error note to the local state
-      setNotes([...notes, errorNote]);
-
-      // Remove the error message after 5 seconds
-      setTimeout(() => {
-        setNotes((notes) => notes.filter((note) => !note.isError));
-      }, 5000);
+      // Use the new error message function
+      showErrorMessage(
+        "Nastala chyba při generování shrnutí. Zkuste to prosím znovu později."
+      );
 
       setSummaryModal(false);
     } finally {
@@ -569,7 +557,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                 <div className="space-y-3">
                   {sortedNotes().map((note) => (
                     <motion.div
-                      key={note.id}
+                      key={
+                        note.id ||
+                        `note-${Math.random().toString(36).substring(2, 11)}`
+                      }
                       variants={noteVariants}
                       className={`p-4 rounded-md border ${
                         note.isAISummary
@@ -684,6 +675,30 @@ export default function BookComponent({ book, onDelete }: BookProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Display error messages */}
+      <AnimatePresence>
+        {errorMessages.length > 0 && (
+          <div className="px-4 pb-4">
+            {errorMessages.map((error) => (
+              <motion.div
+                key={error.id}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-4 rounded-md border bg-red-50/60 dark:bg-red-950/30 border-red-200/50 dark:border-red-800/30 mb-2"
+              >
+                <div className="flex items-center">
+                  <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error.message}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog

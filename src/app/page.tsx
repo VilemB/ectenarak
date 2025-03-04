@@ -729,7 +729,10 @@ export default function Home() {
                 >
                   {(searchQuery ? filteredBooks : books).map((book) => (
                     <BookComponent
-                      key={book.id}
+                      key={
+                        book.id ||
+                        `book-${Math.random().toString(36).substring(2, 11)}`
+                      }
                       book={book}
                       onDelete={(bookId: string) =>
                         showDeleteConfirmation(bookId)
@@ -784,48 +787,47 @@ export default function Home() {
           </p>
 
           <div className="space-y-3 mt-6">
-            <div className="flex items-start gap-3" key="feature-add-books">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <PlusCircle className="h-5 w-5 text-primary" />
+            {[
+              {
+                id: "feature-add-books",
+                icon: <PlusCircle className="h-5 w-5 text-primary" />,
+                title: "Přidej své knihy",
+                description:
+                  "Začni přidáním knih, které čteš nebo jsi přečetl(a).",
+              },
+              {
+                id: "feature-add-notes",
+                icon: <PenLine className="h-5 w-5 text-primary" />,
+                title: "Zaznamenávej poznámky",
+                description:
+                  "Ke každé knize si můžeš přidat libovolné množství poznámek.",
+              },
+              {
+                id: "feature-ai-summary",
+                icon: <Sparkles className="h-5 w-5 text-primary" />,
+                title: "Generuj AI shrnutí",
+                description:
+                  "Nech si vygenerovat shrnutí tvých poznámek pomocí umělé inteligence.",
+              },
+            ].map((feature) => (
+              <div
+                className="flex items-start gap-3"
+                key={
+                  feature.id ||
+                  `feature-${Math.random().toString(36).substring(2, 11)}`
+                }
+              >
+                <div className="bg-primary/10 p-2 rounded-full">
+                  {feature.icon}
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-white">
+                    {feature.title}
+                  </h4>
+                  <p className="text-sm text-gray-300">{feature.description}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-white">
-                  Přidej své knihy
-                </h4>
-                <p className="text-sm text-gray-300">
-                  Začni přidáním knih, které čteš nebo jsi přečetl(a).
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3" key="feature-add-notes">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <PenLine className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-white">
-                  Zaznamenávej poznámky
-                </h4>
-                <p className="text-sm text-gray-300">
-                  Ke každé knize si můžeš přidat libovolné množství poznámek.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3" key="feature-ai-summary">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-white">
-                  Generuj AI shrnutí
-                </h4>
-                <p className="text-sm text-gray-300">
-                  Nech si vygenerovat shrnutí tvých poznámek pomocí umělé
-                  inteligence.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
 
           <div className="pt-4 border-t border-gray-700/50 flex justify-center mt-6">
@@ -864,7 +866,10 @@ export default function Home() {
                 },
               ].map((shortcut) => (
                 <div
-                  key={shortcut.id}
+                  key={
+                    shortcut.id ||
+                    `shortcut-${Math.random().toString(36).substring(2, 11)}`
+                  }
                   className="flex justify-between items-center py-2 border-b border-gray-700/50"
                 >
                   <span className="text-sm text-gray-300">

@@ -158,7 +158,7 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 z-10"></div>
 
                 {/* Placeholder for app screenshot - fixed z-index */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm z-30">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm z-20">
                   <BookOpen className="w-20 h-20 text-primary/50 mb-4" />
                   <p className="text-muted-foreground text-center px-4">
                     Zde bude screenshot aplikace
@@ -170,8 +170,8 @@ export default function LandingPage() {
                 </div>
 
                 {/* Decorative elements */}
-                <div className="absolute top-4 left-4 right-4 bottom-4 border border-primary/20 rounded-lg z-20"></div>
-                <div className="absolute top-8 left-8 right-8 bottom-8 border border-accent/20 rounded-lg z-20"></div>
+                <div className="absolute top-4 left-4 right-4 bottom-4 border border-primary/20 rounded-lg z-10"></div>
+                <div className="absolute top-8 left-8 right-8 bottom-8 border border-accent/20 rounded-lg z-10"></div>
 
                 {/* Animated glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-accent/5 animate-pulse z-5"></div>
@@ -179,7 +179,7 @@ export default function LandingPage() {
 
               {/* Floating badges */}
               <motion.div
-                className="absolute -top-6 -right-6 bg-card shadow-lg rounded-lg p-3 border border-border/50 z-40"
+                className="absolute -top-6 -right-6 bg-card shadow-lg rounded-lg p-3 border border-border/50 z-30"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
@@ -191,7 +191,7 @@ export default function LandingPage() {
               </motion.div>
 
               <motion.div
-                className="absolute -bottom-6 -left-6 bg-card shadow-lg rounded-lg p-3 border border-border/50 z-40"
+                className="absolute -bottom-6 -left-6 bg-card shadow-lg rounded-lg p-3 border border-border/50 z-30"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
@@ -294,9 +294,9 @@ export default function LandingPage() {
 
       {/* Premium Features Section */}
       <section className="py-16 md:py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5 opacity-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-70"></div>
         <div className="container mx-auto px-4 relative z-10">
-          <div className="bg-card border border-border/50 rounded-2xl p-8 md:p-12 shadow-xl">
+          <div className="bg-card/90 backdrop-blur-sm border border-border/50 rounded-2xl p-8 md:p-12 shadow-xl">
             <div className="flex flex-col lg:flex-row gap-12 items-center">
               <div className="flex-1 space-y-6">
                 <motion.div

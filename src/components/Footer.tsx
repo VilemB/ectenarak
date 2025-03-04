@@ -13,8 +13,7 @@ export default function Footer() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="backdrop-blur-sm border-t border-border/40 py-8"
-      style={{ backgroundColor: "rgba(var(--background), 0.8)" }}
+      className="backdrop-blur-sm border-t border-border/40 py-8 bg-background/80"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">

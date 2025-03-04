@@ -50,7 +50,10 @@ export default function NavbarWrapper() {
                 },
               ].map((shortcut) => (
                 <div
-                  key={shortcut.id}
+                  key={
+                    shortcut.id ||
+                    `shortcut-${Math.random().toString(36).substring(2, 11)}`
+                  }
                   className="flex justify-between items-center py-2 border-b border-gray-700/50"
                 >
                   <span className="text-sm text-gray-300">
