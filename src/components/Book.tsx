@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ interface BookProps {
   onDelete: (bookId: string) => void;
 }
 
-// Only keep the animation variants that are actually used
+// Improved animation variants
 const expandedContentVariants = {
   hidden: { opacity: 0, height: 0 },
   visible: {
@@ -75,14 +75,20 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     noteId?: string;
   }>({ isOpen: false, type: "book" });
   const [summaryModal, setSummaryModal] = useState(false);
-  const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+  const bookRef = useRef<HTMLDivElement>(null);
 
   // Fetch notes from the database when the component mounts or when expanded
   useEffect(() => {
     const fetchNotes = async () => {
       if (!book.id || !isExpanded) return;
 
-      setIsLoadingNotes(true);
+      // Only set loading state if we haven't fetched notes yet
+      if (!hasAttemptedFetch) {
+        setIsLoadingNotes(true);
+      }
+
       try {
         const response = await fetch(`/api/books/${book.id}/notes`);
 
@@ -109,6 +115,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         );
 
         setNotes(formattedNotes);
+        setHasAttemptedFetch(true);
       } catch (error) {
         console.error("Error fetching notes:", error);
       } finally {
@@ -117,7 +124,25 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     };
 
     fetchNotes();
-  }, [book.id, isExpanded]);
+  }, [book.id, isExpanded, hasAttemptedFetch]);
+
+  // Handle clicks outside the book component to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        bookRef.current &&
+        !bookRef.current.contains(event.target as Node) &&
+        isExpanded
+      ) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isExpanded]);
 
   // Memoize the sorted notes to prevent unnecessary re-renders
   const sortedNotes = useCallback(() => {
@@ -170,6 +195,16 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     } catch (error) {
       console.error("Error adding note:", error);
     }
+  };
+
+  // Toggle expanded state when clicking on the book
+  const handleBookClick = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  // Prevent propagation for buttons inside the book
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const handleGenerateSummary = async (
@@ -333,75 +368,75 @@ export default function BookComponent({ book, onDelete }: BookProps) {
         console.error("Error deleting note:", error);
       }
     }
+
+    // Close the modal
     setDeleteModal({ isOpen: false, type: "book" });
   };
 
   return (
-    <div className="w-full">
+    <div
+      ref={bookRef}
+      className={`bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-200 ${
+        isExpanded ? "shadow-md" : ""
+      }`}
+    >
       <div
-        className={`bg-card rounded-lg shadow-md transition-all duration-300 ${
-          isExpanded
-            ? "ring-2 ring-primary/20 p-5"
-            : "hover:shadow-lg p-4 hover:border-primary/30 border border-transparent cursor-pointer"
+        className={`p-4 sm:p-5 cursor-pointer group ${
+          isExpanded ? "rounded-t-lg" : "rounded-lg"
         }`}
+        onClick={handleBookClick}
       >
-        <div
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-          onClick={() => {
-            if (!isExpanded) {
-              setIsExpanded(true);
-            }
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <div className="hidden sm:flex h-10 w-10 rounded-full bg-primary/10 items-center justify-center flex-shrink-0">
-              <BookOpen className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                {book.title}
-              </h3>
-              <div className="flex flex-wrap items-center text-muted-foreground gap-x-3 gap-y-1 mt-1">
-                <div className="flex items-center">
-                  <User className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-sm">{book.author}</span>
-                  {book.authorSummary && (
-                    <Button
-                      variant="icon"
-                      size="sm"
-                      className="ml-1 text-muted-foreground hover:text-primary hover:bg-primary/10 h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAuthorInfoVisible(!isAuthorInfoVisible);
-                      }}
-                    >
-                      <Info className="h-3.5 w-3.5" />
-                      <span className="sr-only">Author info</span>
-                    </Button>
-                  )}
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-xs">{formatDate(book.createdAt)}</span>
-                </div>
-                {notes.length > 0 && (
-                  <div className="flex items-center">
-                    <PenLine className="h-3.5 w-3.5 mr-1.5" />
-                    <span className="text-xs">
-                      {notes.length}{" "}
-                      {notes.length === 1
-                        ? "poznámka"
-                        : notes.length > 1 && notes.length < 5
-                        ? "poznámky"
-                        : "poznámek"}
-                    </span>
-                  </div>
+        <div className="flex items-start gap-3">
+          <div className="hidden sm:flex h-10 w-10 rounded-full bg-primary/10 items-center justify-center flex-shrink-0">
+            <BookOpen className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-grow">
+            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+              {book.title}
+            </h3>
+            <div className="flex flex-wrap items-center text-muted-foreground gap-x-3 gap-y-1 mt-1">
+              <div className="flex items-center">
+                <User className="h-3.5 w-3.5 mr-1.5" />
+                <span className="text-sm">{book.author}</span>
+                {book.authorSummary && (
+                  <Button
+                    variant="icon"
+                    size="sm"
+                    className="ml-1 text-muted-foreground hover:text-primary hover:bg-primary/10 h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsAuthorInfoVisible(!isAuthorInfoVisible);
+                    }}
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    <span className="sr-only">Author info</span>
+                  </Button>
                 )}
               </div>
+              <div className="flex items-center">
+                <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                <span className="text-xs">{formatDate(book.createdAt)}</span>
+              </div>
+              {notes.length > 0 && (
+                <div className="flex items-center">
+                  <PenLine className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs">
+                    {notes.length}{" "}
+                    {notes.length === 1
+                      ? "poznámka"
+                      : notes.length > 1 && notes.length < 5
+                      ? "poznámky"
+                      : "poznámek"}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex gap-2 mt-1 sm:mt-0">
+          <div
+            className="flex gap-2 mt-1 sm:mt-0 ml-auto"
+            onClick={handleButtonClick}
+          >
             <ExportButton book={book} notes={notes} />
             <Button
               variant="outline"
@@ -444,6 +479,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="mt-4 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-md text-sm border border-amber-200/50 dark:border-amber-800/30"
+            onClick={handleButtonClick}
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center text-amber-700 dark:text-amber-500">
@@ -474,6 +510,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               animate="visible"
               exit="hidden"
               className="mt-5 pt-5 border-t border-border/50"
+              onClick={handleButtonClick}
             >
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-5">
                 <h4 className="text-base font-medium flex items-center">
