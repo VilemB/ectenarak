@@ -65,7 +65,10 @@ export function Modal({
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div
               className="min-h-screen px-4 flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
             >
               {/* Backdrop */}
               <motion.div
@@ -76,8 +79,9 @@ export function Modal({
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm"
                 aria-hidden="true"
                 onClick={(e) => {
-                  e.stopPropagation(); // Stop propagation to prevent book toggle
-                  onClose();
+                  e.preventDefault(); // Prevent default behavior
+                  e.stopPropagation(); // Stop propagation to prevent interaction with elements behind
+                  onClose(); // Close the modal when clicking on the overlay
                 }}
               />
 
@@ -93,7 +97,10 @@ export function Modal({
                   stiffness: 350,
                 }}
                 className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl border border-gray-700/50 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10"
-                onClick={(e) => e.stopPropagation()} // Prevent clicks from reaching the backdrop
+                onClick={(e) => {
+                  e.preventDefault(); // Prevent default behavior
+                  e.stopPropagation(); // Prevent clicks from reaching the backdrop
+                }}
               >
                 {title && (
                   <div className="flex items-center justify-between p-5 border-b border-gray-700/50">

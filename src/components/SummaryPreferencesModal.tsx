@@ -359,7 +359,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.style === "academic"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -382,7 +382,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.style === "casual"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -407,7 +407,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.style === "creative"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -480,7 +480,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.length === "short"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -503,7 +503,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.length === "medium"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -526,7 +526,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.length === "long"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -601,7 +601,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "plot"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -626,7 +626,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "characters"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -649,7 +649,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "themes"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -674,7 +674,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "balanced"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -744,7 +744,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.language === "cs"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -767,7 +767,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.language === "en"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
