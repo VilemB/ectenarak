@@ -333,6 +333,49 @@ export default function BookComponent({
     setShowDeleteConfirm(false);
   };
 
+  const handleConfirmDeleteNote = async () => {
+    if (deleteModal.type === "note" && deleteModal.noteId && book.id) {
+      try {
+        const response = await fetch(
+          `/api/books/${book.id}/notes/${deleteModal.noteId}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete note");
+        }
+
+        const data = await response.json();
+
+        // Update the notes list with the returned data
+        const formattedNotes = data.notes.map(
+          (note: {
+            _id: string;
+            content: string;
+            createdAt: string;
+            isAISummary?: boolean;
+          }) => ({
+            id: note._id,
+            bookId: book.id,
+            content: note.content,
+            createdAt: new Date(note.createdAt).toISOString(),
+            isAISummary: note.isAISummary || false,
+          })
+        );
+
+        setNotes(formattedNotes);
+      } catch (error) {
+        console.error("Error deleting note:", error);
+        showErrorMessage("Nepodařilo se smazat poznámku");
+      }
+    }
+
+    // Close the delete modal
+    setDeleteModal({ isOpen: false, type: "book" });
+  };
+
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
@@ -410,7 +453,8 @@ export default function BookComponent({
               <div className="flex items-center mt-1.5">
                 <div
                   className="group cursor-pointer flex items-center gap-1.5"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (book.authorSummary) {
                       setIsAuthorInfoVisible(!isAuthorInfoVisible);
                     } else {
@@ -457,7 +501,10 @@ export default function BookComponent({
           <div className="flex flex-col gap-2 sm:flex-row">
             {!book.authorSummary && (
               <Button
-                onClick={() => setAuthorSummaryModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAuthorSummaryModal(true);
+                }}
                 variant="outline"
                 size="sm"
                 className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
@@ -709,7 +756,11 @@ export default function BookComponent({
       <ConfirmationDialog
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, type: "book" })}
-        onConfirm={handleConfirmDelete}
+        onConfirm={
+          deleteModal.type === "book"
+            ? handleConfirmDelete
+            : handleConfirmDeleteNote
+        }
         title={deleteModal.type === "book" ? "Smazat knihu" : "Smazat poznámku"}
         description={
           deleteModal.type === "book"
