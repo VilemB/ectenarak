@@ -22,6 +22,10 @@ import {
 } from "./SummaryPreferencesModal";
 import { ExportButton } from "./ExportButton";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  AuthorSummaryPreferencesModal,
+  AuthorSummaryPreferences,
+} from "@/components/AuthorSummaryPreferencesModal";
 
 interface BookProps {
   book: Book;
@@ -88,6 +92,7 @@ export default function BookComponent({
     noteId?: string;
   }>({ isOpen: false, type: "book" });
   const [summaryModal, setSummaryModal] = useState(false);
+  const [authorSummaryModal, setAuthorSummaryModal] = useState(false);
   const bookRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -328,100 +333,44 @@ export default function BookComponent({
     setShowDeleteConfirm(false);
   };
 
-  // Update the handleGenerateAuthorSummary function with better validation
-  const handleGenerateAuthorSummary = async () => {
+  const handleGenerateAuthorSummary = async (
+    preferencesToUse: AuthorSummaryPreferences
+  ) => {
+    if (!book.id) {
+      showErrorMessage("Nelze generovat informace o autorovi pro knihu bez ID");
+      return;
+    }
+
     setIsGeneratingAuthorSummary(true);
 
     try {
-      // Debug the book object
-      console.log("Book object:", book);
-      console.log("Book ID:", book.id);
-
-      // Validate book data before proceeding
-      if (!book || Object.keys(book).length === 0) {
-        console.error("Cannot generate author summary: Book object is empty");
-        showErrorMessage(
-          "Chyba: Data knihy nejsou k dispozici. Zkuste obnovit stránku."
-        );
-        return;
-      }
-
-      if (!book.author) {
-        console.error("Cannot generate author summary: Author is missing");
-        showErrorMessage("Chyba: Jméno autora chybí. Zkuste obnovit stránku.");
-        return;
-      }
-
-      // Call the API to generate author summary
-      const summaryResponse = await fetch("/api/generate-author-summary", {
+      const response = await fetch(`/api/books/${book.id}/author-summary`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           author: book.author,
+          preferences: preferencesToUse,
         }),
       });
 
-      if (!summaryResponse.ok) {
-        throw new Error("Failed to generate author summary");
+      if (!response.ok) {
+        throw new Error("Nepodařilo se získat informace o autorovi");
       }
 
-      const summaryData = await summaryResponse.json();
-
-      // Make sure we have a valid book ID
-      if (!book.id) {
-        console.error("Book ID is missing from book object:", book);
-        showErrorMessage(
-          "Chyba: ID knihy chybí. Zkuste obnovit stránku a přidat knihu znovu."
-        );
-        return;
-      }
-
-      // Log the URL we're about to call
-      const updateUrl = `/api/books/${book.id}`;
-      console.log("Calling update API at:", updateUrl);
-
-      // Update the book with the new author summary
-      const updateResponse = await fetch(updateUrl, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorSummary: summaryData.summary,
-        }),
-      });
-
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
-        console.error("API error:", errorData);
-        throw new Error(
-          `Failed to update book with author summary: ${
-            errorData.error || "Unknown error"
-          }`
-        );
-      }
-
-      // Process the response
-      const updateData = await updateResponse.json();
-      console.log("Update response:", updateData);
-
-      // Update the local book state with the new author summary
+      const data = await response.json();
       setBook((prevBook) => ({
         ...prevBook,
-        authorSummary: summaryData.summary,
+        authorSummary: data.summary,
       }));
-
-      // Show the author info after generation
       setIsAuthorInfoVisible(true);
     } catch (error) {
       console.error("Error generating author summary:", error);
-      showErrorMessage(
-        "Nepodařilo se vygenerovat shrnutí autora. Zkuste to prosím znovu."
-      );
+      showErrorMessage("Nepodařilo se získat informace o autorovi");
     } finally {
       setIsGeneratingAuthorSummary(false);
+      setAuthorSummaryModal(false);
     }
   };
 
@@ -460,27 +409,23 @@ export default function BookComponent({
               </h3>
               <div className="flex items-center mt-1.5">
                 <div
-                  className="flex items-center relative group cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  className="group cursor-pointer flex items-center gap-1.5"
+                  onClick={() => {
                     if (book.authorSummary) {
                       setIsAuthorInfoVisible(!isAuthorInfoVisible);
-                    } else if (!isGeneratingAuthorSummary && book.id) {
-                      handleGenerateAuthorSummary();
+                    } else {
+                      setAuthorSummaryModal(true);
                     }
                   }}
                 >
-                  <User className="h-4 w-4 mr-1.5 text-primary/70" />
-                  <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
+                  <span className="text-sm font-medium group-hover:text-primary transition-colors">
                     {book.author}
                   </span>
-
-                  {/* Author Summary Indicator */}
                   {book.authorSummary && (
-                    <span
-                      className="ml-2 h-2.5 w-2.5 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.5)] group-hover:shadow-[0_0_12px_rgba(251,191,36,0.7)] transition-all duration-300"
-                      title="Klikněte pro zobrazení informací o autorovi"
-                    />
+                    <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-amber-400 to-amber-300 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gradient-to-r from-amber-500 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)] group-hover:shadow-[0_0_12px_rgba(245,158,11,0.8)] transition-all"></span>
+                    </span>
                   )}
                 </div>
               </div>
@@ -512,14 +457,11 @@ export default function BookComponent({
           <div className="flex flex-col gap-2 sm:flex-row">
             {!book.authorSummary && (
               <Button
+                onClick={() => setAuthorSummaryModal(true)}
                 variant="outline"
                 size="sm"
                 className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleGenerateAuthorSummary();
-                }}
-                disabled={isGeneratingAuthorSummary || !book.id}
+                disabled={!book.id || isGeneratingAuthorSummary}
               >
                 {isGeneratingAuthorSummary ? (
                   <>
@@ -632,15 +574,24 @@ export default function BookComponent({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-primary border-primary/30 hover:bg-primary/10"
+                  className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSummaryModal(true);
                   }}
                   disabled={isGenerating || !book.id}
                 >
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                  <span>Generovat shrnutí</span>
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                      <span>Generuji...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                      <span>Generovat shrnutí</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -657,13 +608,13 @@ export default function BookComponent({
                     key={note.id}
                     className={`relative p-4 rounded-lg border ${
                       note.isAISummary
-                        ? "bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30"
+                        ? "bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/20 dark:border-amber-800/30"
                         : "bg-background border-border/60"
                     }`}
                   >
                     {note.isAISummary && (
-                      <div className="absolute top-3 right-3 flex items-center text-xs text-primary/70">
-                        <Sparkles className="h-3 w-3 mr-1" />
+                      <div className="absolute top-3 right-3 flex items-center text-xs text-amber-600 dark:text-amber-400">
+                        <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
                         <span>AI shrnutí</span>
                       </div>
                     )}
@@ -787,6 +738,18 @@ export default function BookComponent({
         onClose={() => setSummaryModal(false)}
         onGenerate={handleGenerateSummary}
         isGenerating={isGenerating}
+        title="Generovat shrnutí knihy"
+        description="Vyberte preferovaný styl a zaměření shrnutí knihy."
+      />
+
+      {/* Add Author Summary Preferences Modal */}
+      <AuthorSummaryPreferencesModal
+        isOpen={authorSummaryModal}
+        onClose={() => setAuthorSummaryModal(false)}
+        onGenerate={handleGenerateAuthorSummary}
+        isGenerating={isGeneratingAuthorSummary}
+        title="Informace o autorovi"
+        description="Vyberte preferovaný styl a zaměření informací o autorovi."
       />
     </div>
   );

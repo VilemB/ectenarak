@@ -12,6 +12,7 @@ import {
   Info,
   Save,
   RotateCcw,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSummaryPreferences } from "@/contexts/SummaryPreferencesContext";
@@ -30,6 +31,8 @@ export interface SummaryPreferencesModalProps {
   onClose: () => void;
   onGenerate: (preferences: SummaryPreferences) => Promise<void>;
   isGenerating: boolean;
+  title?: string;
+  description?: string;
 }
 
 const optionVariants = {
@@ -95,6 +98,8 @@ export function SummaryPreferencesModal({
   onClose,
   onGenerate,
   isGenerating,
+  title,
+  description,
 }: SummaryPreferencesModalProps) {
   // Use global preferences instead of local storage directly
   const {
@@ -188,200 +193,106 @@ export function SummaryPreferencesModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Nastavení shrnutí"
+      title={title || "Nastavení shrnutí"}
       showCloseButton={true}
     >
       <div className="p-5 max-w-full overflow-x-hidden">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Preview section */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 mb-4">
-            <h3 className="text-sm font-medium text-white mb-2 flex items-center">
-              <Sparkles className="h-4 w-4 mr-2 text-primary" />
-              Náhled nastavení
-            </h3>
-            <p className="text-sm text-gray-300">{getPreviewText()}</p>
+        {description && (
+          <p className="text-muted-foreground mb-4">{description}</p>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* Header with AI icon */}
+          <div className="flex items-center mb-4 text-amber-600 dark:text-amber-400">
+            <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
+            <h3 className="text-lg font-medium">Přizpůsobte si AI shrnutí</h3>
           </div>
 
-          {/* Warning for long summaries */}
-          <AnimatePresence>
+          {/* Preview section */}
+          <div className="bg-amber-50/30 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center text-amber-700 dark:text-amber-400 mb-2">
+              <BookText className="h-4 w-4 mr-2" />
+              <h4 className="font-medium text-sm">Náhled nastavení</h4>
+            </div>
+            <p className="text-sm text-amber-800/80 dark:text-amber-300/80">
+              {getPreviewText()}
+            </p>
             {showLongWarning && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-4"
-              >
-                <div className="flex items-start">
-                  <Info className="h-5 w-5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-sm font-medium text-amber-400 mb-1">
-                      Upozornění na délku
-                    </h4>
-                    <p className="text-xs text-amber-300">
-                      Dlouhá shrnutí vyžadují více tokenů a mohou být zkrácena,
-                      pokud máte hodně poznámek. Pro nejlepší výsledky zvažte
-                      kratší délku nebo rozdělte poznámky do více knih.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
+              <div className="mt-2 text-xs flex items-start gap-1.5 text-amber-600 dark:text-amber-400">
+                <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                <p>
+                  Dlouhé shrnutí může být obsáhlejší, ale generování trvá déle a
+                  spotřebuje více tokenů.
+                </p>
+              </div>
             )}
-          </AnimatePresence>
+          </div>
 
           {/* Maturita Exam Features */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-foreground mb-3 flex items-center">
-              <BookText className="h-4 w-4 mr-2 text-primary" />
-              Funkce pro maturanty
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              <div className="relative">
-                <motion.div
-                  variants={optionVariants}
-                  initial="notSelected"
-                  animate={preferences.examFocus ? "selected" : "notSelected"}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+          <div className="space-y-3 mb-6">
+            <label className="text-sm font-medium text-foreground flex items-center">
+              <BookText className="h-4 w-4 mr-2 text-amber-500" />
+              Další možnosti
+            </label>
+            <div className="space-y-2">
+              <motion.button
+                type="button"
+                variants={optionVariants}
+                animate={preferences.examFocus ? "selected" : "notSelected"}
+                className={`
+                  relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                  ${
                     preferences.examFocus
-                      ? "bg-primary/10 border-primary/30"
-                      : "bg-card border-border hover:bg-secondary/50"
-                  }`}
-                  onClick={() =>
-                    setPreferences({
-                      ...preferences,
-                      examFocus: !preferences.examFocus,
-                    })
+                      ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
+                      : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
                   }
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${
-                          preferences.examFocus
-                            ? "bg-primary border-primary"
-                            : "border-muted-foreground"
-                        }`}
-                      >
-                        {preferences.examFocus && (
-                          <div className="w-3 h-3 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-foreground">
-                          Zaměření na maturitu
-                        </h4>
-                        <p className="text-xs text-muted-foreground">
-                          Strukturuje shrnutí podle požadavků maturitní zkoušky
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveTooltip(
-                          activeTooltip === "examFocus" ? null : "examFocus"
-                        );
-                      }}
-                    >
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-                <AnimatePresence>
-                  {activeTooltip === "examFocus" && (
-                    <motion.div
-                      variants={tooltipVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                      className="absolute right-0 mt-2 p-3 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
-                    >
-                      <p className="text-xs text-popover-foreground">
-                        {optionDescriptions.examFocus}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                `}
+                onClick={() =>
+                  setPreferences({
+                    ...preferences,
+                    examFocus: !preferences.examFocus,
+                  })
+                }
+              >
+                <div className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-2 text-amber-500" />
+                  <div className="text-sm font-medium">Pro maturitu</div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Zaměření na aspekty důležité pro maturitní zkoušku z českého
+                  jazyka a literatury.
+                </div>
+              </motion.button>
 
-              <div className="relative">
-                <motion.div
-                  variants={optionVariants}
-                  initial="notSelected"
-                  animate={
-                    preferences.literaryContext ? "selected" : "notSelected"
-                  }
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+              <motion.button
+                type="button"
+                variants={optionVariants}
+                animate={
+                  preferences.literaryContext ? "selected" : "notSelected"
+                }
+                className={`
+                  relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                  ${
                     preferences.literaryContext
-                      ? "bg-primary/10 border-primary/30"
-                      : "bg-card border-border hover:bg-secondary/50"
-                  }`}
-                  onClick={() =>
-                    setPreferences({
-                      ...preferences,
-                      literaryContext: !preferences.literaryContext,
-                    })
+                      ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
+                      : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
                   }
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${
-                          preferences.literaryContext
-                            ? "bg-primary border-primary"
-                            : "border-muted-foreground"
-                        }`}
-                      >
-                        {preferences.literaryContext && (
-                          <div className="w-3 h-3 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-foreground">
-                          Literární kontext
-                        </h4>
-                        <p className="text-xs text-muted-foreground">
-                          Přidá informace o literárním období a zařazení díla
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveTooltip(
-                          activeTooltip === "literaryContext"
-                            ? null
-                            : "literaryContext"
-                        );
-                      }}
-                    >
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-                <AnimatePresence>
-                  {activeTooltip === "literaryContext" && (
-                    <motion.div
-                      variants={tooltipVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                      className="absolute right-0 mt-2 p-3 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-lg z-10 w-full max-w-md"
-                    >
-                      <p className="text-xs text-popover-foreground">
-                        {optionDescriptions.literaryContext}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                `}
+                onClick={() =>
+                  setPreferences({
+                    ...preferences,
+                    literaryContext: !preferences.literaryContext,
+                  })
+                }
+              >
+                <div className="flex items-center">
+                  <BookText className="h-4 w-4 mr-2 text-amber-500" />
+                  <div className="text-sm font-medium">Literární kontext</div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Přidá informace o literárním kontextu, období a zařazení díla.
+                </div>
+              </motion.button>
             </div>
           </div>
 
@@ -389,7 +300,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-primary" />
+                  <BookText className="h-4 w-4 text-amber-500" />
                   <label className="text-sm font-medium text-foreground">
                     Styl shrnutí
                   </label>
@@ -512,7 +423,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <AlignJustify className="h-4 w-4 text-primary" />
+                  <AlignJustify className="h-4 w-4 text-amber-500" />
                   <label className="text-sm font-medium text-foreground">
                     Délka shrnutí
                   </label>
@@ -631,7 +542,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
+                  <BookText className="h-4 w-4 text-amber-500" />
                   <label className="text-sm font-medium text-foreground">
                     Zaměření
                   </label>
@@ -779,7 +690,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Languages className="h-4 w-4 text-primary" />
+                  <Languages className="h-4 w-4 text-amber-500" />
                   <label className="text-sm font-medium text-foreground">
                     Jazyk
                   </label>
