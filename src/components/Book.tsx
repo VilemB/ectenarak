@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,8 @@ import {
   AlertCircle,
   User,
   Info,
+  BookOpen,
+  Calendar,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -75,10 +77,10 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   const [summaryModal, setSummaryModal] = useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(true);
 
-  // Fetch notes from the database when the component mounts
+  // Fetch notes from the database when the component mounts or when expanded
   useEffect(() => {
     const fetchNotes = async () => {
-      if (!book.id) return;
+      if (!book.id || !isExpanded) return;
 
       setIsLoadingNotes(true);
       try {
@@ -115,7 +117,15 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     };
 
     fetchNotes();
-  }, [book.id]);
+  }, [book.id, isExpanded]);
+
+  // Memoize the sorted notes to prevent unnecessary re-renders
+  const sortedNotes = useCallback(() => {
+    return [...notes].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [notes]);
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +189,7 @@ export default function BookComponent({ book, onDelete }: BookProps) {
 
         // Create a temporary error note
         const errorNote: Note = {
-          id: "temp-error",
+          id: `temp-error-${Date.now()}`, // Add timestamp to ensure unique key
           bookId: book.id,
           content:
             "Pro generování shrnutí je potřeba nejprve přidat alespoň jednu poznámku k této knize.",
@@ -256,9 +266,9 @@ export default function BookComponent({ book, onDelete }: BookProps) {
     } catch (error) {
       console.error("Error generating summary:", error);
 
-      // Add an error note
+      // Add an error note with a unique ID
       const errorNote: Note = {
-        id: "temp-error",
+        id: `temp-error-${Date.now()}`, // Add timestamp to ensure unique key
         bookId: book.id,
         content:
           "Nastala chyba při generování shrnutí. Zkuste to prosím znovu později.",
@@ -329,68 +339,102 @@ export default function BookComponent({ book, onDelete }: BookProps) {
   return (
     <div className="w-full">
       <div
-        className={`bg-card rounded-lg shadow-md p-4 mb-4 transition-all duration-300 ${
-          isExpanded ? "ring-2 ring-primary/20" : "hover:shadow-lg"
+        className={`bg-card rounded-lg shadow-md transition-all duration-300 ${
+          isExpanded
+            ? "ring-2 ring-primary/20 p-5"
+            : "hover:shadow-lg p-4 hover:border-primary/30 border border-transparent cursor-pointer"
         }`}
-        onClick={() => !isExpanded && setIsExpanded(true)}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div className="mb-2 sm:mb-0">
-            <h3 className="text-lg font-semibold">{book.title}</h3>
-            <div className="flex items-center text-muted-foreground">
-              <User className="h-3.5 w-3.5 mr-1" />
-              <span className="text-sm">{book.author}</span>
-              {book.authorSummary && (
-                <Button
-                  variant="icon"
-                  size="sm"
-                  className="ml-1 text-muted-foreground hover:text-primary hover:bg-primary/10 h-6 w-6"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsAuthorInfoVisible(!isAuthorInfoVisible);
-                  }}
-                >
-                  <Info className="h-3.5 w-3.5" />
-                  <span className="sr-only">Author info</span>
-                </Button>
-              )}
+        <div
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+          onClick={() => {
+            if (!isExpanded) {
+              setIsExpanded(true);
+            }
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="hidden sm:flex h-10 w-10 rounded-full bg-primary/10 items-center justify-center flex-shrink-0">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                {book.title}
+              </h3>
+              <div className="flex flex-wrap items-center text-muted-foreground gap-x-3 gap-y-1 mt-1">
+                <div className="flex items-center">
+                  <User className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-sm">{book.author}</span>
+                  {book.authorSummary && (
+                    <Button
+                      variant="icon"
+                      size="sm"
+                      className="ml-1 text-muted-foreground hover:text-primary hover:bg-primary/10 h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAuthorInfoVisible(!isAuthorInfoVisible);
+                      }}
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                      <span className="sr-only">Author info</span>
+                    </Button>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs">{formatDate(book.createdAt)}</span>
+                </div>
+                {notes.length > 0 && (
+                  <div className="flex items-center">
+                    <PenLine className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs">
+                      {notes.length}{" "}
+                      {notes.length === 1
+                        ? "poznámka"
+                        : notes.length > 1 && notes.length < 5
+                        ? "poznámky"
+                        : "poznámek"}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="flex gap-2 mt-1 sm:mt-0">
             <ExportButton book={book} notes={notes} />
             <Button
-              variant="icon"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+              variant="outline"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors h-9"
               onClick={(e) => {
                 e.stopPropagation();
                 setDeleteModal({ isOpen: true, type: "book" });
               }}
             >
-              <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Delete book</span>
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              <span>Smazat</span>
             </Button>
-            {notes.length > 0 && (
-              <Button
-                variant="icon"
-                size="icon"
-                className={`text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8 transition-transform duration-200 ${
+            <Button
+              variant={isExpanded ? "default" : "outline"}
+              size="sm"
+              className={`transition-all duration-200 h-9 ${
+                isExpanded ? "" : "hover:bg-primary/10 hover:text-primary"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
+            >
+              <ChevronDown
+                className={`h-4 w-4 mr-1.5 transition-transform duration-200 ${
                   isExpanded ? "rotate-180" : ""
                 }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExpanded(!isExpanded);
-                }}
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
-              >
-                <ChevronDown className="h-4 w-4" />
-                <span className="sr-only">
-                  {isExpanded ? "Collapse" : "Expand"}
-                </span>
-              </Button>
-            )}
+              />
+              <span>{isExpanded ? "Skrýt" : "Zobrazit"}</span>
+            </Button>
           </div>
         </div>
 
@@ -399,24 +443,24 @@ export default function BookComponent({ book, onDelete }: BookProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-4 p-3 bg-muted/50 rounded-md text-sm"
+            className="mt-4 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-md text-sm border border-amber-200/50 dark:border-amber-800/30"
           >
             <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center text-primary">
-                <User className="h-3.5 w-3.5 mr-1" />
-                <span className="text-xs font-medium">O autorovi</span>
+              <div className="flex items-center text-amber-700 dark:text-amber-500">
+                <User className="h-4 w-4 mr-2" />
+                <span className="font-medium">O autorovi</span>
               </div>
               <Button
                 variant="icon"
                 size="sm"
-                className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-6 w-6"
+                className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6"
                 onClick={() => setIsAuthorInfoVisible(false)}
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Close</span>
               </Button>
             </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-amber prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
             </div>
           </motion.div>
@@ -429,106 +473,126 @@ export default function BookComponent({ book, onDelete }: BookProps) {
               initial="hidden"
               animate="visible"
               exit="hidden"
-              className="mt-4"
+              className="mt-5 pt-5 border-t border-border/50"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-sm font-medium">Poznámky</h4>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-5">
+                <h4 className="text-base font-medium flex items-center">
+                  <PenLine className="h-4 w-4 mr-2 text-primary" />
+                  Poznámky a shrnutí
+                </h4>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs"
+                    className="h-9 text-sm hover:border-primary/30 hover:bg-primary/5"
                     onClick={() => setSummaryModal(true)}
                   >
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    <Sparkles className="h-4 w-4 mr-1.5 text-amber-500" />
                     Generovat shrnutí
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
-                    className="h-8 text-xs"
+                    className="h-9 text-sm"
                     onClick={() => setIsAddingNote(true)}
                   >
-                    <PenLine className="h-3.5 w-3.5 mr-1.5" />
+                    <PenLine className="h-4 w-4 mr-1.5" />
                     Přidat poznámku
                   </Button>
                 </div>
               </div>
 
               {isLoadingNotes ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <div className="flex justify-center items-center py-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
                 </div>
               ) : notes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>Zatím nemáte žádné poznámky k této knize.</p>
-                  <p className="text-sm mt-1">
-                    Klikněte na &quot;Přidat poznámku&quot; pro vytvoření první
-                    poznámky.
+                <div className="text-center py-10 px-4 border border-dashed border-border/50 rounded-lg bg-muted/30">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
+                    <PenLine className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="text-foreground font-medium">
+                    Zatím nemáte žádné poznámky k této knize
                   </p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                    Přidejte své myšlenky, citáty nebo poznámky o knize pro
+                    pozdější využití.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 hover:border-primary/30"
+                    onClick={() => setIsAddingNote(true)}
+                  >
+                    <PenLine className="h-4 w-4 mr-1.5" />
+                    Přidat první poznámku
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {notes
-                    .sort(
-                      (a: Note, b: Note) =>
-                        new Date(b.createdAt).getTime() -
-                        new Date(a.createdAt).getTime()
-                    )
-                    .map((note) => (
-                      <motion.div
-                        key={note.id}
-                        variants={noteVariants}
-                        className={`p-3 rounded-md ${
-                          note.isAISummary
-                            ? "bg-amber-50 dark:bg-amber-950/20"
-                            : note.isError
-                            ? "bg-red-50 dark:bg-red-950/20"
-                            : "bg-muted/50"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center">
-                            {note.isAISummary ? (
-                              <div className="flex items-center text-amber-500">
-                                <Sparkles className="h-3.5 w-3.5 mr-1" />
-                                <span className="text-xs font-medium">
-                                  AI Shrnutí
-                                </span>
-                              </div>
-                            ) : note.isError ? (
-                              <div className="flex items-center text-red-500">
-                                <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                                <span className="text-xs font-medium">
-                                  Chyba
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">
+                  {sortedNotes().map((note) => (
+                    <motion.div
+                      key={note.id}
+                      variants={noteVariants}
+                      className={`p-4 rounded-md border ${
+                        note.isAISummary
+                          ? "bg-amber-50/60 dark:bg-amber-950/30 border-amber-200/50 dark:border-amber-800/30"
+                          : note.isError
+                          ? "bg-red-50/60 dark:bg-red-950/30 border-red-200/50 dark:border-red-800/30"
+                          : "bg-muted/40 border-border/40"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2.5">
+                        <div className="flex items-center">
+                          {note.isAISummary ? (
+                            <div className="flex items-center text-amber-600 dark:text-amber-500 bg-amber-100/50 dark:bg-amber-900/30 py-0.5 px-2 rounded-full">
+                              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                              <span className="text-xs font-medium">
+                                AI Shrnutí
+                              </span>
+                            </div>
+                          ) : note.isError ? (
+                            <div className="flex items-center text-red-600 dark:text-red-500 bg-red-100/50 dark:bg-red-900/30 py-0.5 px-2 rounded-full">
+                              <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
+                              <span className="text-xs font-medium">Chyba</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-muted-foreground bg-background/80 py-0.5 px-2 rounded-full border border-border/30">
+                              <Calendar className="h-3 w-3 mr-1.5" />
+                              <span className="text-xs">
                                 {formatDate(note.createdAt)}
                               </span>
-                            )}
-                          </div>
-                          {!note.isError && (
-                            <Button
-                              variant="icon"
-                              size="sm"
-                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-6 w-6"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteNote(note.id);
-                              }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              <span className="sr-only">Delete note</span>
-                            </Button>
+                            </div>
                           )}
                         </div>
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{note.content}</ReactMarkdown>
-                        </div>
-                      </motion.div>
-                    ))}
+                        {!note.isError && (
+                          <Button
+                            variant="icon"
+                            size="sm"
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNote(note.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span className="sr-only">Delete note</span>
+                          </Button>
+                        )}
+                      </div>
+                      <div
+                        className={`prose prose-sm dark:prose-invert max-w-none ${
+                          note.isAISummary
+                            ? "prose-amber"
+                            : note.isError
+                            ? "prose-red"
+                            : ""
+                        }`}
+                      >
+                        <ReactMarkdown>{note.content}</ReactMarkdown>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               )}
 
@@ -538,33 +602,42 @@ export default function BookComponent({ book, onDelete }: BookProps) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mt-4"
+                    className="mt-5"
                   >
-                    <form onSubmit={handleAddNote} className="space-y-3">
-                      <textarea
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        placeholder="Napiš svou poznámku..."
-                        className="w-full p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y min-h-[120px]"
-                        autoFocus
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsAddingNote(false)}
-                        >
-                          Zrušit
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="default"
-                          size="sm"
-                          disabled={!newNote.trim()}
-                        >
-                          Uložit poznámku
-                        </Button>
+                    <form onSubmit={handleAddNote} className="space-y-4">
+                      <div className="border border-border/50 rounded-lg bg-muted/20 p-1">
+                        <textarea
+                          value={newNote}
+                          onChange={(e) => setNewNote(e.target.value)}
+                          placeholder="Napiš svou poznámku..."
+                          className="w-full p-3 rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y min-h-[150px]"
+                          autoFocus
+                        />
+                        <div className="flex justify-between items-center px-2 py-1.5">
+                          <div className="text-xs text-muted-foreground">
+                            Podporuje Markdown
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setIsAddingNote(false)}
+                              className="h-8 text-xs"
+                            >
+                              Zrušit
+                            </Button>
+                            <Button
+                              type="submit"
+                              variant="default"
+                              size="sm"
+                              disabled={!newNote.trim()}
+                              className="h-8 text-xs"
+                            >
+                              Uložit poznámku
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </form>
                   </motion.div>
