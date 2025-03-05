@@ -86,11 +86,15 @@ export default function BookComponent({
   const [errorMessages, setErrorMessages] = useState<
     Array<{ id: string; message: string }>
   >([]);
+  const [successMessages, setSuccessMessages] = useState<
+    Array<{ id: string; message: string }>
+  >([]);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note";
     noteId?: string;
-  }>({ isOpen: false, type: "book" });
+    isLoading?: boolean;
+  }>({ isOpen: false, type: "book", isLoading: false });
   const [summaryModal, setSummaryModal] = useState(false);
   const [authorSummaryModal, setAuthorSummaryModal] = useState(false);
   const bookRef = useRef<HTMLDivElement>(null);
@@ -117,6 +121,17 @@ export default function BookComponent({
     setTimeout(() => {
       setErrorMessages((prev) => prev.filter((msg) => msg.id !== id));
     }, 5000);
+  }, []);
+
+  // Add a function to show success messages
+  const showSuccessMessage = useCallback((message: string) => {
+    const id = Math.random().toString(36).substring(2, 11);
+    setSuccessMessages((prev) => [...prev, { id, message }]);
+
+    // Auto-remove the success message after 3 seconds
+    setTimeout(() => {
+      setSuccessMessages((prev) => prev.filter((msg) => msg.id !== id));
+    }, 3000);
   }, []);
 
   // Memoize fetchNotes with useCallback
@@ -323,7 +338,7 @@ export default function BookComponent({
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    setDeleteModal({ isOpen: true, type: "note", noteId });
+    setDeleteModal({ isOpen: true, type: "note", noteId, isLoading: false });
   };
 
   const handleConfirmDelete = async () => {
@@ -335,6 +350,9 @@ export default function BookComponent({
 
   const handleConfirmDeleteNote = async () => {
     if (deleteModal.type === "note" && deleteModal.noteId && book.id) {
+      // Set loading state
+      setDeleteModal((prev) => ({ ...prev, isLoading: true }));
+
       try {
         const response = await fetch(
           `/api/books/${book.id}/notes/${deleteModal.noteId}`,
@@ -344,7 +362,8 @@ export default function BookComponent({
         );
 
         if (!response.ok) {
-          throw new Error("Failed to delete note");
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete note");
         }
 
         const data = await response.json();
@@ -365,15 +384,27 @@ export default function BookComponent({
           })
         );
 
+        // Update both the local notes state and the book state
         setNotes(formattedNotes);
+        setBook((prevBook) => ({
+          ...prevBook,
+          notes: formattedNotes,
+        }));
+
+        // Show success message
+        showSuccessMessage("Poznámka byla úspěšně smazána");
       } catch (error) {
         console.error("Error deleting note:", error);
         showErrorMessage("Nepodařilo se smazat poznámku");
+      } finally {
+        // Always close the delete modal, even if there was an error
+        setDeleteModal({ isOpen: false, type: "book", isLoading: false });
       }
+    } else {
+      // Close the modal if the required IDs are missing
+      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+      showErrorMessage("Chybí ID poznámky nebo knihy");
     }
-
-    // Close the delete modal
-    setDeleteModal({ isOpen: false, type: "book" });
   };
 
   const handleGenerateAuthorSummary = async (
@@ -657,7 +688,13 @@ export default function BookComponent({
                       note.isAISummary
                         ? "bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/20 dark:border-amber-800/30"
                         : "bg-background border-border/60"
-                    }`}
+                    } ${
+                      deleteModal.type === "note" &&
+                      deleteModal.noteId === note.id &&
+                      deleteModal.isLoading
+                        ? "opacity-50"
+                        : ""
+                    } transition-opacity duration-200`}
                   >
                     {note.isAISummary && (
                       <div className="absolute top-3 right-3 flex items-center text-xs text-amber-600 dark:text-amber-400">
@@ -675,11 +712,12 @@ export default function BookComponent({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteNote(note.id);
                         }}
+                        aria-label="Smazat poznámku"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         <span className="sr-only">Smazat poznámku</span>
@@ -752,10 +790,48 @@ export default function BookComponent({
         )}
       </AnimatePresence>
 
+      {/* Success Messages */}
+      <AnimatePresence>
+        {successMessages.length > 0 && (
+          <div className="p-4 space-y-2">
+            {successMessages.map((success, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded-md"
+              >
+                <div className="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-green-500 mr-2"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {success.message}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Confirmation Dialogs */}
       <ConfirmationDialog
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, type: "book" })}
+        onClose={() =>
+          setDeleteModal({ isOpen: false, type: "book", isLoading: false })
+        }
         onConfirm={
           deleteModal.type === "book"
             ? handleConfirmDelete
@@ -771,6 +847,8 @@ export default function BookComponent({
           deleteModal.type === "book" ? "Smazat knihu" : "Smazat poznámku"
         }
         cancelText="Zrušit"
+        isLoading={deleteModal.isLoading}
+        variant="destructive"
       />
 
       <ConfirmationDialog

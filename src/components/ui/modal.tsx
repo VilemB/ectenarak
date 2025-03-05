@@ -25,13 +25,36 @@ export function Modal({
 }: ModalProps) {
   const [isMounted, setIsMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
 
     if (isOpen) {
+      // Store the currently focused element
+      previousFocusRef.current = document.activeElement as HTMLElement;
+
       // Prevent scrolling when modal is open
       document.body.style.overflow = "hidden";
+
+      // Focus the modal
+      setTimeout(() => {
+        if (modalRef.current) {
+          const focusableElements = modalRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusableElements.length > 0) {
+            (focusableElements[0] as HTMLElement).focus();
+          } else {
+            modalRef.current.focus();
+          }
+        }
+      }, 50);
+    } else {
+      // Restore focus when modal closes
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
     }
 
     return () => {
@@ -47,12 +70,41 @@ export function Modal({
       }
     };
 
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key === "Tab" && modalRef.current) {
+        // Get all focusable elements in the modal
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[
+          focusableElements.length - 1
+        ] as HTMLElement;
+
+        // If shift+tab and on first element, move to last element
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+        // If tab and on last element, move to first element
+        else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
+      document.addEventListener("keydown", handleTab);
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleTab);
     };
   }, [isOpen, onClose]);
 
@@ -101,10 +153,17 @@ export function Modal({
                   e.preventDefault(); // Prevent default behavior
                   e.stopPropagation(); // Prevent clicks from reaching the backdrop
                 }}
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={title ? "modal-title" : undefined}
               >
                 {title && (
                   <div className="flex items-center justify-between p-5 border-b border-gray-700/50">
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3
+                      className="text-xl font-semibold text-white"
+                      id="modal-title"
+                    >
                       {title}
                     </h3>
                     {showCloseButton && (

@@ -699,4 +699,3 @@ export function AuthorSummaryPreferencesModal({
     </Modal>
   );
 }
-// TODO: vylepšit mazání poznámky
