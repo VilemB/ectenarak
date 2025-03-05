@@ -189,31 +189,43 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto relative pb-20 mb-16">
+      {/* Enhanced decorative elements */}
+      <div className="absolute -top-20 -left-20 w-60 h-60 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-gradient-to-tl from-indigo-500/20 to-blue-500/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-lg max-h-lg bg-gradient-to-b from-transparent to-blue-950/30 rounded-3xl blur-3xl -z-20 opacity-50" />
+
+      <div className="mb-10 text-center">
+        <h2 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+          Čtenářský deník
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Přihlaste se nebo si vytvořte účet
+        </p>
+      </div>
+
       <Tabs
         defaultValue="login"
         value={activeTab}
         onValueChange={handleTabChange}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-10 rounded-full p-1 bg-muted/30 backdrop-blur-sm border border-white/5">
           <TabsTrigger
             value="login"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+            className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
           >
             Přihlášení
           </TabsTrigger>
           <TabsTrigger
             value="signup"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+            className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
           >
             Registrace
           </TabsTrigger>
         </TabsList>
 
         <div className="relative min-h-[420px]">
-          {" "}
-          {/* Fixed height container with relative positioning */}
           <AnimatePresence mode="wait" initial={false}>
             {activeTab === "login" && (
               <motion.div
@@ -226,59 +238,62 @@ export default function LoginForm() {
               >
                 <motion.div
                   variants={itemVariants}
-                  className="space-y-2 text-center mb-6"
+                  className="space-y-2 text-center mb-8"
                 >
-                  <h3 className="text-xl font-semibold">Vítejte zpět</h3>
+                  <h3 className="text-2xl font-semibold">Vítejte zpět</h3>
                   <p className="text-sm text-muted-foreground">
                     Přihlaste se ke svému účtu
                   </p>
                 </motion.div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <motion.div variants={itemVariants} className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <motion.div variants={itemVariants} className="space-y-3">
+                    <Label htmlFor="email" className="text-sm font-medium">
                       Email
                     </Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="vas@email.cz"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
-                    />
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="vas@email.cz"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                      />
+                    </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="space-y-2">
+                  <motion.div variants={itemVariants} className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label
-                        htmlFor="password"
-                        className="flex items-center gap-2"
-                      >
-                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="password" className="text-sm font-medium">
                         Heslo
                       </Label>
                       <Button
                         variant="link"
-                        className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
+                        className="p-0 h-auto text-xs text-blue-400 hover:text-blue-300"
                         type="button"
                       >
                         Zapomenuté heslo?
                       </Button>
                     </div>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
-                    />
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                      />
+                    </div>
                   </motion.div>
 
                   <AnimatePresence>
@@ -289,7 +304,7 @@ export default function LoginForm() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2"
+                        className="bg-red-500/10 text-red-400 text-sm p-4 rounded-xl flex items-start gap-2 border border-red-500/20"
                       >
                         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>{error}</span>
@@ -300,7 +315,7 @@ export default function LoginForm() {
                   <motion.div variants={itemVariants}>
                     <Button
                       type="submit"
-                      className="w-full transition-all duration-300 hover:shadow-md"
+                      className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -313,10 +328,10 @@ export default function LoginForm() {
                   </motion.div>
                 </form>
 
-                <motion.div variants={itemVariants} className="mt-6">
+                <motion.div variants={itemVariants} className="mt-8">
                   <div className="relative flex items-center justify-center">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-border"></div>
+                      <div className="w-full border-t border-white/10"></div>
                     </div>
                     <div className="relative bg-background px-4 text-xs text-muted-foreground">
                       nebo pokračujte s
@@ -328,7 +343,7 @@ export default function LoginForm() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full transition-all duration-300 hover:shadow-md hover:bg-background"
+                    className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-md hover:bg-white/5 border-white/10 backdrop-blur-sm"
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
                   >
@@ -336,7 +351,7 @@ export default function LoginForm() {
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <svg
-                        className="h-4 w-4 mr-2"
+                        className="h-5 w-5 mr-2"
                         aria-hidden="true"
                         focusable="false"
                         data-prefix="fab"
@@ -351,7 +366,7 @@ export default function LoginForm() {
                         ></path>
                       </svg>
                     )}
-                    Google
+                    Pokračovat s Google
                   </Button>
                 </motion.div>
               </motion.div>
@@ -368,71 +383,80 @@ export default function LoginForm() {
               >
                 <motion.div
                   variants={itemVariants}
-                  className="space-y-2 text-center mb-6"
+                  className="space-y-2 text-center mb-8"
                 >
-                  <h3 className="text-xl font-semibold">Vytvořit účet</h3>
+                  <h3 className="text-2xl font-semibold">Vytvořit účet</h3>
                   <p className="text-sm text-muted-foreground">
                     Zaregistrujte se a začněte používat aplikaci
                   </p>
                 </motion.div>
 
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <motion.div variants={itemVariants} className="space-y-2">
-                    <Label htmlFor="name" className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                <form onSubmit={handleSignUp} className="space-y-6">
+                  <motion.div variants={itemVariants} className="space-y-3">
+                    <Label htmlFor="name" className="text-sm font-medium">
                       Jméno
                     </Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      placeholder="Vaše jméno"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
-                    />
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="name"
+                        name="name"
+                        type="text"
+                        placeholder="Vaše jméno"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                      />
+                    </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="space-y-2">
+                  <motion.div variants={itemVariants} className="space-y-3">
                     <Label
                       htmlFor="signup-email"
-                      className="flex items-center gap-2"
+                      className="text-sm font-medium"
                     >
-                      <Mail className="h-4 w-4 text-muted-foreground" />
                       Email
                     </Label>
-                    <Input
-                      id="signup-email"
-                      name="email"
-                      type="email"
-                      placeholder="vas@email.cz"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
-                    />
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="signup-email"
+                        name="email"
+                        type="email"
+                        placeholder="vas@email.cz"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                      />
+                    </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="space-y-2">
+                  <motion.div variants={itemVariants} className="space-y-3">
                     <Label
                       htmlFor="signup-password"
-                      className="flex items-center gap-2"
+                      className="text-sm font-medium"
                     >
-                      <Lock className="h-4 w-4 text-muted-foreground" />
                       Heslo
                     </Label>
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary/20"
-                    />
-                    <p className="text-xs text-muted-foreground">
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="signup-password"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
                       Heslo musí mít alespoň 6 znaků
                     </p>
                   </motion.div>
@@ -445,7 +469,7 @@ export default function LoginForm() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2"
+                        className="bg-red-500/10 text-red-400 text-sm p-4 rounded-xl flex items-start gap-2 border border-red-500/20"
                       >
                         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>{error}</span>
@@ -459,7 +483,7 @@ export default function LoginForm() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="bg-green-100 text-green-800 text-sm p-3 rounded-md flex items-start gap-2"
+                        className="bg-green-500/10 text-green-400 text-sm p-4 rounded-xl flex items-start gap-2 border border-green-500/20"
                       >
                         <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>{success}</span>
@@ -470,7 +494,7 @@ export default function LoginForm() {
                   <motion.div variants={itemVariants}>
                     <Button
                       type="submit"
-                      className="w-full transition-all duration-300 hover:shadow-md"
+                      className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -483,12 +507,12 @@ export default function LoginForm() {
                   </motion.div>
                 </form>
 
-                <motion.div variants={itemVariants} className="mt-6">
+                <motion.div variants={itemVariants} className="mt-8">
                   <div className="text-center text-xs text-muted-foreground">
                     Registrací souhlasíte s našimi{" "}
                     <Button
                       variant="link"
-                      className="p-0 h-auto text-xs text-primary hover:underline"
+                      className="p-0 h-auto text-xs text-blue-400 hover:text-blue-300"
                       type="button"
                     >
                       podmínkami použití
@@ -496,7 +520,7 @@ export default function LoginForm() {
                     a{" "}
                     <Button
                       variant="link"
-                      className="p-0 h-auto text-xs text-primary hover:underline"
+                      className="p-0 h-auto text-xs text-blue-400 hover:text-blue-300"
                       type="button"
                     >
                       zásadami ochrany osobních údajů

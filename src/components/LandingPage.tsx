@@ -429,7 +429,6 @@ export default function LandingPage() {
 
             <div className="flex-1">
               <motion.div
-                className="bg-card border border-border/50 rounded-xl p-6 shadow-xl"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
