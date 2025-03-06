@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,30 +63,24 @@ export default function BookComponent({
   book: initialBook,
   onDelete,
 }: BookProps) {
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   // Validate the book object
-  useEffect(() => {
+  const safeBook: Book = useMemo(() => {
     if (!initialBook || Object.keys(initialBook).length === 0) {
-      console.error("Empty book object passed to BookComponent:", initialBook);
+      console.error(
+        "Warning: Empty book object received in props:",
+        initialBook
+      );
+      // Return a safe default book object
+      return {
+        id: `temp-${Math.random().toString(36).substring(2, 11)}`,
+        title: "Untitled Book",
+        author: "Unknown Author",
+        notes: [],
+        createdAt: new Date().toISOString(),
+      };
     }
-
-    if (!initialBook.id) {
-      console.error("Book without ID passed to BookComponent:", initialBook);
-    }
+    return initialBook;
   }, [initialBook]);
-
-  // Create a safe book object with fallbacks for all properties
-  const safeBook = {
-    id: initialBook.id || `temp-${Math.random().toString(36).substring(2, 9)}`,
-    title: initialBook.title || "Untitled Book",
-    author: initialBook.author || "Unknown Author",
-    createdAt: initialBook.createdAt || new Date().toISOString(),
-    authorSummary: initialBook.authorSummary || "",
-    authorId: initialBook.authorId || "",
-    userId: initialBook.userId || "",
-    notes: initialBook.notes || [],
-  };
 
   // Rest of the component uses safeBook instead of initialBook
   const [book, setBook] = useState<Book>(safeBook);
@@ -390,10 +384,25 @@ export default function BookComponent({
   };
 
   const handleConfirmDelete = async () => {
-    if (book.id) {
-      onDelete(book.id);
+    if (!book.id) {
+      showErrorMessage("Nelze smazat knihu bez ID");
+      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+      return;
     }
-    setShowDeleteConfirm(false);
+
+    // Set loading state
+    setDeleteModal((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      // Call the onDelete function passed from the parent
+      await onDelete(book.id);
+      showSuccessMessage("Kniha byla úspěšně smazána");
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      showErrorMessage("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
+    } finally {
+      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+    }
   };
 
   const handleConfirmDeleteNote = async () => {
@@ -570,7 +579,12 @@ export default function BookComponent({
       return;
     }
 
-    setShowDeleteConfirm(true);
+    // Use the deleteModal state instead of showDeleteConfirm
+    setDeleteModal({
+      isOpen: true,
+      type: "book",
+      isLoading: false,
+    });
   };
 
   // Handle keyboard shortcuts
@@ -1133,16 +1147,6 @@ export default function BookComponent({
         cancelText="Zrušit"
         isLoading={deleteModal.isLoading}
         variant="destructive"
-      />
-
-      <ConfirmationDialog
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleConfirmDelete}
-        title="Smazat knihu"
-        description={`Opravdu chcete smazat knihu "${book.title}"? Tato akce je nevratná.`}
-        confirmText="Smazat knihu"
-        cancelText="Zrušit"
       />
 
       {/* Summary Preferences Modal */}

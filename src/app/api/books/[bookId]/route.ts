@@ -64,7 +64,7 @@ export async function DELETE(
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = params;
+    const { bookId } = await params;
 
     if (!bookId) {
       return NextResponse.json(
@@ -118,7 +118,7 @@ export async function PATCH(
     await dbConnect();
 
     // Properly handle the bookId parameter
-    const bookId = params.bookId;
+    const { bookId } = await params;
 
     if (!bookId || bookId === "undefined") {
       return NextResponse.json(

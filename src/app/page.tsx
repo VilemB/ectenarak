@@ -1,31 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { Book } from "@/types";
-import BookComponent from "@/components/Book";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Modal } from "@/components/ui/modal";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
-  PlusCircle,
-  AlertCircle,
   BookOpen,
   Search,
-  Library,
-  BookText,
-  X,
-  Info,
-  PenLine,
-  Sparkles,
-  Loader2,
   Plus,
+  PlusCircle,
+  X,
+  Keyboard,
+  Info,
+  Sparkles,
+  AlertCircle,
+  BookText,
+  PenLine,
+  Loader2,
   ChevronRight,
   ChevronLeft,
   User,
+  Library,
 } from "lucide-react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
-import { Modal } from "@/components/ui/modal";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useAuth } from "@/hooks/useAuth";
+import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
+import { formatDate } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import LandingPage from "@/components/LandingPage";
 
 const containerVariants = {
@@ -75,11 +83,6 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showWelcome, setShowWelcome] = useLocalStorage("welcome-shown", true);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{
-    isOpen: boolean;
-    bookId: string;
-    bookTitle: string;
-  } | null>(null);
   const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
     useState(false);
   const [includeAuthorSummary, setIncludeAuthorSummary] = useState(false);
@@ -360,33 +363,23 @@ export default function Home() {
     }
   };
 
-  const handleDeleteBook = async (bookId: string) => {
+  const handleDeleteBook = async (bookId: string): Promise<void> => {
     try {
       const response = await fetch(`/api/books/${bookId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete book");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete book");
       }
 
       // Update local state after successful deletion
       setBooks(books.filter((book) => book.id !== bookId));
-      setDeleteConfirmation(null);
     } catch (error) {
       console.error("Error deleting book:", error);
       setError("Failed to delete book. Please try again.");
-    }
-  };
-
-  const showDeleteConfirmation = (bookId: string) => {
-    const bookToDelete = books.find((book) => book.id === bookId);
-    if (bookToDelete) {
-      setDeleteConfirmation({
-        isOpen: true,
-        bookId,
-        bookTitle: bookToDelete.title,
-      });
+      throw error; // Re-throw the error so the caller can handle it
     }
   };
 
@@ -411,7 +404,7 @@ export default function Home() {
 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-foreground flex items-center">
-              <BookText className="h-5 w-5 mr-2 text-primary" />
+              <BookOpen className="h-5 w-5 mr-2 text-primary" />
               Přidat novou knihu
             </h2>
             <Button
@@ -817,9 +810,7 @@ export default function Home() {
                           `book-${Math.random().toString(36).substring(2, 11)}`
                         }
                         book={book}
-                        onDelete={(bookId: string) =>
-                          showDeleteConfirmation(bookId)
-                        }
+                        onDelete={handleDeleteBook}
                       />
                     );
                   })}
@@ -829,23 +820,6 @@ export default function Home() {
           )}
         </main>
       )}
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={deleteConfirmation?.isOpen || false}
-        onClose={() => setDeleteConfirmation(null)}
-        onConfirm={() =>
-          deleteConfirmation && handleDeleteBook(deleteConfirmation.bookId)
-        }
-        title="Smazat knihu"
-        description={
-          deleteConfirmation
-            ? `Opravdu chcete smazat knihu "${deleteConfirmation.bookTitle}"? Tato akce je nevratná.`
-            : ""
-        }
-        confirmText="Smazat knihu"
-        cancelText="Zrušit"
-      />
 
       {/* Welcome Modal */}
       <Modal
