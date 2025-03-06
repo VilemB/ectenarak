@@ -32,31 +32,10 @@ interface BookProps {
   onDelete: (bookId: string) => void;
 }
 
-// Improved animation variants
-const expandedContentVariants = {
-  hidden: {
-    opacity: 0,
-    height: 0,
-    transition: {
-      height: { duration: 0.3 },
-      opacity: { duration: 0.2 },
-    },
-  },
-  visible: {
-    opacity: 1,
-    height: "auto",
-    transition: {
-      height: { duration: 0.4 },
-      opacity: { duration: 0.3, delay: 0.1 },
-    },
-  },
-};
-
 // Animation variants for note items
-const noteItemVariants = {
+const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
+  visible: { opacity: 1, y: 0 },
 };
 
 export default function BookComponent({
@@ -209,6 +188,30 @@ export default function BookComponent({
     };
   }, [isExpanded]);
 
+  // Add a smooth scroll effect when expanding a book
+  useEffect(() => {
+    if (isExpanded) {
+      // Smooth scroll to the book when expanded
+      setTimeout(() => {
+        bookRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  }, [isExpanded]);
+
+  // Add a smooth scroll to the notes section when adding a new note
+  useEffect(() => {
+    if (notes.length > 0 && isExpanded) {
+      // Scroll to the bottom of notes when a new note is added
+      notesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [notes.length, isExpanded]);
+
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
@@ -273,19 +276,9 @@ export default function BookComponent({
     }
   };
 
-  // Toggle expanded state when clicking on the book
   const handleBookClick = () => {
+    // Toggle expanded state with animation
     setIsExpanded(!isExpanded);
-
-    // If expanding, scroll to the book after a short delay
-    if (!isExpanded) {
-      setTimeout(() => {
-        bookRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 100);
-    }
   };
 
   const handleGenerateSummary = async (
@@ -628,27 +621,69 @@ export default function BookComponent({
     }
   };
 
+  // Add click outside handler for author summary
+  useEffect(() => {
+    if (!isAuthorInfoVisible) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if the click is outside the author summary
+      const target = event.target as Node;
+      const authorSummaryElement = document.getElementById(
+        `author-summary-${book.id}`
+      );
+
+      if (authorSummaryElement && !authorSummaryElement.contains(target)) {
+        setIsAuthorInfoVisible(false);
+      }
+    };
+
+    // Add escape key handler to close author summary
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isAuthorInfoVisible) {
+        setIsAuthorInfoVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscKey);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [isAuthorInfoVisible, book.id]);
+
   return (
-    <div
+    <motion.div
       ref={bookRef}
       className="bg-background rounded-xl border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      layout
     >
       {/* Book Header */}
-      <div
+      <motion.div
         className={`p-5 cursor-pointer ${
           isExpanded ? "border-b border-border/40" : ""
         }`}
         onClick={handleBookClick}
+        whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
+        transition={{ duration: 0.2 }}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex-grow space-y-3">
             {/* Title and Author */}
             <div>
-              <h3 className="text-xl font-medium text-foreground group-hover:text-primary transition-colors">
+              <motion.h3
+                className="text-xl font-medium text-foreground group-hover:text-primary transition-colors"
+                whileHover={{ scale: 1.01 }}
+                transition={{ duration: 0.2 }}
+              >
                 {book.title}
-              </h3>
+              </motion.h3>
               <div className="flex items-center mt-1.5">
-                <div
+                <motion.div
                   className="group cursor-pointer flex items-center gap-1.5"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -658,6 +693,8 @@ export default function BookComponent({
                       setAuthorSummaryModal(true);
                     }
                   }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <span className="text-sm font-medium group-hover:text-primary transition-colors">
                     {book.author}
@@ -668,7 +705,7 @@ export default function BookComponent({
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gradient-to-r from-amber-500 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)] group-hover:shadow-[0_0_12px_rgba(245,158,11,0.8)] transition-all"></span>
                     </span>
                   )}
-                </div>
+                </motion.div>
               </div>
             </div>
 
@@ -756,12 +793,13 @@ export default function BookComponent({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Author Summary Panel */}
       <AnimatePresence>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
+            id={`author-summary-${book.id}`}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -773,18 +811,21 @@ export default function BookComponent({
                 <User className="h-4 w-4 mr-2" />
                 <span className="font-medium">O autorovi</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsAuthorInfoVisible(false);
-                }}
-              >
-                <X className="h-3 w-3" />
-                <span className="sr-only">Zavřít</span>
-              </Button>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-amber-600/70 dark:text-amber-500/70">
+                  ESC
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
+                  onClick={() => setIsAuthorInfoVisible(false)}
+                  aria-label="Zavřít informace o autorovi"
+                >
+                  <X className="h-3 w-3" />
+                  <span className="sr-only">Zavřít</span>
+                </Button>
+              </div>
             </div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -794,6 +835,21 @@ export default function BookComponent({
             >
               <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
             </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.2 }}
+              className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-end"
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 text-xs"
+                onClick={() => setIsAuthorInfoVisible(false)}
+              >
+                Zavřít
+              </Button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -802,264 +858,208 @@ export default function BookComponent({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            variants={expandedContentVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            className="p-5 bg-gradient-to-b from-background to-background/80"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-5">
-              <div className="flex items-center gap-2">
-                <h4 className="text-lg font-medium flex items-center text-foreground/90">
-                  <PenLine className="h-4 w-4 mr-2 text-primary" />
-                  Poznámky a shrnutí
-                </h4>
-                {notes.length > 0 && (
-                  <div className="inline-flex items-center justify-center bg-primary/10 text-primary text-xs font-medium rounded-full h-5 min-w-5 px-1.5">
-                    {notes.length}
+            {/* Notes Section */}
+            <div className="p-5">
+              {/* Notes Filter */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium">Poznámky</h4>
+                  <div className="flex items-center gap-1 bg-secondary/50 rounded-full p-1 text-xs">
+                    <button
+                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                        activeNoteFilter === "all"
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-secondary"
+                      }`}
+                      onClick={() => setActiveNoteFilter("all")}
+                    >
+                      Všechny
+                    </button>
+                    <button
+                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                        activeNoteFilter === "regular"
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-secondary"
+                      }`}
+                      onClick={() => setActiveNoteFilter("regular")}
+                    >
+                      Moje
+                    </button>
+                    <button
+                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                        activeNoteFilter === "ai"
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-secondary"
+                      }`}
+                      onClick={() => setActiveNoteFilter("ai")}
+                    >
+                      AI
+                    </button>
                   </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSummaryModal(true);
+                    }}
+                    disabled={isGenerating || !book.id}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                        <span>Generuji...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                        <span>Generovat shrnutí</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Notes List */}
+              <div className="space-y-4 mb-6">
+                {notes.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.3 }}
+                    className="text-center py-8 text-muted-foreground bg-background/50 rounded-lg border border-dashed border-border/60"
+                  >
+                    <div className="flex justify-center mb-3">
+                      <PenLine className="h-10 w-10 text-muted-foreground/30" />
+                    </div>
+                    <p className="text-sm mb-2">Zatím nemáte žádné poznámky.</p>
+                    <p className="text-xs text-muted-foreground/70">
+                      Přidejte svou první poznámku pomocí formuláře níže.
+                    </p>
+                  </motion.div>
+                ) : (
+                  <AnimatePresence initial={false}>
+                    {notes
+                      .filter((note) => {
+                        if (activeNoteFilter === "all") return true;
+                        if (activeNoteFilter === "regular")
+                          return !note.isAISummary;
+                        if (activeNoteFilter === "ai") return note.isAISummary;
+                        return true;
+                      })
+                      .map((note) => (
+                        <motion.div
+                          key={note.id}
+                          layout
+                          variants={itemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="hidden"
+                          className={`relative p-4 rounded-lg border shadow-sm hover:shadow-md ${
+                            note.isAISummary
+                              ? "bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/20 dark:border-amber-800/30"
+                              : "bg-background border-border/60"
+                          } ${
+                            deleteModal.type === "note" &&
+                            deleteModal.noteId === note.id &&
+                            deleteModal.isLoading
+                              ? "opacity-50"
+                              : ""
+                          } transition-all duration-200`}
+                        >
+                          {note.isAISummary && (
+                            <div className="absolute top-3 right-3 flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30 px-2 py-1 rounded-full">
+                              <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
+                              <span>AI shrnutí</span>
+                            </div>
+                          )}
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{note.content}</ReactMarkdown>
+                          </div>
+                          <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
+                            <span className="text-xs text-muted-foreground flex items-center">
+                              <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground/70" />
+                              {formatDate(note.createdAt)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteNote(note.id);
+                              }}
+                              aria-label="Smazat poznámku"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span className="sr-only">Smazat poznámku</span>
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    <div ref={notesEndRef} />
+                  </AnimatePresence>
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSummaryModal(true);
-                  }}
-                  disabled={isGenerating || !book.id}
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
-                      <span>Generuji...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                      <span>Generovat shrnutí</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Note Filters */}
-            {notes.length > 0 && (
-              <div className="flex mb-4 border-b border-border/40 overflow-x-auto pb-1 scrollbar-hide">
-                <button
-                  onClick={() => setActiveNoteFilter("all")}
-                  className={`px-4 py-2 text-sm font-medium transition-all relative ${
-                    activeNoteFilter === "all"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Všechny poznámky
-                  <span className="ml-1.5 inline-flex items-center justify-center bg-background text-xs font-medium rounded-full h-5 min-w-5 px-1.5 border border-border/60">
-                    {notes.length}
-                  </span>
-                  {activeNoteFilter === "all" && (
-                    <motion.div
-                      layoutId="activeFilter"
-                      className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveNoteFilter("regular")}
-                  className={`px-4 py-2 text-sm font-medium transition-all relative ${
-                    activeNoteFilter === "regular"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Moje poznámky
-                  <span className="ml-1.5 inline-flex items-center justify-center bg-background text-xs font-medium rounded-full h-5 min-w-5 px-1.5 border border-border/60">
-                    {notes.filter((note) => !note.isAISummary).length}
-                  </span>
-                  {activeNoteFilter === "regular" && (
-                    <motion.div
-                      layoutId="activeFilter"
-                      className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveNoteFilter("ai")}
-                  className={`px-4 py-2 text-sm font-medium transition-all relative ${
-                    activeNoteFilter === "ai"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  AI shrnutí
-                  <span className="ml-1.5 inline-flex items-center justify-center bg-background text-xs font-medium rounded-full h-5 min-w-5 px-1.5 border border-border/60">
-                    {notes.filter((note) => note.isAISummary).length}
-                  </span>
-                  {activeNoteFilter === "ai" && (
-                    <motion.div
-                      layoutId="activeFilter"
-                      className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Notes List */}
-            <div className="space-y-4 mb-6">
-              {notes.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
-                  className="text-center py-8 text-muted-foreground bg-background/50 rounded-lg border border-dashed border-border/60"
-                >
-                  <div className="flex justify-center mb-3">
-                    <PenLine className="h-10 w-10 text-muted-foreground/30" />
-                  </div>
-                  <p className="text-sm mb-2">Zatím nemáte žádné poznámky.</p>
-                  <p className="text-xs text-muted-foreground/70">
-                    Přidejte svou první poznámku pomocí formuláře níže.
-                  </p>
-                </motion.div>
-              ) : (
-                <AnimatePresence initial={false}>
-                  {notes
-                    .filter((note) => {
-                      if (activeNoteFilter === "all") return true;
-                      if (activeNoteFilter === "regular")
-                        return !note.isAISummary;
-                      if (activeNoteFilter === "ai") return note.isAISummary;
-                      return true;
-                    })
-                    .map((note) => (
+              {/* Add Note Form */}
+              <div className="mt-4">
+                <form onSubmit={handleAddNote}>
+                  <div className="flex flex-col gap-2">
+                    <div className="relative">
+                      <textarea
+                        ref={textareaRef}
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        onKeyDown={handleTextareaKeyDown}
+                        onFocus={() => setIsAddingNote(true)}
+                        placeholder="Přidat poznámku..."
+                        className="w-full p-3 border border-border/60 rounded-lg resize-none transition-all duration-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 min-h-[80px]"
+                        rows={isAddingNote ? 4 : 2}
+                      />
                       <motion.div
-                        key={note.id}
-                        layout
-                        variants={noteItemVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        className={`relative p-4 rounded-lg border shadow-sm hover:shadow-md ${
-                          note.isAISummary
-                            ? "bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/20 dark:border-amber-800/30"
-                            : "bg-background border-border/60"
-                        } ${
-                          deleteModal.type === "note" &&
-                          deleteModal.noteId === note.id &&
-                          deleteModal.isLoading
-                            ? "opacity-50"
-                            : ""
-                        } transition-all duration-200`}
+                        className="absolute bottom-3 right-3 flex items-center gap-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: isAddingNote ? 1 : 0 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        {note.isAISummary && (
-                          <div className="absolute top-3 right-3 flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30 px-2 py-1 rounded-full">
-                            <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                            <span>AI shrnutí</span>
-                          </div>
-                        )}
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{note.content}</ReactMarkdown>
-                        </div>
-                        <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
-                          <span className="text-xs text-muted-foreground flex items-center">
-                            <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground/70" />
-                            {formatDate(note.createdAt)}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteNote(note.id);
-                            }}
-                            aria-label="Smazat poznámku"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            <span className="sr-only">Smazat poznámku</span>
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNewNote("");
+                            setIsAddingNote(false);
+                            textareaRef.current?.blur();
+                          }}
+                          className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                        >
+                          Zrušit
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="default"
+                          size="sm"
+                          disabled={!newNote.trim()}
+                          className="h-8"
+                        >
+                          Přidat
+                        </Button>
                       </motion.div>
-                    ))}
-                  <div ref={notesEndRef} />
-                </AnimatePresence>
-              )}
-            </div>
-
-            {/* Add Note Form */}
-            <form
-              onSubmit={handleAddNote}
-              className="mt-6 bg-background/50 p-4 rounded-lg border border-border/60 shadow-sm"
-            >
-              <h5 className="text-sm font-medium mb-3 flex items-center text-foreground/90">
-                <PenLine className="h-3.5 w-3.5 mr-1.5 text-primary/70" />
-                Přidat novou poznámku
-                <kbd className="ml-2 inline-flex items-center gap-1 rounded border border-border/60 bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                  <span className="text-xs">Alt</span>+
-                  <span className="text-xs">N</span>
-                </kbd>
-              </h5>
-              <div className="flex flex-col gap-3">
-                <div>
-                  <textarea
-                    ref={textareaRef}
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    onKeyDown={handleTextareaKeyDown}
-                    placeholder="Zapište své myšlenky, postřehy nebo citace z knihy..."
-                    className="w-full p-3 rounded-lg border border-border/60 focus:border-primary focus:ring-1 focus:ring-primary bg-background resize-none transition-all duration-200"
-                    rows={3}
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <div className="text-xs text-muted-foreground">
-                      {newNote.length > 0 ? (
-                        <span>{newNote.length} znaků</span>
-                      ) : (
-                        <span className="text-muted-foreground/60">
-                          Tip: Použijte{" "}
-                          <kbd className="px-1 py-0.5 text-[10px] font-mono rounded border border-border/60 bg-background">
-                            Ctrl+Enter
-                          </kbd>{" "}
-                          pro rychlé uložení
-                        </span>
-                      )}
                     </div>
-                    <Button
-                      type="submit"
-                      disabled={!newNote.trim() || isAddingNote || !book.id}
-                      className="relative overflow-hidden"
-                    >
-                      {isAddingNote ? (
-                        <>
-                          <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-background rounded-full"></div>
-                          <span>Ukládám...</span>
-                        </>
-                      ) : (
-                        <>
-                          <PenLine className="h-4 w-4 mr-1.5" />
-                          <span>Přidat poznámku</span>
-                        </>
-                      )}
-                    </Button>
                   </div>
-                </div>
+                </form>
               </div>
-            </form>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1168,6 +1168,6 @@ export default function BookComponent({
         title="Informace o autorovi"
         description="Vyberte preferovaný styl a zaměření informací o autorovi."
       />
-    </div>
+    </motion.div>
   );
 }
