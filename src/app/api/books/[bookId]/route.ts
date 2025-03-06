@@ -12,7 +12,7 @@ export async function GET(
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = params;
+    const { bookId } = await params;
 
     if (!bookId) {
       return NextResponse.json(

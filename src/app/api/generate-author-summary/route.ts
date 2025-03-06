@@ -1,8 +1,37 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Author from "@/models/Author";
+import { OpenAI } from "openai";
+
+// Initialize OpenAI client with proper error handling
+const getOpenAIClient = () => {
+  console.log("Getting OpenAI API key...");
+  const apiKey = process.env.OPENAI_API_KEY;
+  console.log("API key available?", !!apiKey);
+
+  if (!apiKey) {
+    console.error("OpenAI API key is not configured");
+    throw new Error("OpenAI API key is not configured");
+  }
+
+  console.log("API key length:", apiKey.length);
+  console.log("Creating OpenAI client instance...");
+
+  try {
+    const client = new OpenAI({
+      apiKey,
+    });
+    console.log("OpenAI client created successfully");
+    return client;
+  } catch (error) {
+    console.error("Error creating OpenAI client:", error);
+    throw error;
+  }
+};
 
 export async function POST(request: Request) {
+  console.log("=== GENERAL AUTHOR SUMMARY API ROUTE START ===");
+
   try {
     // Connect to the database
     await dbConnect();
@@ -31,13 +60,14 @@ export async function POST(request: Request) {
     console.log(`Generating new summary for author: ${author}`);
 
     // Call OpenAI API to generate the summary
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
+    let summary: string;
+
+    try {
+      console.log("Initializing OpenAI client...");
+      const openai = getOpenAIClient();
+      console.log("Calling OpenAI API...");
+
+      const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
@@ -52,15 +82,21 @@ export async function POST(request: Request) {
         ],
         max_tokens: 500,
         temperature: 0.7,
-      }),
-    });
+      });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      if (!response.choices || response.choices.length === 0) {
+        throw new Error("OpenAI API returned empty response");
+      }
+
+      const content = response.choices[0].message.content;
+      summary = content
+        ? content.trim()
+        : "Nepodařilo se vygenerovat informace o autorovi.";
+      console.log("Summary generated successfully");
+    } catch (error) {
+      console.error("Error in OpenAI API call:", error);
+      throw new Error("Failed to generate author summary via OpenAI");
     }
-
-    const data = await response.json();
-    const summary = data.choices[0].message.content.trim();
 
     // Save or update the author in the database
     if (!authorDoc) {

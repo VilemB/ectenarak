@@ -458,41 +458,101 @@ export default function BookComponent({
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
+    console.log("=== HANDLE GENERATE AUTHOR SUMMARY CALLED ===");
+
     if (!book.id) {
       showErrorMessage("Nelze generovat informace o autorovi pro knihu bez ID");
       return;
     }
 
+    if (!book.author) {
+      showErrorMessage("Nelze generovat informace o autorovi bez jména autora");
+      return;
+    }
+
+    console.log("Generating author summary for:", book.author);
+    console.log("Book ID:", book.id);
+    console.log("Preferences:", preferencesToUse);
+
     setIsGeneratingAuthorSummary(true);
 
     try {
-      const response = await fetch(`/api/books/${book.id}/author-summary`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          author: book.author,
-          preferences: preferencesToUse,
-        }),
-      });
+      const apiUrl = `/api/books/${book.id}/author-summary`;
+      console.log("API URL:", apiUrl);
+      console.log(
+        "Request payload:",
+        JSON.stringify(
+          {
+            author: book.author,
+            preferences: preferencesToUse,
+          },
+          null,
+          2
+        )
+      );
+
+      console.log("Sending API request...");
+
+      let response;
+      try {
+        response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            author: book.author,
+            preferences: preferencesToUse,
+          }),
+        });
+        console.log("API request sent");
+      } catch (fetchError) {
+        console.error("Fetch error:", fetchError);
+        throw new Error(
+          `Network error: ${
+            fetchError instanceof Error
+              ? fetchError.message
+              : String(fetchError)
+          }`
+        );
+      }
+
+      console.log("API response status:", response.status);
+      console.log(
+        "API response headers:",
+        Array.from(response.headers).reduce((obj, [key, value]) => {
+          obj[key] = value;
+          return obj;
+        }, {} as Record<string, string>)
+      );
 
       if (!response.ok) {
-        throw new Error("Nepodařilo se získat informace o autorovi");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API error response:", errorData);
+        throw new Error(
+          errorData.error || "Nepodařilo se získat informace o autorovi"
+        );
       }
 
       const data = await response.json();
+      console.log("API success response:", data);
+
       setBook((prevBook) => ({
         ...prevBook,
         authorSummary: data.summary,
       }));
+      setAuthorSummaryModal(false); // Close the modal after successful generation
       setIsAuthorInfoVisible(true);
+      showSuccessMessage("Informace o autorovi byly úspěšně vygenerovány");
     } catch (error) {
       console.error("Error generating author summary:", error);
-      showErrorMessage("Nepodařilo se získat informace o autorovi");
+      showErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se vygenerovat informace o autorovi"
+      );
     } finally {
       setIsGeneratingAuthorSummary(false);
-      setAuthorSummaryModal(false);
     }
   };
 
