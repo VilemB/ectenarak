@@ -1,33 +1,10 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Author from "@/models/Author";
-import { OpenAI } from "openai";
-
-// Initialize OpenAI client with proper error handling
-const getOpenAIClient = () => {
-  console.log("Getting OpenAI API key...");
-  const apiKey = process.env.OPENAI_API_KEY;
-  console.log("API key available?", !!apiKey);
-
-  if (!apiKey) {
-    console.error("OpenAI API key is not configured");
-    throw new Error("OpenAI API key is not configured");
-  }
-
-  console.log("API key length:", apiKey.length);
-  console.log("Creating OpenAI client instance...");
-
-  try {
-    const client = new OpenAI({
-      apiKey,
-    });
-    console.log("OpenAI client created successfully");
-    return client;
-  } catch (error) {
-    console.error("Error creating OpenAI client:", error);
-    throw error;
-  }
-};
+import {
+  generateAuthorSummary,
+  DEFAULT_AUTHOR_PREFERENCES,
+} from "@/lib/openai";
 
 export async function POST(request: Request) {
   console.log("=== GENERAL AUTHOR SUMMARY API ROUTE START ===");
@@ -37,7 +14,8 @@ export async function POST(request: Request) {
     await dbConnect();
 
     // Get the author name from the request
-    const { author } = await request.json();
+    const { author, preferences = DEFAULT_AUTHOR_PREFERENCES } =
+      await request.json();
 
     if (!author) {
       return NextResponse.json(
@@ -59,60 +37,40 @@ export async function POST(request: Request) {
     // generate a new summary
     console.log(`Generating new summary for author: ${author}`);
 
-    // Call OpenAI API to generate the summary
-    let summary: string;
-
     try {
-      console.log("Initializing OpenAI client...");
-      const openai = getOpenAIClient();
-      console.log("Calling OpenAI API...");
+      // Generate the summary using our shared utility
+      const summary = await generateAuthorSummary(author, preferences);
+      console.log("Summary generated successfully");
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a helpful assistant that provides concise, informative summaries about authors.",
-          },
-          {
-            role: "user",
-            content: `Provide a brief summary about the author ${author}. Include key biographical information, major works, writing style, and significance in literature. Format the response in markdown.`,
-          },
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      });
-
-      if (!response.choices || response.choices.length === 0) {
-        throw new Error("OpenAI API returned empty response");
+      // Save or update the author in the database
+      if (!authorDoc) {
+        authorDoc = new Author({
+          name: author,
+          summary: summary,
+        });
+      } else {
+        authorDoc.summary = summary;
       }
 
-      const content = response.choices[0].message.content;
-      summary = content
-        ? content.trim()
-        : "Nepodařilo se vygenerovat informace o autorovi.";
-      console.log("Summary generated successfully");
+      await authorDoc.save();
+      console.log("Author saved to database");
+      console.log("=== GENERAL AUTHOR SUMMARY API ROUTE SUCCESS ===");
+
+      return NextResponse.json({ summary });
     } catch (error) {
-      console.error("Error in OpenAI API call:", error);
-      throw new Error("Failed to generate author summary via OpenAI");
+      console.error("Error generating author summary:", error);
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to generate author summary",
+        },
+        { status: 500 }
+      );
     }
-
-    // Save or update the author in the database
-    if (!authorDoc) {
-      authorDoc = new Author({
-        name: author,
-        summary: summary,
-      });
-    } else {
-      authorDoc.summary = summary;
-    }
-
-    await authorDoc.save();
-
-    return NextResponse.json({ summary });
   } catch (error) {
-    console.error("Error generating author summary:", error);
+    console.error("Error in author summary API:", error);
     return NextResponse.json(
       { error: "Failed to generate author summary" },
       { status: 500 }

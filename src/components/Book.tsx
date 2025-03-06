@@ -477,7 +477,8 @@ export default function BookComponent({
     setIsGeneratingAuthorSummary(true);
 
     try {
-      const apiUrl = `/api/books/${book.id}/author-summary`;
+      // Use the new consolidated API endpoint
+      const apiUrl = `/api/author-summary`;
       console.log("API URL:", apiUrl);
       console.log(
         "Request payload:",
@@ -485,6 +486,7 @@ export default function BookComponent({
           {
             author: book.author,
             preferences: preferencesToUse,
+            bookId: book.id,
           },
           null,
           2
@@ -503,6 +505,7 @@ export default function BookComponent({
           body: JSON.stringify({
             author: book.author,
             preferences: preferencesToUse,
+            bookId: book.id,
           }),
         });
         console.log("API request sent");
