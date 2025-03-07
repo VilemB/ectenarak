@@ -26,6 +26,7 @@ import {
   AuthorSummaryPreferencesModal,
   AuthorSummaryPreferences,
 } from "@/components/AuthorSummaryPreferencesModal";
+import { NoteEditor } from "@/components/NoteEditor";
 
 interface BookProps {
   book: Book;
@@ -613,19 +614,6 @@ export default function BookComponent({
     };
   }, [isExpanded, deleteModal.isOpen, summaryModal, authorSummaryModal]);
 
-  // Handle textarea keyboard shortcuts
-  const handleTextareaKeyDown = (
-    e: React.KeyboardEvent<HTMLTextAreaElement>
-  ) => {
-    // Submit form with Ctrl+Enter or Cmd+Enter
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      if (newNote.trim() && !isAddingNote && book.id) {
-        handleAddNote(e as unknown as React.FormEvent);
-      }
-    }
-  };
-
   // Add click outside handler for author summary
   useEffect(() => {
     if (!isAuthorInfoVisible) return;
@@ -1126,51 +1114,22 @@ export default function BookComponent({
 
               {/* Add Note Form */}
               <div className="mt-4">
-                <form onSubmit={handleAddNote}>
-                  <div className="flex flex-col gap-2">
-                    <div className="relative">
-                      <textarea
-                        ref={textareaRef}
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        onKeyDown={handleTextareaKeyDown}
-                        onFocus={() => setIsAddingNote(true)}
-                        placeholder="Přidat poznámku..."
-                        className="w-full p-3 border border-border/60 rounded-lg resize-none transition-all duration-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 min-h-[80px]"
-                        rows={isAddingNote ? 4 : 2}
-                      />
-                      <motion.div
-                        className="absolute bottom-3 right-3 flex items-center gap-2"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: isAddingNote ? 1 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setNewNote("");
-                            setIsAddingNote(false);
-                            textareaRef.current?.blur();
-                          }}
-                          className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                        >
-                          Zrušit
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="default"
-                          size="sm"
-                          disabled={!newNote.trim()}
-                          className="h-8"
-                        >
-                          Přidat
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </div>
-                </form>
+                <NoteEditor
+                  value={newNote}
+                  onChange={setNewNote}
+                  onSubmit={handleAddNote}
+                  onCancel={() => {
+                    setNewNote("");
+                    setIsAddingNote(false);
+                    textareaRef.current?.blur();
+                  }}
+                  isSubmitting={isAddingNote}
+                  placeholder="Přidat poznámku..."
+                  autoFocus={false}
+                  minRows={2}
+                  maxRows={8}
+                  showPreview={true}
+                />
               </div>
             </div>
           </motion.div>
