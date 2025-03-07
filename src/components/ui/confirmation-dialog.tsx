@@ -38,7 +38,7 @@ export function ConfirmationDialog({
       title={title}
       showCloseButton={showCloseButton}
     >
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-4 modal-content">
         {variant === "destructive" && (
           <div className="flex items-center justify-center mb-2">
             <div className="bg-red-500/10 p-4 rounded-full">

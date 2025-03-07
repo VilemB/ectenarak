@@ -148,7 +148,7 @@ export function Modal({
                   damping: 30,
                   stiffness: 350,
                 }}
-                className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl border border-gray-700/50 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10"
+                className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl border border-gray-700/50 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10 modal-content"
                 onClick={(e) => {
                   e.preventDefault(); // Prevent default behavior
                   e.stopPropagation(); // Prevent clicks from reaching the backdrop
@@ -157,6 +157,12 @@ export function Modal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={title ? "modal-title" : undefined}
+                onMouseDown={(e) => {
+                  e.stopPropagation(); // Prevent mousedown from reaching elements behind
+                }}
+                onMouseUp={(e) => {
+                  e.stopPropagation(); // Prevent mouseup from reaching elements behind
+                }}
               >
                 {title && (
                   <div className="flex items-center justify-between p-5 border-b border-gray-700/50">

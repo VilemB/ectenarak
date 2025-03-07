@@ -278,8 +278,21 @@ export default function BookComponent({
     }
   };
 
-  const handleBookClick = () => {
-    // Toggle expanded state with animation
+  // Expand/collapse the book card
+  const toggleExpanded = (e: React.MouseEvent) => {
+    // Don't toggle if clicking on buttons or interactive elements
+    if (
+      e.target instanceof HTMLButtonElement ||
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      (e.target instanceof HTMLElement &&
+        (e.target.closest("button") ||
+          e.target.closest(".modal-content") || // Don't collapse when clicking modal content
+          e.target.closest("[role='dialog']"))) // Don't collapse when clicking any dialog
+    ) {
+      return;
+    }
+
     setIsExpanded(!isExpanded);
   };
 
@@ -682,7 +695,7 @@ export default function BookComponent({
         className={`p-5 cursor-pointer ${
           isExpanded ? "border-b border-border/40" : ""
         }`}
-        onClick={handleBookClick}
+        onClick={toggleExpanded}
         whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
         transition={{ duration: 0.2 }}
       >
