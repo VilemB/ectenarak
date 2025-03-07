@@ -91,6 +91,7 @@ export default function BookComponent({
   const bookRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const notesEndRef = useRef<HTMLDivElement>(null);
+  const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
 
   // Update local book state when props change, with validation
   useEffect(() => {
@@ -657,6 +658,28 @@ export default function BookComponent({
     };
   }, [isAuthorInfoVisible, book.id]);
 
+  // Add a function to handle viewing a specific summary
+  const handleViewSummary = (noteId: string) => {
+    setSelectedSummary(noteId === selectedSummary ? null : noteId);
+  };
+
+  // Add ESC key handler for selected summary
+  useEffect(() => {
+    if (!selectedSummary) return;
+
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && selectedSummary) {
+        setSelectedSummary(null);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscKey);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [selectedSummary]);
+
   return (
     <motion.div
       ref={bookRef}
@@ -970,7 +993,7 @@ export default function BookComponent({
                           exit="hidden"
                           className={`relative p-4 rounded-lg border shadow-sm hover:shadow-md ${
                             note.isAISummary
-                              ? "bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/20 dark:border-amber-800/30"
+                              ? "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200/50 dark:border-amber-800/30 shadow-inner"
                               : "bg-background border-border/60"
                           } ${
                             deleteModal.type === "note" &&
@@ -981,33 +1004,119 @@ export default function BookComponent({
                           } transition-all duration-200`}
                         >
                           {note.isAISummary && (
-                            <div className="absolute top-3 right-3 flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30 px-2 py-1 rounded-full">
-                              <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                              <span>AI shrnutí</span>
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex items-center text-amber-700 dark:text-amber-400">
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                <span className="font-medium">
+                                  AI shrnutí knihy
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {selectedSummary === note.id && (
+                                  <span className="text-xs text-amber-600/70 dark:text-amber-500/70">
+                                    ESC
+                                  </span>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
+                                  onClick={() => handleViewSummary(note.id)}
+                                  aria-label={
+                                    selectedSummary === note.id
+                                      ? "Zavřít shrnutí"
+                                      : "Zobrazit celé shrnutí"
+                                  }
+                                >
+                                  {selectedSummary === note.id ? (
+                                    <X className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronDown className="h-3 w-3" />
+                                  )}
+                                  <span className="sr-only">
+                                    {selectedSummary === note.id
+                                      ? "Zavřít"
+                                      : "Zobrazit"}
+                                  </span>
+                                </Button>
+                              </div>
                             </div>
                           )}
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown>{note.content}</ReactMarkdown>
-                          </div>
-                          <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
-                            <span className="text-xs text-muted-foreground flex items-center">
-                              <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground/70" />
-                              {formatDate(note.createdAt)}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteNote(note.id);
-                              }}
-                              aria-label="Smazat poznámku"
+
+                          {note.isAISummary ? (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.1, duration: 0.2 }}
+                              className="prose prose-amber prose-sm dark:prose-invert max-w-none"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              <span className="sr-only">Smazat poznámku</span>
-                            </Button>
-                          </div>
+                              {selectedSummary === note.id ? (
+                                <ReactMarkdown>{note.content}</ReactMarkdown>
+                              ) : (
+                                <>
+                                  <ReactMarkdown>
+                                    {note.content.split("\n\n")[0]}
+                                  </ReactMarkdown>
+                                  {note.content.split("\n\n").length > 1 && (
+                                    <div
+                                      className="mt-2 text-amber-600 dark:text-amber-400 text-xs cursor-pointer hover:underline"
+                                      onClick={() => handleViewSummary(note.id)}
+                                    >
+                                      Zobrazit celé shrnutí...
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </motion.div>
+                          ) : (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown>{note.content}</ReactMarkdown>
+                            </div>
+                          )}
+
+                          {note.isAISummary && selectedSummary === note.id && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.3, duration: 0.2 }}
+                              className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-amber-600/70 dark:text-amber-500/70 hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+                                onClick={() => handleDeleteNote(note.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                <span className="sr-only">Smazat shrnutí</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 text-xs"
+                                onClick={() => setSelectedSummary(null)}
+                              >
+                                Zavřít
+                              </Button>
+                            </motion.div>
+                          )}
+
+                          {!note.isAISummary && (
+                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
+                              <span className="text-xs text-muted-foreground flex items-center">
+                                <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground/70" />
+                                {formatDate(note.createdAt)}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+                                onClick={() => handleDeleteNote(note.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </motion.div>
                       ))}
                     <div ref={notesEndRef} />
