@@ -240,25 +240,52 @@ export function NoteEditor({
       <AnimatePresence>
         {showMarkdownHelp && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-b border-border/40 bg-secondary/10 px-3 py-2 text-xs text-muted-foreground"
+            initial={{ opacity: 0, height: 0, overflow: "hidden" }}
+            animate={{
+              opacity: 1,
+              height: "auto",
+              transition: {
+                height: {
+                  duration: 0.3,
+                  ease: "easeOut",
+                },
+                opacity: {
+                  duration: 0.2,
+                  delay: 0.1,
+                },
+              },
+            }}
+            exit={{
+              opacity: 0,
+              height: 0,
+              transition: {
+                height: {
+                  duration: 0.2,
+                  ease: "easeIn",
+                },
+                opacity: {
+                  duration: 0.1,
+                },
+              },
+            }}
+            className="border-b border-border/40 bg-secondary/10 px-3 overflow-hidden"
           >
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="font-mono bg-secondary/30 px-1 rounded">
-                  **tučné**
-                </span>{" "}
-                = <span className="font-bold">tučné</span>{" "}
-                <span className="text-muted-foreground/60">(Ctrl+B)</span>
-              </div>
-              <div>
-                <span className="font-mono bg-secondary/30 px-1 rounded">
-                  *kurzíva*
-                </span>{" "}
-                = <span className="italic">kurzíva</span>{" "}
-                <span className="text-muted-foreground/60">(Ctrl+I)</span>
+            <div className="py-2 text-xs text-muted-foreground">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="font-mono bg-secondary/30 px-1 rounded">
+                    **tučné**
+                  </span>{" "}
+                  = <span className="font-bold">tučné</span>{" "}
+                  <span className="text-muted-foreground/60">(Ctrl+B)</span>
+                </div>
+                <div>
+                  <span className="font-mono bg-secondary/30 px-1 rounded">
+                    *kurzíva*
+                  </span>{" "}
+                  = <span className="italic">kurzíva</span>{" "}
+                  <span className="text-muted-foreground/60">(Ctrl+I)</span>
+                </div>
               </div>
             </div>
           </motion.div>
