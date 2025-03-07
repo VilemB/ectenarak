@@ -125,7 +125,17 @@ export function SummaryPreferencesModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onGenerate(preferences);
+    console.log("Form submitted with preferences:", preferences);
+
+    try {
+      onGenerate(preferences).catch((error) => {
+        console.error("Error in onGenerate promise:", error);
+      });
+    } catch (error) {
+      console.error("Error calling onGenerate:", error);
+    }
+
+    console.log("onGenerate function called");
   };
 
   const saveAsDefault = () => {
@@ -824,6 +834,12 @@ export function SummaryPreferencesModal({
                 variant="outline"
                 size="sm"
                 disabled={isGenerating}
+                onClick={(e) => {
+                  console.log("Generate button clicked directly");
+                  if (!isGenerating) {
+                    handleSubmit(e);
+                  }
+                }}
                 className={`
                   flex items-center gap-2 w-full sm:w-auto justify-center 
                   bg-amber-500/10 text-amber-500 border border-amber-500/20 

@@ -44,6 +44,13 @@ function generatePrompt(
     styleMap[preferences.style]
   }. Zaměř se na ${focusMap[preferences.focus]}. Piš ${language}.`;
 
+  // Add instructions for when no notes are provided
+  if (!notes || notes.trim() === "") {
+    prompt += `
+
+Vytvoř shrnutí na základě obecných znalostí o této knize. Pokud knihu neznáš, vytvoř shrnutí na základě toho, co by mohla obsahovat kniha s tímto názvem od tohoto autora. Zahrň pravděpodobný děj, postavy, témata a literární kontext.`;
+  }
+
   // Add exam focus instructions if enabled
   if (preferences.examFocus) {
     prompt += `
@@ -72,9 +79,14 @@ Přidej odstavec o literárním kontextu díla, který zahrnuje:
   // Add general instructions
   prompt += `
 
-Shrnutí musí být kompletní s jasným závěrem. Při nedostatku tokenů zkrať obsah, ale neukončuj náhle.
+Shrnutí musí být kompletní s jasným závěrem. Při nedostatku tokenů zkrať obsah, ale neukončuj náhle.`;
 
-${notes ? `Poznámky čtenáře:\n${notes}` : ""}`;
+  // Add notes if available
+  if (notes && notes.trim()) {
+    prompt += `
+
+Poznámky čtenáře:\n${notes}`;
+  }
 
   return prompt;
 }
@@ -103,10 +115,21 @@ function checkIfSummaryIsCutOff(summary: string): string {
 }
 
 export async function POST(request: Request) {
+  console.log("=== GENERATE SUMMARY API ROUTE CALLED ===");
+
   try {
-    const { bookTitle, bookAuthor, notes, preferences } = await request.json();
+    const body = await request.json();
+    const { bookTitle, bookAuthor, notes, preferences } = body;
+
+    console.log("Request received:", {
+      bookTitle,
+      bookAuthor,
+      notesLength: notes?.length || 0,
+      preferences,
+    });
 
     if (!bookTitle || !bookAuthor || !preferences) {
+      console.log("Missing required parameters");
       return NextResponse.json(
         { error: "Chybí povinné parametry" },
         { status: 400 }
@@ -121,14 +144,17 @@ export async function POST(request: Request) {
       processedNotes =
         notes.substring(0, 6000) +
         "\n\n[...]\n\nPoznámka: Vaše poznámky byly zkráceny na 6000 znaků pro optimalizaci využití tokenů. Zobrazeny jsou pouze první části poznámek.";
+      console.log("Notes truncated to 6000 characters");
     }
 
+    console.log("Generating prompt...");
     const prompt = generatePrompt(
       bookTitle,
       bookAuthor,
       processedNotes,
       preferences
     );
+    console.log("Prompt generated, length:", prompt.length);
 
     // Set max_tokens based on the length preference
     let maxTokens;
@@ -149,30 +175,53 @@ export async function POST(request: Request) {
         maxTokens = 1500;
     }
 
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [
+    console.log("Using model:", model, "with max tokens:", maxTokens);
+    console.log("Calling OpenAI API...");
+
+    try {
+      const response = await openai.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: prompt,
+          },
+        ],
+        temperature: preferences.style === "creative" ? 0.8 : 0.6,
+        max_tokens: maxTokens,
+      });
+
+      console.log("OpenAI API response received");
+
+      const summary = response.choices[0]?.message?.content;
+
+      if (!summary) {
+        console.log("No summary content in OpenAI response");
+        throw new Error("Nepodařilo se získat odpověď z OpenAI API");
+      }
+
+      console.log("Summary received, length:", summary.length);
+
+      // Check if the summary appears to be cut off
+      const processedSummary = checkIfSummaryIsCutOff(summary);
+
+      console.log("=== GENERATE SUMMARY API ROUTE SUCCESS ===");
+      return NextResponse.json({
+        summary: processedSummary,
+      });
+    } catch (openaiError: unknown) {
+      console.error("OpenAI API error:", openaiError);
+      return NextResponse.json(
         {
-          role: "system",
-          content: prompt,
+          error:
+            "Chyba při volání OpenAI API: " +
+            (openaiError instanceof Error
+              ? openaiError.message
+              : "Neznámá chyba"),
         },
-      ],
-      temperature: preferences.style === "creative" ? 0.8 : 0.6,
-      max_tokens: maxTokens,
-    });
-
-    const summary = response.choices[0]?.message?.content;
-
-    if (!summary) {
-      throw new Error("Nepodařilo se získat odpověď z OpenAI API");
+        { status: 500 }
+      );
     }
-
-    // Check if the summary appears to be cut off
-    const processedSummary = checkIfSummaryIsCutOff(summary);
-
-    return NextResponse.json({
-      summary: processedSummary,
-    });
   } catch (error) {
     console.error("Error generating summary:", error);
     return NextResponse.json(

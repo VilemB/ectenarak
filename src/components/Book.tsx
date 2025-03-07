@@ -284,25 +284,20 @@ export default function BookComponent({
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
   ) => {
+    console.log("=== HANDLE GENERATE SUMMARY CALLED ===");
+    console.log("Preferences:", preferencesToUse);
+
     setIsGenerating(true);
     try {
+      // Get notes text if available, but don't require it
       const notesText = notes
         .filter((note) => !note.isAISummary)
         .map((note) => note.content)
         .join("\n\n");
 
-      if (!notesText.trim()) {
-        // Show a message if there are no notes to generate a summary from
-        setIsGenerating(false);
-        setSummaryModal(false);
+      console.log("Notes text length:", notesText.length);
 
-        // Use the new error message function instead of creating a temporary note
-        showErrorMessage(
-          "Pro generování shrnutí je potřeba nejprve přidat alespoň jednu poznámku k této knize."
-        );
-        return;
-      }
-
+      console.log("Sending API request to generate summary...");
       const response = await fetch("/api/generate-summary", {
         method: "POST",
         headers: {
@@ -311,18 +306,23 @@ export default function BookComponent({
         body: JSON.stringify({
           bookTitle: book.title,
           bookAuthor: book.author,
-          notes: notesText,
+          notes: notesText, // This can now be empty
           preferences: preferencesToUse,
         }),
       });
+      console.log("API response status:", response.status);
 
       if (!response.ok) {
-        throw new Error("Failed to generate summary");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API error response:", errorData);
+        throw new Error(errorData.error || "Failed to generate summary");
       }
 
       const data = await response.json();
+      console.log("Summary generated successfully");
 
       // Add the AI summary as a note in the database
+      console.log("Saving summary as a note...");
       const summaryResponse = await fetch(`/api/books/${book.id}/notes`, {
         method: "POST",
         headers: {
@@ -333,12 +333,16 @@ export default function BookComponent({
           isAISummary: true,
         }),
       });
+      console.log("Save note response status:", summaryResponse.status);
 
       if (!summaryResponse.ok) {
-        throw new Error("Failed to save summary");
+        const errorData = await summaryResponse.json().catch(() => ({}));
+        console.error("API error response:", errorData);
+        throw new Error(errorData.error || "Failed to save summary");
       }
 
       const summaryData = await summaryResponse.json();
+      console.log("Summary saved successfully");
 
       // Transform the notes data
       const formattedNotes = summaryData.notes.map(
