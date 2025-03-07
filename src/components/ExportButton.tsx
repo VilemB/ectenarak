@@ -680,7 +680,8 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
             </button>
           </div>
 
-          <div className="mt-5 text-xs text-gray-500 italic text-center">
+          <div className="mt-6 p-3 bg-gray-800/70 border border-gray-700/50 rounded-md text-sm text-gray-300 flex items-center justify-center">
+            <Download className="h-4 w-4 mr-2 text-amber-400" />
             Exportované soubory se stáhnou do složky stahování vašeho
             prohlížeče.
           </div>
