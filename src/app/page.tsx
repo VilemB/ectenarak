@@ -111,14 +111,30 @@ export default function Home() {
       }
 
       setIsLoadingBooks(true);
+      setError(""); // Clear any previous errors
+
       try {
         const response = await fetch(
           `/api/books?userId=${encodeURIComponent(user.id)}`
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({}));
           console.error("API error:", errorData);
+
+          // Set a user-friendly error message
+          if (response.status === 500) {
+            setError(
+              "Nepodařilo se připojit k databázi. Zkontrolujte připojení k internetu nebo zkuste později."
+            );
+          } else {
+            setError(
+              `Chyba při načítání knih: ${
+                errorData.error || response.statusText
+              }`
+            );
+          }
+
           throw new Error(
             `Failed to fetch books: ${errorData.error || response.statusText}`
           );
@@ -132,6 +148,7 @@ export default function Home() {
         if (!data.books || !Array.isArray(data.books)) {
           console.error("Invalid books data format:", data);
           setBooks([]);
+          setError("Nepodařilo se načíst knihy. Neplatný formát dat.");
           return;
         }
 
@@ -210,8 +227,13 @@ export default function Home() {
         console.log("Formatted books:", formattedBooks);
 
         setBooks(formattedBooks);
+        setError(""); // Clear any errors on success
       } catch (error) {
         console.error("Error fetching books:", error);
+        // Only set a generic error if one hasn't been set already
+        if (!error) {
+          setError("Nepodařilo se načíst knihy. Zkuste to prosím později.");
+        }
       } finally {
         setIsLoadingBooks(false);
       }

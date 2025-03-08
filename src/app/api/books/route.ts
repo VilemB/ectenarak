@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import dbConnect, { mockData, isMockConnection } from "@/lib/mongodb";
 import Book from "@/models/Book";
 import Author from "@/models/Author";
+import mongoose from "mongoose";
 
 export async function GET(request: Request) {
   try {
@@ -20,6 +21,19 @@ export async function GET(request: Request) {
         { error: "User ID is required" },
         { status: 400 }
       );
+    }
+
+    // If using mock connection, return mock data
+    if (isMockConnection) {
+      console.log("API: Using mock data for books");
+
+      // Filter mock books to match the requested userId
+      const mockBooksForUser = mockData.books.map((book) => ({
+        ...book,
+        userId: userId, // Set the userId to match the requested one
+      }));
+
+      return NextResponse.json({ books: mockBooksForUser });
     }
 
     // Get all books for the user
@@ -124,6 +138,24 @@ export async function POST(request: Request) {
         { error: "User ID, title, and author are required" },
         { status: 400 }
       );
+    }
+
+    // If using mock connection, return a mock response
+    if (isMockConnection) {
+      console.log("API: Using mock data for creating a book");
+
+      // Create a mock book
+      const mockBook = {
+        id: new mongoose.Types.ObjectId().toString(),
+        title,
+        author,
+        authorId: new mongoose.Types.ObjectId().toString(),
+        notes: [],
+        createdAt: new Date().toISOString(),
+        authorSummary: null,
+      };
+
+      return NextResponse.json({ book: mockBook });
     }
 
     // Check if the author exists in the database

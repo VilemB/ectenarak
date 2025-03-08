@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import dbConnect, { mockData, isMockConnection } from "@/lib/mongodb";
 import Book from "@/models/Book";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -19,6 +19,34 @@ export async function GET(
         { error: "Book ID is required" },
         { status: 400 }
       );
+    }
+
+    // If using mock connection, return mock data
+    if (isMockConnection) {
+      console.log("API: Using mock data for individual book, bookId:", bookId);
+
+      // Find the mock book with the matching ID
+      const mockBook = mockData.books.find(
+        (book) => book._id.toString() === bookId
+      );
+
+      if (!mockBook) {
+        console.log("Book not found in mock data, bookId:", bookId);
+        return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      }
+
+      console.log("Returning mock book:", mockBook.title);
+      return NextResponse.json({
+        book: {
+          id: mockBook._id,
+          title: mockBook.title,
+          author: mockBook.author,
+          authorId: mockBook.authorId || null,
+          notes: mockBook.notes || [],
+          createdAt: mockBook.createdAt,
+          userId: mockBook.userId,
+        },
+      });
     }
 
     // Get the book
@@ -71,6 +99,32 @@ export async function DELETE(
         { error: "Book ID is required" },
         { status: 400 }
       );
+    }
+
+    // If using mock connection, return mock data
+    if (isMockConnection) {
+      console.log("API: Using mock data for deleting a book, bookId:", bookId);
+
+      // Find the mock book with the matching ID
+      const mockBookIndex = mockData.books.findIndex(
+        (book) => book._id.toString() === bookId
+      );
+
+      if (mockBookIndex === -1) {
+        console.log("Book not found in mock data, bookId:", bookId);
+        return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      }
+
+      const mockBook = mockData.books[mockBookIndex];
+
+      // For mock data, we'll skip the user verification
+      // This allows any authenticated user to access the mock data
+
+      // Remove the book from the mock data
+      mockData.books.splice(mockBookIndex, 1);
+      console.log("Deleted mock book:", mockBook.title);
+
+      return NextResponse.json({ message: "Book deleted successfully" });
     }
 
     // Get the book to check ownership
@@ -129,6 +183,49 @@ export async function PATCH(
 
     // Get the request body
     const body = await request.json();
+
+    // If using mock connection, return mock data
+    if (isMockConnection) {
+      console.log("API: Using mock data for updating a book, bookId:", bookId);
+
+      // Find the mock book with the matching ID
+      const mockBookIndex = mockData.books.findIndex(
+        (book) => book._id.toString() === bookId
+      );
+
+      if (mockBookIndex === -1) {
+        console.log("Book not found in mock data, bookId:", bookId);
+        return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      }
+
+      const mockBook = mockData.books[mockBookIndex];
+
+      // For mock data, we'll skip the user verification
+      // This allows any authenticated user to access the mock data
+
+      // Update the mock book
+      const updatedBook = {
+        ...mockBook,
+        ...body,
+      };
+
+      mockData.books[mockBookIndex] = updatedBook;
+      console.log("Updated mock book:", updatedBook.title);
+
+      return NextResponse.json({
+        message: "Book updated successfully",
+        book: {
+          id: updatedBook._id,
+          title: updatedBook.title,
+          author: updatedBook.author,
+          authorId: updatedBook.authorId || null,
+          authorSummary: updatedBook.authorSummary || null,
+          notes: updatedBook.notes || [],
+          createdAt: updatedBook.createdAt,
+          userId: updatedBook.userId,
+        },
+      });
+    }
 
     // Get the book to check ownership
     const book = await Book.findById(bookId);

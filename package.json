@@ -2,11 +2,13 @@
   "name": "ctenarsky-denik",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test-mongodb": "node test-mongodb-connection.js"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.8.0",

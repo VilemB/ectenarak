@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import dbConnect, { mockData, isMockConnection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -61,6 +61,40 @@ export async function POST(
     console.log("Connecting to database...");
     await dbConnect();
     console.log("Connected to database");
+
+    // If using mock connection, return mock data
+    if (isMockConnection) {
+      console.log("API: Using mock data for author summary, bookId:", bookId);
+
+      // Find the mock book with the matching ID
+      const mockBookIndex = mockData.books.findIndex(
+        (book) => book._id.toString() === bookId
+      );
+
+      if (mockBookIndex === -1) {
+        console.log("Book not found in mock data, bookId:", bookId);
+        return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      }
+
+      const mockBook = mockData.books[mockBookIndex];
+
+      // For mock data, we'll skip the user verification
+      // This allows any authenticated user to access the mock data
+
+      // Generate a mock author summary
+      const mockSummary = `${author} byl významný český spisovatel, novinář a překladatel. Narodil se v roce 1890 a zemřel v roce 1938. Je známý především svými díly jako jsou R.U.R., Válka s mloky, Bílá nemoc a mnoho dalších. Jeho díla často obsahují prvky science fiction a varují před nebezpečím totalitarismu a technologického pokroku bez etických zábran.`;
+
+      // Update the mock book with the author summary
+      mockData.books[mockBookIndex].authorSummary = mockSummary;
+
+      console.log(
+        "Mock author summary generated successfully for book:",
+        mockBook.title
+      );
+      console.log("=== AUTHOR SUMMARY API ROUTE SUCCESS (MOCK) ===");
+
+      return NextResponse.json({ summary: mockSummary });
+    }
 
     // Verify the book belongs to the user
     console.log("Finding book in database...");
