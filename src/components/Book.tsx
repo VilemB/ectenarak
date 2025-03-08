@@ -33,12 +33,6 @@ interface BookProps {
   onDelete: (bookId: string) => void;
 }
 
-// Animation variants for note items
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
-
 export default function BookComponent({
   book: initialBook,
   onDelete,
@@ -66,6 +60,7 @@ export default function BookComponent({
   const [book, setBook] = useState<Book>(safeBook);
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
     useState(false);
@@ -94,18 +89,6 @@ export default function BookComponent({
   const notesEndRef = useRef<HTMLDivElement>(null);
   const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
 
-  // Update local book state when props change, with validation
-  useEffect(() => {
-    if (initialBook && Object.keys(initialBook).length > 0) {
-      setBook(initialBook);
-    } else {
-      console.error(
-        "Warning: Book component received empty book object in props update:",
-        initialBook
-      );
-    }
-  }, [initialBook]);
-
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
     const id = Math.random().toString(36).substring(2, 11);
@@ -128,49 +111,55 @@ export default function BookComponent({
     }, 3000);
   }, []);
 
-  // Memoize fetchNotes with useCallback
-  const fetchNotes = useCallback(async () => {
-    if (!book.id || book.id.startsWith("temp-")) {
-      console.error("Cannot fetch notes: Invalid book ID", book.id);
-      showErrorMessage("Nelze načíst poznámky: Neplatné ID knihy");
-      return;
-    }
+  // Function to fetch notes
+  const fetchNotes = useCallback(
+    async (bookId: string) => {
+      try {
+        setIsLoadingNotes(true);
+        const response = await fetch(`/api/books/${bookId}/notes`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch notes");
+        }
+        const data = await response.json();
 
-    try {
-      const response = await fetch(`/api/books/${book.id}/notes`);
+        // Format the notes from the response
+        const formattedNotes = data.notes.map(
+          (note: {
+            _id: string;
+            content: string;
+            createdAt: string;
+            isAISummary?: boolean;
+          }) => ({
+            id: note._id,
+            bookId: bookId,
+            content: note.content,
+            createdAt: new Date(note.createdAt).toISOString(),
+            isAISummary: note.isAISummary || false,
+          })
+        );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch notes");
+        setNotes(formattedNotes);
+      } catch (error) {
+        console.error("Error fetching notes:", error);
+        showErrorMessage("Failed to load notes. Please try again.");
+      } finally {
+        setIsLoadingNotes(false);
       }
+    },
+    [showErrorMessage]
+  );
 
-      const data = await response.json();
-
-      // Transform the data to match the Note interface
-      const formattedNotes = data.notes.map(
-        (note: {
-          _id: string;
-          content: string;
-          createdAt: string;
-          isAISummary?: boolean;
-        }) => ({
-          id: note._id || `note-${Math.random().toString(36).substring(2, 11)}`,
-          bookId: book.id,
-          content: note.content,
-          createdAt: new Date(note.createdAt).toISOString(),
-          isAISummary: note.isAISummary || false,
-        })
-      );
-
-      setNotes(formattedNotes);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
-    }
-  }, [book.id, showErrorMessage]);
-
-  // Add useEffect to call fetchNotes
+  // Update local book state when props change, with validation
   useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
+    if (initialBook && Object.keys(initialBook).length > 0) {
+      setBook(initialBook);
+
+      // Pre-fetch notes when the component mounts
+      if (initialBook.id) {
+        fetchNotes(initialBook.id);
+      }
+    }
+  }, [initialBook, fetchNotes]);
 
   // Handle clicks outside the book component to close it
   useEffect(() => {
@@ -193,13 +182,27 @@ export default function BookComponent({
   // Add a smooth scroll effect when expanding a book
   useEffect(() => {
     if (isExpanded) {
-      // Smooth scroll to the book when expanded
+      // Wait for the animation to complete before scrolling
       setTimeout(() => {
-        bookRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 100);
+        if (bookRef.current) {
+          const bookRect = bookRef.current.getBoundingClientRect();
+          const isBookVisible =
+            bookRect.top >= 0 && bookRect.bottom <= window.innerHeight;
+
+          // Only scroll if the book isn't fully visible
+          if (!isBookVisible) {
+            const offset =
+              bookRect.height > window.innerHeight
+                ? 100 // If book is taller than viewport, just scroll to top with some padding
+                : window.innerHeight / 3; // Otherwise center it more or less
+
+            window.scrollTo({
+              top: window.scrollY + bookRect.top - offset,
+              behavior: "smooth",
+            });
+          }
+        }
+      }, 400); // Wait for expansion animation to be mostly complete
     }
   }, [isExpanded]);
 
@@ -685,19 +688,17 @@ export default function BookComponent({
     <motion.div
       ref={bookRef}
       className="bg-background rounded-xl border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
       layout
     >
       {/* Book Header */}
       <motion.div
-        className={`p-5 cursor-pointer ${
+        className={`p-5 cursor-pointer transition-colors duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${
           isExpanded ? "border-b border-border/40" : ""
         }`}
         onClick={toggleExpanded}
-        whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
-        transition={{ duration: 0.2 }}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex-grow space-y-3">
@@ -856,9 +857,9 @@ export default function BookComponent({
               </div>
             </div>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.2 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
               className="prose prose-amber prose-sm dark:prose-invert max-w-none"
             >
               <ReactMarkdown>{book.authorSummary}</ReactMarkdown>
@@ -866,7 +867,7 @@ export default function BookComponent({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.2 }}
+              transition={{ duration: 0.2 }}
               className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-end"
             >
               <Button
@@ -886,10 +887,10 @@ export default function BookComponent({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            initial={{ height: 0, overflow: "hidden" }}
+            animate={{ height: "auto" }}
+            exit={{ height: 0 }}
+            transition={{ duration: 0.3 }}
           >
             {/* Notes Section */}
             <div className="p-5">
@@ -959,11 +960,20 @@ export default function BookComponent({
 
               {/* Notes List */}
               <div className="space-y-4 mb-6">
-                {notes.length === 0 ? (
+                {isLoadingNotes ? (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.3 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center py-8 text-muted-foreground"
+                  >
+                    <div className="animate-spin mb-3 h-6 w-6 border-t-2 border-b-2 border-primary rounded-full"></div>
+                    <p className="text-sm">Načítání poznámek...</p>
+                  </motion.div>
+                ) : notes.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
                     className="text-center py-8 text-muted-foreground bg-background/50 rounded-lg border border-dashed border-border/60"
                   >
                     <div className="flex justify-center mb-3">
@@ -975,153 +985,164 @@ export default function BookComponent({
                     </p>
                   </motion.div>
                 ) : (
-                  <AnimatePresence initial={false}>
-                    {notes
-                      .filter((note) => {
-                        if (activeNoteFilter === "all") return true;
-                        if (activeNoteFilter === "regular")
-                          return !note.isAISummary;
-                        if (activeNoteFilter === "ai") return note.isAISummary;
-                        return true;
-                      })
-                      .map((note) => (
-                        <motion.div
-                          key={note.id}
-                          layout
-                          variants={itemVariants}
-                          initial="hidden"
-                          animate="visible"
-                          exit="hidden"
-                          className={`relative p-4 rounded-lg border shadow-sm hover:shadow-md ${
-                            note.isAISummary
-                              ? "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200/50 dark:border-amber-800/30 shadow-inner"
-                              : "bg-background border-border/60"
-                          } ${
-                            deleteModal.type === "note" &&
-                            deleteModal.noteId === note.id &&
-                            deleteModal.isLoading
-                              ? "opacity-50"
-                              : ""
-                          } transition-all duration-200`}
-                        >
-                          {note.isAISummary && (
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex items-center text-amber-700 dark:text-amber-400">
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                <span className="font-medium">
-                                  AI shrnutí knihy
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {selectedSummary === note.id && (
-                                  <span className="text-xs text-amber-600/70 dark:text-amber-500/70">
-                                    ESC
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="space-y-4"
+                  >
+                    <AnimatePresence initial={false}>
+                      {notes
+                        .filter((note) => {
+                          if (activeNoteFilter === "all") return true;
+                          if (activeNoteFilter === "regular")
+                            return !note.isAISummary;
+                          if (activeNoteFilter === "ai")
+                            return note.isAISummary;
+                          return true;
+                        })
+                        .map((note) => (
+                          <motion.div
+                            key={note.id}
+                            layout
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className={`relative p-4 rounded-lg border shadow-sm hover:shadow-md ${
+                              note.isAISummary
+                                ? "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200/50 dark:border-amber-800/30 shadow-inner"
+                                : "bg-background border-border/60"
+                            } ${
+                              deleteModal.type === "note" &&
+                              deleteModal.noteId === note.id &&
+                              deleteModal.isLoading
+                                ? "opacity-50"
+                                : ""
+                            } transition-all duration-200`}
+                          >
+                            {note.isAISummary && (
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center text-amber-700 dark:text-amber-400">
+                                  <Sparkles className="h-4 w-4 mr-2" />
+                                  <span className="font-medium">
+                                    AI shrnutí knihy
                                   </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {selectedSummary === note.id && (
+                                    <span className="text-xs text-amber-600/70 dark:text-amber-500/70">
+                                      ESC
+                                    </span>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
+                                    onClick={() => handleViewSummary(note.id)}
+                                    aria-label={
+                                      selectedSummary === note.id
+                                        ? "Zavřít shrnutí"
+                                        : "Zobrazit celé shrnutí"
+                                    }
+                                  >
+                                    {selectedSummary === note.id ? (
+                                      <X className="h-3 w-3" />
+                                    ) : (
+                                      <ChevronDown className="h-3 w-3" />
+                                    )}
+                                    <span className="sr-only">
+                                      {selectedSummary === note.id
+                                        ? "Zavřít"
+                                        : "Zobrazit"}
+                                    </span>
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+
+                            {note.isAISummary ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1, duration: 0.2 }}
+                                className="prose prose-amber prose-sm dark:prose-invert max-w-none"
+                              >
+                                {selectedSummary === note.id ? (
+                                  <ReactMarkdown>{note.content}</ReactMarkdown>
+                                ) : (
+                                  <>
+                                    <ReactMarkdown>
+                                      {note.content.split("\n\n")[0]}
+                                    </ReactMarkdown>
+                                    {note.content.split("\n\n").length > 1 && (
+                                      <div
+                                        className="mt-2 text-amber-600 dark:text-amber-400 text-xs cursor-pointer hover:underline"
+                                        onClick={() =>
+                                          handleViewSummary(note.id)
+                                        }
+                                      >
+                                        Zobrazit celé shrnutí...
+                                      </div>
+                                    )}
+                                  </>
                                 )}
+                              </motion.div>
+                            ) : (
+                              <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown>{note.content}</ReactMarkdown>
+                              </div>
+                            )}
+
+                            {note.isAISummary &&
+                              selectedSummary === note.id && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ delay: 0.3, duration: 0.2 }}
+                                  className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
+                                >
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-amber-600/70 dark:text-amber-500/70 hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+                                    onClick={() => handleDeleteNote(note.id)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <span className="sr-only">
+                                      Smazat shrnutí
+                                    </span>
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 text-xs"
+                                    onClick={() => setSelectedSummary(null)}
+                                  >
+                                    Zavřít
+                                  </Button>
+                                </motion.div>
+                              )}
+
+                            {!note.isAISummary && (
+                              <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
+                                <span className="text-xs text-muted-foreground flex items-center">
+                                  <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground/70" />
+                                  {formatDate(note.createdAt)}
+                                </span>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
-                                  onClick={() => handleViewSummary(note.id)}
-                                  aria-label={
-                                    selectedSummary === note.id
-                                      ? "Zavřít shrnutí"
-                                      : "Zobrazit celé shrnutí"
-                                  }
+                                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+                                  onClick={() => handleDeleteNote(note.id)}
                                 >
-                                  {selectedSummary === note.id ? (
-                                    <X className="h-3 w-3" />
-                                  ) : (
-                                    <ChevronDown className="h-3 w-3" />
-                                  )}
-                                  <span className="sr-only">
-                                    {selectedSummary === note.id
-                                      ? "Zavřít"
-                                      : "Zobrazit"}
-                                  </span>
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
-                            </div>
-                          )}
-
-                          {note.isAISummary ? (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.1, duration: 0.2 }}
-                              className="prose prose-amber prose-sm dark:prose-invert max-w-none"
-                            >
-                              {selectedSummary === note.id ? (
-                                <ReactMarkdown>{note.content}</ReactMarkdown>
-                              ) : (
-                                <>
-                                  <ReactMarkdown>
-                                    {note.content.split("\n\n")[0]}
-                                  </ReactMarkdown>
-                                  {note.content.split("\n\n").length > 1 && (
-                                    <div
-                                      className="mt-2 text-amber-600 dark:text-amber-400 text-xs cursor-pointer hover:underline"
-                                      onClick={() => handleViewSummary(note.id)}
-                                    >
-                                      Zobrazit celé shrnutí...
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </motion.div>
-                          ) : (
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown>{note.content}</ReactMarkdown>
-                            </div>
-                          )}
-
-                          {note.isAISummary && selectedSummary === note.id && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: 0.3, duration: 0.2 }}
-                              className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-amber-600/70 dark:text-amber-500/70 hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
-                                onClick={() => handleDeleteNote(note.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                <span className="sr-only">Smazat shrnutí</span>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 text-xs"
-                                onClick={() => setSelectedSummary(null)}
-                              >
-                                Zavřít
-                              </Button>
-                            </motion.div>
-                          )}
-
-                          {!note.isAISummary && (
-                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
-                              <span className="text-xs text-muted-foreground flex items-center">
-                                <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground/70" />
-                                {formatDate(note.createdAt)}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
-                                onClick={() => handleDeleteNote(note.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
-                    <div ref={notesEndRef} />
-                  </AnimatePresence>
+                            )}
+                          </motion.div>
+                        ))}
+                    </AnimatePresence>
+                  </motion.div>
                 )}
               </div>
 
@@ -1145,6 +1166,7 @@ export default function BookComponent({
                 />
               </div>
             </div>
+            <div ref={notesEndRef} />
           </motion.div>
         )}
       </AnimatePresence>
