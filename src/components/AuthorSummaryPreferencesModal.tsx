@@ -182,7 +182,7 @@ export function AuthorSummaryPreferencesModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={title || "Informace o autorovi"}
+      title={title || "Generovat informace o autorovi"}
       showCloseButton={true}
     >
       <div className="p-5 max-w-full overflow-x-hidden">
@@ -195,7 +195,7 @@ export function AuthorSummaryPreferencesModal({
           <div className="flex items-center mb-4 text-amber-600 dark:text-amber-400">
             <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
             <h3 className="text-lg font-medium">
-              Přizpůsobte si AI informace o autorovi
+              Přizpůsobte si generování informací o autorovi
             </h3>
           </div>
 

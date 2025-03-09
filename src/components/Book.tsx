@@ -88,6 +88,9 @@ export default function BookComponent({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const notesEndRef = useRef<HTMLDivElement>(null);
   const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
+    null
+  );
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -716,6 +719,30 @@ export default function BookComponent({
     };
   }, [isExpanded, deleteModal.isOpen, summaryModal, authorSummaryModal]);
 
+  // Add a function to handle closing the author summary with scroll position preservation
+  const handleCloseAuthorInfo = useCallback(() => {
+    // Save the current scroll position before closing
+    setSavedScrollPosition(window.scrollY);
+
+    // Close the author info immediately - this prevents the flashing issue
+    // by letting the AnimatePresence handle the exit animation properly
+    setIsAuthorInfoVisible(false);
+  }, []);
+
+  // Handle animation completion after closing author summary
+  const handleAnimationComplete = useCallback(() => {
+    if (savedScrollPosition !== null) {
+      // Scroll to the book element instead of restoring previous position
+      if (bookRef.current) {
+        bookRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+      setSavedScrollPosition(null);
+    }
+  }, [savedScrollPosition]);
+
   // Add click outside handler for author summary
   useEffect(() => {
     if (!isAuthorInfoVisible) return;
@@ -728,14 +755,40 @@ export default function BookComponent({
       );
 
       if (authorSummaryElement && !authorSummaryElement.contains(target)) {
-        setIsAuthorInfoVisible(false);
+        // Add a subtle visual feedback when clicking outside
+        const ripple = document.createElement("div");
+        ripple.className =
+          "fixed w-5 h-5 rounded-full bg-amber-400/30 dark:bg-amber-600/30 z-50 pointer-events-none";
+        ripple.style.left = `${event.clientX - 10}px`;
+        ripple.style.top = `${event.clientY - 10}px`;
+        ripple.style.transform = "scale(0)";
+        ripple.style.opacity = "1";
+        ripple.style.transition = "all 0.3s ease-out";
+
+        document.body.appendChild(ripple);
+
+        // Trigger the animation
+        requestAnimationFrame(() => {
+          ripple.style.transform = "scale(8)";
+          ripple.style.opacity = "0";
+        });
+
+        // Remove the ripple element after animation
+        setTimeout(() => {
+          if (document.body.contains(ripple)) {
+            document.body.removeChild(ripple);
+          }
+        }, 300);
+
+        // Close the author info
+        handleCloseAuthorInfo();
       }
     };
 
     // Add escape key handler to close author summary
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === "Escape" && isAuthorInfoVisible) {
-        setIsAuthorInfoVisible(false);
+        handleCloseAuthorInfo();
       }
     };
 
@@ -746,7 +799,7 @@ export default function BookComponent({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscKey);
     };
-  }, [isAuthorInfoVisible, book.id]);
+  }, [isAuthorInfoVisible, book.id, handleCloseAuthorInfo]);
 
   // Add a function to handle viewing a specific summary
   const handleViewSummary = (noteId: string) => {
@@ -803,7 +856,11 @@ export default function BookComponent({
                   onClick={(e) => {
                     e.stopPropagation();
                     if (book.authorSummary) {
-                      setIsAuthorInfoVisible(!isAuthorInfoVisible);
+                      if (isAuthorInfoVisible) {
+                        handleCloseAuthorInfo();
+                      } else {
+                        setIsAuthorInfoVisible(true);
+                      }
                     } else {
                       setAuthorSummaryModal(true);
                     }
@@ -860,7 +917,7 @@ export default function BookComponent({
                   className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
                 >
                   <User className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="hidden sm:inline">Info o autorovi</span>
+                  <span className="hidden sm:inline">Informace o autorovi</span>
                   <span className="sm:hidden">Info</span>
                 </Button>
                 <div className="flex">
@@ -882,8 +939,10 @@ export default function BookComponent({
                     ) : (
                       <>
                         <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                        <span className="hidden sm:inline">Přegenerovat</span>
-                        <span className="sm:hidden">Nové</span>
+                        <span className="hidden sm:inline">
+                          Aktualizovat informace o autorovi
+                        </span>
+                        <span className="sm:hidden">Aktualizovat</span>
                       </>
                     )}
                   </Button>
@@ -923,7 +982,7 @@ export default function BookComponent({
                     <span className="hidden sm:inline">
                       Informace o autorovi
                     </span>
-                    <span className="sm:hidden">O autorovi</span>
+                    <span className="sm:hidden">Info</span>
                   </>
                 )}
               </Button>
@@ -967,41 +1026,83 @@ export default function BookComponent({
       </motion.div>
 
       {/* Author Summary Panel */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait" onExitComplete={handleAnimationComplete}>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
             id={`author-summary-${book.id}`}
             initial={{ opacity: 0, height: 0, overflow: "hidden" }}
             animate={{ opacity: 1, height: "auto", overflow: "visible" }}
-            exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+            exit={{
+              opacity: 0,
+              height: 0,
+              overflow: "hidden",
+              transition: {
+                opacity: { duration: 0.2, ease: "easeOut" },
+                height: { duration: 0.3, delay: 0.1, ease: "easeInOut" },
+              },
+            }}
             transition={{
               type: "spring",
-              stiffness: 100,
-              damping: 20,
-              mass: 1,
+              stiffness: 300,
+              damping: 30,
+              mass: 0.8,
+              duration: 0.3,
             }}
-            className="mx-5 my-3 p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg text-sm border border-amber-200/50 dark:border-amber-800/30 shadow-inner"
+            className="mx-5 my-3 p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg text-sm border border-amber-200/50 dark:border-amber-800/30 shadow-inner relative"
           >
+            {/* Close button - positioned absolutely in the top-right corner */}
+            <div className="absolute -top-2 -right-2 z-10">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{
+                  scale: [0.9, 1.1, 1],
+                  opacity: 1,
+                }}
+                transition={{
+                  duration: 0.5,
+                  times: [0, 0.6, 1],
+                  ease: "easeOut",
+                }}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-amber-100 dark:bg-amber-900 hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-700 dark:text-amber-300 h-8 w-8 p-0 rounded-full shadow-md border border-amber-200/70 dark:border-amber-800/70 transition-all duration-200"
+                  onClick={handleCloseAuthorInfo}
+                  aria-label="Zavřít informace o autorovi"
+                  title="Zavřít informace o autorovi (ESC)"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Zavřít</span>
+                </Button>
+              </motion.div>
+            </div>
+
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center text-amber-700 dark:text-amber-400">
                 <User className="h-4 w-4 mr-2" />
                 <span className="font-medium">O autorovi</span>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-amber-600/70 dark:text-amber-500/70">
+              <motion.div
+                className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.2 }}
+                whileHover={{
+                  scale: 1.03,
+                  backgroundColor: "rgba(251, 191, 36, 0.2)",
+                  borderColor: "rgba(251, 191, 36, 0.3)",
+                }}
+              >
+                <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
                   ESC
+                </kbd>
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                  zavřít panel
                 </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-amber-600/70 dark:text-amber-500/70 hover:text-amber-700 hover:bg-amber-200/30 dark:hover:bg-amber-800/30 h-6 w-6 p-0 rounded-full"
-                  onClick={() => setIsAuthorInfoVisible(false)}
-                  aria-label="Zavřít informace o autorovi"
-                >
-                  <X className="h-3 w-3" />
-                  <span className="sr-only">Zavřít</span>
-                </Button>
-              </div>
+              </motion.div>
             </div>
             <motion.div
               initial={{ opacity: 0 }}
@@ -1030,7 +1131,7 @@ export default function BookComponent({
                 variant="ghost"
                 size="sm"
                 className="text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 text-xs"
-                onClick={() => setIsAuthorInfoVisible(false)}
+                onClick={handleCloseAuthorInfo}
               >
                 Zavřít
               </Button>
@@ -1112,7 +1213,7 @@ export default function BookComponent({
                     ) : (
                       <>
                         <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                        <span>Generovat shrnutí</span>
+                        <span>Generovat shrnutí knihy</span>
                       </>
                     )}
                   </Button>
@@ -1469,7 +1570,7 @@ export default function BookComponent({
         onClose={() => setAuthorSummaryModal(false)}
         onGenerate={handleGenerateAuthorSummary}
         isGenerating={isGeneratingAuthorSummary}
-        title="Informace o autorovi"
+        title="Generovat informace o autorovi"
         description="Vyberte preferovaný styl a zaměření informací o autorovi."
       />
     </motion.div>

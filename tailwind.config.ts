@@ -57,6 +57,15 @@ const config: Config = {
           },
         },
       },
+      animation: {
+        fadeOut: "fadeOut 0.15s ease-out forwards",
+      },
+      keyframes: {
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+      },
     },
   },
   plugins: [typography, forms],

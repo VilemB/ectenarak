@@ -244,8 +244,8 @@ function fixIncompleteAuthorSummary(
   // Add a notice about the incomplete summary
   const notice =
     language === "cs"
-      ? `\n\n---\n\n**Poznámka:** Informace o autorovi ${author} mohou být neúplné. Pro získání kompletních informací zkuste přegenerovat s jinými preferencemi nebo kratší délkou.`
-      : `\n\n---\n\n**Note:** The information about author ${author} may be incomplete. To get complete information, try regenerating with different preferences or a shorter length.`;
+      ? `\n\n---\n\n**Poznámka:** Informace o autorovi ${author} mohou být neúplné. Pro získání kompletních informací zkuste přegenerovat informace o autorovi s jinými preferencemi nebo kratší délkou.`
+      : `\n\n---\n\n**Note:** The information about author ${author} may be incomplete. To get complete information, try regenerating author information with different preferences or a shorter length.`;
 
   return summary + notice;
 }
