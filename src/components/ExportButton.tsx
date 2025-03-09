@@ -431,7 +431,7 @@ export function ExportButton(props: ExportButtonProps) {
       }
 
       // Add simple page numbers to all pages
-      const totalPages = doc.internal.pages.length;
+      const totalPages = doc.internal.pages.length - 1;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         doc.setFont("Roboto", "normal");
@@ -547,7 +547,6 @@ export function ExportButton(props: ExportButtonProps) {
         format: "a4",
         putOnlyUsedFonts: true,
         compress: true,
-        hotfixes: ["px_scaling"],
       });
 
       // Add Czech language font support using local font files
@@ -564,64 +563,19 @@ export function ExportButton(props: ExportButtonProps) {
       const pageHeight = doc.internal.pageSize.getHeight();
       const contentWidth = pageWidth - margin * 2;
 
-      // Define consistent colors for better visual design
-      const colors = {
-        text: [50, 50, 50],
-        lightText: [100, 100, 100],
-        heading: [40, 40, 40],
-        accent: [65, 105, 225], // Royal Blue
-        secondary: [100, 149, 237], // Cornflower Blue
-        background: [252, 252, 252],
-        headerBg: [240, 248, 255], // Alice Blue
-        border: [220, 220, 220],
-        noteBg: [248, 250, 252],
-        summaryBg: [240, 248, 255],
-      };
-
-      // Helper function to apply colors consistently
-      const applyColor = (
-        colorType: keyof typeof colors,
-        method: "setFillColor" | "setDrawColor" | "setTextColor"
-      ) => {
-        const [r, g, b] = colors[colorType];
-        doc[method](r, g, b);
-      };
-
-      // Helper function to check if we need a new page
+      // Simple helper function to check if we need a new page
       const checkForPageBreak = (
         currentY: number,
         requiredHeight: number = 20
       ): number => {
-        if (currentY + requiredHeight > pageHeight - 40) {
+        if (currentY + requiredHeight > pageHeight - margin) {
           doc.addPage();
-          applyColor("background", "setFillColor");
-          doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-          // Add header to new page
-          applyColor("headerBg", "setFillColor");
-          doc.rect(0, 0, pageWidth, 15, "F");
-          applyColor("border", "setDrawColor");
-          doc.setLineWidth(0.5);
-          doc.line(0, 15, pageWidth, 15);
-
-          // Add book title to header
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(9);
-          applyColor("lightText", "setTextColor");
-          doc.text(encodeCzechText(book.title), margin, 10);
-
-          // Add page number
-          const pageNumber = doc.internal.pages.length;
-          doc.text(`${pageNumber}`, pageWidth - margin - 5, 10, {
-            align: "right",
-          });
-
-          return margin + 10;
+          return margin;
         }
         return currentY;
       };
 
-      // Helper function to process markdown for Czech characters
+      // Simple helper function to process markdown for Czech characters
       const processMarkdown = (text: string): string => {
         if (!text) return "";
 
@@ -631,725 +585,226 @@ export function ExportButton(props: ExportButtonProps) {
         // Replace markdown formatting with plain text
         let processed = encodedText;
 
-        // Process headings - convert to plain text with proper spacing and capitalization
-        processed = processed.replace(/^# (.+)$/gm, (_, p1) =>
-          p1.toUpperCase()
-        );
-        processed = processed.replace(/^## (.+)$/gm, (_, p1) =>
-          p1.toUpperCase()
-        );
-        processed = processed.replace(/^### (.+)$/gm, (_, p1) =>
-          p1.toUpperCase()
-        );
-
-        // Remove bold and italic markers
+        // Remove markdown formatting
+        processed = processed.replace(/^# (.+)$/gm, "$1");
+        processed = processed.replace(/^## (.+)$/gm, "$1");
+        processed = processed.replace(/^### (.+)$/gm, "$1");
         processed = processed.replace(/\*\*(.+?)\*\*/g, "$1");
         processed = processed.replace(/\*(.+?)\*/g, "$1");
-
-        // Convert lists to plain text with proper indentation
         processed = processed.replace(/^- (.+)$/gm, "• $1");
         processed = processed.replace(/^(\d+)\. (.+)$/gm, "$1. $2");
 
         return processed;
       };
 
-      // Add subtle page background for a more professional look
-      applyColor("background", "setFillColor");
-      doc.rect(0, 0, pageWidth, pageHeight, "F");
+      // Initialize the y position for content placement
+      let yPosition = margin;
 
-      // Add elegant header with a gradient-like effect
-      applyColor("headerBg", "setFillColor");
-      doc.rect(0, 0, pageWidth, 30, "F");
-
-      // Add subtle accent line at the bottom of the header
-      applyColor("border", "setDrawColor");
-      doc.setLineWidth(0.5);
-      doc.line(0, 30, pageWidth, 30);
-
-      // Title with improved typography
+      // Title
       doc.setFont("Roboto", "bold");
-      doc.setFontSize(18);
-      applyColor("heading", "setTextColor");
-
-      // Center the title with proper Czech character encoding and capitalization
-      const titleText = encodeCzechText(
-        `MATURITNÍ PŘÍPRAVA: ${book.title.toUpperCase()}`
+      doc.setFontSize(16);
+      doc.text(
+        encodeCzechText("MATURITNÍ PŘÍPRAVA: " + book.title),
+        margin,
+        yPosition
       );
-      doc.text(titleText, pageWidth / 2, 20, { align: "center" });
+      yPosition += 10;
 
-      // Set initial y position for content
-      let yPosition = 40;
+      // Author
+      doc.setFont("Roboto", "normal");
+      doc.setFontSize(12);
+      doc.text(`Autor: ${encodeCzechText(book.author)}`, margin, yPosition);
+      yPosition += 10;
 
-      // Basic information with elegant layout
-      // Create a stylish box for basic info
-      applyColor("noteBg", "setFillColor");
-      applyColor("border", "setDrawColor");
-      doc.roundedRect(margin, yPosition, contentWidth, 35, 3, 3, "FD");
+      // Date
+      doc.text(
+        `Datum: ${formatDate(new Date().toISOString())}`,
+        margin,
+        yPosition
+      );
+      yPosition += 15;
+
+      // Author information section
+      doc.setFont("Roboto", "bold");
+      doc.setFontSize(14);
+      doc.text(encodeCzechText("O AUTOROVI"), margin, yPosition);
+      yPosition += 10;
+
+      // Author content
+      doc.setFont("Roboto", "normal");
+      doc.setFontSize(11);
+
+      if (book.authorSummary) {
+        const processedAuthorSummary = processMarkdown(book.authorSummary);
+        const authorSummaryLines = doc.splitTextToSize(
+          processedAuthorSummary,
+          contentWidth
+        );
+
+        for (let i = 0; i < authorSummaryLines.length; i++) {
+          yPosition = checkForPageBreak(yPosition, 5);
+          doc.text(authorSummaryLines[i], margin, yPosition);
+          yPosition += 5;
+        }
+      } else {
+        doc.text(
+          encodeCzechText("Informace o autorovi nejsou k dispozici."),
+          margin,
+          yPosition
+        );
+        yPosition += 10;
+      }
 
       yPosition += 10;
 
-      // Author and date with improved styling
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(12);
-      applyColor("text", "setTextColor");
-      doc.text(
-        `Autor: ${encodeCzechText(book.author)}`,
-        margin + 10,
-        yPosition
-      );
-      yPosition += 6;
-      doc.text(`Datum: ${formatDate(book.createdAt)}`, margin + 10, yPosition);
-      yPosition += 20;
-
-      // Add author summary if available with elegant design
-      if (book.authorSummary) {
-        // Check if we need a new page
-        yPosition = checkForPageBreak(yPosition, 60);
-
-        // Create a stylish container for author information
-        applyColor("summaryBg", "setFillColor");
-        applyColor("border", "setDrawColor");
-        doc.setLineWidth(0.2);
-
-        // Calculate container height based on content length
-        const authorSummaryText = book.authorSummary || "";
-        const authorPreviewLines = doc.splitTextToSize(
-          authorSummaryText,
-          contentWidth - 30
-        );
-        // Make container height proportional to text length with a minimum height
-        const estimatedHeight = Math.max(
-          authorPreviewLines.length * 6 + 50,
-          120
-        );
-
-        // Draw container with rounded corners
-        doc.roundedRect(
-          margin,
-          yPosition,
-          contentWidth,
-          estimatedHeight,
-          3,
-          3,
-          "FD"
-        );
-
-        // Add accent bar on the left
-        applyColor("accent", "setFillColor");
-        doc.roundedRect(margin, yPosition, 5, estimatedHeight, 1, 1, "F");
-
-        // Section title with improved styling - capitalized
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(14);
-        applyColor("heading", "setTextColor");
-        doc.text(encodeCzechText("O AUTOROVI"), margin + 15, yPosition + 15);
-
-        // Add decorative line under the title
-        applyColor("accent", "setDrawColor");
-        doc.setLineWidth(0.5);
-        doc.line(margin + 15, yPosition + 20, margin + 80, yPosition + 20);
-
-        // Author content with better typography
-        doc.setFont("Roboto", "normal");
-        doc.setFontSize(11);
-        applyColor("text", "setTextColor");
-
-        // Process the author summary to remove markdown formatting
-        const processedAuthorSummary = processMarkdown(
-          book.authorSummary || ""
-        );
-
-        // Split text to fit within margins and handle Czech characters
-        const authorSummaryLines = doc.splitTextToSize(
-          encodeCzechText(processedAuthorSummary),
-          contentWidth - 30
-        );
-
-        // Draw text with proper line spacing
-        let contentY = yPosition + 30;
-        for (let i = 0; i < authorSummaryLines.length; i++) {
-          // Check for page break during rendering if needed
-          if (contentY > pageHeight - 40) {
-            doc.addPage();
-            applyColor("background", "setFillColor");
-            doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-            // Add header to new page
-            applyColor("headerBg", "setFillColor");
-            doc.rect(0, 0, pageWidth, 15, "F");
-            applyColor("border", "setDrawColor");
-            doc.setLineWidth(0.5);
-            doc.line(0, 15, pageWidth, 15);
-
-            // Add book title to header
-            doc.setFont("Roboto", "normal");
-            doc.setFontSize(9);
-            applyColor("lightText", "setTextColor");
-            doc.text(encodeCzechText(book.title), margin, 10);
-
-            // Continue container on new page
-            applyColor("summaryBg", "setFillColor");
-            applyColor("border", "setDrawColor");
-            doc.setLineWidth(0.2);
-
-            // Draw container on new page
-            doc.roundedRect(
-              margin,
-              margin + 10,
-              contentWidth,
-              pageHeight - margin * 2 - 10,
-              3,
-              3,
-              "FD"
-            );
-
-            // Add accent bar on the left
-            applyColor("accent", "setFillColor");
-            doc.roundedRect(
-              margin,
-              margin + 10,
-              5,
-              pageHeight - margin * 2 - 10,
-              1,
-              1,
-              "F"
-            );
-
-            contentY = margin + 25;
-
-            // Reset counter to continue from top of page
-            const remainingLines = authorSummaryLines.slice(i);
-
-            // Draw remaining text
-            doc.setFont("Roboto", "normal");
-            doc.setFontSize(11);
-            applyColor("text", "setTextColor");
-
-            for (let j = 0; j < remainingLines.length; j++) {
-              doc.text(remainingLines[j], margin + 15, contentY + j * 6);
-            }
-
-            // Update position and break out of the loop
-            yPosition = contentY + remainingLines.length * 6 + 15;
-            break;
-          }
-
-          doc.text(authorSummaryLines[i], margin + 15, contentY);
-          contentY += 6;
-        }
-
-        // Update position for next section if we didn't break to a new page
-        if (contentY <= pageHeight - 40) {
-          yPosition = contentY + 15;
-        }
-      }
-
-      // Add notes section with elegant design
-      // Check if we need a new page
-      yPosition = checkForPageBreak(yPosition, 60);
-
-      // Section title with improved styling
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(16);
-      applyColor("heading", "setTextColor");
-      doc.text(encodeCzechText("POZNÁMKY"), margin, yPosition);
-
-      // Add decorative line under section title
-      applyColor("accent", "setDrawColor");
-      doc.setLineWidth(0.5);
-      doc.line(margin, yPosition + 5, margin + 60, yPosition + 5);
-
-      yPosition += 15;
-
-      const maturitaNotes = notes.filter(
-        (note) => !note.isAISummary && !note.isError
-      );
+      // Add AI summaries
       const summaries = notes.filter(
         (note) => note.isAISummary && !note.isError
       );
 
-      // For each note, add content with proper styling
-      if (maturitaNotes.length > 0) {
-        maturitaNotes.forEach((note, index) => {
-          // Check if we need a new page
-          yPosition = checkForPageBreak(yPosition, 60);
+      // Summary section
+      yPosition = checkForPageBreak(yPosition, 20);
+      doc.setFont("Roboto", "bold");
+      doc.setFontSize(14);
+      doc.text(encodeCzechText("SHRNUTÍ DÍLA"), margin, yPosition);
+      yPosition += 10;
 
-          // Add a subtle note container with improved design
-          applyColor("noteBg", "setFillColor");
-          applyColor("border", "setDrawColor");
-          doc.setLineWidth(0.2);
+      // Summary content
+      doc.setFont("Roboto", "normal");
+      doc.setFontSize(11);
 
-          // Calculate note container dimensions
-          const notePreviewLines = doc.splitTextToSize(
-            note.content.substring(0, 150),
-            contentWidth - 30
-          );
-          const estimatedHeight = Math.max(
-            notePreviewLines.length * 6 + 30,
-            50
-          );
-
-          // Create a more visually appealing note container
-          doc.roundedRect(
-            margin,
-            yPosition,
-            contentWidth,
-            estimatedHeight,
-            3,
-            3,
-            "FD"
-          );
-
-          // Add a colored accent bar on the left for better visual separation
-          applyColor("accent", "setFillColor");
-          doc.roundedRect(margin, yPosition, 5, estimatedHeight, 1, 1, "F");
-
-          // Note date with better styling
-          doc.setFont("Roboto", "bold");
-          doc.setFontSize(10);
-          applyColor("lightText", "setTextColor");
-          doc.text(formatDate(note.createdAt), margin + 10, yPosition + 12);
-
-          // Add note number for reference
-          const noteNumberText = `#${index + 1}`;
-          const noteNumberWidth = doc.getTextWidth(noteNumberText);
-          doc.text(
-            noteNumberText,
-            pageWidth - margin - 10 - noteNumberWidth,
-            yPosition + 12
-          );
-
-          // Add a subtle separator line
-          applyColor("border", "setDrawColor");
-          doc.setLineWidth(0.2);
-          doc.line(
-            margin + 10,
-            yPosition + 18,
-            margin + contentWidth - 10,
-            yPosition + 18
-          );
-
-          // Process and render note content with markdown support
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(11);
-          applyColor("text", "setTextColor");
-
-          // Split text to fit within note container
-          const processedContent = processMarkdown(note.content);
-          const contentLines = doc.splitTextToSize(
-            processedContent,
-            contentWidth - 30
-          );
-
-          // Draw content with proper line spacing
-          let contentY = yPosition + 25;
-          for (let i = 0; i < contentLines.length; i++) {
-            // Check for page break during rendering if needed
-            if (contentY > pageHeight - 40) {
-              doc.addPage();
-              applyColor("background", "setFillColor");
-              doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-              // Add header to new page
-              applyColor("headerBg", "setFillColor");
-              doc.rect(0, 0, pageWidth, 15, "F");
-              applyColor("border", "setDrawColor");
-              doc.setLineWidth(0.5);
-              doc.line(0, 15, pageWidth, 15);
-
-              // Add book title to header
-              doc.setFont("Roboto", "normal");
-              doc.setFontSize(9);
-              applyColor("lightText", "setTextColor");
-              doc.text(encodeCzechText(book.title), margin, 10);
-
-              // Continue container on new page
-              contentY = margin + 25;
-
-              // Add a note continuation indicator
-              doc.setFont("Roboto", "italic");
-              doc.setFontSize(9);
-              applyColor("lightText", "setTextColor");
-              doc.text(
-                `Poznámka #${index + 1} (pokračování)`,
-                margin,
-                contentY - 10
-              );
-
-              // Add a subtle separator line
-              applyColor("border", "setDrawColor");
-              doc.setLineWidth(0.2);
-              doc.line(
-                margin,
-                contentY - 5,
-                margin + contentWidth,
-                contentY - 5
-              );
-
-              // Reset counter to continue from top of page
-              const remainingLines = contentLines.slice(i);
-
-              // Draw remaining text
-              doc.setFont("Roboto", "normal");
-              doc.setFontSize(11);
-              applyColor("text", "setTextColor");
-
-              for (let j = 0; j < remainingLines.length; j++) {
-                doc.text(remainingLines[j], margin + 15, contentY + j * 6);
-              }
-
-              // Update position and break out of the loop
-              yPosition = contentY + remainingLines.length * 6 + 15;
-              break;
-            }
-
-            doc.text(contentLines[i], margin + 15, contentY);
-            contentY += 6;
-          }
-
-          // Update position for next note if we didn't break to a new page
-          if (contentY <= pageHeight - 40) {
-            yPosition = contentY + 15;
-          }
-
-          // Add extra spacing between notes for better separation
-          yPosition += 10;
-        });
-      } else {
-        doc.setFont("Roboto", "italic");
-        doc.setFontSize(11);
-        doc.setTextColor(100, 100, 100);
-        doc.text(encodeCzechText("Žádné poznámky"), margin, yPosition + 10);
-        yPosition += 20;
-      }
-
-      // Add AI summaries with improved positioning
       if (summaries.length > 0) {
-        // Check if we need a new page
-        yPosition = checkForPageBreak(yPosition, 60);
-
-        // Section title with improved styling
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(16);
-        applyColor("heading", "setTextColor");
-        doc.text(encodeCzechText("AI SHRNUTÍ"), margin, yPosition);
-
-        // Add decorative line under section title
-        applyColor("accent", "setDrawColor");
-        doc.setLineWidth(0.5);
-        doc.line(margin, yPosition + 5, margin + 60, yPosition + 5);
-
-        yPosition += 15;
-
-        // For each summary, add content with improved positioning
         summaries.forEach((summary) => {
-          // Check if we need a new page
-          yPosition = checkForPageBreak(yPosition, 60);
-
-          // Add a subtle summary container with improved design
-          applyColor("summaryBg", "setFillColor");
-          applyColor("border", "setDrawColor");
-          doc.setLineWidth(0.2);
-
-          // Calculate summary container dimensions
-          const summaryPreviewLines = doc.splitTextToSize(
-            summary.content.substring(0, 150),
-            contentWidth - 30
-          );
-          const estimatedHeight = Math.max(
-            summaryPreviewLines.length * 6 + 30,
-            50
-          );
-
-          // Create a more visually appealing summary container
-          doc.roundedRect(
-            margin,
-            yPosition,
-            contentWidth,
-            estimatedHeight,
-            3,
-            3,
-            "FD"
-          );
-
-          // Add a colored accent bar on the left for better visual separation
-          applyColor("accent", "setFillColor");
-          doc.roundedRect(margin, yPosition, 5, estimatedHeight, 1, 1, "F");
-
-          // Add AI badge
-          doc.setFont("Roboto", "bold");
-          doc.setFontSize(9);
-          doc.setTextColor(255, 255, 255);
-
-          // Draw badge background
-          applyColor("accent", "setFillColor");
-          doc.roundedRect(margin + 10, yPosition + 8, 20, 10, 5, 5, "F");
-
-          // Draw badge text
-          doc.text("AI", margin + 15, yPosition + 14);
-
-          // Summary date with better positioning
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(10);
-          applyColor("lightText", "setTextColor");
-          doc.text(formatDate(summary.createdAt), margin + 35, yPosition + 14);
-
-          // Add a subtle separator line
-          applyColor("border", "setDrawColor");
-          doc.setLineWidth(0.2);
-          doc.line(
-            margin + 10,
-            yPosition + 22,
-            margin + contentWidth - 10,
-            yPosition + 22
-          );
-
-          // Process and render summary content
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(11);
-          applyColor("text", "setTextColor");
-
-          // Split text to fit within summary container
           const processedContent = processMarkdown(summary.content);
           const contentLines = doc.splitTextToSize(
             processedContent,
-            contentWidth - 30
+            contentWidth
           );
 
-          // Draw content with proper line spacing
-          let contentY = yPosition + 30;
           for (let i = 0; i < contentLines.length; i++) {
-            // Check for page break during rendering if needed
-            if (contentY > pageHeight - 40) {
-              doc.addPage();
-              applyColor("background", "setFillColor");
-              doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-              // Add header to new page
-              applyColor("headerBg", "setFillColor");
-              doc.rect(0, 0, pageWidth, 15, "F");
-              applyColor("border", "setDrawColor");
-              doc.setLineWidth(0.5);
-              doc.line(0, 15, pageWidth, 15);
-
-              // Add book title to header
-              doc.setFont("Roboto", "normal");
-              doc.setFontSize(9);
-              applyColor("lightText", "setTextColor");
-              doc.text(encodeCzechText(book.title), margin, 10);
-
-              // Continue container on new page
-              contentY = margin + 25;
-
-              // Add a summary continuation indicator
-              doc.setFont("Roboto", "italic");
-              doc.setFontSize(9);
-              applyColor("lightText", "setTextColor");
-              doc.text("AI Shrnutí (pokračování)", margin, contentY - 10);
-
-              // Add a subtle separator line
-              applyColor("border", "setDrawColor");
-              doc.setLineWidth(0.2);
-              doc.line(
-                margin,
-                contentY - 5,
-                margin + contentWidth,
-                contentY - 5
-              );
-
-              // Reset counter to continue from top of page
-              const remainingLines = contentLines.slice(i);
-
-              // Draw remaining text
-              doc.setFont("Roboto", "normal");
-              doc.setFontSize(11);
-              applyColor("text", "setTextColor");
-
-              for (let j = 0; j < remainingLines.length; j++) {
-                doc.text(remainingLines[j], margin + 15, contentY + j * 6);
-              }
-
-              // Update position and break out of the loop
-              yPosition = contentY + remainingLines.length * 6 + 15;
-              break;
-            }
-
-            doc.text(contentLines[i], margin + 15, contentY);
-            contentY += 6;
+            yPosition = checkForPageBreak(yPosition, 5);
+            doc.text(contentLines[i], margin, yPosition);
+            yPosition += 5;
           }
 
-          // Update position for next summary if we didn't break to a new page
-          if (contentY <= pageHeight - 40) {
-            yPosition = contentY + 15;
-          }
-
-          // Add extra spacing between summaries for better separation
-          yPosition += 10;
+          yPosition += 5;
         });
+      } else {
+        doc.text(
+          encodeCzechText("Shrnutí díla není k dispozici."),
+          margin,
+          yPosition
+        );
+        yPosition += 10;
       }
 
-      // Add exam structure with improved styling
-      yPosition = checkForPageBreak(yPosition, 60);
+      // Add regular notes
+      const regularNotes = notes.filter(
+        (note) => !note.isAISummary && !note.isError
+      );
 
-      // Section title with improved styling
+      // Notes section
+      yPosition = checkForPageBreak(yPosition, 20);
       doc.setFont("Roboto", "bold");
-      doc.setFontSize(16);
-      applyColor("heading", "setTextColor");
+      doc.setFontSize(14);
+      doc.text(encodeCzechText("VLASTNÍ POZNÁMKY"), margin, yPosition);
+      yPosition += 10;
+
+      // Notes content
+      if (regularNotes.length > 0) {
+        regularNotes.forEach((note, index) => {
+          yPosition = checkForPageBreak(yPosition, 15);
+
+          // Note number and date
+          doc.setFont("Roboto", "bold");
+          doc.setFontSize(11);
+          doc.text(
+            encodeCzechText(
+              `Poznámka ${index + 1} - ${formatDate(note.createdAt)}`
+            ),
+            margin,
+            yPosition
+          );
+          yPosition += 7;
+
+          // Note content
+          doc.setFont("Roboto", "normal");
+          doc.setFontSize(10);
+
+          const processedContent = processMarkdown(note.content);
+          const contentLines = doc.splitTextToSize(
+            processedContent,
+            contentWidth
+          );
+
+          for (let i = 0; i < contentLines.length; i++) {
+            yPosition = checkForPageBreak(yPosition, 5);
+            doc.text(contentLines[i], margin, yPosition);
+            yPosition += 5;
+          }
+
+          yPosition += 10;
+        });
+      } else {
+        doc.setFont("Roboto", "normal");
+        doc.setFontSize(11);
+        doc.text(encodeCzechText("Žádné vlastní poznámky"), margin, yPosition);
+        yPosition += 10;
+      }
+
+      // Add exam structure
+      yPosition = checkForPageBreak(yPosition, 20);
+      doc.setFont("Roboto", "bold");
+      doc.setFontSize(14);
       doc.text(
         encodeCzechText("STRUKTURA PRO ÚSTNÍ ZKOUŠKU"),
         margin,
         yPosition
       );
+      yPosition += 10;
 
-      // Add decorative line under section title
-      applyColor("accent", "setDrawColor");
-      doc.setLineWidth(0.5);
-      doc.line(margin, yPosition + 5, margin + 60, yPosition + 5);
-
-      yPosition += 15;
-
-      // Add exam structure in a visually appealing container
-      applyColor("noteBg", "setFillColor");
-      applyColor("border", "setDrawColor");
-
-      // Calculate container height
-      const examStructure = [
-        "Literárněhistorický kontext",
-        "Téma a motivy",
-        "Časoprostor",
-        "Kompoziční výstavba",
-        "Literární druh a žánr",
-        "Vypravěč / lyrický subjekt",
-        "Postavy",
-        "Vyprávěcí způsoby",
-        "Typy promluv",
-        "Veršová výstavba",
-        "Jazykové prostředky a jejich funkce",
-        "Tropy a figury a jejich funkce",
-      ];
-
-      const structureHeight = examStructure.length * 8 + 20;
-
-      // Draw container with rounded corners
-      doc.roundedRect(
-        margin,
-        yPosition,
-        contentWidth,
-        structureHeight,
-        3,
-        3,
-        "FD"
-      );
-
-      // Draw structure items with improved styling
       doc.setFont("Roboto", "normal");
       doc.setFontSize(11);
-      applyColor("text", "setTextColor");
+
+      const examStructure = [
+        "1. Literárněhistorický kontext",
+        "2. Téma a motivy",
+        "3. Časoprostor",
+        "4. Kompoziční výstavba",
+        "5. Literární druh a žánr",
+        "6. Vypravěč / lyrický subjekt",
+        "7. Postavy",
+        "8. Vyprávěcí způsoby",
+        "9. Typy promluv",
+        "10. Veršová výstavba",
+        "11. Jazykové prostředky a jejich funkce",
+        "12. Tropy a figury a jejich funkce",
+      ];
 
       for (let i = 0; i < examStructure.length; i++) {
-        // Check if we need a new page
-        if (yPosition + 10 + i * 8 > pageHeight - 40) {
-          doc.addPage();
-          applyColor("background", "setFillColor");
-          doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-          // Add header to new page
-          applyColor("headerBg", "setFillColor");
-          doc.rect(0, 0, pageWidth, 15, "F");
-          applyColor("border", "setDrawColor");
-          doc.setLineWidth(0.5);
-          doc.line(0, 15, pageWidth, 15);
-
-          // Add book title to header
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(9);
-          applyColor("lightText", "setTextColor");
-          doc.text(encodeCzechText(book.title), margin, 10);
-
-          // Continue container on new page
-          yPosition = margin + 10;
-
-          // Redraw container
-          applyColor("noteBg", "setFillColor");
-          applyColor("border", "setDrawColor");
-
-          // Calculate remaining height
-          const remainingItems = examStructure.length - i;
-          const remainingHeight = remainingItems * 8 + 10;
-
-          // Draw container
-          doc.roundedRect(
-            margin,
-            yPosition,
-            contentWidth,
-            remainingHeight,
-            3,
-            3,
-            "FD"
-          );
-
-          // Reset font for content
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(11);
-          applyColor("text", "setTextColor");
-
-          // Draw remaining items
-          for (let j = i; j < examStructure.length; j++) {
-            const itemY = yPosition + 10 + (j - i) * 8;
-
-            // Draw item number
-            doc.setFont("Roboto", "bold");
-            doc.text(`${j + 1}.`, margin + 10, itemY);
-
-            // Draw item text
-            doc.setFont("Roboto", "normal");
-            doc.text(encodeCzechText(examStructure[j]), margin + 20, itemY);
-          }
-
-          // Update position and break out of the loop
-          yPosition += remainingHeight + 15;
-          break;
-        }
-
-        // Draw item number
-        doc.setFont("Roboto", "bold");
-        doc.text(`${i + 1}.`, margin + 10, yPosition + 10 + i * 8);
-
-        // Draw item text
-        doc.setFont("Roboto", "normal");
-        doc.text(
-          encodeCzechText(examStructure[i]),
-          margin + 20,
-          yPosition + 10 + i * 8
-        );
+        yPosition = checkForPageBreak(yPosition, 5);
+        doc.text(encodeCzechText(examStructure[i]), margin, yPosition);
+        yPosition += 5;
       }
 
-      // Update position for next section
-      if (yPosition + structureHeight <= pageHeight - 40) {
-        yPosition += structureHeight + 15;
-      }
-
-      // Add page numbers to all pages
-      const totalPages = doc.internal.pages.length;
+      // Add simple page numbers to all pages
+      const totalPages = doc.internal.pages.length - 1;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-
-        // Add footer with page number
         doc.setFont("Roboto", "normal");
         doc.setFontSize(9);
-        applyColor("lightText", "setTextColor");
         doc.text(`${i} / ${totalPages}`, pageWidth / 2, pageHeight - 10, {
           align: "center",
         });
       }
 
-      // Save the PDF with a Czech-friendly filename
+      // Save the PDF
       doc.save(
         `${book.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_maturita.pdf`
       );
       setExportSuccess(true);
     } catch (error) {
-      console.error("Error exporting PDF:", error);
+      console.error("Error exporting maturita PDF:", error);
       setExportSuccess(false);
     } finally {
       setIsExporting(false);
