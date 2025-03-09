@@ -138,39 +138,116 @@ function selectOptimalAuthorModel(preferences: AuthorSummaryPreferences): {
   let model: string;
   let maxTokens: number;
 
+  // Define absolute maximum token limits to prevent excessive consumption
+  const MAX_TOKENS_LIMIT = 4000; // Hard limit for any request
+  const SAFE_TOKENS_LIMIT = 3000; // Default safe limit for most cases
+
   if (complexityScore >= 5) {
     // High complexity - use GPT-4o for best quality
     model = "gpt-4o";
     maxTokens =
       preferences.length === "long"
-        ? 2000
+        ? Math.min(3500, MAX_TOKENS_LIMIT)
         : preferences.length === "medium"
-        ? 1000
-        : 600;
+        ? Math.min(2500, SAFE_TOKENS_LIMIT)
+        : Math.min(1500, SAFE_TOKENS_LIMIT);
   } else if (complexityScore >= 3) {
     // Medium complexity - use GPT-4o-mini for good balance
     model = "gpt-4o-mini";
     maxTokens =
       preferences.length === "long"
-        ? 1500
+        ? Math.min(3000, SAFE_TOKENS_LIMIT)
         : preferences.length === "medium"
-        ? 800
-        : 500;
+        ? Math.min(2000, SAFE_TOKENS_LIMIT)
+        : Math.min(1200, SAFE_TOKENS_LIMIT);
   } else {
     // Low complexity - use GPT-3.5 Turbo for efficiency
     model = "gpt-3.5-turbo";
     maxTokens =
       preferences.length === "long"
-        ? 1200
+        ? Math.min(2500, SAFE_TOKENS_LIMIT)
         : preferences.length === "medium"
-        ? 700
-        : 400;
+        ? Math.min(1800, SAFE_TOKENS_LIMIT)
+        : Math.min(1000, SAFE_TOKENS_LIMIT);
   }
 
+  // Apply a cost-based adjustment based on model
+  // More expensive models get stricter token limits
+  const costAdjustedLimit =
+    model === "gpt-4o"
+      ? Math.min(maxTokens, 3500)
+      : model === "gpt-4o-mini"
+      ? Math.min(maxTokens, 3800)
+      : maxTokens;
+
   console.log(
-    `Selected author model: ${model} (complexity score: ${complexityScore})`
+    `Selected author model: ${model} (complexity score: ${complexityScore}, tokens: ${costAdjustedLimit})`
   );
-  return { model, maxTokens };
+  return { model, maxTokens: costAdjustedLimit };
+}
+
+/**
+ * Check if a summary appears to be cut off or incomplete
+ * @param summary The summary text to check
+ * @returns True if the summary appears complete, false if it seems cut off
+ */
+function isSummaryComplete(summary: string): boolean {
+  if (!summary) return false;
+
+  // Trim whitespace
+  const trimmedSummary = summary.trim();
+
+  // Check if summary ends with proper punctuation
+  const endsWithProperPunctuation = /[.!?]$/.test(trimmedSummary);
+
+  // Check if summary has a reasonable length
+  const hasReasonableLength = trimmedSummary.length > 100;
+
+  // Check if summary contains expected sections (for structured summaries)
+  const hasExpectedSections =
+    trimmedSummary.includes("# ") && // Has a main heading
+    (trimmedSummary.includes("## ") || trimmedSummary.includes("\n\n")); // Has sections or paragraphs
+
+  // Check if summary doesn't end mid-sentence
+  const lastSentence = trimmedSummary.split(/[.!?]/).pop() || "";
+  const lastSentenceComplete =
+    lastSentence.trim().split(/\s+/).length < 4 || endsWithProperPunctuation;
+
+  // Check if summary doesn't have obvious truncation markers
+  const noTruncationMarkers =
+    !trimmedSummary.endsWith("...") &&
+    !trimmedSummary.endsWith("…") &&
+    !trimmedSummary.endsWith("-");
+
+  return (
+    hasReasonableLength &&
+    hasExpectedSections &&
+    lastSentenceComplete &&
+    noTruncationMarkers
+  );
+}
+
+/**
+ * Fix a potentially incomplete summary by adding a completion notice
+ * @param summary The potentially incomplete summary
+ * @returns Fixed summary with a completion notice if needed
+ */
+function fixIncompleteAuthorSummary(
+  summary: string,
+  author: string,
+  language: string
+): string {
+  if (isSummaryComplete(summary)) {
+    return summary;
+  }
+
+  // Add a notice about the incomplete summary
+  const notice =
+    language === "cs"
+      ? `\n\n---\n\n**Poznámka:** Informace o autorovi ${author} mohou být neúplné. Pro získání kompletních informací zkuste přegenerovat s jinými preferencemi nebo kratší délkou.`
+      : `\n\n---\n\n**Note:** The information about author ${author} may be incomplete. To get complete information, try regenerating with different preferences or a shorter length.`;
+
+  return summary + notice;
 }
 
 /**
@@ -202,59 +279,126 @@ export async function generateAuthorSummary(
     // Get OpenAI client
     const openai = getOpenAIClient();
 
-    // Construct the prompt based on preferences
-    const prompt = buildAuthorSummaryPrompt(author, preferences);
+    // Try up to 3 times with different settings if needed
+    let attempts = 0;
+    const maxAttempts = 3;
+    let currentPreferences = { ...preferences };
 
-    // Calculate prompt tokens to ensure we have enough completion tokens
-    const estimatedPromptTokens = estimateTokenCount(prompt) + 200; // Add buffer for system message
+    while (attempts < maxAttempts) {
+      attempts++;
+      console.log(`Attempt ${attempts} of ${maxAttempts} for author summary`);
 
-    // Select optimal model based on complexity
-    const { model, maxTokens } = selectOptimalAuthorModel(preferences);
+      // Adjust strategy based on attempt number
+      if (attempts === 2) {
+        // On second attempt, simplify but keep length
+        console.log("Simplifying features for retry attempt");
+        currentPreferences = {
+          ...currentPreferences,
+          // Remove additional sections but keep length
+          includeTimeline: false,
+          includeInfluences: false,
+          includeAwards: false,
+        };
+      } else if (attempts === 3) {
+        // On third attempt, reduce length and further simplify
+        console.log(
+          "Reducing length and further simplifying for final attempt"
+        );
+        currentPreferences = {
+          ...currentPreferences,
+          length: "short",
+          style: "casual", // Simpler style
+          studyGuide: false, // Remove study guide formatting
+        };
+      }
 
-    // Ensure we don't exceed context window
-    const contextWindow =
-      model === "gpt-4o" ? 8192 : model === "gpt-4o-mini" ? 8192 : 4096;
-    const adjustedMaxTokens = Math.min(
-      maxTokens,
+      // Construct the prompt based on preferences
+      const prompt = buildAuthorSummaryPrompt(author, currentPreferences);
+
+      // Calculate prompt tokens to ensure we have enough completion tokens
+      const estimatedPromptTokens = estimateTokenCount(prompt) + 200; // Add buffer for system message
+
+      // Select optimal model based on complexity
+      const { model, maxTokens } = selectOptimalAuthorModel(currentPreferences);
+
+      // On retry attempts, increase token limit to ensure completion
+      const attemptAdjustedMaxTokens =
+        attempts > 1
+          ? Math.min(maxTokens + (attempts - 1) * 500, 4000) // Increase by 500 tokens per retry, up to 4000
+          : maxTokens;
+
       // Ensure we don't exceed context window
-      contextWindow - estimatedPromptTokens - 100 // 100 token safety buffer
+      const contextWindow =
+        model === "gpt-4o" ? 8192 : model === "gpt-4o-mini" ? 8192 : 4096;
+      const adjustedMaxTokens = Math.min(
+        attemptAdjustedMaxTokens,
+        // Ensure we don't exceed context window
+        contextWindow - estimatedPromptTokens - 100 // 100 token safety buffer
+      );
+
+      // System message based on language
+      const systemMessage =
+        preferences.language === "cs"
+          ? "Jsi literární expert specializující se na informace o autorech."
+          : "You are a literary expert specializing in author information.";
+
+      // Call OpenAI API
+      console.log(
+        `Generating author summary for ${author} using ${model} model with ${adjustedMaxTokens} tokens`
+      );
+      const response = await openai.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: systemMessage,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: preferences.style === "creative" ? 0.8 : 0.6,
+        max_tokens: adjustedMaxTokens,
+        frequency_penalty: 0.1, // Slight penalty to avoid repetition
+        presence_penalty: 0.1, // Slight penalty to encourage covering new topics
+      });
+
+      const rawSummary = response.choices[0]?.message?.content || "";
+
+      // Check if the summary is complete
+      if (isSummaryComplete(rawSummary) || attempts >= maxAttempts) {
+        // Either the summary is complete or we've reached max attempts
+        // Check if the summary is complete and fix it if needed
+        const summary =
+          attempts >= maxAttempts
+            ? fixIncompleteAuthorSummary(
+                rawSummary,
+                author,
+                preferences.language
+              )
+            : rawSummary;
+
+        // Cache the summary
+        authorSummaryCache[cacheKey] = {
+          summary,
+          timestamp: Date.now(),
+          preferences,
+        };
+        console.log("Author summary cached with key:", cacheKey);
+
+        return summary;
+      }
+
+      console.log(
+        "Summary appears incomplete, retrying with adjusted settings..."
+      );
+    }
+
+    // This should never be reached due to the return in the loop
+    throw new Error(
+      "Failed to generate complete author summary after multiple attempts"
     );
-
-    // System message based on language
-    const systemMessage =
-      preferences.language === "cs"
-        ? "Jsi literární expert specializující se na informace o autorech."
-        : "You are a literary expert specializing in author information.";
-
-    // Call OpenAI API
-    console.log(`Generating author summary for ${author} using ${model} model`);
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: systemMessage,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: preferences.style === "creative" ? 0.8 : 0.6,
-      max_tokens: adjustedMaxTokens,
-    });
-
-    const summary = response.choices[0]?.message?.content || "";
-
-    // Cache the summary
-    authorSummaryCache[cacheKey] = {
-      summary,
-      timestamp: Date.now(),
-      preferences,
-    };
-    console.log("Author summary cached with key:", cacheKey);
-
-    return summary;
   } catch (error) {
     console.error("Error generating author summary:", error);
     throw new Error(
@@ -440,7 +584,7 @@ ${
 
 Formátuj text pomocí Markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl, odrážky pro seznamy.
 
-DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní.`;
+DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní. Pokud se blížíš k limitu tokenů, raději zkrať obsah v každé sekci, ale zachovej všechny sekce a zajisti, že shrnutí má jasný závěr. Nikdy neukončuj text uprostřed věty nebo myšlenky.`;
 
   return prompt.trim();
 }

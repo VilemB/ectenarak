@@ -179,7 +179,9 @@ ${
   // Add formatting instructions in a more compact way
   prompt += `
 
-Formátuj pomocí markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl.`;
+Formátuj pomocí markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl.
+
+DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní. Pokud se blížíš k limitu tokenů, raději zkrať obsah v každé sekci, ale zachovej všechny sekce a zajisti, že shrnutí má jasný závěr. Nikdy neukončuj text uprostřed věty nebo myšlenky.`;
 
   // Add notes if available (after all instructions to prioritize them)
   if (notes && notes.trim()) {
@@ -192,24 +194,66 @@ ${notes}`;
   return prompt;
 }
 
-function checkIfSummaryIsCutOff(summary: string): string {
-  // Simple check for proper ending
-  const lastChar = summary.trim().slice(-1);
+/**
+ * Check if a summary appears to be cut off or incomplete
+ * @param summary The summary text to check
+ * @param bookTitle The title of the book
+ * @param author The author of the book
+ * @param preferences The summary preferences
+ * @returns Fixed summary with a completion notice if needed
+ */
+function checkIfSummaryIsCutOff(
+  summary: string,
+  bookTitle: string,
+  author: string,
+  preferences: SummaryPreferences
+): string {
+  if (!summary) return summary;
+
+  // Trim whitespace
+  const trimmedSummary = summary.trim();
+
+  // Check if summary ends with proper punctuation
+  const lastChar = trimmedSummary.slice(-1);
   const properEndingPunctuation = [".", "!", "?", '"', ")", "]", "}"].includes(
     lastChar
   );
 
-  // Only check last sentence if ending punctuation is missing
-  if (!properEndingPunctuation) {
-    const lastSentence = summary.split(/[.!?]/).pop()?.trim() || "";
-    const isTooShort = lastSentence.split(" ").length < 3;
+  // Check if summary has a reasonable length
+  const hasReasonableLength = trimmedSummary.length > 100;
 
-    if (isTooShort) {
-      return (
-        summary +
-        "\n\n*Poznámka: Toto shrnutí bylo zkráceno kvůli omezení délky.*\n\n*Pro úplné shrnutí doporučujeme:*\n- Zvolit kratší délku shrnutí\n- Rozdělit poznámky do více knih\n- Ručně zkrátit nejdůležitější poznámky"
-      );
-    }
+  // Check if summary contains expected sections (for structured summaries)
+  const hasExpectedSections = preferences.studyGuide
+    ? trimmedSummary.includes("# ") && trimmedSummary.includes("## ")
+    : true;
+
+  // Check if summary doesn't end mid-sentence
+  const lastSentence = trimmedSummary.split(/[.!?]/).pop() || "";
+  const lastSentenceComplete =
+    lastSentence.trim().split(/\s+/).length < 4 || properEndingPunctuation;
+
+  // Check if summary doesn't have obvious truncation markers
+  const noTruncationMarkers =
+    !trimmedSummary.endsWith("...") &&
+    !trimmedSummary.endsWith("…") &&
+    !trimmedSummary.endsWith("-");
+
+  // If the summary appears incomplete
+  if (
+    !hasReasonableLength ||
+    !hasExpectedSections ||
+    !lastSentenceComplete ||
+    !noTruncationMarkers
+  ) {
+    const language = preferences.language === "cs" ? "cs" : "en";
+
+    // Create a notice in the appropriate language
+    const notice =
+      language === "cs"
+        ? `\n\n---\n\n**Poznámka:** Shrnutí knihy "${bookTitle}" (${author}) může být neúplné. Pro získání kompletního shrnutí zkuste:\n\n- Zvolit kratší délku shrnutí\n- Použít méně komplexní nastavení\n- Rozdělit poznámky do více knih\n- Ručně zkrátit nejdůležitější poznámky`
+        : `\n\n---\n\n**Note:** The summary of "${bookTitle}" (${author}) may be incomplete. To get a complete summary, try:\n\n- Choosing a shorter summary length\n- Using less complex settings\n- Splitting your notes into multiple books\n- Manually shortening your most important notes`;
+
+    return summary + notice;
   }
 
   return summary;
@@ -337,6 +381,10 @@ function selectOptimalModel(
   if (notesLength > 3000) complexityScore += 2;
   else if (notesLength > 1000) complexityScore += 1;
 
+  // Define absolute maximum token limits to prevent excessive consumption
+  const MAX_TOKENS_LIMIT = 4000; // Hard limit for any request
+  const SAFE_TOKENS_LIMIT = 3000; // Default safe limit for most cases
+
   // Select model based on complexity
   let model: string;
   let maxTokens: number;
@@ -346,34 +394,90 @@ function selectOptimalModel(
     model = "gpt-4o";
     maxTokens =
       preferences.length === "long"
-        ? 3000
+        ? Math.min(3500, MAX_TOKENS_LIMIT)
         : preferences.length === "medium"
-        ? 2000
-        : 1000;
+        ? Math.min(2500, SAFE_TOKENS_LIMIT)
+        : Math.min(1500, SAFE_TOKENS_LIMIT);
   } else if (complexityScore >= 3) {
     // Medium complexity - use GPT-4o-mini for good balance
     model = "gpt-4o-mini";
     maxTokens =
       preferences.length === "long"
-        ? 2500
+        ? Math.min(3000, SAFE_TOKENS_LIMIT)
         : preferences.length === "medium"
-        ? 1500
-        : 800;
+        ? Math.min(2000, SAFE_TOKENS_LIMIT)
+        : Math.min(1200, SAFE_TOKENS_LIMIT);
   } else {
     // Low complexity - use GPT-3.5 Turbo for efficiency
     model = "gpt-3.5-turbo";
     maxTokens =
       preferences.length === "long"
-        ? 2000
+        ? Math.min(2500, SAFE_TOKENS_LIMIT)
         : preferences.length === "medium"
-        ? 1200
-        : 600;
+        ? Math.min(1800, SAFE_TOKENS_LIMIT)
+        : Math.min(1000, SAFE_TOKENS_LIMIT);
   }
 
+  // Apply a cost-based adjustment based on model and notes length
+  // More expensive models get stricter token limits when notes are short
+  const hasSignificantNotes = notesLength > 1000;
+  const costAdjustedLimit =
+    model === "gpt-4o"
+      ? hasSignificantNotes
+        ? Math.min(maxTokens, 3500)
+        : Math.min(maxTokens, 3000)
+      : model === "gpt-4o-mini"
+      ? hasSignificantNotes
+        ? Math.min(maxTokens, 3800)
+        : Math.min(maxTokens, 3200)
+      : maxTokens;
+
   console.log(
-    `Selected model: ${model} (complexity score: ${complexityScore})`
+    `Selected model: ${model} (complexity score: ${complexityScore}, tokens: ${costAdjustedLimit})`
   );
-  return { model, maxTokens };
+  return { model, maxTokens: costAdjustedLimit };
+}
+
+/**
+ * Check if a summary appears to be complete
+ * @param summary The summary text to check
+ * @returns True if the summary appears complete, false if it seems cut off
+ */
+function isSummaryComplete(summary: string): boolean {
+  if (!summary) return false;
+
+  // Trim whitespace
+  const trimmedSummary = summary.trim();
+
+  // Check if summary ends with proper punctuation
+  const endsWithProperPunctuation = /[.!?]$/.test(trimmedSummary);
+
+  // Check if summary has a reasonable length
+  const hasReasonableLength = trimmedSummary.length > 200;
+
+  // Check if summary contains expected sections or paragraphs
+  const hasExpectedStructure =
+    trimmedSummary.includes("\n\n") ||
+    trimmedSummary.includes("# ") ||
+    trimmedSummary.includes("## ");
+
+  // Check if summary doesn't end mid-sentence
+  const lastSentence = trimmedSummary.split(/[.!?]/).pop() || "";
+  const lastSentenceComplete =
+    lastSentence.trim().split(/\s+/).length < 4 || endsWithProperPunctuation;
+
+  // Check if summary doesn't have obvious truncation markers
+  const noTruncationMarkers =
+    !trimmedSummary.endsWith("...") &&
+    !trimmedSummary.endsWith("…") &&
+    !trimmedSummary.endsWith("-");
+
+  return (
+    hasReasonableLength &&
+    hasExpectedStructure &&
+    lastSentenceComplete &&
+    noTruncationMarkers
+  );
 }
 
 export async function POST(request: Request) {
@@ -432,80 +536,150 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("Generating prompt...");
-    const prompt = generatePrompt(
+    // Try up to 3 times with different settings if needed
+    let attempts = 0;
+    const maxAttempts = 3;
+    let currentPreferences = { ...preferences };
+    let summary = "";
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      console.log(`Attempt ${attempts} of ${maxAttempts} for book summary`);
+
+      // Adjust strategy based on attempt number
+      if (attempts === 2) {
+        // On second attempt, simplify but keep length
+        console.log("Simplifying features for retry attempt");
+        currentPreferences = {
+          ...currentPreferences,
+          // Remove additional features but keep length
+          examFocus: false,
+          literaryContext: false,
+        };
+      } else if (attempts === 3) {
+        // On third attempt, reduce length and further simplify
+        console.log(
+          "Reducing length and further simplifying for final attempt"
+        );
+        currentPreferences = {
+          ...currentPreferences,
+          length: "short",
+          style: "casual", // Simpler style
+          studyGuide: false, // Remove study guide formatting
+        };
+      }
+
+      console.log("Generating prompt...");
+      const prompt = generatePrompt(
+        bookTitle,
+        bookAuthor,
+        processedNotes,
+        currentPreferences
+      );
+      console.log("Prompt generated, length:", prompt.length);
+
+      // Select optimal model based on request complexity
+      const { model, maxTokens } = selectOptimalModel(
+        currentPreferences,
+        processedNotes?.length || 0
+      );
+
+      // On retry attempts, increase token limit to ensure completion
+      const attemptAdjustedMaxTokens =
+        attempts > 1
+          ? Math.min(maxTokens + (attempts - 1) * 500, 4000) // Increase by 500 tokens per retry, up to 4000
+          : maxTokens;
+
+      console.log(
+        `Using model: ${model} with max tokens: ${attemptAdjustedMaxTokens}`
+      );
+
+      console.log("Calling OpenAI API...");
+
+      try {
+        const response = await openai.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: "system",
+              content: prompt,
+            },
+          ],
+          temperature: currentPreferences.style === "creative" ? 0.8 : 0.6,
+          max_tokens: attemptAdjustedMaxTokens,
+          frequency_penalty: 0.1, // Slight penalty to avoid repetition
+          presence_penalty: 0.1, // Slight penalty to encourage covering new topics
+        });
+
+        console.log("OpenAI API response received");
+
+        const currentSummary = response.choices[0]?.message?.content;
+
+        if (!currentSummary) {
+          console.log("No summary content in OpenAI response");
+          if (attempts >= maxAttempts) {
+            throw new Error("Nepodařilo se získat odpověď z OpenAI API");
+          }
+          console.log("Retrying with simpler settings...");
+          continue;
+        }
+
+        console.log("Summary received, length:", currentSummary.length);
+
+        // Check if the summary appears complete
+        const isComplete = isSummaryComplete(currentSummary);
+
+        if (isComplete || attempts >= maxAttempts) {
+          // Either the summary is complete or we've reached max attempts
+          summary = currentSummary;
+          break;
+        }
+
+        console.log(
+          "Summary appears incomplete, retrying with adjusted settings..."
+        );
+      } catch (openaiError: unknown) {
+        console.error("OpenAI API error:", openaiError);
+        if (attempts >= maxAttempts) {
+          return NextResponse.json(
+            {
+              error:
+                "Chyba při volání OpenAI API: " +
+                (openaiError instanceof Error
+                  ? openaiError.message
+                  : "Neznámá chyba"),
+            },
+            { status: 500 }
+          );
+        }
+        console.log("Retrying with simpler settings after error...");
+      }
+    }
+
+    // Check if the summary appears to be cut off
+    const processedSummary = checkIfSummaryIsCutOff(
+      summary,
       bookTitle,
       bookAuthor,
-      processedNotes,
       preferences
     );
-    console.log("Prompt generated, length:", prompt.length);
 
-    // Select optimal model based on request complexity
-    const { model, maxTokens } = selectOptimalModel(
-      preferences,
-      processedNotes?.length || 0
-    );
-    console.log("Using model:", model, "with max tokens:", maxTokens);
-
-    console.log("Calling OpenAI API...");
-
-    try {
-      const response = await openai.chat.completions.create({
-        model,
-        messages: [
-          {
-            role: "system",
-            content: prompt,
-          },
-        ],
-        temperature: preferences.style === "creative" ? 0.8 : 0.6,
-        max_tokens: maxTokens,
-      });
-
-      console.log("OpenAI API response received");
-
-      const summary = response.choices[0]?.message?.content;
-
-      if (!summary) {
-        console.log("No summary content in OpenAI response");
-        throw new Error("Nepodařilo se získat odpověď z OpenAI API");
-      }
-
-      console.log("Summary received, length:", summary.length);
-
-      // Check if the summary appears to be cut off
-      const processedSummary = checkIfSummaryIsCutOff(summary);
-
-      // Cache the summary if no user notes were provided
-      if (!notes || notes.trim() === "") {
-        const cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
-        summaryCache[cacheKey] = {
-          summary: processedSummary,
-          timestamp: Date.now(),
-          preferences,
-        };
-        console.log("Summary cached with key:", cacheKey);
-      }
-
-      console.log("=== GENERATE SUMMARY API ROUTE SUCCESS ===");
-      return NextResponse.json({
+    // Cache the summary if no user notes were provided
+    if (!notes || notes.trim() === "") {
+      const cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
+      summaryCache[cacheKey] = {
         summary: processedSummary,
-        fromCache: false,
-      });
-    } catch (openaiError: unknown) {
-      console.error("OpenAI API error:", openaiError);
-      return NextResponse.json(
-        {
-          error:
-            "Chyba při volání OpenAI API: " +
-            (openaiError instanceof Error
-              ? openaiError.message
-              : "Neznámá chyba"),
-        },
-        { status: 500 }
-      );
+        timestamp: Date.now(),
+        preferences,
+      };
+      console.log("Summary cached with key:", cacheKey);
     }
+
+    console.log("=== GENERATE SUMMARY API ROUTE SUCCESS ===");
+    return NextResponse.json({
+      summary: processedSummary,
+      fromCache: false,
+    });
   } catch (error) {
     console.error("Error generating summary:", error);
     return NextResponse.json(
