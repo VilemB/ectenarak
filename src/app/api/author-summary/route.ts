@@ -68,6 +68,93 @@ export async function POST(req: NextRequest) {
 }
 
 /**
+ * DELETE endpoint to remove author summary from a book
+ *
+ * Query parameters:
+ * - bookId: string (required) - The ID of the book to remove the author summary from
+ */
+export async function DELETE(req: NextRequest) {
+  console.log("=== DELETE AUTHOR SUMMARY API ROUTE START ===");
+
+  try {
+    // Connect to database
+    await dbConnect();
+
+    // Get bookId from URL parameters
+    const url = new URL(req.url);
+    const bookId = url.searchParams.get("bookId");
+
+    console.log("Request parameters:", { bookId });
+
+    // Validate bookId
+    if (!bookId) {
+      return NextResponse.json(
+        { error: "Book ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!ObjectId.isValid(bookId)) {
+      console.log("Invalid book ID:", bookId);
+      return NextResponse.json({ error: "Invalid book ID" }, { status: 400 });
+    }
+
+    // Get user session for authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      console.log("Unauthorized: No user session found");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
+    // Verify the book belongs to the user
+    const book = await Book.findOne({
+      _id: bookId,
+      userId: userId,
+    });
+
+    if (!book) {
+      console.log("Book not found or does not belong to the user");
+      return NextResponse.json(
+        { error: "Book not found or does not belong to the user" },
+        { status: 404 }
+      );
+    }
+
+    // Check if the book has an author summary
+    if (!book.authorSummary) {
+      console.log("Book does not have an author summary");
+      return NextResponse.json(
+        { error: "Book does not have an author summary" },
+        { status: 404 }
+      );
+    }
+
+    // Remove the author summary
+    book.authorSummary = undefined;
+    await book.save();
+    console.log("Author summary removed from book:", bookId);
+
+    return NextResponse.json({
+      success: true,
+      message: "Author summary removed successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting author summary:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete author summary",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * Handle book-specific author summary generation
  */
 async function handleBookSpecificSummary(

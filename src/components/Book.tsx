@@ -78,7 +78,7 @@ export default function BookComponent({
   >([]);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    type: "book" | "note";
+    type: "book" | "note" | "authorSummary";
     noteId?: string;
     isLoading?: boolean;
   }>({ isOpen: false, type: "book", isLoading: false });
@@ -583,6 +583,92 @@ export default function BookComponent({
     }
   };
 
+  /**
+   * Delete the author summary for the current book
+   */
+  const handleDeleteAuthorSummary = async () => {
+    // Open the confirmation dialog
+    setDeleteModal({ isOpen: true, type: "authorSummary", isLoading: false });
+  };
+
+  /**
+   * Handle the confirmation of author summary deletion
+   */
+  const handleConfirmDeleteAuthorSummary = async () => {
+    console.log("=== HANDLE CONFIRM DELETE AUTHOR SUMMARY CALLED ===");
+
+    if (!book.id) {
+      showErrorMessage("Nelze smazat informace o autorovi pro knihu bez ID");
+      setDeleteModal({
+        isOpen: false,
+        type: "authorSummary",
+        isLoading: false,
+      });
+      return;
+    }
+
+    if (!book.authorSummary) {
+      showErrorMessage("Kniha nemá informace o autorovi ke smazání");
+      setDeleteModal({
+        isOpen: false,
+        type: "authorSummary",
+        isLoading: false,
+      });
+      return;
+    }
+
+    // Set loading state
+    setDeleteModal((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      // Call the DELETE endpoint
+      const apiUrl = `/api/author-summary?bookId=${book.id}`;
+      console.log("API URL:", apiUrl);
+
+      const response = await fetch(apiUrl, {
+        method: "DELETE",
+      });
+
+      console.log("API response status:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API error response:", errorData);
+        throw new Error(
+          errorData.error || "Nepodařilo se smazat informace o autorovi"
+        );
+      }
+
+      const data = await response.json();
+      console.log("API success response:", data);
+
+      // Update the book state to remove the author summary
+      setBook((prevBook) => ({
+        ...prevBook,
+        authorSummary: undefined,
+      }));
+
+      // Close the author info panel
+      setIsAuthorInfoVisible(false);
+
+      showSuccessMessage("Informace o autorovi byly úspěšně smazány");
+    } catch (error) {
+      console.error("Error deleting author summary:", error);
+      showErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se smazat informace o autorovi"
+      );
+    } finally {
+      // Reset the delete modal state
+      setDeleteModal({
+        isOpen: false,
+        type: "authorSummary",
+        isLoading: false,
+      });
+    }
+  };
+
   // Update the handleBookDelete function
   const handleBookDelete = () => {
     // Check if the book has a valid ID (not a temporary one)
@@ -762,7 +848,60 @@ export default function BookComponent({
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2 sm:flex-row">
-            {!book.authorSummary && (
+            {book.authorSummary ? (
+              <div className="flex gap-2">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAuthorInfoVisible(!isAuthorInfoVisible);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+                >
+                  <User className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline">Info o autorovi</span>
+                  <span className="sm:hidden">Info</span>
+                </Button>
+                <div className="flex">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAuthorSummaryModal(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200 rounded-r-none border-r-0"
+                    disabled={isGeneratingAuthorSummary}
+                  >
+                    {isGeneratingAuthorSummary ? (
+                      <>
+                        <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                        <span>Generuji...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        <span className="hidden sm:inline">Přegenerovat</span>
+                        <span className="sm:hidden">Nové</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAuthorSummary();
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-amber-600 border-amber-200 hover:bg-destructive/10 hover:text-destructive dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-destructive/20 transition-all duration-200 rounded-l-none px-2"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="sr-only">Smazat info o autorovi</span>
+                  </Button>
+                </div>
+              </div>
+            ) : (
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -780,8 +919,11 @@ export default function BookComponent({
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                    <span>Info o autorovi</span>
+                    <User className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="hidden sm:inline">
+                      Informace o autorovi
+                    </span>
+                    <span className="sm:hidden">O autorovi</span>
                   </>
                 )}
               </Button>
@@ -873,8 +1015,17 @@ export default function BookComponent({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
-              className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-end"
+              className="mt-3 pt-2 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between"
             >
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-amber-600/70 dark:text-amber-500/70 hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+                onClick={handleDeleteAuthorSummary}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span className="sr-only">Smazat informace o autorovi</span>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -1272,16 +1423,30 @@ export default function BookComponent({
         onConfirm={
           deleteModal.type === "book"
             ? handleConfirmDelete
-            : handleConfirmDeleteNote
+            : deleteModal.type === "note"
+            ? handleConfirmDeleteNote
+            : handleConfirmDeleteAuthorSummary
         }
-        title={deleteModal.type === "book" ? "Smazat knihu" : "Smazat poznámku"}
+        title={
+          deleteModal.type === "book"
+            ? "Smazat knihu"
+            : deleteModal.type === "note"
+            ? "Smazat poznámku"
+            : "Smazat informace o autorovi"
+        }
         description={
           deleteModal.type === "book"
             ? `Opravdu chcete smazat knihu "${book.title}"? Tato akce je nevratná.`
-            : "Opravdu chcete smazat tuto poznámku? Tato akce je nevratná."
+            : deleteModal.type === "note"
+            ? "Opravdu chcete smazat tuto poznámku? Tato akce je nevratná."
+            : "Opravdu chcete smazat informace o autorovi? Tato akce je nevratná."
         }
         confirmText={
-          deleteModal.type === "book" ? "Smazat knihu" : "Smazat poznámku"
+          deleteModal.type === "book"
+            ? "Smazat knihu"
+            : deleteModal.type === "note"
+            ? "Smazat poznámku"
+            : "Smazat informace o autorovi"
         }
         cancelText="Zrušit"
         isLoading={deleteModal.isLoading}

@@ -59,20 +59,49 @@ function generatePrompt(
   notes: string | undefined,
   preferences: SummaryPreferences
 ) {
-  // Simplified maps for more concise prompts
-  const focusMap = {
-    plot: "děj",
-    characters: "postavy",
-    themes: "témata",
-    balanced: "děj, postavy i témata vyváženě",
-  };
-
+  // Define style characteristics more specifically
   const styleMap = {
-    academic: "akademický",
-    casual: "neformální",
-    creative: "kreativní",
+    academic: {
+      label: "akademický",
+      instruction:
+        "Používej odbornou terminologii, analyzuj dílo kriticky, cituj literární teorie kde je to vhodné.",
+    },
+    casual: {
+      label: "neformální",
+      instruction:
+        "Piš přístupným jazykem, vyhni se složitým termínům, používej přirozený tón jako při konverzaci.",
+    },
+    creative: {
+      label: "kreativní",
+      instruction:
+        "Používej barvitý jazyk, metafory a přirovnání, buď originální v interpretaci.",
+    },
   };
 
+  // Define focus areas more specifically
+  const focusMap = {
+    plot: {
+      label: "děj",
+      instruction:
+        "Věnuj 70% obsahu popisu děje, zápletky a struktury vyprávění.",
+    },
+    characters: {
+      label: "postavy",
+      instruction:
+        "Věnuj 70% obsahu analýze postav, jejich motivací, vývoje a vzájemných vztahů.",
+    },
+    themes: {
+      label: "témata",
+      instruction:
+        "Věnuj 70% obsahu rozboru hlavních témat, symboliky a motivů díla.",
+    },
+    balanced: {
+      label: "vyvážený obsah",
+      instruction: "Pokryj rovnoměrně děj, postavy i témata díla.",
+    },
+  };
+
+  // Length with specific word count targets
   const lengthMap = {
     short: "150-200 slov",
     medium: "300-400 slov",
@@ -81,12 +110,21 @@ function generatePrompt(
 
   const language = preferences.language === "cs" ? "česky" : "anglicky";
 
-  // Build a concise base prompt
-  let prompt = `Shrnutí: "${bookTitle}" (${author}). Styl: ${
-    styleMap[preferences.style]
-  }. Délka: ${lengthMap[preferences.length]}. Zaměření: ${
-    focusMap[preferences.focus]
-  }. Jazyk: ${language}.`;
+  // Build a more directive but still concise base prompt
+  let prompt = `Shrnutí knihy "${bookTitle}" (${author}). `;
+
+  // Add style instruction
+  prompt += `Styl: ${styleMap[preferences.style].label}. ${
+    styleMap[preferences.style].instruction
+  } `;
+
+  // Add focus instruction
+  prompt += `Zaměření: ${focusMap[preferences.focus].label}. ${
+    focusMap[preferences.focus].instruction
+  } `;
+
+  // Add length and language
+  prompt += `Délka: ${lengthMap[preferences.length]}. Jazyk: ${language}.`;
 
   // Add minimal instructions for when no notes are provided
   if (!notes || notes.trim() === "") {

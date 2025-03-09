@@ -277,67 +277,81 @@ function buildAuthorSummaryPrompt(
 ): string {
   const language = preferences.language === "cs" ? "českém" : "anglickém";
 
-  // Style instructions
-  let styleInstructions = "";
-  if (preferences.style === "academic") {
-    styleInstructions =
-      "formální, odborný styl s použitím literárněvědné terminologie. Používej akademický tón a odbornější slovní zásobu.";
-  } else if (preferences.style === "casual") {
-    styleInstructions =
-      "přístupný, konverzační styl pro běžné čtenáře. Vyhýbej se příliš odborným termínům a používej přátelský, srozumitelný jazyk.";
-  } else if (preferences.style === "creative") {
-    styleInstructions =
-      "živý, poutavý styl s důrazem na zajímavosti a příběhy. Buď kreativní, používej barvitý jazyk a snaž se čtenáře zaujmout.";
-  }
+  // Define style characteristics with specific instructions
+  const styleMap = {
+    academic: {
+      label: "formální, odborný",
+      instruction:
+        "Používej literárněvědnou terminologii, cituj odborné zdroje, analyzuj kriticky.",
+    },
+    casual: {
+      label: "přístupný, konverzační",
+      instruction:
+        "Vyhýbej se odborným termínům, používej srozumitelný jazyk a přátelský tón.",
+    },
+    creative: {
+      label: "živý, poutavý",
+      instruction:
+        "Používej barvitý jazyk, zajímavé příběhy a anekdoty, buď originální.",
+    },
+  };
+
+  // Define focus areas with specific instructions
+  const focusMap = {
+    life: {
+      label: "život autora",
+      instruction:
+        "Věnuj 70% obsahu životnímu příběhu, vzdělání a událostem, které formovaly tvorbu.",
+    },
+    works: {
+      label: "díla autora",
+      instruction:
+        "Věnuj 70% obsahu literárním dílům, stylu psaní, tématům a vývoji tvorby.",
+    },
+    impact: {
+      label: "vliv a odkaz",
+      instruction:
+        "Věnuj 70% obsahu vlivu na literaturu, společnost a významu pro současné čtenáře.",
+    },
+    balanced: {
+      label: "vyvážený obsah",
+      instruction: "Pokryj rovnoměrně život, díla i význam autora.",
+    },
+  };
 
   // Word count targets
-  let wordCountTarget = "";
-  if (preferences.length === "short") {
-    wordCountTarget = "přibližně 150-200 slov";
-  } else if (preferences.length === "medium") {
-    wordCountTarget = "přibližně 300-400 slov";
-  } else if (preferences.length === "long") {
-    wordCountTarget = "přibližně 500-700 slov";
-  }
+  const lengthMap = {
+    short: "150-200 slov",
+    medium: "300-400 slov",
+    long: "500-700 slov",
+  };
 
-  // Focus instructions
-  let focusInstructions = "";
-  if (preferences.focus === "life") {
-    focusInstructions =
-      "životní příběh autora, osobní život, vzdělání, důležité životní události a klíčové momenty, které formovaly jeho tvorbu";
-  } else if (preferences.focus === "works") {
-    focusInstructions =
-      "literární díla autora, jeho styl psaní, hlavní témata, vývoj tvorby a nejvýznamnější publikace";
-  } else if (preferences.focus === "impact") {
-    focusInstructions =
-      "vliv autora na literaturu a společnost, jeho odkaz, jak změnil svůj žánr nebo literární scénu, a jaký má význam pro současné čtenáře";
-  } else if (preferences.focus === "balanced") {
-    focusInstructions =
-      "vyvážené pokrytí života autora, jeho děl i významu - poskytni ucelený obraz o autorovi";
-  }
-
-  // Build the complete prompt with enhanced structure for studying
-  let prompt = `
-Vytvoř informace o autorovi "${author}" v ${language} jazyce`;
+  // Build a more directive but still concise base prompt
+  let prompt = `Informace o autorovi "${author}" v ${language} jazyce.`;
 
   // Add study guide focus if enabled
   if (preferences.studyGuide) {
-    prompt += ` optimalizované pro studijní účely a přípravu na zkoušky`;
+    prompt += ` Optimalizuj pro studijní účely a přípravu na zkoušky.`;
   }
 
-  prompt += `.
+  // Add style instruction
+  prompt += ` Styl: ${styleMap[preferences.style].label}. ${
+    styleMap[preferences.style].instruction
+  }`;
 
-Použij ${styleInstructions}
+  // Add focus instruction
+  prompt += ` Zaměření: ${focusMap[preferences.focus].label}. ${
+    focusMap[preferences.focus].instruction
+  }`;
 
-Délka textu by měla být ${wordCountTarget}.
-
-Zaměř se především na ${focusInstructions}.`;
+  // Add length
+  prompt += ` Délka: ${lengthMap[preferences.length]}.`;
 
   // Add structured format for study guide
   if (preferences.studyGuide) {
     prompt += `
 
-Strukturuj informace podle následujícího formátu pro maximální studijní hodnotu:
+Strukturuj informace podle následujícího formátu:
 
 # ${author}
 
@@ -421,20 +435,12 @@ ${
 - **Literární tradice:** [do jaké literární tradice autor patří]`;
   }
 
-  // Add formatting instructions
+  // Add formatting instructions in a more compact way
   prompt += `
 
-Formátuj text pomocí Markdown pro lepší čitelnost:
-- Použij # pro hlavní nadpis s jménem autora
-- Použij ## pro sekce
-- Použij ### pro podsekce
-- Používej **tučný text** pro zvýraznění důležitých informací
-- Používej *kurzívu* pro názvy děl
-- Používej odrážky pro seznamy
-- Pokud je to vhodné, můžeš použít > pro citace autora
+Formátuj text pomocí Markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl, odrážky pro seznamy.
 
-DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní a nekončí uprostřed věty. Pokud některé informace nejsou známé, uveď pravděpodobné nebo typické charakteristiky pro daný typ autora a období.
-`.trim();
+DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní.`;
 
-  return prompt;
+  return prompt.trim();
 }
