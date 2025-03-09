@@ -4,17 +4,77 @@ import { Book, Note } from "@/types";
 import { Download, FileText, FileIcon, BookText } from "lucide-react";
 import jsPDF from "jspdf";
 import { Modal } from "@/components/ui/modal";
+import { ButtonProps } from "@/components/ui/button";
 
-interface ExportButtonProps {
+// Book export props
+interface BookExportProps {
   book: Book;
   notes: Note[];
 }
 
-export function ExportButton({ book, notes }: ExportButtonProps) {
+// Single note export props
+interface SingleNoteExportProps {
+  content: string;
+  filename: string;
+  buttonProps?: ButtonProps;
+}
+
+// Combined props type with discriminator
+type ExportButtonProps = BookExportProps | SingleNoteExportProps;
+
+// Helper function to determine if props are for a single note
+function isSingleNoteProps(
+  props: ExportButtonProps
+): props is SingleNoteExportProps {
+  return "content" in props;
+}
+
+// Implementation
+export function ExportButton(props: ExportButtonProps) {
+  // Define all state hooks at the top level
   const [isExporting, setIsExporting] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [exportType, setExportType] = useState<string | null>(null);
+  const [exportType, setExportType] = useState<
+    "TXT" | "PDF" | "Maturita TXT" | "Maturita PDF" | null
+  >(null);
   const [exportSuccess, setExportSuccess] = useState<boolean | null>(null);
+
+  // Check if it's a single note export
+  if (isSingleNoteProps(props)) {
+    const { content, filename, buttonProps } = props;
+
+    const handleExport = () => {
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleExport();
+        }}
+        aria-label="Exportovat poznámku"
+        title="Exportovat poznámku"
+        {...buttonProps}
+      >
+        <Download className="h-3.5 w-3.5" />
+      </Button>
+    );
+  }
+
+  // Book export implementation
+  const { book, notes } = props;
 
   // Check if the book has any notes (regular or AI summary)
   const hasNotes = notes.length > 0;
@@ -64,7 +124,9 @@ export function ExportButton({ book, notes }: ExportButtonProps) {
   };
 
   const handleExport = async (exportFunction: () => void, type: string) => {
-    setExportType(type);
+    setExportType(
+      type as "TXT" | "PDF" | "Maturita TXT" | "Maturita PDF" | null
+    );
     setIsExporting(true);
     setExportSuccess(null);
 
