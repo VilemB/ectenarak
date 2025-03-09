@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles,
   Loader2,
-  Languages,
   BookText,
   AlignJustify,
   Info,
@@ -726,6 +725,153 @@ export function SummaryPreferencesModal({
                   </Button>
                 </motion.div>
               </div>
+            </div>
+          </div>
+
+          {/* Language selection */}
+          <div className="bg-background p-4 rounded-lg border border-border shadow-sm mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BookText className="h-4 w-4 text-amber-500" />
+                <label className="text-sm font-medium text-foreground">
+                  Jazyk
+                </label>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 rounded-full"
+                onClick={() =>
+                  setActiveTooltip(
+                    activeTooltip === "language" ? null : "language"
+                  )
+                }
+              >
+                <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="sr-only">Informace o jazyce</span>
+              </Button>
+            </div>
+
+            <AnimatePresence>
+              {activeTooltip === "language" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                >
+                  <p>
+                    <strong>Čeština:</strong> {optionDescriptions.language.cs}
+                  </p>
+                  <p>
+                    <strong>Angličtina:</strong>{" "}
+                    {optionDescriptions.language.en}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid grid-cols-2 gap-3">
+              {(["cs", "en"] as const).map((language) => (
+                <motion.div
+                  key={language}
+                  variants={optionVariants}
+                  animate={
+                    preferences.language === language
+                      ? "selected"
+                      : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.language === language ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.language === language
+                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() => setPreferences({ ...preferences, language })}
+                  >
+                    {language === "cs" ? "Čeština" : "Angličtina"}
+                  </Button>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Add the action buttons at the bottom of the form */}
+          <div className="mt-6 pt-4 border-t border-gray-700/30 flex flex-col sm:flex-row justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={resetToDefaults}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                <span>Obnovit výchozí</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={saveAsDefault}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+                <span>Uložit jako výchozí</span>
+              </Button>
+
+              <AnimatePresence>
+                {showSavedMessage && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs text-green-500"
+                  >
+                    Nastavení uloženo
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+            <div className="flex items-center w-full sm:w-auto">
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={isGenerating}
+                onClick={(e) => {
+                  console.log("Generate button clicked directly");
+                  if (!isGenerating) {
+                    handleSubmit(e);
+                  }
+                }}
+                className={`
+                  flex items-center gap-2 w-full sm:w-auto justify-center 
+                  bg-amber-500/10 text-amber-500 border border-amber-500/20 
+                  hover:bg-amber-500/20 transition-all duration-200 
+                  shadow-sm hover:shadow
+                  ${isGenerating ? "opacity-70 cursor-not-allowed" : ""}
+                `}
+              >
+                {isGenerating ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    <span>Generuji...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Generovat shrnutí</span>
+                  </div>
+                )}
+              </Button>
             </div>
           </div>
         </form>
