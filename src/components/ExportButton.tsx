@@ -233,111 +233,10 @@ export function ExportButton(props: ExportButtonProps) {
       const pageHeight = doc.internal.pageSize.getHeight();
       const contentWidth = pageWidth - margin * 2;
 
-      // Add subtle page background for a more professional look
-      doc.setFillColor(252, 252, 252);
-      doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-      // Add elegant header with a gradient line
-      doc.setFillColor(240, 240, 240);
-      doc.rect(0, 0, pageWidth, 35, "F");
-
-      // Add gradient line under header
-      doc.setLineDashPattern([1, 0], 0);
-      doc.setDrawColor(100, 100, 100);
-      doc.setLineWidth(0.8);
-      doc.line(0, 35, pageWidth, 35);
-
-      // Title with improved typography
-      doc.setFontSize(18);
-      doc.setTextColor(50, 50, 50);
-      doc.setFont("Roboto", "bold");
-
-      // Center the title with proper Czech character encoding
-      const titleLines = doc.splitTextToSize(
-        encodeCzechText(book.title),
-        contentWidth
-      );
-      doc.text(titleLines, pageWidth / 2, 20, { align: "center" });
-
-      let yPosition = 50;
-
-      // Basic information with elegant layout
-      // Create a stylish box for basic info
-      doc.setFillColor(245, 245, 245);
-      doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(margin, yPosition, contentWidth, 35, 3, 3, "FD");
-
-      yPosition += 10;
-
-      // Author and date with improved styling
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(80, 80, 80);
-      doc.text(
-        `Autor: ${encodeCzechText(book.author)}`,
-        margin + 10,
-        yPosition
-      );
-      yPosition += 6;
-      doc.text(`Datum: ${formatDate(book.createdAt)}`, margin + 10, yPosition);
-      yPosition += 20;
-
-      // Add author summary if available with elegant design
-      if (book.authorSummary) {
-        // Check if we need a new page
-        if (yPosition > pageHeight - 40) {
-          doc.addPage();
-          // Add subtle page background for a more professional look
-          doc.setFillColor(252, 252, 252);
-          doc.rect(0, 0, pageWidth, pageHeight, "F");
-          yPosition = margin;
-        }
-
-        // Section title with improved styling
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(14);
-        doc.setTextColor(50, 50, 50);
-        doc.text(encodeCzechText("O autorovi"), margin, yPosition);
-        yPosition += 10;
-
-        // Author content with better typography
-        doc.setFont("Roboto", "normal");
-        doc.setFontSize(11);
-        doc.setTextColor(60, 60, 60);
-
-        // Split text to fit within margins and handle Czech characters
-        const authorSummaryLines = doc.splitTextToSize(
-          encodeCzechText(book.authorSummary),
-          contentWidth
-        );
-        doc.text(authorSummaryLines, margin, yPosition);
-        yPosition += authorSummaryLines.length * 5 + 15;
-      }
-
-      // Add notes section with elegant design
-      // Check if we need a new page
-      if (yPosition > pageHeight - 40) {
-        doc.addPage();
-        // Add subtle page background for a more professional look
-        doc.setFillColor(252, 252, 252);
-        doc.rect(0, 0, pageWidth, pageHeight, "F");
-        yPosition = margin;
-      }
-
-      // Section title with improved styling
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(14);
-      doc.setTextColor(50, 50, 50);
-      doc.text(encodeCzechText("Poznámky"), margin, yPosition);
-      yPosition += 10;
-
-      const regularNotes = notes.filter(
-        (note) => !note.isAISummary && !note.isError
-      );
-      const summaries = notes.filter((note) => note.isAISummary);
-
       // Helper function to process markdown for Czech characters
       const processMarkdown = (text: string): string => {
+        if (!text) return "";
+
         // First encode Czech characters
         const encodedText = encodePdfCzechText(doc, text);
 
@@ -385,23 +284,53 @@ export function ExportButton(props: ExportButtonProps) {
             doc.setFont("Roboto", "bold");
 
             if (level === 1) {
-              doc.setFontSize(16);
+              // Level 1 heading - larger, with underline
+              doc.setFontSize(18);
               doc.setTextColor(40, 40, 40);
               const lines = doc.splitTextToSize(content, contentWidth - 10);
               doc.text(lines, margin, y);
-              y += lines.length * 7 + 5;
+
+              // Add underline
+              const textWidth = doc.getTextWidth(lines[0]);
+              doc.setDrawColor(100, 100, 100);
+              doc.setLineWidth(0.5);
+              doc.line(
+                margin,
+                y + 2,
+                margin + Math.min(textWidth, contentWidth - 20),
+                y + 2
+              );
+
+              y += lines.length * 7 + 8; // Add more space after heading
             } else if (level === 2) {
-              doc.setFontSize(14);
+              // Level 2 heading - medium size with light background
+              doc.setFontSize(16);
               doc.setTextColor(50, 50, 50);
-              const lines = doc.splitTextToSize(content, contentWidth - 10);
+
+              // Add light background
+              doc.setFillColor(245, 245, 245);
+              const lines = doc.splitTextToSize(content, contentWidth - 15);
+              const boxHeight = lines.length * 6 + 4;
+              doc.roundedRect(
+                margin - 2,
+                y - 4,
+                contentWidth + 4,
+                boxHeight,
+                1,
+                1,
+                "F"
+              );
+
+              // Add text
               doc.text(lines, margin, y);
-              y += lines.length * 6 + 4;
+              y += boxHeight + 4; // Add more space after heading
             } else {
-              doc.setFontSize(12);
+              // Level 3 heading - smaller with indent
+              doc.setFontSize(14);
               doc.setTextColor(60, 60, 60);
-              const lines = doc.splitTextToSize(content, contentWidth - 10);
-              doc.text(lines, margin, y);
-              y += lines.length * 5 + 3;
+              const lines = doc.splitTextToSize(content, contentWidth - 15);
+              doc.text(lines, margin + 2, y); // Slight indent
+              y += lines.length * 5 + 5;
             }
             continue;
           }
@@ -437,45 +366,6 @@ export function ExportButton(props: ExportButtonProps) {
             continue;
           }
 
-          // Check if this is a numbered list
-          if (/^\d+\.\s/.test(paragraph.trim())) {
-            const items = paragraph
-              .split("\n")
-              .filter((line) => /^\d+\.\s/.test(line.trim()));
-
-            for (const item of items) {
-              doc.setFont("Roboto", "normal");
-              doc.setFontSize(11);
-              doc.setTextColor(60, 60, 60);
-
-              // Extract number and text
-              const match = item.trim().match(/^(\d+)\.\s+(.*)/);
-              if (match) {
-                const [, number, text] = match;
-
-                // Draw number
-                doc.text(`${number}.`, margin, y);
-
-                // Text with indent
-                const lines = doc.splitTextToSize(
-                  text.trim(),
-                  contentWidth - 15
-                );
-                doc.text(lines, margin + 6, y);
-                y += lines.length * 5 + 2;
-
-                // Check if we need a new page
-                if (y > pageHeight - 40) {
-                  doc.addPage();
-                  doc.setFillColor(252, 252, 252);
-                  doc.rect(0, 0, pageWidth, pageHeight, "F");
-                  y = margin;
-                }
-              }
-            }
-            continue;
-          }
-
           // Regular paragraph - handle bold and italic manually
           const paragraphText = paragraph;
 
@@ -493,9 +383,118 @@ export function ExportButton(props: ExportButtonProps) {
         return y;
       };
 
+      // Add subtle page background for a more professional look
+      doc.setFillColor(252, 252, 252);
+      doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+      // Add elegant header with a gradient line
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 0, pageWidth, 35, "F");
+
+      // Add gradient line under header
+      doc.setLineDashPattern([1, 0], 0);
+      doc.setDrawColor(100, 100, 100);
+      doc.setLineWidth(0.8);
+      doc.line(0, 35, pageWidth, 35);
+
+      // Title with improved typography
+      doc.setFontSize(18);
+      doc.setTextColor(50, 50, 50);
+      doc.setFont("Roboto", "bold");
+
+      // Center the title with proper Czech character encoding
+      const titleLines = doc.splitTextToSize(
+        encodeCzechText(book.title),
+        contentWidth
+      );
+      doc.text(titleLines, pageWidth / 2, 20, { align: "center" });
+
+      // Set initial y position for content
+      let yPosition = margin;
+
+      // Basic information with elegant layout
+      // Create a stylish box for basic info
+      doc.setFillColor(245, 245, 245);
+      doc.setDrawColor(220, 220, 220);
+      doc.roundedRect(margin, yPosition, contentWidth, 35, 3, 3, "FD");
+
+      yPosition += 10;
+
+      // Author and date with improved styling
+      doc.setFont("Roboto", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(80, 80, 80);
+      doc.text(
+        `Autor: ${encodeCzechText(book.author)}`,
+        margin + 10,
+        yPosition
+      );
+      yPosition += 6;
+      doc.text(`Datum: ${formatDate(book.createdAt)}`, margin + 10, yPosition);
+      yPosition += 20;
+
+      // Add author summary if available with elegant design
+      if (book.authorSummary) {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 40) {
+          doc.addPage();
+          // Add subtle page background for a more professional look
+          doc.setFillColor(252, 252, 252);
+          doc.rect(0, 0, pageWidth, pageHeight, "F");
+          yPosition = margin;
+        }
+
+        // Section title with improved styling
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(50, 50, 50);
+        doc.text(encodeCzechText("O autorovi"), margin, yPosition);
+        yPosition += 10;
+
+        // Author content with better typography
+        doc.setFont("Roboto", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(60, 60, 60);
+
+        // Process the author summary to remove markdown formatting
+        const processedAuthorSummary = processMarkdown(
+          book.authorSummary || ""
+        );
+
+        // Split text to fit within margins and handle Czech characters
+        const authorSummaryLines = doc.splitTextToSize(
+          encodeCzechText(processedAuthorSummary),
+          contentWidth
+        );
+        doc.text(authorSummaryLines, margin, yPosition);
+        yPosition += authorSummaryLines.length * 5 + 15;
+      }
+
+      // Add notes section with elegant design
+      // Check if we need a new page
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        // Add subtle page background for a more professional look
+        doc.setFillColor(252, 252, 252);
+        doc.rect(0, 0, pageWidth, pageHeight, "F");
+        yPosition = margin;
+      }
+
+      // Section title with improved styling
+      doc.setFont("Roboto", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(50, 50, 50);
+      doc.text(encodeCzechText("Poznámky"), margin, yPosition);
+      yPosition += 10;
+
+      const maturitaNotes = notes.filter(
+        (note) => !note.isAISummary && !note.isError
+      );
+      const summaries = notes.filter((note) => note.isAISummary);
+
       // For each note, add content with proper styling
-      if (regularNotes.length > 0) {
-        regularNotes.forEach((note, index) => {
+      if (maturitaNotes.length > 0) {
+        maturitaNotes.forEach((note, index) => {
           // Check if we need a new page
           if (yPosition > pageHeight - 40) {
             doc.addPage();
@@ -516,7 +515,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition = renderMarkdown(processedContent, yPosition);
 
           // Add a subtle separator between notes
-          if (index < regularNotes.length - 1) {
+          if (index < maturitaNotes.length - 1) {
             doc.setDrawColor(220, 220, 220);
             doc.setLineWidth(0.2);
             doc.line(
@@ -725,74 +724,10 @@ export function ExportButton(props: ExportButtonProps) {
       const pageHeight = doc.internal.pageSize.getHeight();
       const contentWidth = pageWidth - margin * 2;
 
-      // Add subtle page background for a more professional look
-      doc.setFillColor(252, 252, 252);
-      doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-      // Add elegant header with a gradient line
-      doc.setFillColor(240, 240, 240);
-      doc.rect(0, 0, pageWidth, 35, "F");
-
-      // Add gradient line under header
-      doc.setLineDashPattern([1, 0], 0);
-      doc.setDrawColor(100, 100, 100);
-      doc.setLineWidth(0.8);
-      doc.line(0, 35, pageWidth, 35);
-
-      // Title with improved typography
-      doc.setFontSize(18);
-      doc.setTextColor(50, 50, 50);
-
-      // Use a font that supports Czech characters
-      doc.setFont("Roboto", "bold");
-
-      // Center the title - ensure proper encoding for Czech characters
-      const titleText = encodeCzechText(`MATURITNÍ PŘÍPRAVA: ${book.title}`);
-      const titleLines = doc.splitTextToSize(titleText, contentWidth);
-      doc.text(titleLines, pageWidth / 2, 20, { align: "center" });
-
-      let yPosition = 50;
-
-      // Basic information with elegant layout
-      // Create a stylish box for basic info
-      doc.setFillColor(245, 245, 245);
-      doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(margin, yPosition, contentWidth, 35, 3, 3, "FD");
-
-      yPosition += 10;
-
-      // Book title with better styling
-      doc.setFontSize(13);
-      doc.setTextColor(60, 60, 60);
-
-      // Handle long titles by splitting them if needed
-      const bookTitleLines = doc.splitTextToSize(
-        encodeCzechText(`${book.title}`),
-        contentWidth - 20
-      );
-      doc.setFont("Roboto", "bold");
-      doc.text(bookTitleLines, margin + 10, yPosition);
-      yPosition += bookTitleLines.length * 6 + 2;
-
-      // Author and date with improved styling
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(80, 80, 80);
-      doc.text(
-        `Autor: ${encodeCzechText(book.author)}`,
-        margin + 10,
-        yPosition
-      );
-      yPosition += 6;
-      doc.text(
-        `Datum zpracování: ${formatDate(new Date().toISOString())}`,
-        margin + 10,
-        yPosition
-      );
-      yPosition += 20;
-
       // Helper function to process markdown for Czech characters
       const processMarkdown = (text: string): string => {
+        if (!text) return "";
+
         // First encode Czech characters
         const encodedText = encodePdfCzechText(doc, text);
 
@@ -840,23 +775,53 @@ export function ExportButton(props: ExportButtonProps) {
             doc.setFont("Roboto", "bold");
 
             if (level === 1) {
-              doc.setFontSize(16);
+              // Level 1 heading - larger, with underline
+              doc.setFontSize(18);
               doc.setTextColor(40, 40, 40);
               const lines = doc.splitTextToSize(content, contentWidth - 10);
               doc.text(lines, margin, y);
-              y += lines.length * 7 + 5;
+
+              // Add underline
+              const textWidth = doc.getTextWidth(lines[0]);
+              doc.setDrawColor(100, 100, 100);
+              doc.setLineWidth(0.5);
+              doc.line(
+                margin,
+                y + 2,
+                margin + Math.min(textWidth, contentWidth - 20),
+                y + 2
+              );
+
+              y += lines.length * 7 + 8; // Add more space after heading
             } else if (level === 2) {
-              doc.setFontSize(14);
+              // Level 2 heading - medium size with light background
+              doc.setFontSize(16);
               doc.setTextColor(50, 50, 50);
-              const lines = doc.splitTextToSize(content, contentWidth - 10);
+
+              // Add light background
+              doc.setFillColor(245, 245, 245);
+              const lines = doc.splitTextToSize(content, contentWidth - 15);
+              const boxHeight = lines.length * 6 + 4;
+              doc.roundedRect(
+                margin - 2,
+                y - 4,
+                contentWidth + 4,
+                boxHeight,
+                1,
+                1,
+                "F"
+              );
+
+              // Add text
               doc.text(lines, margin, y);
-              y += lines.length * 6 + 4;
+              y += boxHeight + 4; // Add more space after heading
             } else {
-              doc.setFontSize(12);
+              // Level 3 heading - smaller with indent
+              doc.setFontSize(14);
               doc.setTextColor(60, 60, 60);
-              const lines = doc.splitTextToSize(content, contentWidth - 10);
-              doc.text(lines, margin, y);
-              y += lines.length * 5 + 3;
+              const lines = doc.splitTextToSize(content, contentWidth - 15);
+              doc.text(lines, margin + 2, y); // Slight indent
+              y += lines.length * 5 + 5;
             }
             continue;
           }
@@ -892,45 +857,6 @@ export function ExportButton(props: ExportButtonProps) {
             continue;
           }
 
-          // Check if this is a numbered list
-          if (/^\d+\.\s/.test(paragraph.trim())) {
-            const items = paragraph
-              .split("\n")
-              .filter((line) => /^\d+\.\s/.test(line.trim()));
-
-            for (const item of items) {
-              doc.setFont("Roboto", "normal");
-              doc.setFontSize(11);
-              doc.setTextColor(60, 60, 60);
-
-              // Extract number and text
-              const match = item.trim().match(/^(\d+)\.\s+(.*)/);
-              if (match) {
-                const [, number, text] = match;
-
-                // Draw number
-                doc.text(`${number}.`, margin, y);
-
-                // Text with indent
-                const lines = doc.splitTextToSize(
-                  text.trim(),
-                  contentWidth - 15
-                );
-                doc.text(lines, margin + 6, y);
-                y += lines.length * 5 + 2;
-
-                // Check if we need a new page
-                if (y > pageHeight - 40) {
-                  doc.addPage();
-                  doc.setFillColor(252, 252, 252);
-                  doc.rect(0, 0, pageWidth, pageHeight, "F");
-                  y = margin;
-                }
-              }
-            }
-            continue;
-          }
-
           // Regular paragraph - handle bold and italic manually
           const paragraphText = paragraph;
 
@@ -948,56 +874,208 @@ export function ExportButton(props: ExportButtonProps) {
         return y;
       };
 
-      // Author summary with elegant design
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(14);
+      // Initialize the y position for content placement
+      let yPosition = 50;
+
+      // Add subtle page background for a more professional look
+      doc.setFillColor(252, 252, 252);
+      doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+      // Add elegant header with a gradient line
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 0, pageWidth, 35, "F");
+
+      // Add gradient line under header
+      doc.setLineDashPattern([1, 0], 0);
+      doc.setDrawColor(100, 100, 100);
+      doc.setLineWidth(0.8);
+      doc.line(0, 35, pageWidth, 35);
+
+      // Title with improved typography
+      doc.setFontSize(18);
       doc.setTextColor(50, 50, 50);
-      doc.text(encodeCzechText("O autorovi"), margin, yPosition);
+
+      // Use a font that supports Czech characters
+      doc.setFont("Roboto", "bold");
+
+      // Center the title - ensure proper encoding for Czech characters
+      const titleText = encodeCzechText(`MATURITNÍ PŘÍPRAVA: ${book.title}`);
+      const titleLines = doc.splitTextToSize(titleText, contentWidth);
+      doc.text(titleLines, pageWidth / 2, 20, { align: "center" });
+
+      // Basic information with elegant layout
+      // Create a stylish box for basic info
+      doc.setFillColor(245, 245, 245);
+      doc.setDrawColor(220, 220, 220);
+      doc.roundedRect(margin, yPosition, contentWidth, 35, 3, 3, "FD");
+
       yPosition += 10;
 
+      // Author and date with improved styling
+      doc.setFont("Roboto", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(80, 80, 80);
+      doc.text(
+        `Autor: ${encodeCzechText(book.author)}`,
+        margin + 10,
+        yPosition
+      );
+      yPosition += 6;
+      doc.text(`Datum: ${formatDate(book.createdAt)}`, margin + 10, yPosition);
+      yPosition += 20;
+
+      // Add author summary if available with elegant design
       if (book.authorSummary) {
-        // Process and render author summary with proper Czech character support
-        const processedAuthorSummary = processMarkdown(book.authorSummary);
-        yPosition = renderMarkdown(processedAuthorSummary, yPosition);
-      } else {
-        doc.setFont("Roboto", "italic");
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.text(
-          encodeCzechText("Informace o autorovi nejsou k dispozici."),
-          margin,
-          yPosition
+        // Check if we need a new page
+        if (yPosition > pageHeight - 40) {
+          doc.addPage();
+          // Add subtle page background for a more professional look
+          doc.setFillColor(252, 252, 252);
+          doc.rect(0, 0, pageWidth, pageHeight, "F");
+          yPosition = margin;
+        }
+
+        // Section title with improved styling
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(50, 50, 50);
+        doc.text(encodeCzechText("O autorovi"), margin, yPosition);
+        yPosition += 10;
+
+        // Author content with better typography
+        doc.setFont("Roboto", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(60, 60, 60);
+
+        // Process the author summary to remove markdown formatting
+        const processedAuthorSummary = processMarkdown(
+          book.authorSummary || ""
         );
-        yPosition += 15;
+
+        // Split text to fit within margins and handle Czech characters
+        const authorSummaryLines = doc.splitTextToSize(
+          encodeCzechText(processedAuthorSummary),
+          contentWidth
+        );
+        doc.text(authorSummaryLines, margin, yPosition);
+        yPosition += authorSummaryLines.length * 5 + 15;
       }
 
-      // Add AI summary if available
-      const summaries = notes.filter(
-        (note) => note.isAISummary && !note.isError
-      );
+      // Add notes section with elegant design
+      // Check if we need a new page
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        // Add subtle page background for a more professional look
+        doc.setFillColor(252, 252, 252);
+        doc.rect(0, 0, pageWidth, pageHeight, "F");
+        yPosition = margin;
+      }
 
+      // Section title with improved styling
       doc.setFont("Roboto", "bold");
       doc.setFontSize(14);
       doc.setTextColor(50, 50, 50);
-      doc.text(encodeCzechText("Shrnutí díla"), margin, yPosition);
+      doc.text(encodeCzechText("Poznámky"), margin, yPosition);
       yPosition += 10;
 
-      if (summaries.length > 0) {
-        // Process and render markdown content
-        summaries.forEach((summary) => {
-          const processedContent = processMarkdown(summary.content);
+      const maturitaNotes = notes.filter(
+        (note) => !note.isAISummary && !note.isError
+      );
+      const summaries = notes.filter((note) => note.isAISummary);
+
+      // For each note, add content with proper styling
+      if (maturitaNotes.length > 0) {
+        maturitaNotes.forEach((note, index) => {
+          // Check if we need a new page
+          if (yPosition > pageHeight - 40) {
+            doc.addPage();
+            doc.setFillColor(252, 252, 252);
+            doc.rect(0, 0, pageWidth, pageHeight, "F");
+            yPosition = margin;
+          }
+
+          // Note date with better styling
+          doc.setFont("Roboto", "bold");
+          doc.setFontSize(10);
+          doc.setTextColor(80, 80, 80);
+          doc.text(formatDate(note.createdAt), margin, yPosition);
+          yPosition += 5;
+
+          // Process and render note content with markdown support
+          const processedContent = processMarkdown(note.content);
           yPosition = renderMarkdown(processedContent, yPosition);
+
+          // Add a subtle separator between notes
+          if (index < maturitaNotes.length - 1) {
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.2);
+            doc.line(
+              margin,
+              yPosition - 5,
+              margin + contentWidth,
+              yPosition - 5
+            );
+            yPosition += 5;
+          }
         });
       } else {
         doc.setFont("Roboto", "italic");
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
-        doc.text(
-          encodeCzechText("Shrnutí díla není k dispozici."),
-          margin,
-          yPosition
-        );
-        yPosition += 15;
+        doc.text(encodeCzechText("Žádné poznámky"), margin, yPosition);
+        yPosition += 10;
+      }
+
+      // Add AI summaries if available
+      if (summaries.length > 0) {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 40) {
+          doc.addPage();
+          doc.setFillColor(252, 252, 252);
+          doc.rect(0, 0, pageWidth, pageHeight, "F");
+          yPosition = margin;
+        }
+
+        // Section title with improved styling
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(50, 50, 50);
+        doc.text(encodeCzechText("AI Shrnutí"), margin, yPosition);
+        yPosition += 10;
+
+        summaries.forEach((summary, index) => {
+          // Check if we need a new page
+          if (yPosition > pageHeight - 40) {
+            doc.addPage();
+            doc.setFillColor(252, 252, 252);
+            doc.rect(0, 0, pageWidth, pageHeight, "F");
+            yPosition = margin;
+          }
+
+          // Summary date with better styling
+          doc.setFont("Roboto", "bold");
+          doc.setFontSize(10);
+          doc.setTextColor(80, 80, 100);
+          doc.text(formatDate(summary.createdAt), margin, yPosition);
+          yPosition += 5;
+
+          // Process and render summary content with markdown support
+          const processedContent = processMarkdown(summary.content);
+          yPosition = renderMarkdown(processedContent, yPosition);
+
+          // Add a subtle separator between summaries
+          if (index < summaries.length - 1) {
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.2);
+            doc.line(
+              margin,
+              yPosition - 5,
+              margin + contentWidth,
+              yPosition - 5
+            );
+            yPosition += 5;
+          }
+        });
       }
 
       // Add regular notes
