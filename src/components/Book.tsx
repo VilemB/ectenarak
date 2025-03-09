@@ -12,6 +12,7 @@ import {
   AlertCircle,
   User,
   Calendar,
+  Copy,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -90,15 +91,34 @@ const DeleteButton = ({
   onClick: () => void;
   text: string;
 }) => (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="text-amber-600/70 dark:text-amber-500/70 hover:text-destructive hover:bg-destructive/10 h-7 px-2 transition-all duration-200"
+  <motion.button
     onClick={onClick}
+    whileHover={{ scale: 1.01 }}
+    whileTap={{ scale: 0.99 }}
+    className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1.5 transition-colors"
   >
-    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+    <Trash2 className="h-3.5 w-3.5" />
     <span>{text}</span>
-  </Button>
+  </motion.button>
+);
+
+// Copy button component
+const CopyButton = ({
+  onClick,
+  text,
+}: {
+  onClick: () => void;
+  text: string;
+}) => (
+  <motion.button
+    onClick={onClick}
+    whileHover={{ scale: 1.01 }}
+    whileTap={{ scale: 0.99 }}
+    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+  >
+    <Copy className="h-3.5 w-3.5" />
+    <span>{text}</span>
+  </motion.button>
 );
 
 // Study-friendly content formatter component
@@ -916,6 +936,27 @@ export default function BookComponent({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectedSummary, handleCloseSummary]);
 
+  // Add a function to handle copying note content
+  const handleCopyNote = (content: string) => {
+    // Remove markdown formatting for a cleaner copy
+    const plainText = content
+      .replace(/#{1,6}\s+/g, "") // Remove headings
+      .replace(/\*\*/g, "") // Remove bold
+      .replace(/\*/g, "") // Remove italic
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"); // Replace links with just the text
+
+    navigator.clipboard
+      .writeText(plainText)
+      .then(() => {
+        // Show success message
+        showSuccessMessage("Text poznámky byl zkopírován do schránky");
+      })
+      .catch((err) => {
+        console.error("Failed to copy text: ", err);
+        showErrorMessage("Nepodařilo se zkopírovat text");
+      });
+  };
+
   return (
     <motion.div
       ref={bookRef}
@@ -1394,6 +1435,20 @@ export default function BookComponent({
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleCopyNote(note.content)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                                <span className="sr-only">Kopírovat text</span>
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.99 }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                                 onClick={() => handleDeleteNote(note.id)}
                               >
@@ -1491,10 +1546,18 @@ export default function BookComponent({
                                   transition={{ delay: 0.3, duration: 0.2 }}
                                   className="mt-5 pt-3 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
                                 >
-                                  <DeleteButton
-                                    onClick={() => handleDeleteNote(note.id)}
-                                    text="Smazat shrnutí"
-                                  />
+                                  <div className="flex items-center gap-4">
+                                    <CopyButton
+                                      onClick={() =>
+                                        handleCopyNote(note.content)
+                                      }
+                                      text="Kopírovat text"
+                                    />
+                                    <DeleteButton
+                                      onClick={() => handleDeleteNote(note.id)}
+                                      text="Smazat shrnutí"
+                                    />
+                                  </div>
 
                                   <CloseButtonBottom
                                     onClick={handleCloseSummary}
