@@ -805,7 +805,7 @@ export default function BookComponent({
               <Button
                 variant={isExpanded ? "default" : "outline"}
                 size="sm"
-                className="transition-all duration-200"
+                className="transition-all duration-300"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsExpanded(!isExpanded);
@@ -813,7 +813,7 @@ export default function BookComponent({
                 aria-expanded={isExpanded}
               >
                 <ChevronDown
-                  className={`h-4 w-4 mr-1.5 transition-transform duration-200 ${
+                  className={`h-4 w-4 mr-1.5 transition-transform duration-300 ease-in-out ${
                     isExpanded ? "rotate-180" : ""
                   }`}
                 />
@@ -829,10 +829,15 @@ export default function BookComponent({
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
             id={`author-summary-${book.id}`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            initial={{ opacity: 0, height: 0, overflow: "hidden" }}
+            animate={{ opacity: 1, height: "auto", overflow: "visible" }}
+            exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+            transition={{
+              type: "spring",
+              stiffness: 100,
+              damping: 20,
+              mass: 1,
+            }}
             className="mx-5 my-3 p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg text-sm border border-amber-200/50 dark:border-amber-800/30 shadow-inner"
           >
             <div className="flex justify-between items-start mb-3">
@@ -888,9 +893,14 @@ export default function BookComponent({
         {isExpanded && (
           <motion.div
             initial={{ height: 0, overflow: "hidden" }}
-            animate={{ height: "auto" }}
-            exit={{ height: 0 }}
-            transition={{ duration: 0.3 }}
+            animate={{ height: "auto", overflow: "visible" }}
+            exit={{ height: 0, overflow: "hidden" }}
+            transition={{
+              type: "spring",
+              stiffness: 100,
+              damping: 20,
+              mass: 1,
+            }}
           >
             {/* Notes Section */}
             <div className="p-5">
@@ -962,8 +972,13 @@ export default function BookComponent({
               <div className="space-y-4 mb-6">
                 {isLoadingNotes ? (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 15,
+                    }}
                     className="flex flex-col items-center justify-center py-8 text-muted-foreground"
                   >
                     <div className="animate-spin mb-3 h-6 w-6 border-t-2 border-b-2 border-primary rounded-full"></div>
@@ -971,9 +986,13 @@ export default function BookComponent({
                   </motion.div>
                 ) : notes.length === 0 ? (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 15,
+                    }}
                     className="text-center py-8 text-muted-foreground bg-background/50 rounded-lg border border-dashed border-border/60"
                   >
                     <div className="flex justify-center mb-3">
@@ -988,6 +1007,7 @@ export default function BookComponent({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
                     className="space-y-4"
                   >
                     <AnimatePresence initial={false}>
@@ -1000,14 +1020,26 @@ export default function BookComponent({
                             return note.isAISummary;
                           return true;
                         })
-                        .map((note) => (
+                        .map((note, index) => (
                           <motion.div
                             key={note.id}
                             layout
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{
+                              opacity: 1,
+                              y: 0,
+                              transition: {
+                                delay: index * 0.05,
+                                type: "spring",
+                                stiffness: 100,
+                                damping: 15,
+                              },
+                            }}
+                            exit={{
+                              opacity: 0,
+                              y: -10,
+                              transition: { duration: 0.2 },
+                            }}
                             className={`relative p-4 rounded-lg border shadow-sm hover:shadow-md ${
                               note.isAISummary
                                 ? "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200/50 dark:border-amber-800/30 shadow-inner"
