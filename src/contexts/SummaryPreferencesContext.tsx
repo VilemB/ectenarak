@@ -27,6 +27,7 @@ export function SummaryPreferencesProvider({
       language: "cs",
       examFocus: false,
       literaryContext: false,
+      studyGuide: false,
     }
   );
 

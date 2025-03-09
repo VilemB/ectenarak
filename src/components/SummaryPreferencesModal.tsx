@@ -24,6 +24,7 @@ export interface SummaryPreferences {
   language: "cs" | "en";
   examFocus: boolean;
   literaryContext: boolean;
+  studyGuide: boolean;
 }
 
 export interface SummaryPreferencesModalProps {
@@ -152,6 +153,7 @@ export function SummaryPreferencesModal({
       language: "cs",
       examFocus: false,
       literaryContext: false,
+      studyGuide: false,
     };
     setPreferences(defaults);
     setGlobalPreferences(defaults);
@@ -301,6 +303,35 @@ export function SummaryPreferencesModal({
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   Přidá informace o literárním kontextu, období a zařazení díla.
+                </div>
+              </motion.button>
+
+              <motion.button
+                type="button"
+                variants={optionVariants}
+                animate={preferences.studyGuide ? "selected" : "notSelected"}
+                className={`
+                  relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                  ${
+                    preferences.studyGuide
+                      ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
+                      : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
+                  }
+                `}
+                onClick={() =>
+                  setPreferences({
+                    ...preferences,
+                    studyGuide: !preferences.studyGuide,
+                  })
+                }
+              >
+                <div className="flex items-center">
+                  <Sparkles className="h-4 w-4 mr-2 text-amber-500" />
+                  <div className="text-sm font-medium">Studijní průvodce</div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Vytvoří komplexní studijní materiál s klíčovými body pro
+                  zkoušky a tipy pro analýzu.
                 </div>
               </motion.button>
             </div>
@@ -695,171 +726,6 @@ export function SummaryPreferencesModal({
                   </Button>
                 </motion.div>
               </div>
-            </div>
-
-            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Languages className="h-4 w-4 text-amber-500" />
-                  <label className="text-sm font-medium text-foreground">
-                    Jazyk
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={() =>
-                    setActiveTooltip(
-                      activeTooltip === "language" ? null : "language"
-                    )
-                  }
-                >
-                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {activeTooltip === "language" && (
-                  <motion.div
-                    variants={tooltipVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
-                  >
-                    <p>
-                      <strong>Čeština:</strong> {optionDescriptions.language.cs}
-                    </p>
-                    <p>
-                      <strong>Angličtina:</strong>{" "}
-                      {optionDescriptions.language.en}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="grid grid-cols-2 gap-3">
-                <motion.div
-                  variants={optionVariants}
-                  animate={
-                    preferences.language === "cs" ? "selected" : "notSelected"
-                  }
-                >
-                  <Button
-                    type="button"
-                    variant={
-                      preferences.language === "cs" ? "default" : "outline"
-                    }
-                    className={`w-full ${
-                      preferences.language === "cs"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
-                        : "border-input text-foreground hover:bg-secondary"
-                    }`}
-                    onClick={() =>
-                      setPreferences({ ...preferences, language: "cs" })
-                    }
-                  >
-                    Čeština
-                  </Button>
-                </motion.div>
-                <motion.div
-                  variants={optionVariants}
-                  animate={
-                    preferences.language === "en" ? "selected" : "notSelected"
-                  }
-                >
-                  <Button
-                    type="button"
-                    variant={
-                      preferences.language === "en" ? "default" : "outline"
-                    }
-                    className={`w-full ${
-                      preferences.language === "en"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
-                        : "border-input text-foreground hover:bg-secondary"
-                    }`}
-                    onClick={() =>
-                      setPreferences({ ...preferences, language: "en" })
-                    }
-                  >
-                    Angličtina
-                  </Button>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-4 pt-4 border-t border-gray-700/50 mt-6">
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white text-xs sm:text-sm"
-                onClick={saveAsDefault}
-              >
-                <Save className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Uložit jako výchozí</span>
-                <span className="sm:hidden">Uložit</span>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1 text-gray-400 hover:text-white hover:bg-gray-700/50 text-xs sm:text-sm"
-                onClick={resetToDefaults}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Obnovit výchozí</span>
-                <span className="sm:hidden">Obnovit</span>
-              </Button>
-              <AnimatePresence>
-                {showSavedMessage && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="text-xs text-green-400"
-                  >
-                    Uloženo!
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
-            <div className="flex items-center w-full sm:w-auto">
-              <Button
-                type="submit"
-                variant="outline"
-                size="sm"
-                disabled={isGenerating}
-                onClick={(e) => {
-                  console.log("Generate button clicked directly");
-                  if (!isGenerating) {
-                    handleSubmit(e);
-                  }
-                }}
-                className={`
-                  flex items-center gap-2 w-full sm:w-auto justify-center 
-                  bg-amber-500/10 text-amber-500 border border-amber-500/20 
-                  hover:bg-amber-500/20 transition-all duration-200 
-                  shadow-sm hover:shadow
-                  ${isGenerating ? "opacity-70 cursor-not-allowed" : ""}
-                `}
-              >
-                {isGenerating ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                    <span>Generuji...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    <span>Generovat shrnutí</span>
-                  </div>
-                )}
-              </Button>
             </div>
           </div>
         </form>

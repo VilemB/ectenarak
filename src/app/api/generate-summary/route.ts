@@ -1,10 +1,57 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { SummaryPreferences } from "@/components/SummaryPreferencesModal";
+import { createHash } from "crypto";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Simple in-memory cache for summaries
+// In a production environment, this should be replaced with Redis or another persistent cache
+interface CacheEntry {
+  summary: string;
+  timestamp: number;
+  preferences: SummaryPreferences;
+}
+
+const summaryCache: Record<string, CacheEntry> = {};
+
+// Cache expiration time (24 hours in milliseconds)
+const CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
+
+/**
+ * Generate a cache key based on book details and preferences
+ * @param bookTitle Book title
+ * @param author Book author
+ * @param preferences Summary preferences
+ * @returns Cache key string
+ */
+function generateCacheKey(
+  bookTitle: string,
+  author: string,
+  preferences: SummaryPreferences
+): string {
+  // Create a simplified version of preferences for the cache key
+  // We don't need to include all details, just the ones that significantly affect the output
+  const simplifiedPrefs = {
+    style: preferences.style,
+    length: preferences.length,
+    focus: preferences.focus,
+    language: preferences.language,
+    hasExamFocus: preferences.examFocus,
+    hasLiteraryContext: preferences.literaryContext,
+    hasStudyGuide: preferences.studyGuide,
+  };
+
+  // Create a string to hash
+  const stringToHash = `${bookTitle}|${author}|${JSON.stringify(
+    simplifiedPrefs
+  )}`;
+
+  // Generate a hash for the cache key
+  return createHash("md5").update(stringToHash).digest("hex");
+}
 
 function generatePrompt(
   bookTitle: string,
@@ -12,80 +59,96 @@ function generatePrompt(
   notes: string | undefined,
   preferences: SummaryPreferences
 ) {
-  // Simplified section generation
+  // Simplified maps for more concise prompts
   const focusMap = {
-    plot: "děj a strukturu díla",
-    characters: "hlavní postavy a jejich vývoj",
-    themes: "hlavní témata a motivy díla",
+    plot: "děj",
+    characters: "postavy",
+    themes: "témata",
     balanced: "děj, postavy i témata vyváženě",
   };
 
-  // Simplified style instructions
   const styleMap = {
-    academic: "akademický, analytický",
-    casual: "neformální, přístupný",
-    creative: "kreativní, poutavý",
+    academic: "akademický",
+    casual: "neformální",
+    creative: "kreativní",
   };
 
-  // Simplified length instructions with word counts
   const lengthMap = {
-    short: "stručné (150-200 slov)",
-    medium: "středně dlouhé (300-400 slov)",
-    long: "podrobné (500-700 slov)",
+    short: "150-200 slov",
+    medium: "300-400 slov",
+    long: "500-700 slov",
   };
 
-  // Language is simplified to a single word
   const language = preferences.language === "cs" ? "česky" : "anglicky";
 
-  // Build the prompt with optional exam focus and literary context
-  let prompt = `Vytvoř ${
-    lengthMap[preferences.length]
-  } shrnutí knihy "${bookTitle}" od ${author} ve stylu ${
+  // Build a concise base prompt
+  let prompt = `Shrnutí: "${bookTitle}" (${author}). Styl: ${
     styleMap[preferences.style]
-  }. Zaměř se na ${focusMap[preferences.focus]}. Piš ${language}.`;
+  }. Délka: ${lengthMap[preferences.length]}. Zaměření: ${
+    focusMap[preferences.focus]
+  }. Jazyk: ${language}.`;
 
-  // Add instructions for when no notes are provided
+  // Add minimal instructions for when no notes are provided
   if (!notes || notes.trim() === "") {
-    prompt += `
-
-Vytvoř shrnutí na základě obecných znalostí o této knize. Pokud knihu neznáš, vytvoř shrnutí na základě toho, co by mohla obsahovat kniha s tímto názvem od tohoto autora. Zahrň pravděpodobný děj, postavy, témata a literární kontext.`;
+    prompt += ` Vycházej z obecných znalostí o knize nebo vytvoř pravděpodobný obsah.`;
   }
 
-  // Add exam focus instructions if enabled
+  // Add structure template based on preferences
+  // Use a more compact format for study guide
+  if (preferences.studyGuide) {
+    prompt += `
+
+Struktura (použij markdown):
+# ${bookTitle} - ${author}
+## Základní informace
+- Žánr, druh, forma, rok, směr
+## Děj a kompozice
+- Časoprostor, kompozice, vypravěč, stručný děj
+## Postavy
+- Hlavní a vedlejší postavy, vztahy
+## Témata a motivy
+- Hlavní témata, motivy, symbolika
+## Jazykové prostředky
+- Jazyk, styl, typické prostředky
+## Kontext a význam
+- Literární kontext, význam díla
+## Studijní poznámky
+- Důležité body, interpretace, tipy`;
+  }
+
+  // Add exam focus in a more compact format
   if (preferences.examFocus) {
     prompt += `
 
-Strukturuj shrnutí podle požadavků maturitní zkoušky z českého jazyka a literatury. Zahrň:
-1. Základní informace o díle (žánr, literární druh)
-2. Časoprostor díla
-3. Kompozici a vypravěčskou perspektivu
-4. Hlavní postavy a jejich charakteristiku
-5. Hlavní témata a motivy
-6. Jazykové prostředky a styl
-7. Význam díla v kontextu autorovy tvorby`;
+${
+  preferences.studyGuide ? "## Maturitní příprava" : "Zahrň sekci pro maturitu:"
+}
+- Zařazení k maturitě, argumentace, typické otázky, doporučené souvislosti`;
   }
 
-  // Add literary context instructions if enabled
+  // Add literary context in a more compact format
   if (preferences.literaryContext) {
     prompt += `
 
-Přidej odstavec o literárním kontextu díla, který zahrnuje:
-- Literární období a směr, do kterého dílo patří
-- Charakteristické znaky tohoto období/směru v díle
-- Srovnání s jinými významnými díly stejného období/žánru
-- Historický a společenský kontext vzniku díla`;
+${
+  preferences.studyGuide
+    ? "## Rozšířený literární kontext"
+    : "Zahrň sekci o literárním kontextu:"
+}
+- Charakteristika období/směru, historické souvislosti, autor v kontextu, vliv`;
   }
 
-  // Add general instructions
+  // Add formatting instructions in a more compact way
   prompt += `
 
-Shrnutí musí být kompletní s jasným závěrem. Při nedostatku tokenů zkrať obsah, ale neukončuj náhle.`;
+Formátuj pomocí markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl.`;
 
-  // Add notes if available
+  // Add notes if available (after all instructions to prioritize them)
   if (notes && notes.trim()) {
     prompt += `
 
-Poznámky čtenáře:\n${notes}`;
+Poznámky čtenáře:
+${notes}`;
   }
 
   return prompt;
@@ -114,6 +177,167 @@ function checkIfSummaryIsCutOff(summary: string): string {
   return summary;
 }
 
+/**
+ * Intelligently truncate notes to optimize token usage while preserving important information
+ * @param notes The original notes text
+ * @param maxChars Maximum character limit (approximate)
+ * @returns Processed notes with important information preserved
+ */
+function intelligentlyTruncateNotes(
+  notes: string,
+  maxChars: number = 6000
+): string {
+  if (!notes || notes.length <= maxChars) return notes;
+
+  // Split notes into paragraphs
+  const paragraphs = notes.split(/\n\n+/);
+
+  // If we have very few paragraphs, just truncate normally
+  if (paragraphs.length <= 3) {
+    return (
+      notes.substring(0, maxChars) +
+      "\n\n[...]\n\nPoznámka: Vaše poznámky byly zkráceny pro optimalizaci využití tokenů."
+    );
+  }
+
+  // Identify potentially important paragraphs
+  const scoredParagraphs = paragraphs.map((para, index) => {
+    // Calculate importance score based on various factors
+    let score = 0;
+
+    // Earlier paragraphs are often more important (introduction, context)
+    score += Math.max(0, 10 - index);
+
+    // Paragraphs with keywords are likely important
+    const importantKeywords = [
+      "hlavní",
+      "důležité",
+      "klíčové",
+      "téma",
+      "motiv",
+      "postava",
+      "děj",
+      "závěr",
+      "shrnutí",
+      "symbolika",
+      "význam",
+      "analýza",
+    ];
+
+    importantKeywords.forEach((keyword) => {
+      if (para.toLowerCase().includes(keyword.toLowerCase())) {
+        score += 5;
+      }
+    });
+
+    // Longer paragraphs might contain more information
+    score += Math.min(5, para.length / 100);
+
+    // Paragraphs with formatting might be structured important points
+    if (para.includes("- ") || para.includes("* ") || /\d+\./.test(para)) {
+      score += 5;
+    }
+
+    return { text: para, score, index };
+  });
+
+  // Sort paragraphs by importance score (descending)
+  scoredParagraphs.sort((a, b) => b.score - a.score);
+
+  // Take the most important paragraphs up to the character limit
+  let result = "";
+  let currentLength = 0;
+
+  // Always include the first paragraph (likely introduction)
+  const firstPara = paragraphs[0];
+  result += firstPara + "\n\n";
+  currentLength += firstPara.length + 2;
+
+  // Add high-scoring paragraphs until we approach the limit
+  for (const para of scoredParagraphs) {
+    // Skip the first paragraph as we've already included it
+    if (para.index === 0) continue;
+
+    // Check if adding this paragraph would exceed our limit
+    if (currentLength + para.text.length + 2 > maxChars - 100) {
+      // We're approaching the limit, stop adding paragraphs
+      break;
+    }
+
+    result += para.text + "\n\n";
+    currentLength += para.text.length + 2;
+  }
+
+  // Add a note about truncation
+  result +=
+    "[...]\n\nPoznámka: Vaše poznámky byly inteligentně zkráceny pro optimalizaci využití tokenů. Zobrazeny jsou nejdůležitější části.";
+
+  return result;
+}
+
+/**
+ * Select the most appropriate model based on request complexity
+ * @param preferences User preferences for the summary
+ * @param notesLength Length of user notes (if any)
+ * @returns Object with selected model and max tokens
+ */
+function selectOptimalModel(
+  preferences: SummaryPreferences,
+  notesLength: number = 0
+): { model: string; maxTokens: number } {
+  // Base complexity score starts at 0
+  let complexityScore = 0;
+
+  // Add complexity based on preferences
+  if (preferences.studyGuide) complexityScore += 3;
+  if (preferences.examFocus) complexityScore += 2;
+  if (preferences.literaryContext) complexityScore += 2;
+  if (preferences.style === "academic") complexityScore += 1;
+  if (preferences.length === "long") complexityScore += 2;
+
+  // Add complexity based on notes length
+  if (notesLength > 3000) complexityScore += 2;
+  else if (notesLength > 1000) complexityScore += 1;
+
+  // Select model based on complexity
+  let model: string;
+  let maxTokens: number;
+
+  if (complexityScore >= 6) {
+    // High complexity - use GPT-4o for best quality
+    model = "gpt-4o";
+    maxTokens =
+      preferences.length === "long"
+        ? 3000
+        : preferences.length === "medium"
+        ? 2000
+        : 1000;
+  } else if (complexityScore >= 3) {
+    // Medium complexity - use GPT-4o-mini for good balance
+    model = "gpt-4o-mini";
+    maxTokens =
+      preferences.length === "long"
+        ? 2500
+        : preferences.length === "medium"
+        ? 1500
+        : 800;
+  } else {
+    // Low complexity - use GPT-3.5 Turbo for efficiency
+    model = "gpt-3.5-turbo";
+    maxTokens =
+      preferences.length === "long"
+        ? 2000
+        : preferences.length === "medium"
+        ? 1200
+        : 600;
+  }
+
+  console.log(
+    `Selected model: ${model} (complexity score: ${complexityScore})`
+  );
+  return { model, maxTokens };
+}
+
 export async function POST(request: Request) {
   console.log("=== GENERATE SUMMARY API ROUTE CALLED ===");
 
@@ -136,15 +360,38 @@ export async function POST(request: Request) {
       );
     }
 
-    // Truncate notes if they're too long to save on input tokens
+    // Check cache first if no user notes are provided
+    // We only cache summaries that don't depend on user notes
+    if (!notes || notes.trim() === "") {
+      const cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
+      const cachedEntry = summaryCache[cacheKey];
+
+      // Check if we have a valid cache entry
+      if (
+        cachedEntry &&
+        Date.now() - cachedEntry.timestamp < CACHE_EXPIRATION
+      ) {
+        console.log("Cache hit! Returning cached summary");
+        return NextResponse.json({
+          summary: cachedEntry.summary,
+          fromCache: true,
+        });
+      }
+
+      console.log("Cache miss or expired entry");
+    }
+
+    // Use intelligent truncation for notes to preserve important information
     let processedNotes = notes;
     if (notes && notes.length > 6000) {
-      // If notes are very long, truncate them to save tokens
-      // This keeps approximately the first 6000 characters which is enough context
-      processedNotes =
-        notes.substring(0, 6000) +
-        "\n\n[...]\n\nPoznámka: Vaše poznámky byly zkráceny na 6000 znaků pro optimalizaci využití tokenů. Zobrazeny jsou pouze první části poznámek.";
-      console.log("Notes truncated to 6000 characters");
+      processedNotes = intelligentlyTruncateNotes(notes, 6000);
+      console.log(
+        "Notes intelligently truncated from",
+        notes.length,
+        "to",
+        processedNotes.length,
+        "characters"
+      );
     }
 
     console.log("Generating prompt...");
@@ -156,26 +403,13 @@ export async function POST(request: Request) {
     );
     console.log("Prompt generated, length:", prompt.length);
 
-    // Set max_tokens based on the length preference
-    let maxTokens;
-    // Use the same model for all lengths to maintain quality
-    const model = "gpt-4o-mini";
-
-    switch (preferences.length) {
-      case "short":
-        maxTokens = 800;
-        break;
-      case "medium":
-        maxTokens = 1500;
-        break;
-      case "long":
-        maxTokens = 2500;
-        break;
-      default:
-        maxTokens = 1500;
-    }
-
+    // Select optimal model based on request complexity
+    const { model, maxTokens } = selectOptimalModel(
+      preferences,
+      processedNotes?.length || 0
+    );
     console.log("Using model:", model, "with max tokens:", maxTokens);
+
     console.log("Calling OpenAI API...");
 
     try {
@@ -205,9 +439,21 @@ export async function POST(request: Request) {
       // Check if the summary appears to be cut off
       const processedSummary = checkIfSummaryIsCutOff(summary);
 
+      // Cache the summary if no user notes were provided
+      if (!notes || notes.trim() === "") {
+        const cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
+        summaryCache[cacheKey] = {
+          summary: processedSummary,
+          timestamp: Date.now(),
+          preferences,
+        };
+        console.log("Summary cached with key:", cacheKey);
+      }
+
       console.log("=== GENERATE SUMMARY API ROUTE SUCCESS ===");
       return NextResponse.json({
         summary: processedSummary,
+        fromCache: false,
       });
     } catch (openaiError: unknown) {
       console.error("OpenAI API error:", openaiError);

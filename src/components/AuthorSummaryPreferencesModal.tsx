@@ -26,6 +26,7 @@ export interface AuthorSummaryPreferences {
   includeTimeline: boolean;
   includeAwards: boolean;
   includeInfluences: boolean;
+  studyGuide: boolean;
 }
 
 export interface AuthorSummaryPreferencesModalProps {
@@ -95,6 +96,7 @@ export function AuthorSummaryPreferencesModal({
     includeTimeline: false,
     includeAwards: false,
     includeInfluences: false,
+    studyGuide: false,
   };
 
   const [preferences, setPreferences] =
@@ -646,6 +648,35 @@ export function AuthorSummaryPreferencesModal({
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     Přidá informace o literárních vlivech a inspiracích autora.
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  type="button"
+                  variants={optionVariants}
+                  animate={preferences.studyGuide ? "selected" : "notSelected"}
+                  className={`
+                    relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                    ${
+                      preferences.studyGuide
+                        ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
+                        : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
+                    }
+                  `}
+                  onClick={() =>
+                    setPreferences({
+                      ...preferences,
+                      studyGuide: !preferences.studyGuide,
+                    })
+                  }
+                >
+                  <div className="flex items-center">
+                    <Sparkles className="h-4 w-4 mr-2 text-amber-500" />
+                    <div className="text-sm font-medium">Studijní průvodce</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Vytvoří komplexní studijní materiál s klíčovými body pro
+                    zkoušky a tipy pro analýzu.
                   </div>
                 </motion.button>
               </div>
