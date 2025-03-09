@@ -1,19 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  BookOpen,
-  ArrowRight,
-  BookText,
-  PenLine,
-  Sparkles,
-  ChevronDown,
-  CheckCircle,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoginForm from "./LoginForm";
 import { useState, useEffect } from "react";
-import Footer from "./Footer";
+import {
+  ChevronDown,
+  BookOpen,
+  Sparkles,
+  BookText,
+  ArrowRight,
+  PenLine,
+  CheckCircle,
+} from "lucide-react";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -463,9 +462,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* Use the Footer component instead of inline footer */}
-      <Footer />
     </div>
   );
 }

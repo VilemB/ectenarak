@@ -6,6 +6,7 @@ import { SummaryPreferencesProvider } from "@/contexts/SummaryPreferencesContext
 import { SessionProvider } from "@/components/SessionProvider";
 import { Toaster } from "sonner";
 import NavbarWrapper from "@/components/NavbarWrapper";
+import Footer from "@/components/Footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -46,7 +47,8 @@ export default function RootLayout({
             <SummaryPreferencesProvider>
               <div className="flex-1 flex flex-col">
                 <NavbarWrapper />
-                <main className="flex-1 pb-16">{children}</main>
+                <main className="flex-1 pb-8">{children}</main>
+                <Footer />
               </div>
               <Toaster position="top-center" />
             </SummaryPreferencesProvider>
