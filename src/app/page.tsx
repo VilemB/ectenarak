@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Book } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
@@ -15,11 +12,9 @@ import {
   Plus,
   PlusCircle,
   X,
-  Keyboard,
   Info,
   Sparkles,
   AlertCircle,
-  BookText,
   PenLine,
   Loader2,
   ChevronRight,
@@ -29,11 +24,6 @@ import {
 } from "lucide-react";
 import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
-import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
-import { formatDate } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import LandingPage from "@/components/LandingPage";
 
 const containerVariants = {
@@ -321,14 +311,16 @@ export default function Home() {
       }
 
       const data = await response.json();
-      const newBook = {
+      const newBook: Book = {
         id: data.book.id,
         title: data.book.title,
         author: data.book.author,
         createdAt: data.book.createdAt,
+        updatedAt: data.book.createdAt, // Set updatedAt to match createdAt initially
         authorSummary: data.book.authorSummary || null,
         authorId: data.book.authorId || null,
         userId: data.book.userId,
+        notes: [],
       };
 
       // If includeAuthorSummary is true, generate the author summary
@@ -338,29 +330,27 @@ export default function Home() {
 
           // Check if the book already has an author summary
           if (!newBook.authorSummary) {
-            const summaryResponse = await fetch(
-              "/api/generate-author-summary",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
+            const summaryResponse = await fetch("/api/author-summary", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                author: author,
+                bookId: newBook.id, // Pass the bookId to associate the summary with this book
+                // Use default preferences for automatic generation
+                preferences: {
+                  style: "academic",
+                  length: "medium",
+                  focus: "balanced",
+                  language: "cs",
+                  includeTimeline: false,
+                  includeAwards: false,
+                  includeInfluences: false,
+                  studyGuide: false,
                 },
-                body: JSON.stringify({
-                  author: author,
-                  // Use default preferences for automatic generation
-                  preferences: {
-                    style: "academic",
-                    length: "medium",
-                    focus: "balanced",
-                    language: "cs",
-                    includeTimeline: false,
-                    includeAwards: false,
-                    includeInfluences: false,
-                    studyGuide: false,
-                  },
-                }),
-              }
-            );
+              }),
+            });
 
             if (!summaryResponse.ok) {
               throw new Error("Failed to generate author summary");
@@ -670,7 +660,7 @@ export default function Home() {
                         </p>
                         <p className="mt-1">
                           Nastavení můžete později změnit kliknutím na tlačítko
-                          "Aktualizovat informace o autorovi".
+                          &quot;Aktualizovat informace o autorovi&quot;.
                         </p>
                       </div>
                     </motion.div>
