@@ -107,11 +107,11 @@ const CopyButton = ({
   onClick,
   text,
 }: {
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
   text: string;
 }) => (
   <motion.button
-    onClick={onClick}
+    onClick={(e) => onClick(e)}
     whileHover={{ scale: 1.01 }}
     whileTap={{ scale: 0.99 }}
     className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
@@ -394,7 +394,7 @@ export default function BookComponent({
   };
 
   // Expand/collapse the book card
-  const toggleExpanded = (e: React.MouseEvent) => {
+  const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
     // Don't toggle if clicking on buttons or interactive elements
     if (
       e.target instanceof HTMLButtonElement ||
@@ -406,6 +406,23 @@ export default function BookComponent({
           e.target.closest("[role='dialog']"))) // Don't collapse when clicking any dialog
     ) {
       return;
+    }
+
+    // If it's a keyboard event, only toggle on Enter or Space
+    if (e.type === "keydown") {
+      const keyEvent = e as React.KeyboardEvent;
+      if (keyEvent.key !== "Enter" && keyEvent.key !== " ") {
+        return;
+      }
+      // Prevent scrolling when pressing space
+      if (keyEvent.key === " ") {
+        keyEvent.preventDefault();
+      }
+    }
+
+    // Add haptic feedback if supported
+    if (navigator.vibrate && window.innerWidth <= 768) {
+      navigator.vibrate(5); // Subtle vibration on mobile
     }
 
     setIsExpanded(!isExpanded);
@@ -886,7 +903,27 @@ export default function BookComponent({
   }, [isAuthorInfoVisible, book.id, handleCloseAuthorInfo]);
 
   // Add a function to handle viewing a specific summary
-  const handleViewSummary = (noteId: string) => {
+  const handleViewSummary = (
+    noteId: string,
+    event?: React.MouseEvent | React.KeyboardEvent
+  ) => {
+    // If it's a keyboard event, only toggle on Enter or Space
+    if (event && "key" in event) {
+      const keyEvent = event as React.KeyboardEvent;
+      if (keyEvent.key !== "Enter" && keyEvent.key !== " ") {
+        return;
+      }
+      // Prevent scrolling when pressing space
+      if (keyEvent.key === " ") {
+        keyEvent.preventDefault();
+      }
+    }
+
+    // Add haptic feedback if supported
+    if (navigator.vibrate && window.innerWidth <= 768) {
+      navigator.vibrate(5); // Subtle vibration on mobile
+    }
+
     // Toggle the selected summary
     if (noteId === selectedSummary) {
       // If already selected, close it with animation
@@ -894,6 +931,17 @@ export default function BookComponent({
     } else {
       // If not selected, open it
       setSelectedSummary(noteId);
+
+      // Scroll the summary into view after a short delay to allow animation
+      setTimeout(() => {
+        const summaryElement = document.getElementById(`note-${noteId}`);
+        if (summaryElement) {
+          summaryElement.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      }, 100);
     }
   };
 
@@ -937,13 +985,19 @@ export default function BookComponent({
   }, [selectedSummary, handleCloseSummary]);
 
   // Add a function to handle copying note content
-  const handleCopyNote = (content: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleCopyNote = (content: string, _?: React.MouseEvent) => {
     // Remove markdown formatting for a cleaner copy
     const plainText = content
       .replace(/#{1,6}\s+/g, "") // Remove headings
       .replace(/\*\*/g, "") // Remove bold
       .replace(/\*/g, "") // Remove italic
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"); // Replace links with just the text
+
+    // Add haptic feedback if supported
+    if (navigator.vibrate && window.innerWidth <= 768) {
+      navigator.vibrate(3); // Very subtle vibration for feedback
+    }
 
     navigator.clipboard
       .writeText(plainText)
@@ -970,8 +1024,16 @@ export default function BookComponent({
       <motion.div
         className={`p-5 cursor-pointer transition-colors duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${
           isExpanded ? "border-b border-border/40" : ""
-        }`}
+        } ${isExpanded ? "bg-black/[0.01] dark:bg-white/[0.01]" : ""}`}
         onClick={toggleExpanded}
+        onKeyDown={toggleExpanded}
+        tabIndex={0}
+        role="button"
+        aria-expanded={isExpanded}
+        aria-controls={`book-content-${book.id}`}
+        title={isExpanded ? "Klikněte pro zavření" : "Klikněte pro rozbalení"}
+        whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
+        whileTap={{ scale: 0.995 }}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex-grow space-y-3">
@@ -1209,7 +1271,7 @@ export default function BookComponent({
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => handleCopyNote(book.authorSummary || "")}
+                    onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
                   >
                     <Copy className="h-3.5 w-3.5" />
                     <span className="sr-only">Kopírovat text</span>
@@ -1284,7 +1346,7 @@ export default function BookComponent({
                     text="Smazat informace o autorovi"
                   />
                   <CopyButton
-                    onClick={() => handleCopyNote(book.authorSummary || "")}
+                    onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
                     text="Kopírovat text"
                   />
                 </div>
@@ -1501,10 +1563,12 @@ export default function BookComponent({
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                                onClick={() => handleCopyNote(note.content)}
+                                onClick={(e) => handleViewSummary(note.id, e)}
                               >
                                 <Copy className="h-3.5 w-3.5" />
-                                <span className="sr-only">Kopírovat text</span>
+                                <span className="sr-only">
+                                  Zobrazit shrnutí
+                                </span>
                               </Button>
                             </motion.div>
                             <motion.div
@@ -1603,7 +1667,9 @@ export default function BookComponent({
                                 </div>
 
                                 {/* Study-friendly content */}
-                                <StudyContent content={note.content} />
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                  <StudyContent content={note.content} />
+                                </div>
 
                                 <motion.div
                                   initial={{ opacity: 0 }}
@@ -1613,8 +1679,8 @@ export default function BookComponent({
                                 >
                                   <div className="flex items-center gap-4">
                                     <CopyButton
-                                      onClick={() =>
-                                        handleCopyNote(note.content)
+                                      onClick={(e) =>
+                                        handleCopyNote(note.content, e)
                                       }
                                       text="Kopírovat text"
                                     />
@@ -1644,13 +1710,20 @@ export default function BookComponent({
                                 </ReactMarkdown>
                                 {note.content.split("\n\n").length > 1 && (
                                   <motion.div
-                                    whileHover={{ scale: 1.01 }}
+                                    whileHover={{ scale: 1.01, y: -1 }}
                                     whileTap={{ scale: 0.99 }}
-                                    className="mt-2 text-amber-600 dark:text-amber-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium"
+                                    className="mt-2 text-amber-600 dark:text-amber-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
                                     onClick={() => handleViewSummary(note.id)}
+                                    onKeyDown={(e) =>
+                                      handleViewSummary(note.id, e)
+                                    }
+                                    tabIndex={0}
+                                    role="button"
+                                    aria-expanded={selectedSummary === note.id}
+                                    aria-controls={`expanded-summary-${note.id}`}
                                   >
                                     <span>Zobrazit celé shrnutí</span>
-                                    <ChevronDown className="h-3.5 w-3.5" />
+                                    <ChevronDown className="h-3.5 w-3.5 group-hover:translate-y-0.5 transition-transform" />
                                   </motion.div>
                                 )}
                               </motion.div>
