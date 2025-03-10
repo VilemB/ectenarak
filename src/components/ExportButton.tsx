@@ -232,13 +232,47 @@ export function ExportButton(props: ExportButtonProps) {
       const pageHeight = doc.internal.pageSize.getHeight();
       const contentWidth = pageWidth - margin * 2;
 
+      // Store current font settings to maintain consistency across page breaks
+      let currentFontStyle = "normal";
+      let currentFontSize = 10;
+      let currentTextColor = [50, 50, 50];
+
+      // Helper function to set font settings
+      const setFontSettings = (
+        style: string,
+        size: number,
+        color: number[]
+      ) => {
+        doc.setFont("Roboto", style);
+        doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+
+        // Store current settings
+        currentFontStyle = style;
+        currentFontSize = size;
+        currentTextColor = color;
+      };
+
       // Simple helper function to check if we need a new page
       const checkForPageBreak = (
         currentY: number,
         requiredHeight: number = 20
       ): number => {
         if (currentY + requiredHeight > pageHeight - margin) {
+          // Remember current font settings
+          const rememberStyle = currentFontStyle;
+          const rememberSize = currentFontSize;
+          const rememberColor = [...currentTextColor];
+
           doc.addPage();
+
+          // Add a simple header to each new page
+          setFontSettings("italic", 8, [150, 150, 150]);
+          doc.text(encodeCzechText(book.title), margin, 10);
+
+          // Restore font settings after adding the header
+          setFontSettings(rememberStyle, rememberSize, rememberColor);
+
           return margin;
         }
         return currentY;
@@ -270,14 +304,12 @@ export function ExportButton(props: ExportButtonProps) {
       let yPosition = margin;
 
       // Title
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(16);
+      setFontSettings("bold", 16, [50, 50, 50]);
       doc.text(encodeCzechText(book.title), margin, yPosition);
       yPosition += 10;
 
       // Author
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(12);
+      setFontSettings("normal", 12, [50, 50, 50]);
       doc.text(`Autor: ${encodeCzechText(book.author)}`, margin, yPosition);
       yPosition += 10;
 
@@ -296,9 +328,14 @@ export function ExportButton(props: ExportButtonProps) {
       // Add notes section
       if (regularNotes.length > 0) {
         // Section title
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(14);
+        setFontSettings("bold", 14, [70, 70, 70]);
         doc.text("POZNÁMKY", margin, yPosition);
+
+        // Add a simple line under the section title
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPosition + 2, margin + 40, yPosition + 2);
+
         yPosition += 10;
 
         // For each note, add content
@@ -307,8 +344,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition = checkForPageBreak(yPosition, 30);
 
           // Note number and date
-          doc.setFont("Roboto", "bold");
-          doc.setFontSize(11);
+          setFontSettings("bold", 11, [80, 80, 80]);
           doc.text(
             `Poznámka #${index + 1} - ${formatDate(note.createdAt)}`,
             margin,
@@ -317,8 +353,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition += 7;
 
           // Process and render note content
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(10);
+          setFontSettings("normal", 10, [50, 50, 50]);
 
           // Split text to fit within page width
           const processedContent = processMarkdown(note.content);
@@ -340,8 +375,7 @@ export function ExportButton(props: ExportButtonProps) {
         });
       } else {
         // No notes message
-        doc.setFont("Roboto", "italic");
-        doc.setFontSize(11);
+        setFontSettings("italic", 11, [120, 120, 120]);
         doc.text("Žádné poznámky", margin, yPosition);
         yPosition += 10;
       }
@@ -352,9 +386,14 @@ export function ExportButton(props: ExportButtonProps) {
         yPosition = checkForPageBreak(yPosition, 30);
 
         // Section title
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(14);
+        setFontSettings("bold", 14, [70, 70, 70]);
         doc.text("AI SHRNUTÍ", margin, yPosition);
+
+        // Add a simple line under the section title
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPosition + 2, margin + 40, yPosition + 2);
+
         yPosition += 10;
 
         // For each summary, add content
@@ -363,8 +402,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition = checkForPageBreak(yPosition, 30);
 
           // Summary date
-          doc.setFont("Roboto", "bold");
-          doc.setFontSize(11);
+          setFontSettings("bold", 11, [80, 80, 80]);
           doc.text(
             `AI Shrnutí - ${formatDate(summary.createdAt)}`,
             margin,
@@ -373,8 +411,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition += 7;
 
           // Process and render summary content
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(10);
+          setFontSettings("normal", 10, [50, 50, 50]);
 
           // Split text to fit within page width
           const processedContent = processMarkdown(summary.content);
@@ -402,9 +439,14 @@ export function ExportButton(props: ExportButtonProps) {
         yPosition = checkForPageBreak(yPosition, 30);
 
         // Section title
-        doc.setFont("Roboto", "bold");
-        doc.setFontSize(14);
+        setFontSettings("bold", 14, [70, 70, 70]);
         doc.text("O AUTOROVI", margin, yPosition);
+
+        // Add a simple line under the section title
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPosition + 2, margin + 40, yPosition + 2);
+
         yPosition += 10;
 
         // Process the author summary
@@ -419,8 +461,7 @@ export function ExportButton(props: ExportButtonProps) {
         );
 
         // Draw text with proper line spacing
-        doc.setFont("Roboto", "normal");
-        doc.setFontSize(10);
+        setFontSettings("normal", 10, [50, 50, 50]);
 
         for (let i = 0; i < authorSummaryLines.length; i++) {
           // Check for page break during rendering if needed
@@ -434,11 +475,27 @@ export function ExportButton(props: ExportButtonProps) {
       const totalPages = doc.internal.pages.length - 1;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-        doc.setFont("Roboto", "normal");
-        doc.setFontSize(9);
+
+        // Remember current font settings
+        const rememberStyle = currentFontStyle;
+        const rememberSize = currentFontSize;
+        const rememberColor = [...currentTextColor];
+
+        // Set footer font
+        setFontSettings("normal", 9, [150, 150, 150]);
+
+        // Add a simple footer line
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+        // Add page number
         doc.text(`${i} / ${totalPages}`, pageWidth / 2, pageHeight - 10, {
           align: "center",
         });
+
+        // Restore font settings
+        setFontSettings(rememberStyle, rememberSize, rememberColor);
       }
 
       // Save the PDF
@@ -563,13 +620,51 @@ export function ExportButton(props: ExportButtonProps) {
       const pageHeight = doc.internal.pageSize.getHeight();
       const contentWidth = pageWidth - margin * 2;
 
+      // Store current font settings to maintain consistency across page breaks
+      let currentFontStyle = "normal";
+      let currentFontSize = 10;
+      let currentTextColor = [50, 50, 50];
+
+      // Helper function to set font settings
+      const setFontSettings = (
+        style: string,
+        size: number,
+        color: number[]
+      ) => {
+        doc.setFont("Roboto", style);
+        doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+
+        // Store current settings
+        currentFontStyle = style;
+        currentFontSize = size;
+        currentTextColor = color;
+      };
+
       // Simple helper function to check if we need a new page
       const checkForPageBreak = (
         currentY: number,
         requiredHeight: number = 20
       ): number => {
         if (currentY + requiredHeight > pageHeight - margin) {
+          // Remember current font settings
+          const rememberStyle = currentFontStyle;
+          const rememberSize = currentFontSize;
+          const rememberColor = [...currentTextColor];
+
           doc.addPage();
+
+          // Add a simple header to each new page
+          setFontSettings("italic", 8, [150, 150, 150]);
+          doc.text(
+            encodeCzechText("MATURITNÍ PŘÍPRAVA: " + book.title),
+            margin,
+            10
+          );
+
+          // Restore font settings after adding the header
+          setFontSettings(rememberStyle, rememberSize, rememberColor);
+
           return margin;
         }
         return currentY;
@@ -601,8 +696,7 @@ export function ExportButton(props: ExportButtonProps) {
       let yPosition = margin;
 
       // Title
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(16);
+      setFontSettings("bold", 16, [50, 50, 50]);
       doc.text(
         encodeCzechText("MATURITNÍ PŘÍPRAVA: " + book.title),
         margin,
@@ -611,8 +705,7 @@ export function ExportButton(props: ExportButtonProps) {
       yPosition += 10;
 
       // Author
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(12);
+      setFontSettings("normal", 12, [50, 50, 50]);
       doc.text(`Autor: ${encodeCzechText(book.author)}`, margin, yPosition);
       yPosition += 10;
 
@@ -625,14 +718,18 @@ export function ExportButton(props: ExportButtonProps) {
       yPosition += 15;
 
       // Author information section
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(14);
+      setFontSettings("bold", 14, [70, 70, 70]);
       doc.text(encodeCzechText("O AUTOROVI"), margin, yPosition);
+
+      // Add a simple line under the section title
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPosition + 2, margin + 40, yPosition + 2);
+
       yPosition += 10;
 
       // Author content
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(11);
+      setFontSettings("normal", 11, [50, 50, 50]);
 
       if (book.authorSummary) {
         const processedAuthorSummary = processMarkdown(book.authorSummary);
@@ -664,14 +761,18 @@ export function ExportButton(props: ExportButtonProps) {
 
       // Summary section
       yPosition = checkForPageBreak(yPosition, 20);
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(14);
+      setFontSettings("bold", 14, [70, 70, 70]);
       doc.text(encodeCzechText("SHRNUTÍ DÍLA"), margin, yPosition);
+
+      // Add a simple line under the section title
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPosition + 2, margin + 40, yPosition + 2);
+
       yPosition += 10;
 
       // Summary content
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(11);
+      setFontSettings("normal", 11, [50, 50, 50]);
 
       if (summaries.length > 0) {
         summaries.forEach((summary) => {
@@ -705,9 +806,14 @@ export function ExportButton(props: ExportButtonProps) {
 
       // Notes section
       yPosition = checkForPageBreak(yPosition, 20);
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(14);
+      setFontSettings("bold", 14, [70, 70, 70]);
       doc.text(encodeCzechText("VLASTNÍ POZNÁMKY"), margin, yPosition);
+
+      // Add a simple line under the section title
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPosition + 2, margin + 40, yPosition + 2);
+
       yPosition += 10;
 
       // Notes content
@@ -716,8 +822,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition = checkForPageBreak(yPosition, 15);
 
           // Note number and date
-          doc.setFont("Roboto", "bold");
-          doc.setFontSize(11);
+          setFontSettings("bold", 11, [80, 80, 80]);
           doc.text(
             encodeCzechText(
               `Poznámka ${index + 1} - ${formatDate(note.createdAt)}`
@@ -728,8 +833,7 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition += 7;
 
           // Note content
-          doc.setFont("Roboto", "normal");
-          doc.setFontSize(10);
+          setFontSettings("normal", 10, [50, 50, 50]);
 
           const processedContent = processMarkdown(note.content);
           const contentLines = doc.splitTextToSize(
@@ -746,25 +850,28 @@ export function ExportButton(props: ExportButtonProps) {
           yPosition += 10;
         });
       } else {
-        doc.setFont("Roboto", "normal");
-        doc.setFontSize(11);
+        setFontSettings("italic", 11, [120, 120, 120]);
         doc.text(encodeCzechText("Žádné vlastní poznámky"), margin, yPosition);
         yPosition += 10;
       }
 
       // Add exam structure
       yPosition = checkForPageBreak(yPosition, 20);
-      doc.setFont("Roboto", "bold");
-      doc.setFontSize(14);
+      setFontSettings("bold", 14, [70, 70, 70]);
       doc.text(
         encodeCzechText("STRUKTURA PRO ÚSTNÍ ZKOUŠKU"),
         margin,
         yPosition
       );
+
+      // Add a simple line under the section title
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPosition + 2, margin + 60, yPosition + 2);
+
       yPosition += 10;
 
-      doc.setFont("Roboto", "normal");
-      doc.setFontSize(11);
+      setFontSettings("normal", 11, [50, 50, 50]);
 
       const examStructure = [
         "1. Literárněhistorický kontext",
@@ -791,11 +898,27 @@ export function ExportButton(props: ExportButtonProps) {
       const totalPages = doc.internal.pages.length - 1;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-        doc.setFont("Roboto", "normal");
-        doc.setFontSize(9);
+
+        // Remember current font settings
+        const rememberStyle = currentFontStyle;
+        const rememberSize = currentFontSize;
+        const rememberColor = [...currentTextColor];
+
+        // Set footer font
+        setFontSettings("normal", 9, [150, 150, 150]);
+
+        // Add a simple footer line
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+        // Add page number
         doc.text(`${i} / ${totalPages}`, pageWidth / 2, pageHeight - 10, {
           align: "center",
         });
+
+        // Restore font settings
+        setFontSettings(rememberStyle, rememberSize, rememberColor);
       }
 
       // Save the PDF
