@@ -111,7 +111,10 @@ const CopyButton = ({
   text: string;
 }) => (
   <motion.button
-    onClick={(e) => onClick(e)}
+    onClick={(e) => {
+      e.stopPropagation(); // Stop event propagation
+      onClick(e);
+    }}
     whileHover={{ scale: 1.01 }}
     whileTap={{ scale: 0.99 }}
     className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
@@ -985,8 +988,12 @@ export default function BookComponent({
   }, [selectedSummary, handleCloseSummary]);
 
   // Add a function to handle copying note content
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleCopyNote = (content: string, _?: React.MouseEvent) => {
+  const handleCopyNote = (content: string, e?: React.MouseEvent) => {
+    // Ensure event doesn't propagate
+    if (e) {
+      e.stopPropagation();
+    }
+
     // Remove markdown formatting for a cleaner copy
     const plainText = content
       .replace(/#{1,6}\s+/g, "") // Remove headings
@@ -1267,15 +1274,10 @@ export default function BookComponent({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                  <CopyButton
                     onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    <span className="sr-only">Kopírovat text</span>
-                  </Button>
+                    text=""
+                  />
                 </motion.div>
                 <motion.div
                   whileHover={{ scale: 1.01 }}
