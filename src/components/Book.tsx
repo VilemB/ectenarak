@@ -1176,7 +1176,7 @@ export default function BookComponent({
               opacity: { duration: 0.3, ease: "easeInOut" },
               height: { duration: 0.3, ease: "easeInOut" },
             }}
-            className="relative mx-5 my-3 p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg text-sm border border-amber-200/50 dark:border-amber-800/30 shadow-inner"
+            className="relative mx-5 my-3 p-4 bg-gradient-to-br from-amber-50/30 to-transparent dark:from-amber-950/10 dark:to-transparent rounded-lg text-sm border border-border/60 shadow-sm"
           >
             {/* Close button - positioned absolutely in the top-right corner */}
             <CloseButtonTop
@@ -1185,16 +1185,72 @@ export default function BookComponent({
               title="Zavřít informace o autorovi (ESC)"
             />
 
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center text-amber-700 dark:text-amber-400">
-                <User className="h-4 w-4 mr-2" />
-                <span className="font-medium">O autorovi</span>
+            {/* Note Header */}
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-amber-500" />
+                <span className="text-xs text-amber-600 dark:text-amber-400">
+                  Informace o autorovi
+                </span>
               </div>
+              <div className="flex items-center gap-1">
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <ExportButton
+                    content={book.authorSummary}
+                    filename={`${book.author}_info.md`}
+                    buttonProps={{
+                      variant: "ghost",
+                      size: "sm",
+                      className:
+                        "h-7 w-7 p-0 text-muted-foreground hover:text-foreground",
+                    }}
+                  />
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleCopyNote(book.authorSummary || "")}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span className="sr-only">Kopírovat text</span>
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={handleDeleteAuthorSummary}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="sr-only">Smazat informace o autorovi</span>
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* ESC key indicator */}
+            <div className="flex justify-between items-start mb-3">
+              <div></div> {/* Empty div for spacing */}
               <motion.div
-                className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+                className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.2 }}
+                transition={{
+                  delay: 0.3,
+                  duration: 0.2,
+                }}
                 whileHover={{
                   scale: 1.03,
                   backgroundColor: "rgba(251, 191, 36, 0.2)",
@@ -1211,7 +1267,9 @@ export default function BookComponent({
             </div>
 
             {/* Study-friendly content */}
-            <StudyContent content={book.authorSummary} />
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <StudyContent content={book.authorSummary} />
+            </div>
 
             {/* Bottom buttons */}
             <motion.div
@@ -1220,10 +1278,16 @@ export default function BookComponent({
               transition={{ delay: 0.3, duration: 0.2 }}
               className="mt-5 pt-3 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
             >
-              <DeleteButton
-                onClick={handleDeleteAuthorSummary}
-                text="Smazat informace o autorovi"
-              />
+              <div className="flex items-center gap-4">
+                <DeleteButton
+                  onClick={handleDeleteAuthorSummary}
+                  text="Smazat informace o autorovi"
+                />
+                <CopyButton
+                  onClick={() => handleCopyNote(book.authorSummary || "")}
+                  text="Kopírovat text"
+                />
+              </div>
 
               <CloseButtonBottom
                 onClick={handleCloseAuthorInfo}
