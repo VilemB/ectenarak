@@ -347,6 +347,17 @@ export default function Home() {
                 },
                 body: JSON.stringify({
                   author: author,
+                  // Use default preferences for automatic generation
+                  preferences: {
+                    style: "academic",
+                    length: "medium",
+                    focus: "balanced",
+                    language: "cs",
+                    includeTimeline: false,
+                    includeAwards: false,
+                    includeInfluences: false,
+                    studyGuide: false,
+                  },
                 }),
               }
             );
@@ -636,12 +647,34 @@ export default function Home() {
                             Vygenerovat shrnutí o autorovi
                           </span>
                           <p className="text-xs text-amber-700 dark:text-amber-300/70 mt-0.5">
-                            AI vygeneruje stručné informace o autorovi knihy
+                            AI vygeneruje stručné akademické informace o
+                            autorovi knihy s použitím výchozích nastavení
                           </p>
                         </div>
                       </label>
                     </div>
                   </div>
+
+                  {includeAuthorSummary && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-3 ml-13 pl-13"
+                    >
+                      <div className="ml-13 pl-13 text-xs text-amber-700 dark:text-amber-300/70 bg-amber-100/50 dark:bg-amber-900/20 p-2 rounded-md border border-amber-200/50 dark:border-amber-800/20">
+                        <p>
+                          <strong>Výchozí nastavení:</strong> Akademický styl,
+                          střední délka, vyvážené zaměření, v češtině.
+                        </p>
+                        <p className="mt-1">
+                          Nastavení můžete později změnit kliknutím na tlačítko
+                          "Aktualizovat informace o autorovi".
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
                 </motion.div>
 
                 {error && (
