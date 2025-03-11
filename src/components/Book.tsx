@@ -258,7 +258,9 @@ export default function BookComponent({
         setNotes(formattedNotes);
       } catch (error) {
         console.error("Error fetching notes:", error);
-        showErrorMessage("Failed to load notes. Please try again.");
+        showErrorMessage(
+          "Nepodařilo se načíst poznámky. Zkuste to prosím znovu."
+        );
       }
     },
     [showErrorMessage]
