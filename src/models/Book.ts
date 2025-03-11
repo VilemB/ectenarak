@@ -29,10 +29,16 @@ const NoteSchema = new mongoose.Schema({
  * Each book belongs to a user and can have multiple notes
  */
 const BookSchema = new mongoose.Schema({
-  // User ID from authentication provider (Google, etc.)
+  // User ID reference to User model
   userId: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed,
     required: true,
+    index: true,
+    ref: "User",
+  },
+  // Legacy userId field for backward compatibility
+  legacyUserId: {
+    type: String,
     index: true,
   },
   title: {
@@ -49,6 +55,7 @@ const BookSchema = new mongoose.Schema({
   authorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Author",
+    required: true,
   },
   // Embedded notes array
   notes: [NoteSchema],
@@ -56,6 +63,38 @@ const BookSchema = new mongoose.Schema({
   authorSummary: {
     type: String,
     default: null,
+  },
+  // Enhanced book metadata
+  isbn: {
+    type: String,
+    trim: true,
+  },
+  publishedYear: {
+    type: Number,
+  },
+  genre: {
+    type: [String],
+    default: [],
+  },
+  coverImage: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  // Enhanced reading progress tracking
+  currentPage: {
+    type: Number,
+    default: 0,
+  },
+  totalPages: {
+    type: Number,
+  },
+  readingStartDate: {
+    type: Date,
+  },
+  readingCompletionDate: {
+    type: Date,
   },
   // Timestamps
   createdAt: {
@@ -86,9 +125,30 @@ BookSchema.index({ userId: 1, title: 1, author: 1 }, { unique: true });
 // Create an index on notes to improve query performance
 BookSchema.index({ "notes.createdAt": -1 });
 
+// Create an index on status for filtering books by status
+BookSchema.index({ userId: 1, status: 1 });
+
+// Create an index on genre for filtering books by genre
+BookSchema.index({ userId: 1, genre: 1 });
+
 // Update the updatedAt field on save
 BookSchema.pre("save", function (next) {
   this.updatedAt = new Date();
+  next();
+});
+
+// Update reading status based on progress
+BookSchema.pre("save", function (next) {
+  // If reading start date is set but status is not_started, update to in_progress
+  if (this.readingStartDate && this.status === "not_started") {
+    this.status = "in_progress";
+  }
+
+  // If reading completion date is set, update to completed
+  if (this.readingCompletionDate) {
+    this.status = "completed";
+  }
+
   next();
 });
 
@@ -97,41 +157,74 @@ BookSchema.virtual("noteCount").get(function () {
   return this.notes ? this.notes.length : 0;
 });
 
+// Virtual for calculating reading progress percentage
+BookSchema.virtual("progressPercentage").get(function () {
+  if (!this.totalPages || this.totalPages === 0) return 0;
+  return Math.min(100, Math.round((this.currentPage / this.totalPages) * 100));
+});
+
 // Define interfaces for TypeScript type checking
 interface INote {
   _id?: mongoose.Types.ObjectId;
   content: string;
   createdAt: Date;
   isAISummary: boolean;
+  createdBy?: string;
 }
 
 interface IBook {
-  userId: string;
+  userId: mongoose.Types.ObjectId | string;
+  legacyUserId?: string;
   title: string;
   author: string;
-  authorSummary?: string;
-  authorId?: mongoose.Types.ObjectId;
+  authorId: mongoose.Types.ObjectId;
   notes: INote[];
+  authorSummary?: string;
+  isbn?: string;
+  publishedYear?: number;
+  genre?: string[];
+  coverImage?: string;
+  description?: string;
+  currentPage?: number;
+  totalPages?: number;
+  readingStartDate?: Date;
+  readingCompletionDate?: Date;
+  status: "not_started" | "in_progress" | "completed";
   createdAt: Date;
   updatedAt: Date;
-  addNote(content: string, isAISummary?: boolean): Promise<void>;
+  noteCount: number;
+  progressPercentage: number;
+  addNote(
+    content: string,
+    isAISummary?: boolean,
+    createdBy?: string
+  ): Promise<void>;
   removeNote(noteId: string): Promise<void>;
+  updateReadingProgress(
+    currentPage: number,
+    totalPages?: number
+  ): Promise<void>;
+  startReading(): Promise<void>;
+  completeReading(): Promise<void>;
 }
 
 /**
  * Method to add a note to a book
  * @param {string} content - The content of the note
  * @param {boolean} isAISummary - Whether the note is an AI-generated summary
+ * @param {string} createdBy - Optional user identifier who created the note
  * @returns {Promise<void>}
  */
 BookSchema.methods.addNote = async function (
   content: string,
-  isAISummary: boolean = false
+  isAISummary: boolean = false,
+  createdBy?: string
 ): Promise<void> {
   const note: INote = {
     content,
     createdAt: new Date(),
     isAISummary,
+    createdBy,
   };
 
   this.notes.push(note);
@@ -153,6 +246,65 @@ BookSchema.methods.removeNote = async function (noteId: string): Promise<void> {
   }
 
   this.notes.splice(noteIndex, 1);
+  await this.save();
+};
+
+/**
+ * Method to update reading progress
+ * @param {number} currentPage - The current page
+ * @param {number} totalPages - Optional total pages (if not already set)
+ * @returns {Promise<void>}
+ */
+BookSchema.methods.updateReadingProgress = async function (
+  currentPage: number,
+  totalPages?: number
+): Promise<void> {
+  this.currentPage = currentPage;
+
+  if (totalPages && (!this.totalPages || this.totalPages === 0)) {
+    this.totalPages = totalPages;
+  }
+
+  // If this is the first update and we don't have a start date, set it
+  if (!this.readingStartDate && currentPage > 0) {
+    this.readingStartDate = new Date();
+    this.status = "in_progress";
+  }
+
+  // If we've reached the end, mark as completed
+  if (this.totalPages && currentPage >= this.totalPages) {
+    this.readingCompletionDate = new Date();
+    this.status = "completed";
+  }
+
+  await this.save();
+};
+
+/**
+ * Method to mark a book as started reading
+ * @returns {Promise<void>}
+ */
+BookSchema.methods.startReading = async function (): Promise<void> {
+  this.readingStartDate = new Date();
+  this.status = "in_progress";
+  await this.save();
+};
+
+/**
+ * Method to mark a book as completed
+ * @returns {Promise<void>}
+ */
+BookSchema.methods.completeReading = async function (): Promise<void> {
+  this.readingCompletionDate = new Date();
+  this.status = "completed";
+
+  // If we don't have a start date, set it to now minus 1 day
+  if (!this.readingStartDate) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    this.readingStartDate = yesterday;
+  }
+
   await this.save();
 };
 

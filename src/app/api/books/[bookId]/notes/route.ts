@@ -26,6 +26,29 @@ interface IMockBook {
   [key: string]: unknown; // For other properties
 }
 
+// Helper function to check if the book belongs to the user
+function checkBookOwnership(
+  book: {
+    userId: mongoose.Types.ObjectId | string;
+    legacyUserId?: string;
+    _doc?: Record<string, unknown>; // For Mongoose document
+  },
+  userId: string
+): boolean {
+  // Handle Mongoose document objects
+  const bookData = book._doc || book;
+
+  return (
+    // Check if userId is an ObjectId and matches session.user.id
+    (bookData.userId instanceof mongoose.Types.ObjectId &&
+      bookData.userId.toString() === userId) ||
+    // Check if userId is a string and matches session.user.id
+    (typeof bookData.userId === "string" && bookData.userId === userId) ||
+    // Check if legacyUserId matches session.user.id
+    (!!bookData.legacyUserId && bookData.legacyUserId === userId)
+  );
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { bookId: string } }
@@ -79,7 +102,7 @@ export async function GET(
     }
 
     // Verify that the book belongs to the current user
-    if (book.userId !== session.user.id) {
+    if (!checkBookOwnership(book, session.user.id)) {
       return NextResponse.json(
         { error: "You don't have permission to access notes from this book" },
         { status: 403 }
@@ -169,7 +192,7 @@ export async function POST(
     }
 
     // Verify that the book belongs to the current user
-    if (book.userId !== session.user.id) {
+    if (!checkBookOwnership(book, session.user.id)) {
       return NextResponse.json(
         { error: "You don't have permission to add notes to this book" },
         { status: 403 }

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test-mongodb": "node test-mongodb-connection.js"
+    "test-mongodb": "node test-mongodb-connection.js",
+    "migrate": "npx tsx src/scripts/migrate-data.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.8.0",
@@ -45,9 +46,11 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/dotenv": "^8.2.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "postcss": "^8",

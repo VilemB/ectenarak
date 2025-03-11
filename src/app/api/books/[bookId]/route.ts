@@ -3,6 +3,7 @@ import dbConnect, { mockData, isMockConnection } from "@/lib/mongodb";
 import Book from "@/models/Book";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import mongoose from "mongoose";
 
 export async function GET(
   request: Request,
@@ -135,7 +136,18 @@ export async function DELETE(
     }
 
     // Verify that the book belongs to the current user
-    if (book.userId !== session.user.id) {
+    const bookData = book._doc || book;
+    const userIdMatches =
+      // Check if userId is an ObjectId and matches session.user.id
+      (bookData.userId instanceof mongoose.Types.ObjectId &&
+        bookData.userId.toString() === session.user.id) ||
+      // Check if userId is a string and matches session.user.id
+      (typeof bookData.userId === "string" &&
+        bookData.userId === session.user.id) ||
+      // Check if legacyUserId matches session.user.id
+      (!!bookData.legacyUserId && bookData.legacyUserId === session.user.id);
+
+    if (!userIdMatches) {
       return NextResponse.json(
         { error: "You don't have permission to delete this book" },
         { status: 403 }
@@ -235,7 +247,18 @@ export async function PATCH(
     }
 
     // Verify that the book belongs to the current user
-    if (book.userId !== session.user.id) {
+    const bookData = book._doc || book;
+    const userIdMatches =
+      // Check if userId is an ObjectId and matches session.user.id
+      (bookData.userId instanceof mongoose.Types.ObjectId &&
+        bookData.userId.toString() === session.user.id) ||
+      // Check if userId is a string and matches session.user.id
+      (typeof bookData.userId === "string" &&
+        bookData.userId === session.user.id) ||
+      // Check if legacyUserId matches session.user.id
+      (!!bookData.legacyUserId && bookData.legacyUserId === session.user.id);
+
+    if (!userIdMatches) {
       return NextResponse.json(
         { error: "You don't have permission to update this book" },
         { status: 403 }
