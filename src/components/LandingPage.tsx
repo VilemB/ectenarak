@@ -87,16 +87,16 @@ export default function LandingPage() {
                 transition={{ duration: 0.6 }}
               >
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                  Sledujte své{" "}
+                  Vytvářejte své{" "}
                   <span className="text-primary relative inline-block">
-                    čtenářské úkoly
+                    čtenářské zápisky
                     <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/50 rounded-full"></span>
                   </span>{" "}
                   jednoduše
                 </h1>
                 <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
-                  Organizujte povinnou četbu, zapisujte si poznámky a sledujte
-                  svůj pokrok v četbě knih zadaných do školy.
+                  Zapisujte si poznámky k povinné četbě, generujte shrnutí knih
+                  a autorů, a exportujte své zápisky do PDF.
                 </p>
               </motion.div>
 
@@ -253,11 +253,11 @@ export default function LandingPage() {
                 <BookText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold mb-2">
-                Sledování četby
+                Poznámky ke knihám
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Přehledně uspořádejte své knihy, sledujte pokrok v četbě a mějte
-                přehled o všech povinných titulech.
+                Uchovávejte všechny své poznámky k povinné četbě na jednom místě
+                a mějte je vždy po ruce pro přípravu do školy.
               </p>
             </motion.div>
 
@@ -273,11 +273,11 @@ export default function LandingPage() {
                 <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold mb-2">
-                Chytré poznámky
+                Generování shrnutí
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Vytvářejte strukturované poznámky ke knihám, zaznamenávejte
-                důležité pasáže a myšlenky pro pozdější studium.
+                Získejte AI generovaná shrnutí knih a informace o autorech pro
+                rychlejší a efektivnější přípravu na testy.
               </p>
             </motion.div>
 
@@ -293,11 +293,11 @@ export default function LandingPage() {
                 <PenLine className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold mb-2">
-                Shrnutí děl
+                Export do PDF
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Zapisujte si shrnutí knih, hlavní postavy a klíčové události pro
-                lepší přípravu na testy a zkoušky.
+                Exportujte své poznámky do PDF formátu pro snadné sdílení nebo
+                tisk při přípravě na hodiny literatury.
               </p>
             </motion.div>
           </div>
@@ -341,8 +341,8 @@ export default function LandingPage() {
                         Automatické shrnutí
                       </h3>
                       <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        Získejte pomoc s vytvářením shrnutí děl,
-                        charakteristikou postav a analýzou témat.
+                        Získejte AI generovaná shrnutí knih s analýzou děje,
+                        postav a hlavních témat díla.
                       </p>
                     </div>
                   </div>
@@ -351,11 +351,24 @@ export default function LandingPage() {
                     <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 flex-shrink-0 mt-0.5" />
                     <div>
                       <h3 className="text-sm sm:text-base font-medium">
-                        Exporty a sdílení
+                        Informace o autorech
                       </h3>
                       <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        Exportujte své poznámky do PDF nebo sdílejte je se
-                        spolužáky pro společnou přípravu.
+                        Získejte podrobné AI generované informace o autorech,
+                        jejich životě, díle a literárním kontextu.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm sm:text-base font-medium">
+                        Přizpůsobení AI shrnutí
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        Nastavte si styl, délku a zaměření AI shrnutí podle
+                        vašich potřeb a preferencí.
                       </p>
                     </div>
                   </div>
@@ -419,151 +432,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-16 sm:py-20 md:py-24 lg:py-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5 opacity-50"></div>
-        <div className="container max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
-          <div className="text-center mb-12 sm:mb-16">
-            <motion.h2
-              className="text-2xl sm:text-3xl md:text-4xl font-bold"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              Co říkají naši <span className="text-primary">uživatelé</span>
-            </motion.h2>
-            <motion.p
-              className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Přečtěte si zkušenosti studentů, kteří používají Čtenářský deník
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-            {/* Testimonial 1 */}
-            <motion.div
-              className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-6 shadow-lg relative"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="absolute -top-4 -left-4 text-4xl text-primary/20">
-                &ldquo;
-              </div>
-              <div className="absolute -bottom-4 -right-4 text-4xl text-primary/20">
-                &rdquo;
-              </div>
-
-              <p className="text-sm sm:text-base text-muted-foreground mb-6 relative z-10">
-                Díky Premium verzi jsem si výrazně zlepšila známky z literatury.
-                AI shrnutí mi pomáhají lépe pochopit díla a jejich kontext.
-                Možnost přizpůsobit si styl a délku shrnutí je skvělá funkce!
-              </p>
-
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  KN
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium">Karolína N.</p>
-                  <p className="text-xs text-muted-foreground">
-                    Studentka gymnázia
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Testimonial 2 */}
-            <motion.div
-              className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-6 shadow-lg relative"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="absolute -top-4 -left-4 text-4xl text-primary/20">
-                &ldquo;
-              </div>
-              <div className="absolute -bottom-4 -right-4 text-4xl text-primary/20">
-                &rdquo;
-              </div>
-
-              <p className="text-sm sm:text-base text-muted-foreground mb-6 relative z-10">
-                Basic plán mi naprosto vyhovuje. Mám dostatek prostoru pro
-                všechny knihy, které čtu, a podrobné informace o autorech mi
-                pomáhají lépe pochopit kontext děl. Za tu cenu je to skvělá
-                volba pro každého studenta.
-              </p>
-
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  JK
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium">Jakub K.</p>
-                  <p className="text-xs text-muted-foreground">Student SŠ</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Testimonial 3 */}
-            <motion.div
-              className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-6 shadow-lg relative"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="absolute -top-4 -left-4 text-4xl text-primary/20">
-                &ldquo;
-              </div>
-              <div className="absolute -bottom-4 -right-4 text-4xl text-primary/20">
-                &rdquo;
-              </div>
-
-              <p className="text-sm sm:text-base text-muted-foreground mb-6 relative z-10">
-                Konečně mám všechny knihy a poznámky na jednom místě! Podrobné
-                informace o autorech mi ušetřily spoustu času při přípravě na
-                maturitu. Neomezený počet knih v Premium verzi je přesně to, co
-                jsem potřeboval.
-              </p>
-
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  TM
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium">Tomáš M.</p>
-                  <p className="text-xs text-muted-foreground">Student SOŠ</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <motion.div
-            className="mt-12 sm:mt-16 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Button
-              variant="outline"
-              className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-300"
-              onClick={() => scrollToSection("pricing-section")}
-            >
-              Vyzkoušet Premium
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </motion.div>
-        </div>
-      </section>
+      {/* Testimonials Section - Removed temporarily until we have actual testimonials */}
 
       {/* Pricing Section */}
       <section
@@ -642,7 +511,7 @@ export default function LandingPage() {
                   <span className="text-3xl sm:text-4xl font-bold">0 Kč</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Základní funkce pro organizaci povinné četby
+                  Základní funkce pro správu čtenářských zápisků
                 </p>
                 <Button
                   className="w-full mb-6"
@@ -662,9 +531,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      Organizace knih podle kategorií
-                    </span>
+                    <span className="text-sm">Export poznámek do PDF</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -717,15 +584,11 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      Podrobné informace o autorech
-                    </span>
+                    <span className="text-sm">Základní AI shrnutí děl</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      Pokročilé formátování poznámek
-                    </span>
+                    <span className="text-sm">Pokročilý export do PDF</span>
                   </li>
                 </ul>
               </div>
@@ -770,23 +633,23 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">AI generovaná shrnutí děl</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      Podrobné informace o autorech
+                      Pokročilá AI generovaná shrnutí děl
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      Pokročilé formátování poznámek
+                      AI generované informace o autorech
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">Přizpůsobení AI shrnutí</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">Pokročilý export do PDF</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -807,8 +670,8 @@ export default function LandingPage() {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-              Všechny plány zahrnují základní funkce pro správu četby.
-              Předplatné můžete zrušit kdykoliv.
+              Všechny plány zahrnují základní funkce pro správu čtenářských
+              zápisků. Předplatné můžete zrušit kdykoliv.
               {yearlyBilling &&
                 " Při ročním předplatném ušetříte 20% oproti měsíční platbě."}
             </p>
@@ -854,10 +717,10 @@ export default function LandingPage() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 Bezplatná verze umožňuje přidat až 20 knih do vaší knihovny,
-                vytvářet základní poznámky, organizovat knihy podle kategorií a
-                zobrazovat základní informace o autorech. Je ideální pro
-                studenty, kteří potřebují organizovat menší množství povinné
-                četby.
+                vytvářet základní poznámky ke knihám, exportovat poznámky do PDF
+                a zobrazovat základní informace o autorech. Je ideální pro
+                studenty, kteří potřebují spravovat menší množství čtenářských
+                zápisků.
               </p>
             </motion.div>
 
@@ -873,11 +736,11 @@ export default function LandingPage() {
                 Jaký je rozdíl mezi Basic a Premium plánem?
               </h3>
               <p className="text-sm text-muted-foreground">
-                Basic plán (49 Kč/měsíc) nabízí až 100 knih, rozšířené poznámky,
-                podrobné informace o autorech a pokročilé formátování. Premium
-                plán (79 Kč/měsíc) přidává neomezený počet knih, AI generovaná
-                shrnutí děl s možností přizpůsobení a prioritní přístup k novým
-                funkcím.
+                Basic plán (49 Kč/měsíc) nabízí až 100 knih, rozšířené poznámky
+                ke knihám, základní AI shrnutí děl a pokročilý export do PDF.
+                Premium plán (79 Kč/měsíc) přidává neomezený počet knih,
+                pokročilá AI generovaná shrnutí děl, AI generované informace o
+                autorech a možnost přizpůsobení AI shrnutí podle vašich potřeb.
               </p>
             </motion.div>
 
@@ -931,10 +794,11 @@ export default function LandingPage() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 AI shrnutí využívají pokročilé jazykové modely k vytvoření
-                strukturovaného shrnutí díla. S Premium plánem si můžete
+                strukturovaného shrnutí díla a informací o autorech. Basic plán
+                nabízí základní AI shrnutí, zatímco Premium plán umožňuje
                 přizpůsobit styl, délku a zaměření shrnutí podle vašich potřeb.
-                Můžete si vybrat mezi akademickým, neformálním nebo kreativním
-                stylem a různými délkami shrnutí.
+                Můžete si také nechat vygenerovat podrobné informace o autorech
+                včetně jejich života, díla a literárního kontextu.
               </p>
             </motion.div>
 
