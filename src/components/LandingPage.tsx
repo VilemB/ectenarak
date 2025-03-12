@@ -527,17 +527,17 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Základní poznámky ke knihám</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Export poznámek do PDF</span>
+                    <span className="text-sm">Manuální poznámky ke knihám</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      Základní informace o autorech
+                      <span className="font-medium">3 AI kredity</span> měsíčně
                     </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">Jednoduchý formát poznámek</span>
                   </li>
                 </ul>
               </div>
@@ -579,16 +579,27 @@ export default function LandingPage() {
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      Rozšířené poznámky ke knihám
+                      <span className="font-medium">50 AI kreditů</span> měsíčně
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Základní AI shrnutí děl</span>
+                    <span className="text-sm">
+                      <span className="font-medium">AI shrnutí autorů</span> a
+                      jejich děl
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Pokročilý export do PDF</span>
+                    <span className="text-sm">
+                      <span className="font-medium">
+                        Export poznámek do PDF
+                      </span>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">Pokročilý formát poznámek</span>
                   </li>
                 </ul>
               </div>
@@ -629,32 +640,48 @@ export default function LandingPage() {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Neomezený počet knih</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      Pokročilá AI generovaná shrnutí děl
+                      <span className="font-medium">Neomezený počet knih</span>
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      AI generované informace o autorech
+                      <span className="font-medium">100 AI kreditů</span>{" "}
+                      měsíčně
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Přizpůsobení AI shrnutí</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">Pokročilý export do PDF</span>
+                    <span className="text-sm">
+                      <span className="font-medium">Pokročilá AI shrnutí</span>{" "}
+                      s delším rozsahem a analýzou postav
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      Prioritní přístup k novým funkcím
+                      <span className="font-medium">
+                        Rozšířené informace o autorech
+                      </span>{" "}
+                      včetně literárního kontextu
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      <span className="font-medium">
+                        Přizpůsobení AI shrnutí
+                      </span>{" "}
+                      dle potřeb
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      <span className="font-medium">
+                        Export poznámek do PDF
+                      </span>
                     </span>
                   </li>
                 </ul>
@@ -717,10 +744,10 @@ export default function LandingPage() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 Bezplatná verze umožňuje přidat až 20 knih do vaší knihovny,
-                vytvářet základní poznámky ke knihám, exportovat poznámky do PDF
-                a zobrazovat základní informace o autorech. Je ideální pro
-                studenty, kteří potřebují spravovat menší množství čtenářských
-                zápisků.
+                vytvářet manuální poznámky ke knihám a využít 3 AI kredity
+                měsíčně pro generování shrnutí. Je ideální pro studenty, kteří
+                potřebují spravovat menší množství čtenářských zápisků a občas
+                využít AI asistenci.
               </p>
             </motion.div>
 
@@ -736,11 +763,13 @@ export default function LandingPage() {
                 Jaký je rozdíl mezi Basic a Premium plánem?
               </h3>
               <p className="text-sm text-muted-foreground">
-                Basic plán (49 Kč/měsíc) nabízí až 100 knih, rozšířené poznámky
-                ke knihám, základní AI shrnutí děl a pokročilý export do PDF.
-                Premium plán (79 Kč/měsíc) přidává neomezený počet knih,
-                pokročilá AI generovaná shrnutí děl, AI generované informace o
-                autorech a možnost přizpůsobení AI shrnutí podle vašich potřeb.
+                Basic plán (49 Kč/měsíc) nabízí až 100 knih, 50 AI kreditů
+                měsíčně, základní AI shrnutí autorů a jejich děl a export
+                poznámek do PDF. Premium plán (79 Kč/měsíc) poskytuje neomezený
+                počet knih, 100 AI kreditů měsíčně, pokročilá AI shrnutí s
+                delším rozsahem a analýzou postav, rozšířené informace o
+                autorech včetně literárního kontextu a možnost přizpůsobení AI
+                shrnutí podle vašich potřeb.
               </p>
             </motion.div>
 
@@ -790,15 +819,17 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.5 }}
             >
               <h3 className="text-lg font-semibold mb-3">
-                Jak fungují AI generovaná shrnutí?
+                Jak fungují AI generovaná shrnutí a AI kredity?
               </h3>
               <p className="text-sm text-muted-foreground">
                 AI shrnutí využívají pokročilé jazykové modely k vytvoření
-                strukturovaného shrnutí díla a informací o autorech. Basic plán
-                nabízí základní AI shrnutí, zatímco Premium plán umožňuje
-                přizpůsobit styl, délku a zaměření shrnutí podle vašich potřeb.
-                Můžete si také nechat vygenerovat podrobné informace o autorech
-                včetně jejich života, díla a literárního kontextu.
+                strukturovaného shrnutí díla nebo informací o autorovi. Každé
+                vygenerování shrnutí spotřebuje jeden AI kredit. Bezplatná verze
+                nabízí 3 kredity měsíčně, Basic plán 50 kreditů měsíčně a
+                Premium plán 100 kreditů měsíčně. Premium plán navíc poskytuje
+                pokročilá AI shrnutí s delším rozsahem a analýzou postav,
+                rozšířené informace o autorech a možnost přizpůsobit styl a
+                zaměření shrnutí podle vašich potřeb.
               </p>
             </motion.div>
 
@@ -815,9 +846,10 @@ export default function LandingPage() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 Ano, neustále pracujeme na vylepšení aplikace. V blízké
-                budoucnosti plánujeme přidat export poznámek do PDF, sdílení
-                poznámek se spolužáky a další pokročilé funkce. Uživatelé
-                Premium plánu získají k těmto funkcím přístup jako první.
+                budoucnosti plánujeme přidat sdílení poznámek se spolužáky,
+                pokročilejší AI analýzy a další funkce pro usnadnění studia.
+                Uživatelé Premium plánu získají k těmto funkcím přístup jako
+                první.
               </p>
             </motion.div>
           </div>
