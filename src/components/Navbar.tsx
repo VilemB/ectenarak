@@ -75,6 +75,31 @@ export default function Navbar({
               </Button>
             )}
 
+            {/* Subscription button - only show when user is logged in */}
+            {user && (
+              <Button
+                onClick={() => router.push("/subscription")}
+                variant="ghost"
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+                  />
+                </svg>
+                Předplatné
+              </Button>
+            )}
+
             {/* Keyboard shortcuts button - only show when user is logged in */}
             {user && (
               <Button
@@ -242,6 +267,32 @@ export default function Navbar({
                     >
                       <Home className="h-4 w-4 mr-2" />
                       Domů
+                    </Button>
+
+                    {/* Subscription button (mobile menu) */}
+                    <Button
+                      onClick={() => {
+                        router.push("/subscription");
+                        setMobileMenuOpen(false);
+                      }}
+                      variant="ghost"
+                      className="w-full justify-start"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Předplatné
                     </Button>
 
                     {/* Keyboard shortcuts button (mobile menu) */}

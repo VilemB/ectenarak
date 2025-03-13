@@ -1,12 +1,10 @@
-import type { Metadata } from "next";
+import React from "react";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { SummaryPreferencesProvider } from "@/contexts/SummaryPreferencesContext";
-import { SessionProvider } from "@/components/SessionProvider";
-import { Toaster } from "sonner";
+import Providers from "@/components/Providers";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
+import { metadata } from "./metadata";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,13 +17,7 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-export const metadata: Metadata = {
-  title: "Čtenářský deník",
-  description: "Sledujte své čtenářské zážitky a pokrok",
-  icons: {
-    icon: "/favicon.ico",
-  },
-};
+export { metadata };
 
 export default function RootLayout({
   children,
@@ -34,26 +26,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="cs" className="h-full scroll-smooth" suppressHydrationWarning>
+      <head>
+        <title>Čtenářský Deník</title>
+        <meta
+          name="description"
+          content="Aplikace pro sledování vašich čtenářských aktivit a správu knih."
+        />
+      </head>
       <body
         className={`${inter.variable} ${poppins.variable} font-sans min-h-full flex flex-col bg-background antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SessionProvider>
-            <SummaryPreferencesProvider>
-              <div className="flex-1 flex flex-col">
-                <NavbarWrapper />
-                <main className="flex-1 pb-8">{children}</main>
-                <Footer />
-              </div>
-              <Toaster position="top-center" />
-            </SummaryPreferencesProvider>
-          </SessionProvider>
-        </ThemeProvider>
+        <Providers>
+          <div className="flex-1 flex flex-col">
+            <NavbarWrapper />
+            <main className="flex-1 pb-8">{children}</main>
+            <Footer />
+          </div>
+        </Providers>
       </body>
     </html>
   );
