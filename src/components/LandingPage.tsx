@@ -386,38 +386,38 @@ export default function LandingPage() {
           </div>
 
           {/* Pricing Cards Container */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
             {/* Free Plan */}
             <motion.div
-              className="bg-[#1a2436] border border-[#2a3548] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
+              className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 z-10">
                 <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
                   Zdarma
                 </div>
               </div>
-              <div className="p-8 flex flex-col h-full">
-                <div className="flex items-center mb-6">
+              <div className="p-6 sm:p-8 flex flex-col h-full">
+                <div className="flex items-center mb-4 sm:mb-6">
                   <div className="w-8 h-8 mr-3 flex items-center justify-center">
                     <BookText className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="text-xl font-bold">Základní</h3>
+                  <h3 className="text-lg sm:text-xl font-bold">Základní</h3>
                 </div>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-5xl font-bold">0 Kč</span>
+                <div className="flex items-baseline mb-4 sm:mb-6">
+                  <span className="text-4xl sm:text-5xl font-bold">0 Kč</span>
                   <span className="text-muted-foreground ml-2 text-sm">
                     navždy
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
                   Základní funkce pro správu zápisků
                 </p>
                 <Button
-                  className="w-full mb-10 py-6 bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground rounded-full"
+                  className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground rounded-full"
                   variant="outline"
                   onClick={() => scrollToSection("signup-section")}
                 >
@@ -426,10 +426,10 @@ export default function LandingPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </span>
                 </Button>
-                <div className="text-xs uppercase tracking-wider mb-6 font-medium text-[#6b7280] border-t border-[#2a3548] pt-6">
+                <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4 sm:pt-6">
                   ZAHRNUJE
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-3 sm:space-y-4">
                   <li className="flex items-start">
                     <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
                     <span className="text-sm">Až 20 knih v knihovně</span>
@@ -454,37 +454,37 @@ export default function LandingPage() {
 
             {/* Basic Plan */}
             <motion.div
-              className="bg-[#1a2436] border border-[#2a3548] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
+              className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 z-10">
                 <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
                   Populární
                 </div>
               </div>
-              <div className="p-8 flex flex-col h-full">
-                <div className="flex items-center mb-6">
+              <div className="p-6 sm:p-8 flex flex-col h-full">
+                <div className="flex items-center mb-4 sm:mb-6">
                   <div className="w-8 h-8 mr-3 flex items-center justify-center">
                     <BookOpen className="h-6 w-6 text-[#3b82f6]" />
                   </div>
-                  <h3 className="text-xl font-bold">Basic</h3>
+                  <h3 className="text-lg sm:text-xl font-bold">Basic</h3>
                 </div>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-5xl font-bold">
+                <div className="flex items-baseline mb-4 sm:mb-6">
+                  <span className="text-4xl sm:text-5xl font-bold">
                     {yearlyBilling ? "39 Kč" : "49 Kč"}
                   </span>
                   <span className="text-muted-foreground ml-2 text-sm">
                     / měsíc
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
                   Rozšířené funkce pro efektivnější práci
                 </p>
                 <Button
-                  className="w-full mb-10 py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
+                  className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
                   variant="default"
                   onClick={() => scrollToSection("signup-section")}
                 >
@@ -493,10 +493,10 @@ export default function LandingPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </span>
                 </Button>
-                <div className="text-xs uppercase tracking-wider mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-6">
+                <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
                   ZAHRNUJE
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-3 sm:space-y-4">
                   <li className="flex items-start">
                     <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
                     <span className="text-sm">Až 100 knih v knihovně</span>
@@ -532,37 +532,37 @@ export default function LandingPage() {
 
             {/* Premium Plan */}
             <motion.div
-              className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full md:scale-105 md:-translate-y-1 mt-8 md:mt-0"
+              className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 mt-8 md:mt-0"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 z-10">
                 <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
                   Doporučeno
                 </div>
               </div>
-              <div className="p-8 flex flex-col h-full">
-                <div className="flex items-center mb-6">
+              <div className="p-6 sm:p-8 flex flex-col h-full">
+                <div className="flex items-center mb-4 sm:mb-6">
                   <div className="w-8 h-8 mr-3 flex items-center justify-center">
                     <Sparkles className="h-6 w-6 text-[#3b82f6]" />
                   </div>
-                  <h3 className="text-xl font-bold">Premium</h3>
+                  <h3 className="text-lg sm:text-xl font-bold">Premium</h3>
                 </div>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-5xl font-bold">
+                <div className="flex items-baseline mb-4 sm:mb-6">
+                  <span className="text-4xl sm:text-5xl font-bold">
                     {yearlyBilling ? "63 Kč" : "79 Kč"}
                   </span>
                   <span className="text-muted-foreground ml-2 text-sm">
                     / měsíc
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
                   Plný přístup ke všem funkcím bez omezení
                 </p>
                 <Button
-                  className="w-full mb-10 py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
+                  className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
                   variant="default"
                   onClick={() => scrollToSection("signup-section")}
                 >
@@ -571,10 +571,10 @@ export default function LandingPage() {
                     <Sparkles className="ml-2 h-4 w-4" />
                   </span>
                 </Button>
-                <div className="text-xs uppercase tracking-wider mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-6">
+                <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
                   ZAHRNUJE VŠE Z BASIC A NAVÍC
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-3 sm:space-y-4">
                   <li className="flex items-start">
                     <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
                     <span className="text-sm">Neomezený počet knih</span>
@@ -609,7 +609,7 @@ export default function LandingPage() {
           </div>
 
           <motion.div
-            className="mt-12 sm:mt-16 text-center"
+            className="mt-10 sm:mt-16 text-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
