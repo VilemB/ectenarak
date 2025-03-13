@@ -6,17 +6,15 @@ import FeatureGate, {
   PremiumFeaturePrompt,
   BasicFeaturePrompt,
   AiCreditsExhaustedPrompt,
-  BookLimitReachedPrompt,
 } from "@/components/FeatureGate";
-import { hasRemainingAiCredits, hasReachedBookLimit } from "@/types/user";
+import { hasRemainingAiCredits } from "@/types/user";
+import { motion } from "framer-motion";
+import { Sparkles, Download } from "lucide-react";
 
 export default function ExampleUsage() {
   const { user, useAiCredit: spendAiCredit } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedText, setGeneratedText] = useState<string | null>(null);
-
-  // Example book count for demonstration
-  const currentBookCount = 4;
 
   const handleGenerateAiSummary = async () => {
     if (!user) return;
@@ -46,30 +44,45 @@ export default function ExampleUsage() {
     }
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Ukázka použití předplatného</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <div className="bg-[#1a2436] rounded-xl p-6 border border-[#2a3548]">
-          <h2 className="text-xl font-bold mb-4">Přidat novou knihu</h2>
-
-          {user && hasReachedBookLimit(user, currentBookCount) ? (
-            <BookLimitReachedPrompt />
-          ) : (
-            <div>
-              <p className="text-gray-400 mb-4">
-                Aktuální počet knih: {currentBookCount}
-              </p>
-              <button className="px-6 py-2 bg-[#3b82f6] text-white rounded-full font-medium hover:bg-blue-600 transition-all">
-                Přidat knihu
-              </button>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="max-w-5xl mx-auto"
+    >
+      {/* Interactive feature demos */}
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 md:grid-cols-2 gap-8"
+      >
+        <div className="bg-gradient-to-br from-[#1a2436] to-[#1a2436]/80 rounded-2xl p-6 border border-[#2a3548] shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="flex items-center mb-4">
+            <div className="bg-blue-500/20 p-3 rounded-xl mr-4 group-hover:bg-blue-500/30 transition-all duration-300">
+              <Sparkles className="h-6 w-6 text-blue-400" />
             </div>
-          )}
-        </div>
-
-        <div className="bg-[#1a2436] rounded-xl p-6 border border-[#2a3548]">
-          <h2 className="text-xl font-bold mb-4">AI Shrnutí knihy</h2>
+            <h2 className="text-xl font-bold">AI Shrnutí knihy</h2>
+          </div>
 
           <FeatureGate
             feature="aiAuthorSummary"
@@ -87,9 +100,11 @@ export default function ExampleUsage() {
               <div>
                 {generatedText ? (
                   <div className="mb-4">
-                    <p className="text-gray-200">{generatedText}</p>
+                    <div className="bg-[#2a3548]/50 p-4 rounded-xl text-gray-200 mb-4">
+                      {generatedText}
+                    </div>
                     <button
-                      className="mt-4 px-6 py-2 bg-[#2a3548] text-white rounded-full font-medium hover:bg-[#3b4659] transition-all"
+                      className="px-6 py-2 bg-[#2a3548] text-white rounded-full font-medium hover:bg-[#3b4659] transition-all"
                       onClick={() => setGeneratedText(null)}
                     >
                       Vygenerovat znovu
@@ -99,11 +114,13 @@ export default function ExampleUsage() {
                   <div>
                     <p className="text-gray-400 mb-4">
                       Zbývající AI kredity:{" "}
-                      {user?.subscription.aiCreditsRemaining || 0} /{" "}
-                      {user?.subscription.aiCreditsTotal || 0}
+                      <span className="text-blue-400 font-medium">
+                        {user?.subscription.aiCreditsRemaining || 0} /{" "}
+                        {user?.subscription.aiCreditsTotal || 0}
+                      </span>
                     </p>
                     <button
-                      className="px-6 py-2 bg-[#3b82f6] text-white rounded-full font-medium hover:bg-blue-600 transition-all"
+                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full font-medium transition-all shadow-lg hover:shadow-xl"
                       onClick={handleGenerateAiSummary}
                       disabled={isGenerating}
                     >
@@ -132,7 +149,10 @@ export default function ExampleUsage() {
                           Generuji...
                         </span>
                       ) : (
-                        "Vygenerovat AI shrnutí"
+                        <span className="flex items-center">
+                          <Sparkles className="mr-2 h-5 w-5" />
+                          Vygenerovat AI shrnutí
+                        </span>
                       )}
                     </button>
                   </div>
@@ -141,11 +161,14 @@ export default function ExampleUsage() {
             )}
           </FeatureGate>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-[#1a2436] rounded-xl p-6 border border-[#2a3548]">
-          <h2 className="text-xl font-bold mb-4">Export do PDF</h2>
+        <div className="bg-gradient-to-br from-[#1a2436] to-[#1a2436]/80 rounded-2xl p-6 border border-[#2a3548] shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="flex items-center mb-4">
+            <div className="bg-blue-500/20 p-3 rounded-xl mr-4 group-hover:bg-blue-500/30 transition-all duration-300">
+              <Download className="h-6 w-6 text-blue-400" />
+            </div>
+            <h2 className="text-xl font-bold">Export do PDF</h2>
+          </div>
 
           <FeatureGate
             feature="exportToPdf"
@@ -153,36 +176,19 @@ export default function ExampleUsage() {
           >
             <div>
               <p className="text-gray-400 mb-4">
-                Exportujte své poznámky a statistiky do PDF formátu.
+                Exportujte své poznámky a statistiky do PDF formátu pro snadné
+                sdílení nebo tisk.
               </p>
-              <button className="px-6 py-2 bg-[#3b82f6] text-white rounded-full font-medium hover:bg-blue-600 transition-all">
-                Exportovat do PDF
+              <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full font-medium transition-all shadow-lg hover:shadow-xl">
+                <span className="flex items-center">
+                  <Download className="mr-2 h-5 w-5" />
+                  Exportovat do PDF
+                </span>
               </button>
             </div>
           </FeatureGate>
         </div>
-
-        <div className="bg-[#1a2436] rounded-xl p-6 border border-[#2a3548]">
-          <h2 className="text-xl font-bold mb-4">
-            Detailní informace o autorovi
-          </h2>
-
-          <FeatureGate
-            feature="detailedAuthorInfo"
-            fallback={<PremiumFeaturePrompt feature="detailedAuthorInfo" />}
-          >
-            <div>
-              <p className="text-gray-400 mb-4">
-                Získejte podrobné informace o autorovi, včetně bibliografie,
-                ocenění a zajímavostí.
-              </p>
-              <button className="px-6 py-2 bg-[#3b82f6] text-white rounded-full font-medium hover:bg-blue-600 transition-all">
-                Zobrazit detaily
-              </button>
-            </div>
-          </FeatureGate>
-        </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

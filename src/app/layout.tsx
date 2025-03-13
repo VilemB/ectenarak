@@ -39,7 +39,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex-1 flex flex-col">
             <NavbarWrapper />
-            <main className="flex-1 pb-8">{children}</main>
+            <main className="flex-1 pb-8 relative z-10">{children}</main>
             <Footer />
           </div>
         </Providers>

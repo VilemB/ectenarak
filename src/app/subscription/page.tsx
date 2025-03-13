@@ -85,7 +85,7 @@ export default function SubscriptionPage() {
       <div className="fixed top-0 left-1/4 w-1/2 h-1/2 bg-blue-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
       <div className="fixed bottom-0 right-1/4 w-1/2 h-1/2 bg-purple-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-1">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-1">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -521,12 +521,11 @@ export default function SubscriptionPage() {
             className="pt-16 border-t border-[#2a3548]/50"
           >
             <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Co získáte s předplatným
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
+                Vyzkoušejte prémiové funkce
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-                Porovnejte dostupné funkce a vyberte si plán, který nejlépe
-                vyhovuje vašim potřebám.
+                Podívejte se na ukázky funkcí, které získáte s předplatným
               </p>
             </div>
 

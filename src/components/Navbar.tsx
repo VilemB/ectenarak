@@ -11,6 +11,7 @@ import {
   LogOut,
   LogIn,
   Home,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -82,20 +83,7 @@ export default function Navbar({
                 variant="ghost"
                 className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
-                  />
-                </svg>
+                <Calendar className="h-5 w-5 mr-2" />
                 Předplatné
               </Button>
             )}
@@ -278,20 +266,7 @@ export default function Navbar({
                       variant="ghost"
                       className="w-full justify-start"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <Calendar className="h-4 w-4 mr-2" />
                       Předplatné
                     </Button>
 
