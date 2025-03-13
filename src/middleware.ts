@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
   console.log(`Middleware processing: ${request.nextUrl.pathname}`);
 
   // Only protect specific routes
-  const protectedRoutes = ["/settings", "/api/user/delete"];
+  const protectedRoutes = ["/settings", "/api/user/delete", "/subscription"];
   const isProtectedRoute = protectedRoutes.some(
     (route) =>
       request.nextUrl.pathname === route ||
@@ -33,10 +33,12 @@ export async function middleware(request: NextRequest) {
   // If not authenticated and trying to access a protected route
   if (!token) {
     console.log(
-      `Redirecting from ${request.nextUrl.pathname} to home (not authenticated)`
+      `Redirecting from ${request.nextUrl.pathname} to login (not authenticated)`
     );
-    // Redirect to the home page for login
-    return NextResponse.redirect(new URL("/", request.url));
+    // Redirect to the login page with the original path as redirect parameter
+    const url = new URL("/login", request.url);
+    url.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
   }
 
   // User is authenticated, allow access to protected route

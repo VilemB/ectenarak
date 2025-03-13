@@ -1,33 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   SubscriptionTier,
   SUBSCRIPTION_LIMITS,
   SUBSCRIPTION_PRICING,
 } from "@/types/user";
+import { useRouter } from "next/navigation";
 
 export default function SubscriptionManager() {
-  const { user, updateSubscription, isLoading } = useAuth();
+  const { user, updateSubscription, isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   // Debug logging
   console.log("SubscriptionManager - Auth state:", {
     userExists: !!user,
     userData: user,
     isLoading,
+    isAuthenticated,
   });
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      console.log(
+        "SubscriptionManager - User not authenticated, redirecting to login"
+      );
+      router.push("/login?redirect=/subscription");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  // Only set state if user exists
   const [isYearly, setIsYearly] = useState<boolean>(
-    user?.subscription.isYearly || false
+    user?.subscription?.isYearly || false
   );
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(
-    user?.subscription.tier || "free"
+    user?.subscription?.tier || "free"
   );
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-  if (!user) {
-    console.log("SubscriptionManager - User not found, showing login prompt");
+  if (!isAuthenticated || !user) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold mb-4">

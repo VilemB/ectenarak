@@ -4,13 +4,12 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import ExampleUsage from "@/components/ExampleUsage";
-import { CheckCircle, LogIn, Sparkles } from "lucide-react";
+import { CheckCircle, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function SubscriptionPage() {
-  const { user, isLoading, isAuthenticated, login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [isLoginLoading, setIsLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState("");
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [yearlyBilling, setYearlyBilling] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
@@ -18,6 +17,14 @@ export default function SubscriptionPage() {
   useEffect(() => {
     console.log("Auth state:", { user, isLoading, isAuthenticated });
   }, [user, isLoading, isAuthenticated]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      console.log("User not authenticated, redirecting to login...");
+      router.push("/login?redirect=/subscription");
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   // Animation variants
   const containerVariants = {
@@ -38,26 +45,6 @@ export default function SubscriptionPage() {
       opacity: 1,
       transition: { duration: 0.6, ease: "easeOut" },
     },
-  };
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!email) {
-      setLoginError("Zadejte e-mail");
-      return;
-    }
-
-    setIsLoginLoading(true);
-    setLoginError("");
-
-    try {
-      await login(email);
-    } catch (error) {
-      console.error("Login failed:", error);
-      setLoginError("Přihlášení selhalo");
-    } finally {
-      setIsLoginLoading(false);
-    }
   };
 
   const handleSelectPlan = (plan: string) => {
@@ -87,61 +74,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  // Quick login component if user is not detected
-  const QuickLogin = () => (
-    <div className="bg-[#1a2436] rounded-xl p-8 border border-[#2a3548] mb-8">
-      <h2 className="text-2xl font-bold mb-4 text-center">Rychlé přihlášení</h2>
-      <p className="text-gray-400 mb-6 text-center">
-        Systém vás nedetekoval jako přihlášeného. Přihlaste se pro správu
-        předplatného.
-      </p>
-
-      <form onSubmit={handleLogin} className="max-w-md mx-auto">
-        <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-400 mb-1"
-          >
-            E-mail
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 bg-[#0f1729] border border-[#2a3548] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-            placeholder="vas@email.cz"
-          />
-        </div>
-
-        {loginError && (
-          <p className="text-red-500 text-sm mb-4">{loginError}</p>
-        )}
-
-        <button
-          type="submit"
-          disabled={isLoginLoading}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
-        >
-          {isLoginLoading ? (
-            <span className="flex items-center">
-              <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin mr-2"></div>
-              Přihlašování...
-            </span>
-          ) : (
-            <span className="flex items-center">
-              <LogIn className="h-4 w-4 mr-2" />
-              Přihlásit se
-            </span>
-          )}
-        </button>
-
-        <p className="mt-4 text-sm text-gray-400 text-center">
-          Pro testovací účely stačí zadat jakýkoliv e-mail.
-        </p>
-      </form>
-    </div>
-  );
+  // If we get here, the user should be authenticated
 
   return (
     <div className="bg-gradient-to-b from-[#0f1729] via-[#111a2f] to-[#0f1729] text-white min-h-screen">
@@ -172,13 +105,6 @@ export default function SubscriptionPage() {
               předplatným.
             </p>
           </motion.div>
-
-          {/* Quick Login if needed */}
-          {!user && (
-            <motion.div variants={itemVariants}>
-              <QuickLogin />
-            </motion.div>
-          )}
 
           {/* Landing Page Style Pricing */}
           <motion.div variants={itemVariants}>

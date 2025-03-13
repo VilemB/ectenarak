@@ -48,7 +48,7 @@ export default function Navbar({
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-10 border-b border-border/50 shadow-sm backdrop-blur-md"
+      className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 shadow-sm backdrop-blur-md"
       style={{ backgroundColor: "rgba(15, 23, 42, 0.9)" }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

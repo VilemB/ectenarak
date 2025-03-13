@@ -189,7 +189,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto relative pb-20 mb-16">
+    <div className="w-full max-w-md mx-auto relative">
       {/* Enhanced decorative elements */}
       <div className="absolute -top-20 -left-20 w-60 h-60 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-full blur-3xl -z-10" />
       <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-gradient-to-tl from-indigo-500/20 to-blue-500/10 rounded-full blur-3xl -z-10" />
