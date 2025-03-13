@@ -4,8 +4,9 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import ExampleUsage from "@/components/ExampleUsage";
-import { CheckCircle, Sparkles } from "lucide-react";
+import { Sparkles, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -47,8 +48,13 @@ export default function SubscriptionPage() {
     },
   };
 
-  const handleSelectPlan = (plan: string) => {
+  const handleSubscribe = (plan: string) => {
     setSelectedPlan(plan);
+
+    console.log(`Selected plan: ${plan}`);
+
+    // You could redirect to a checkout page here
+    // router.push(`/checkout?plan=${plan}`);
   };
 
   const handleUpgrade = () => {
@@ -77,15 +83,14 @@ export default function SubscriptionPage() {
   // If we get here, the user should be authenticated
 
   return (
-    <div className="bg-gradient-to-b from-[#0f1729] via-[#111a2f] to-[#0f1729] text-white min-h-screen">
+    <div className="text-white min-h-screen flex flex-col">
       {/* Subtle background pattern - fixed z-index issue */}
-      <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-0"></div>
+      <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
 
-      {/* Subtle glow effects - fixed z-index issue */}
-      <div className="fixed top-0 left-1/4 w-1/2 h-1/2 bg-blue-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-      <div className="fixed bottom-0 right-1/4 w-1/2 h-1/2 bg-purple-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+      {/* Background gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-1">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10 flex-grow">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -173,285 +178,190 @@ export default function SubscriptionPage() {
               </motion.div>
             </div>
 
-            {/* Pricing Cards Container */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+            {/* Pricing Cards */}
+            <motion.div
+              variants={itemVariants}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
               {/* Free Plan */}
               <motion.div
-                className={`bg-[#1a2436] border-2 ${
-                  selectedPlan === "Free"
-                    ? "border-[#3b82f6]"
-                    : "border-[#2a3548]"
-                } rounded-xl overflow-hidden shadow-sm hover:shadow-xl cursor-pointer transition-all duration-300 relative flex flex-col h-full ${
-                  selectedPlan === "Free" ? "ring-2 ring-[#3b82f6]/50" : ""
-                }`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                onClick={() => handleSelectPlan("Free")}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-gray-900/80 to-gray-950/80 border border-gray-800 shadow-xl flex flex-col h-full"
               >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
-                    Zdarma
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8 flex flex-col h-full">
-                  <div className="flex items-baseline mb-4 sm:mb-6">
-                    <span className="text-4xl sm:text-5xl font-bold">0 Kč</span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      navždy
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                    Základní funkce pro správu zápisků
-                  </p>
-                  <div className="flex items-center mb-8 sm:mb-10">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
-                        selectedPlan === "Free"
-                          ? "border-[#3b82f6] bg-[#3b82f6]/10"
-                          : "border-[#2a3548]"
-                      } mr-3`}
-                    >
-                      {selectedPlan === "Free" && (
-                        <div className="w-3 h-3 rounded-full bg-[#3b82f6]"></div>
-                      )}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-800/10 to-gray-900/10 pointer-events-none"></div>
+                <div className="p-8 flex flex-col flex-grow">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-4 text-gray-100">
+                      Základní
+                    </h3>
+                    <div className="flex items-baseline mb-6">
+                      <span className="text-5xl font-extrabold text-white">
+                        0 Kč
+                      </span>
+                      <span className="ml-2 text-gray-400">navždy</span>
                     </div>
-                    <span
-                      className={`text-sm font-medium ${
-                        selectedPlan === "Free"
-                          ? "text-[#3b82f6]"
-                          : "text-gray-300"
-                      }`}
+                    <ul className="space-y-4 mb-8">
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-green-400 mr-3" />
+                        <span>Až 20 knih v knihovně</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-green-400 mr-3" />
+                        <span>Manuální poznámky ke knihám</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-green-400 mr-3" />
+                        <span>
+                          <span className="font-medium">3 AI kredity</span>{" "}
+                          měsíčně
+                        </span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-green-400 mr-3" />
+                        <span>Jednoduchý formát poznámek</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-auto">
+                    <Button
+                      variant="outline"
+                      className="w-full py-6 text-lg border-gray-700 hover:bg-gray-800/50 text-gray-300"
+                      onClick={() => router.push("/dashboard")}
                     >
-                      {selectedPlan === "Free" ? "Vybráno" : "Vybrat Free plán"}
-                    </span>
+                      Pokračovat zdarma
+                    </Button>
                   </div>
-                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4 sm:pt-6">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Až 5 knih v knihovně</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Manuální poznámky ke knihám
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">3 AI kredity</span>{" "}
-                        měsíčně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Jednoduchý formát poznámek
-                      </span>
-                    </li>
-                  </ul>
                 </div>
               </motion.div>
 
-              {/* Basic Plan */}
+              {/* Standard Plan */}
               <motion.div
-                className={`bg-[#1a2436] border-2 ${
-                  selectedPlan === "Basic"
-                    ? "border-[#3b82f6]"
-                    : "border-[#2a3548]"
-                } rounded-xl overflow-hidden shadow-sm hover:shadow-xl cursor-pointer transition-all duration-300 relative flex flex-col h-full ${
-                  selectedPlan === "Basic" ? "ring-2 ring-[#3b82f6]/50" : ""
-                }`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                onClick={() => handleSelectPlan("Basic")}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+                className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-blue-900/80 to-blue-950/80 border border-blue-800/50 shadow-xl flex flex-col h-full"
               >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
-                    Populární
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8 flex flex-col h-full">
-                  <div className="flex items-baseline mb-4 sm:mb-6">
-                    <span className="text-4xl sm:text-5xl font-bold">
-                      {yearlyBilling ? "39 Kč" : "49 Kč"}
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      / měsíc
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                    Rozšířené funkce pro efektivnější práci
-                  </p>
-                  <div className="flex items-center mb-8 sm:mb-10">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
-                        selectedPlan === "Basic"
-                          ? "border-[#3b82f6] bg-[#3b82f6]/10"
-                          : "border-[#2a3548]"
-                      } mr-3`}
-                    >
-                      {selectedPlan === "Basic" && (
-                        <div className="w-3 h-3 rounded-full bg-[#3b82f6]"></div>
-                      )}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-700/10 pointer-events-none"></div>
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="p-8 flex flex-col flex-grow">
+                  <div>
+                    <div className="absolute top-4 right-4 z-10">
+                      <div className="bg-blue-900/80 text-blue-200 text-xs font-medium px-3 py-1 rounded-full">
+                        Populární
+                      </div>
                     </div>
-                    <span
-                      className={`text-sm font-medium ${
-                        selectedPlan === "Basic"
-                          ? "text-[#3b82f6]"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      {selectedPlan === "Basic"
-                        ? "Vybráno"
-                        : "Vybrat Basic plán"}
-                    </span>
-                  </div>
-                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Až 50 knih v knihovně</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">50 AI kreditů</span>{" "}
-                        měsíčně
+                    <h3 className="text-2xl font-bold mb-4 text-blue-100">
+                      Basic
+                    </h3>
+                    <div className="flex items-baseline mb-6">
+                      <span className="text-5xl font-extrabold text-white">
+                        {yearlyBilling ? "39 Kč" : "49 Kč"}
                       </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">AI shrnutí autorů</span> a
-                        jejich děl
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          Export poznámek do PDF
+                      <span className="ml-2 text-gray-400">/ měsíc</span>
+                    </div>
+                    <ul className="space-y-4 mb-8">
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-blue-400 mr-3" />
+                        <span>Až 100 knih v knihovně</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-blue-400 mr-3" />
+                        <span>
+                          <span className="font-medium">50 AI kreditů</span>{" "}
+                          měsíčně
                         </span>
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Pokročilý formát poznámek</span>
-                    </li>
-                  </ul>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-blue-400 mr-3" />
+                        <span>
+                          <span className="font-medium">AI shrnutí autorů</span>{" "}
+                          a jejich děl
+                        </span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-blue-400 mr-3" />
+                        <span>
+                          <span className="font-medium">
+                            Export poznámek do PDF
+                          </span>
+                        </span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-blue-400 mr-3" />
+                        <span>Pokročilý formát poznámek</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-auto">
+                    <Button
+                      className="w-full py-6 text-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-600/20"
+                      onClick={() => handleSubscribe("basic")}
+                    >
+                      Vybrat plán
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
 
               {/* Premium Plan */}
               <motion.div
-                className={`bg-[#1a2436] border-2 ${
-                  selectedPlan === "Premium"
-                    ? "border-[#3b82f6]"
-                    : selectedPlan
-                    ? "border-[#2a3548]"
-                    : "border-[#3b82f6]"
-                } rounded-xl overflow-hidden shadow-md hover:shadow-xl cursor-pointer transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 ${
-                  selectedPlan === "Premium" ? "ring-2 ring-[#3b82f6]/50" : ""
-                }`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                onClick={() => handleSelectPlan("Premium")}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-purple-900/80 to-purple-950/80 border border-purple-800/50 shadow-xl flex flex-col h-full"
               >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-                    Doporučeno
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8 flex flex-col h-full">
-                  <div className="flex items-baseline mb-4 sm:mb-6">
-                    <span className="text-4xl sm:text-5xl font-bold">
-                      {yearlyBilling ? "63 Kč" : "79 Kč"}
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      / měsíc
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                    Plný přístup ke všem funkcím bez omezení
-                  </p>
-                  <div className="flex items-center mb-8 sm:mb-10">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
-                        selectedPlan === "Premium"
-                          ? "border-[#3b82f6] bg-[#3b82f6]/10"
-                          : "border-[#2a3548]"
-                      } mr-3`}
-                    >
-                      {selectedPlan === "Premium" && (
-                        <div className="w-3 h-3 rounded-full bg-[#3b82f6]"></div>
-                      )}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-purple-700/10 pointer-events-none"></div>
+                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="p-8 flex flex-col flex-grow">
+                  <div>
+                    <div className="absolute top-4 right-4 z-10">
+                      <div className="bg-purple-900/80 text-white text-xs font-medium px-3 py-1 rounded-full">
+                        Doporučeno
+                      </div>
                     </div>
-                    <span
-                      className={`text-sm font-medium ${
-                        selectedPlan === "Premium"
-                          ? "text-[#3b82f6]"
-                          : "text-gray-300"
-                      }`}
+                    <h3 className="text-2xl font-bold mb-4 text-purple-100">
+                      Premium
+                    </h3>
+                    <div className="flex items-baseline mb-6">
+                      <span className="text-5xl font-extrabold text-white">
+                        {yearlyBilling ? "63 Kč" : "79 Kč"}
+                      </span>
+                      <span className="ml-2 text-gray-400">/ měsíc</span>
+                    </div>
+                    <ul className="space-y-4 mb-8">
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-400 mr-3" />
+                        <span>Neomezený počet knih</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-400 mr-3" />
+                        <span>100 AI kreditů měsíčně</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-400 mr-3" />
+                        <span>Pokročilá AI shrnutí s delším rozsahem</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-400 mr-3" />
+                        <span>Detailní informace o autorech</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-400 mr-3" />
+                        <span>Přizpůsobení AI shrnutí</span>
+                      </li>
+                      <li className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-400 mr-3" />
+                        <span>Export poznámek do PDF</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-auto">
+                    <Button
+                      className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-600/20"
+                      onClick={() => handleSubscribe("premium")}
                     >
-                      {selectedPlan === "Premium"
-                        ? "Vybráno"
-                        : "Vybrat Premium plán"}
-                    </span>
+                      Vybrat plán
+                    </Button>
                   </div>
-                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
-                    ZAHRNUJE VŠE Z BASIC A NAVÍC
-                  </div>
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Neomezený počet knih</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">100 AI kreditů měsíčně</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Pokročilá AI shrnutí s delším rozsahem
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Detailní informace o autorech
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Přizpůsobení AI shrnutí</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Export poznámek do PDF</span>
-                    </li>
-                  </ul>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
 
             {/* Upgrade Button */}
             <div className="mt-10 flex justify-center">
@@ -518,14 +428,18 @@ export default function SubscriptionPage() {
           {/* Features Section */}
           <motion.div
             variants={itemVariants}
-            className="pt-16 border-t border-[#2a3548]/50"
+            className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-gray-900/60 to-gray-950/60 border border-gray-800/50 shadow-xl p-8 md:p-12"
           >
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="text-center mb-12 relative z-10">
+              <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200">
                 Vyzkoušejte prémiové funkce
               </h2>
-              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-                Podívejte se na ukázky funkcí, které získáte s předplatným
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Podívejte se na ukázky funkcí, které získáte s předplatným.
               </p>
             </div>
 
@@ -533,42 +447,66 @@ export default function SubscriptionPage() {
           </motion.div>
 
           {/* FAQ Section */}
-          <motion.div variants={itemVariants} className="max-w-3xl mx-auto">
-            <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+          <motion.div
+            variants={itemVariants}
+            className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-gray-900/60 to-gray-950/60 border border-gray-800/50 shadow-xl p-8 md:p-12"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="text-center mb-12 relative z-10">
+              <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200">
                 Často kladené otázky
               </h2>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Odpovědi na nejčastější dotazy o našem předplatném.
+              </p>
             </div>
 
-            <div className="space-y-4">
-              {[
-                {
-                  question: "Jak mohu změnit své předplatné?",
-                  answer:
-                    "Své předplatné můžete kdykoliv změnit v sekci Předplatné. Změny se projeví okamžitě a budou účtovány poměrně k zbývajícímu období.",
-                },
-                {
-                  question: "Mohu zrušit předplatné kdykoliv?",
-                  answer:
-                    "Ano, své předplatné můžete kdykoliv zrušit. Budete moci využívat prémiové funkce až do konce aktuálního fakturačního období.",
-                },
-                {
-                  question: "Co jsou AI kredity a jak je mohu využít?",
-                  answer:
-                    "AI kredity vám umožňují využívat funkce umělé inteligence, jako je generování shrnutí knih nebo analýza textu. Každý plán obsahuje určitý počet kreditů, které se obnovují každý měsíc.",
-                },
-              ].map((faq, index) => (
-                <div
-                  key={index}
-                  className="border-b border-[#2a3548]/50 pb-4 last:border-0"
-                >
-                  <h3 className="text-xl font-semibold mb-2 flex items-center">
-                    <CheckCircle className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
-                    {faq.question}
-                  </h3>
-                  <p className="text-gray-300 pl-7">{faq.answer}</p>
-                </div>
-              ))}
+            <div className="max-w-3xl mx-auto space-y-6 relative z-10">
+              {/* FAQ Item 1 */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 shadow-lg"
+              >
+                <h3 className="text-xl font-semibold mb-3 text-white">
+                  Jak mohu zrušit předplatné?
+                </h3>
+                <p className="text-gray-300">
+                  Předplatné můžete kdykoliv zrušit ve svém profilu. Po zrušení
+                  budete moci využívat prémiové funkce až do konce aktuálního
+                  fakturačního období.
+                </p>
+              </motion.div>
+
+              {/* FAQ Item 2 */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 shadow-lg"
+              >
+                <h3 className="text-xl font-semibold mb-3 text-white">
+                  Co jsou AI kredity?
+                </h3>
+                <p className="text-gray-300">
+                  AI kredity slouží k využívání funkcí umělé inteligence, jako
+                  je generování shrnutí knih nebo analýza textu. Každý plán
+                  obsahuje určitý počet kreditů, které se obnovují každý měsíc.
+                </p>
+              </motion.div>
+
+              {/* FAQ Item 3 */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 shadow-lg"
+              >
+                <h3 className="text-xl font-semibold mb-3 text-white">
+                  Mohu změnit svůj plán?
+                </h3>
+                <p className="text-gray-300">
+                  Ano, svůj plán můžete kdykoliv upgradovat nebo downgradovat.
+                  Změny se projeví na začátku dalšího fakturačního období.
+                </p>
+              </motion.div>
             </div>
           </motion.div>
         </motion.div>

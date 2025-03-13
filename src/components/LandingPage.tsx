@@ -35,9 +35,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="w-full bg-gradient-to-b from-background via-background/95 to-background relative overflow-hidden">
+    <div className="w-full relative overflow-hidden min-h-screen flex flex-col">
       {/* Animated background elements */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      <div className="absolute inset-0 z-[-1] overflow-hidden">
         <div className="absolute top-20 left-10 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[100px] opacity-30 animate-pulse"></div>
         <div
           className="absolute bottom-40 right-20 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-accent/10 rounded-full blur-[120px] opacity-20 animate-pulse"
@@ -48,6 +48,9 @@ export default function LandingPage() {
           style={{ animationDelay: "4s" }}
         ></div>
       </div>
+
+      {/* Background gradient overlay for consistent styling */}
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
 
       {/* Landing page navbar - fixed position */}
       <motion.div
@@ -317,7 +320,7 @@ export default function LandingPage() {
       {/* Pricing Section */}
       <section
         id="pricing-section"
-        className="py-16 md:py-24 bg-[#0f1729] relative overflow-hidden"
+        className="py-16 md:py-24 relative overflow-hidden"
       >
         <div className="container px-4 md:px-6 relative z-10">
           <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">

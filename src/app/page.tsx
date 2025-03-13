@@ -751,7 +751,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <div className="relative flex-1 sm:flex-none sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground search-icon" />
                 <input
                   type="text"
                   placeholder="Hledat knihy..."
