@@ -41,7 +41,11 @@ export function useAuth() {
     options?: Parameters<typeof nextAuthSignOut>[0]
   ) => {
     console.log("SignOut called with options:", options);
-    return await nextAuthSignOut(options);
+    // Set the callbackUrl to the home page (landing page) instead of the login page
+    return await nextAuthSignOut({
+      ...options,
+      callbackUrl: "/",
+    });
   };
 
   return {

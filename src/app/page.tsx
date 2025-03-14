@@ -25,6 +25,38 @@ import {
 import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
 import LandingPage from "@/components/LandingPage";
+import Link from "next/link";
+
+// Define interface for user with subscription
+interface UserWithSubscription {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  subscription: {
+    tier: string;
+    startDate: Date;
+    aiCreditsRemaining: number;
+    aiCreditsTotal: number;
+    isYearly: boolean;
+    autoRenew: boolean;
+  };
+}
+
+// Type guard to check if user has subscription
+function hasSubscription(user: unknown): user is UserWithSubscription {
+  if (!user || typeof user !== "object") return false;
+
+  const maybeUserWithSub = user as Partial<UserWithSubscription>;
+  if (!maybeUserWithSub.subscription) return false;
+
+  const sub = maybeUserWithSub.subscription;
+  return (
+    typeof sub === "object" &&
+    "aiCreditsRemaining" in sub &&
+    "aiCreditsTotal" in sub
+  );
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -801,6 +833,108 @@ export default function Home() {
                 <X className="h-3.5 w-3.5 mr-1" />
                 Zrušit
               </Button>
+            </motion.div>
+          )}
+
+          {/* AI Credits Display */}
+          {user && !showAddForm && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-4 border border-gray-700/40 shadow-md"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="bg-primary/10 p-2 rounded-full mr-3">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-medium text-white">
+                      AI kredity
+                    </h3>
+                    <div className="flex items-center mt-1">
+                      <div className="w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden mr-3">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-blue-400"
+                          style={{
+                            width: `${
+                              ((hasSubscription(user)
+                                ? user.subscription.aiCreditsRemaining
+                                : 3) /
+                                (hasSubscription(user)
+                                  ? user.subscription.aiCreditsTotal
+                                  : 3)) *
+                              100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium text-primary">
+                        {hasSubscription(user)
+                          ? user.subscription.aiCreditsRemaining
+                          : 3}{" "}
+                        /{" "}
+                        {hasSubscription(user)
+                          ? user.subscription.aiCreditsTotal
+                          : 3}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  {(
+                    hasSubscription(user)
+                      ? user.subscription.aiCreditsRemaining ===
+                        user.subscription.aiCreditsTotal
+                      : true
+                  ) ? (
+                    <span className="text-xs bg-green-900/30 text-green-400 py-1 px-2 rounded-full border border-green-800/30">
+                      Plný počet kreditů
+                    </span>
+                  ) : hasSubscription(user) &&
+                    user.subscription.aiCreditsRemaining <=
+                      Math.ceil(user.subscription.aiCreditsTotal * 0.25) ? (
+                    <Link href="/subscription">
+                      <span className="text-xs bg-amber-900/30 text-amber-400 py-1 px-2 rounded-full border border-amber-800/30 cursor-pointer hover:bg-amber-900/40 transition-colors">
+                        Získat více kreditů
+                      </span>
+                    </Link>
+                  ) : (
+                    <span className="text-xs bg-blue-900/30 text-blue-400 py-1 px-2 rounded-full border border-blue-800/30">
+                      {(() => {
+                        // Calculate next renewal date
+                        const today = new Date();
+                        const startDate = hasSubscription(user)
+                          ? new Date(user.subscription.startDate)
+                          : new Date(today.getFullYear(), today.getMonth(), 1);
+
+                        const nextRenewal = new Date(
+                          today.getFullYear(),
+                          today.getMonth() + 1,
+                          startDate.getDate()
+                        );
+
+                        // If the renewal day has already passed this month, use this month's date
+                        if (startDate.getDate() > today.getDate()) {
+                          nextRenewal.setMonth(today.getMonth());
+                        }
+
+                        // Format date nicely in Czech
+                        const options: Intl.DateTimeFormatOptions = {
+                          day: "numeric",
+                          month: "long",
+                        };
+                        return `Obnovení ${nextRenewal.toLocaleDateString(
+                          "cs-CZ",
+                          options
+                        )}`;
+                      })()}
+                    </span>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
