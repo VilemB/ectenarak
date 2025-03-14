@@ -10,6 +10,7 @@ import {
   DEFAULT_AUTHOR_PREFERENCES,
 } from "@/lib/openai";
 import { AuthorSummaryPreferences } from "@/components/AuthorSummaryPreferencesModal";
+import { checkSubscription } from "@/middleware/subscriptionMiddleware";
 
 /**
  * Consolidated API route for author summaries
@@ -24,6 +25,18 @@ export async function POST(req: NextRequest) {
   console.log("=== CONSOLIDATED AUTHOR SUMMARY API ROUTE START ===");
 
   try {
+    // Check subscription requirements
+    const subscriptionCheck = await checkSubscription(req, {
+      feature: "aiAuthorSummary",
+      requireAiCredits: true,
+    });
+
+    if (!subscriptionCheck.allowed) {
+      return subscriptionCheck.response as NextResponse;
+    }
+
+    const user = subscriptionCheck.user;
+
     // Connect to database
     await dbConnect();
 
@@ -47,12 +60,30 @@ export async function POST(req: NextRequest) {
 
     // If bookId is provided, handle as book-specific summary
     if (bookId) {
-      return await handleBookSpecificSummary(req, author, preferences, bookId);
+      const result = await handleBookSpecificSummary(
+        req,
+        author,
+        preferences,
+        bookId
+      );
+
+      // If successful, deduct an AI credit
+      if (result.status === 200) {
+        await user.useAiCredit();
+      }
+
+      return result;
     }
-    // Otherwise handle as general author summary
-    else {
-      return await handleGeneralAuthorSummary(author, preferences);
+
+    // Otherwise, handle as general author summary
+    const result = await handleGeneralAuthorSummary(author, preferences);
+
+    // If successful, deduct an AI credit
+    if (result.status === 200) {
+      await user.useAiCredit();
     }
+
+    return result;
   } catch (error) {
     console.error("Error in author summary API:", error);
     return NextResponse.json(

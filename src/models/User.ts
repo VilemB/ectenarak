@@ -115,6 +115,68 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  // Subscription information
+  subscription: {
+    tier: {
+      type: String,
+      enum: ["free", "basic", "premium"],
+      default: "free",
+    },
+    startDate: {
+      type: Date,
+      default: Date.now,
+    },
+    endDate: {
+      type: Date,
+    },
+    isYearly: {
+      type: Boolean,
+      default: false,
+    },
+    autoRenew: {
+      type: Boolean,
+      default: true,
+    },
+    aiCreditsTotal: {
+      type: Number,
+      default: 3, // Default for free tier
+    },
+    aiCreditsRemaining: {
+      type: Number,
+      default: 3, // Default for free tier
+    },
+    lastRenewalDate: {
+      type: Date,
+      default: Date.now,
+    },
+    nextRenewalDate: {
+      type: Date,
+      default: function () {
+        const now = new Date();
+        return new Date(now.setMonth(now.getMonth() + 1));
+      },
+    },
+    paymentHistory: [
+      {
+        amount: Number,
+        currency: {
+          type: String,
+          default: "CZK",
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+        paymentMethod: String,
+        transactionId: String,
+        status: {
+          type: String,
+          enum: ["pending", "completed", "failed", "refunded"],
+          default: "completed",
+        },
+      },
+    ],
+  },
 });
 
 // Create indexes for common queries
@@ -170,6 +232,118 @@ UserSchema.methods.updateLastLogin = async function () {
   await this.save();
 };
 
+// Method to check if user has access to a specific feature
+UserSchema.methods.hasAccess = function (feature: string) {
+  const SUBSCRIPTION_LIMITS = {
+    free: {
+      maxBooks: 5,
+      aiCreditsPerMonth: 3,
+      exportToPdf: false,
+      advancedNoteFormat: false,
+      aiAuthorSummary: false,
+      aiCustomization: false,
+      detailedAuthorInfo: false,
+      extendedAiSummary: false,
+    },
+    basic: {
+      maxBooks: 50,
+      aiCreditsPerMonth: 50,
+      exportToPdf: true,
+      advancedNoteFormat: true,
+      aiAuthorSummary: true,
+      aiCustomization: false,
+      detailedAuthorInfo: false,
+      extendedAiSummary: false,
+    },
+    premium: {
+      maxBooks: Infinity,
+      aiCreditsPerMonth: 100,
+      exportToPdf: true,
+      advancedNoteFormat: true,
+      aiAuthorSummary: true,
+      aiCustomization: true,
+      detailedAuthorInfo: true,
+      extendedAiSummary: true,
+    },
+  };
+
+  // Define feature type for TypeScript
+  type FeatureKey = keyof typeof SUBSCRIPTION_LIMITS.free;
+
+  const { tier } = this.subscription || { tier: "free" };
+  return Boolean(
+    SUBSCRIPTION_LIMITS[tier as keyof typeof SUBSCRIPTION_LIMITS][
+      feature as FeatureKey
+    ]
+  );
+};
+
+// Method to check if user has reached their book limit
+UserSchema.methods.hasReachedBookLimit = async function () {
+  const bookCount = await mongoose
+    .model("Book")
+    .countDocuments({ userId: this._id });
+  const SUBSCRIPTION_LIMITS = {
+    free: { maxBooks: 5 },
+    basic: { maxBooks: 50 },
+    premium: { maxBooks: Infinity },
+  };
+
+  const { tier } = this.subscription || { tier: "free" };
+  return (
+    bookCount >=
+    SUBSCRIPTION_LIMITS[tier as keyof typeof SUBSCRIPTION_LIMITS].maxBooks
+  );
+};
+
+// Method to check if user has remaining AI credits
+UserSchema.methods.hasRemainingAiCredits = function () {
+  return (this.subscription?.aiCreditsRemaining || 0) > 0;
+};
+
+// Method to use an AI credit
+UserSchema.methods.useAiCredit = async function () {
+  if (!this.hasRemainingAiCredits()) {
+    throw new Error("No AI credits remaining");
+  }
+
+  this.subscription.aiCreditsRemaining -= 1;
+  await this.save();
+  return this.subscription.aiCreditsRemaining;
+};
+
+// Method to renew AI credits
+UserSchema.methods.renewAiCredits = async function (): Promise<{
+  tier: string;
+  aiCreditsTotal: number;
+  aiCreditsRemaining: number;
+  lastRenewalDate: Date;
+  nextRenewalDate: Date;
+}> {
+  const SUBSCRIPTION_LIMITS = {
+    free: { aiCreditsPerMonth: 3 },
+    basic: { aiCreditsPerMonth: 50 },
+    premium: { aiCreditsPerMonth: 100 },
+  };
+
+  const { tier } = this.subscription || { tier: "free" };
+  const tierType = tier as keyof typeof SUBSCRIPTION_LIMITS;
+
+  this.subscription.aiCreditsTotal =
+    SUBSCRIPTION_LIMITS[tierType].aiCreditsPerMonth;
+  this.subscription.aiCreditsRemaining =
+    SUBSCRIPTION_LIMITS[tierType].aiCreditsPerMonth;
+  this.subscription.lastRenewalDate = new Date();
+
+  // Set next renewal date to 1 month from now
+  const nextRenewal = new Date();
+  nextRenewal.setMonth(nextRenewal.getMonth() + 1);
+  this.subscription.nextRenewalDate = nextRenewal;
+
+  await this.save();
+  return this.subscription;
+};
+
 // Configure the model to include virtuals when converted to JSON
 UserSchema.set("toJSON", {
   virtuals: true,
@@ -218,11 +392,41 @@ interface IUser {
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
   };
+  subscription?: {
+    tier: "free" | "basic" | "premium";
+    startDate: Date;
+    endDate?: Date;
+    isYearly: boolean;
+    autoRenew: boolean;
+    aiCreditsTotal: number;
+    aiCreditsRemaining: number;
+    lastRenewalDate: Date;
+    nextRenewalDate: Date;
+    paymentHistory?: Array<{
+      amount: number;
+      currency: string;
+      date: Date;
+      paymentMethod?: string;
+      transactionId?: string;
+      status: "pending" | "completed" | "failed" | "refunded";
+    }>;
+  };
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date;
   updateStats(): Promise<void>;
   updateLastLogin(): Promise<void>;
+  hasAccess(feature: string): boolean;
+  hasReachedBookLimit(): Promise<boolean>;
+  hasRemainingAiCredits(): boolean;
+  useAiCredit(): Promise<number>;
+  renewAiCredits(): Promise<{
+    tier: string;
+    aiCreditsTotal: number;
+    aiCreditsRemaining: number;
+    lastRenewalDate: Date;
+    nextRenewalDate: Date;
+  }>;
 }
 
 // Create and export the User model
