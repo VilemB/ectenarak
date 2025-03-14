@@ -189,7 +189,7 @@ interface IBook {
   totalPages?: number;
   readingStartDate?: Date;
   readingCompletionDate?: Date;
-  status: "not_started" | "in_progress" | "completed";
+  status?: "not_started" | "in_progress" | "completed";
   createdAt: Date;
   updatedAt: Date;
   noteCount: number;

@@ -16,7 +16,7 @@ export interface Book {
   totalPages?: number;
   readingStartDate?: string;
   readingCompletionDate?: string;
-  status: "not_started" | "in_progress" | "completed";
+  status?: "not_started" | "in_progress" | "completed";
   createdAt: string;
   updatedAt: string;
   progressPercentage?: number;

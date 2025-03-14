@@ -5,6 +5,24 @@ import Author from "@/models/Author";
 import User from "@/models/User";
 import mongoose from "mongoose";
 
+// Define a type for mock books with only the fields we need
+interface MockBook {
+  _id: mongoose.Types.ObjectId;
+  title: string;
+  author: string;
+  authorId: mongoose.Types.ObjectId;
+  authorSummary: string | null;
+  createdAt: Date;
+  userId: string;
+  notes: Array<{
+    _id: mongoose.Types.ObjectId;
+    content: string;
+    createdAt: Date;
+    isAISummary: boolean;
+  }>;
+  [key: string]: unknown; // Allow indexing with string for sorting
+}
+
 export async function GET(request: Request) {
   try {
     // Connect to the database
@@ -19,8 +37,6 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
 
     // Filter parameters
-    const status = searchParams.get("status");
-    const genre = searchParams.get("genre");
     const author = searchParams.get("author");
     const searchTerm = searchParams.get("search");
 
@@ -30,7 +46,7 @@ export async function GET(request: Request) {
 
     console.log("API: Fetching books for userId:", userId);
     console.log("API: Pagination:", { page, limit });
-    console.log("API: Filters:", { status, genre, author, searchTerm });
+    console.log("API: Filters:", { author, searchTerm });
     console.log("API: Sorting:", { sortBy, sortOrder });
 
     if (!userId) {
@@ -49,20 +65,7 @@ export async function GET(request: Request) {
       let mockBooksForUser = mockData.books.map((book) => ({
         ...book,
         userId: userId, // Set the userId to match the requested one
-      }));
-
-      // Apply filters to mock data
-      if (status) {
-        mockBooksForUser = mockBooksForUser.filter(
-          (book) => book.status === status
-        );
-      }
-
-      if (genre && genre !== "all") {
-        mockBooksForUser = mockBooksForUser.filter(
-          (book) => book.genre && book.genre.includes(genre)
-        );
-      }
+      })) as MockBook[];
 
       if (author && author !== "all") {
         mockBooksForUser = mockBooksForUser.filter((book) =>
@@ -84,9 +87,9 @@ export async function GET(request: Request) {
         const bValue = b[sortBy];
 
         if (sortOrder === "asc") {
-          return aValue > bValue ? 1 : -1;
+          return String(aValue) > String(bValue) ? 1 : -1;
         } else {
-          return aValue < bValue ? 1 : -1;
+          return String(aValue) < String(bValue) ? 1 : -1;
         }
       });
 
@@ -107,7 +110,7 @@ export async function GET(request: Request) {
     }
 
     // Build query for MongoDB
-    const query: Record<string, any> = {};
+    const query: Record<string, unknown> = {};
 
     // Handle userId - could be ObjectId or string (for OAuth users)
     if (mongoose.Types.ObjectId.isValid(userId)) {
@@ -115,15 +118,6 @@ export async function GET(request: Request) {
     } else {
       // If not a valid ObjectId, search in both userId and legacyUserId fields
       query.$or = [{ userId: userId }, { legacyUserId: userId }];
-    }
-
-    // Add filters to query
-    if (status) {
-      query.status = status;
-    }
-
-    if (genre && genre !== "all") {
-      query.genre = genre;
     }
 
     if (author && author !== "all") {
