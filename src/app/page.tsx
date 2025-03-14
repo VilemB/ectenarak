@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   User,
   Library,
+  Coins,
 } from "lucide-react";
 import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
@@ -847,7 +848,7 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="bg-primary/10 p-2 rounded-full mr-3">
-                    <Sparkles className="h-5 w-5 text-primary" />
+                    <Coins className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="text-base font-medium text-white">
