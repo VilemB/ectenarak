@@ -9,9 +9,8 @@ import {
   Keyboard,
   Settings,
   LogOut,
-  LogIn,
   Home,
-  Calendar,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,6 +26,62 @@ interface NavbarProps {
   signOut?: () => void;
   setShowKeyboardShortcuts?: (show: boolean) => void;
 }
+
+// User illustration component
+const UserIllustration = ({
+  name,
+  email,
+}: {
+  name?: string | null;
+  email?: string | null;
+}) => {
+  // Generate a consistent color based on user name or email
+  const getColor = (identifier: string) => {
+    const colors = [
+      "bg-primary/20 text-primary",
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+      "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+    ];
+
+    // Simple hash function to get consistent index
+    let hash = 0;
+    for (let i = 0; i < identifier.length; i++) {
+      hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Get initials from name or email
+  const getInitials = (name?: string | null, email?: string | null) => {
+    if (name) {
+      return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2);
+    } else if (email) {
+      return email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const identifier = name || email || "User";
+  const colorClass = getColor(identifier);
+  const initials = getInitials(name, email);
+
+  return (
+    <div
+      className={`flex items-center justify-center rounded-full w-8 h-8 ${colorClass}`}
+    >
+      <span className="text-xs font-medium">{initials}</span>
+    </div>
+  );
+};
 
 export default function Navbar({
   user,
@@ -49,103 +104,86 @@ export default function Navbar({
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 shadow-sm backdrop-blur-md"
-      style={{ backgroundColor: "rgba(15, 23, 42, 0.9)" }}
+      transition={{ duration: 0.5 }}
+      className="sticky top-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and title */}
-          <Link href="/" className="flex items-center group">
-            <BookOpen className="h-7 w-7 text-primary mr-3 group-hover:scale-110 transition-transform duration-300" />
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-              Čtenářský deník
-            </h1>
-          </Link>
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex justify-between items-center py-3 md:py-4">
+          {/* Logo and brand */}
+          <div className="flex items-center">
+            <Link
+              href="/"
+              className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors"
+            >
+              <BookOpen className="h-6 w-6 text-primary" />
+              <span className="text-xl font-semibold hidden sm:inline-block">
+                Čtenářský deník
+              </span>
+              <span className="text-xl font-semibold sm:hidden">ČD</span>
+            </Link>
+          </div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Home button - only show when user is logged in */}
-            {user && (
-              <Button
-                onClick={navigateToHome}
-                variant="ghost"
-                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
-              >
-                <Home className="h-5 w-5 mr-2" />
-                Domů
-              </Button>
-            )}
+          <nav className="hidden md:flex items-center space-x-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={navigateToHome}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Domů
+            </Button>
 
-            {/* Subscription button - only show when user is logged in */}
-            {user && (
-              <Button
-                onClick={() => router.push("/subscription")}
-                variant="ghost"
-                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
-              >
-                <Calendar className="h-5 w-5 mr-2" />
-                Předplatné
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowKeyboardShortcuts(true)}
+            >
+              <Keyboard className="h-4 w-4 mr-2" />
+              Zkratky
+            </Button>
 
-            {/* Keyboard shortcuts button - only show when user is logged in */}
             {user && (
-              <Button
-                onClick={() => setShowKeyboardShortcuts(true)}
-                variant="ghost"
-                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
-                title="Klávesové zkratky"
-              >
-                <Keyboard className="h-5 w-5 mr-2" />
-                Zkratky
-              </Button>
-            )}
-
-            {/* User login/profile section */}
-            {user ? (
-              /* User profile dropdown - when logged in */
-              <div className="relative">
+              <div className="relative ml-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "flex items-center gap-2 text-foreground hover:bg-accent/20 transition-all duration-300 rounded-full pl-3 pr-4 py-1.5",
-                    userMenuOpen && "bg-accent/20"
+                    "flex items-center space-x-1 text-muted-foreground hover:text-foreground",
+                    userMenuOpen && "bg-accent/50 text-foreground"
                   )}
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  onBlur={() => setTimeout(() => setUserMenuOpen(false), 100)}
                 >
-                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
-                    {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                    <UserIllustration name={user.name} email={user.email} />
                   </div>
-                  <span className="max-w-[100px] truncate">
-                    {user.name || user.email}
+                  <span className="ml-2 hidden sm:inline-block">
+                    {user.name || user.email?.split("@")[0] || "Uživatel"}
                   </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      userMenuOpen ? "rotate-180" : "rotate-0"
+                    )}
+                  />
                 </Button>
 
                 <AnimatePresence>
                   {userMenuOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-56 origin-top-right bg-card rounded-lg shadow-lg border border-border/50"
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border/50 overflow-hidden z-50"
                     >
-                      <div className="p-2">
-                        <div className="px-3 py-2 border-b border-border/30 mb-1">
-                          <p className="text-sm font-medium text-foreground">
-                            {user.name || "Uživatel"}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-
+                      <div className="p-2 flex flex-col gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-primary transition-all duration-200 mb-1 rounded-md group"
+                          className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md group"
                           onClick={() => {
                             setUserMenuOpen(false);
                             navigateToSettings();
@@ -175,178 +213,111 @@ export default function Navbar({
                   )}
                 </AnimatePresence>
               </div>
-            ) : (
-              /* Login button - when not logged in */
-              <Button
-                onClick={() => router.push("/")}
-                variant="outline"
-                className="shadow-sm transition-all duration-300 hover:shadow-md hover:bg-primary/10"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                Přihlásit se
-              </Button>
             )}
-          </div>
+          </nav>
 
-          {/* Mobile navigation */}
-          <div className="md:hidden flex items-center space-x-2">
-            {/* User profile button (mobile) - when logged in */}
-            {user ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-200"
-                aria-label="User profile"
-                onClick={navigateToSettings}
-              >
-                {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-              </Button>
-            ) : (
-              /* Login button (mobile) - when not logged in */
-              <Button
-                onClick={() => router.push("/")}
-                variant="outline"
-                size="icon"
-                className="bg-primary/10 text-primary hover:bg-primary/20"
-                aria-label="Log in"
-              >
-                <LogIn className="w-5 h-5" />
-              </Button>
-            )}
-
-            {/* Mobile menu toggle */}
+          {/* Mobile menu button */}
+          <div className="flex md:hidden">
             <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              variant="outline"
-              size="icon"
-              className={cn(
-                "text-foreground hover:bg-secondary/70 bg-secondary/50",
-                mobileMenuOpen && "bg-secondary/70"
-              )}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-label="Menu"
             >
               <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden py-3"
-            >
-              {/* Mobile menu buttons */}
-              <div className="flex flex-col space-y-2">
-                {/* Mobile menu sections only for logged in users */}
-                {user ? (
-                  <>
-                    {/* Home button (mobile menu) */}
-                    <Button
-                      onClick={() => {
-                        navigateToHome();
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="ghost"
-                      className="w-full justify-start"
-                    >
-                      <Home className="h-4 w-4 mr-2" />
-                      Domů
-                    </Button>
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm"
+          >
+            <div className="container max-w-7xl mx-auto px-4 py-3 space-y-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigateToHome();
+                }}
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Domů
+              </Button>
 
-                    {/* Subscription button (mobile menu) */}
-                    <Button
-                      onClick={() => {
-                        router.push("/subscription");
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="ghost"
-                      className="w-full justify-start"
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Předplatné
-                    </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setShowKeyboardShortcuts(true);
+                }}
+              >
+                <Keyboard className="h-4 w-4 mr-2" />
+                Klávesové zkratky
+              </Button>
 
-                    {/* Keyboard shortcuts button (mobile menu) */}
-                    <Button
-                      onClick={() => {
-                        setShowKeyboardShortcuts(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="ghost"
-                      className="w-full justify-start"
-                    >
-                      <Keyboard className="h-4 w-4 mr-2" />
-                      Klávesové zkratky
-                    </Button>
-
-                    {/* User section in mobile menu */}
-                    <div className="pt-2 border-t border-border/30">
-                      <div className="flex items-center px-2 py-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium mr-3">
-                          {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-                        </div>
-                        <div className="flex-1 truncate">
-                          <p className="text-sm font-medium text-foreground">
-                            {user.name || "Uživatel"}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
+              {user && (
+                <>
+                  <div className="pt-2 border-t border-border/40">
+                    <div className="flex items-center space-x-3 px-2 py-1">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                        <UserIllustration name={user.name} email={user.email} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {user.name || user.email?.split("@")[0] || "Uživatel"}
+                        </p>
+                        {user.email && (
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
                             {user.email}
                           </p>
-                        </div>
+                        )}
                       </div>
                     </div>
+                  </div>
 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigateToSettings();
+                    }}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Nastavení
+                  </Button>
+
+                  {signOut && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-primary transition-all duration-200 rounded-md group"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        navigateToSettings();
-                      }}
+                      className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-red-400 transition-all duration-200 rounded-md"
+                      onClick={() => signOut()}
                     >
-                      <Settings className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-                      <span className="group-hover:translate-x-0.5 transition-transform">
-                        Nastavení
-                      </span>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Odhlásit se
                     </Button>
-
-                    {signOut && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => signOut()}
-                        className="justify-start text-foreground hover:bg-accent/20 hover:text-red-400 transition-all duration-200 rounded-md group w-full"
-                      >
-                        <LogOut className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-                        <span className="group-hover:translate-x-0.5 transition-transform">
-                          Odhlásit se
-                        </span>
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  /* Login button in mobile menu - when not logged in */
-                  <Button
-                    onClick={() => {
-                      router.push("/");
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full shadow-sm transition-colors"
-                  >
-                    <LogIn className="w-4 h-4 mr-1.5" />
-                    Přihlásit se
-                  </Button>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                  )}
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

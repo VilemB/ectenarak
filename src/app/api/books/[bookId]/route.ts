@@ -113,7 +113,8 @@ export async function DELETE(
 
       if (mockBookIndex === -1) {
         console.log("Book not found in mock data, bookId:", bookId);
-        return NextResponse.json({ error: "Book not found" }, { status: 404 });
+        // Return success even if the book doesn't exist
+        return NextResponse.json({ message: "Book deleted successfully" });
       }
 
       const mockBook = mockData.books[mockBookIndex];
@@ -131,8 +132,10 @@ export async function DELETE(
     // Get the book to check ownership
     const book = await Book.findById(bookId);
 
+    // If the book doesn't exist, consider it already deleted and return success
     if (!book) {
-      return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      console.log(`Book ${bookId} not found, considering it already deleted`);
+      return NextResponse.json({ message: "Book deleted successfully" });
     }
 
     // Verify that the book belongs to the current user

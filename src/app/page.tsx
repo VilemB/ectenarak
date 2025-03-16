@@ -8,20 +8,18 @@ import { Modal } from "@/components/ui/modal";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   BookOpen,
-  Search,
-  Plus,
   PlusCircle,
-  X,
-  Info,
+  Search,
   Sparkles,
+  X,
+  Loader2,
+  Info,
   AlertCircle,
   PenLine,
-  Loader2,
   ChevronRight,
   ChevronLeft,
   User,
   Library,
-  Coins,
 } from "lucide-react";
 import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
@@ -421,21 +419,24 @@ export default function Home() {
 
   const handleDeleteBook = async (bookId: string): Promise<void> => {
     try {
+      // Update local state immediately to provide instant feedback
+      setBooks(books.filter((book) => book.id !== bookId));
+
       const response = await fetch(`/api/books/${bookId}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) {
+      // If we get a 404, the book is already gone from the database
+      // so we don't need to do anything else
+      if (!response.ok && response.status !== 404) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to delete book");
       }
-
-      // Update local state after successful deletion
-      setBooks(books.filter((book) => book.id !== bookId));
     } catch (error) {
       console.error("Error deleting book:", error);
-      setError("Failed to delete book. Please try again.");
-      throw error; // Re-throw the error so the caller can handle it
+      setError("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
+      // We don't revert the UI state because the book might actually be deleted
+      // from the database even if we got an error
     }
   };
 
@@ -797,7 +798,7 @@ export default function Home() {
                 onClick={() => setShowAddForm(true)}
                 className="flex-none shadow-sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <PlusCircle className="h-4 w-4 mr-2" />
                 Přidat knihu
               </Button>
             </div>
@@ -838,65 +839,51 @@ export default function Home() {
           )}
 
           {/* AI Credits Display */}
-          {user && !showAddForm && (
+          {user && hasSubscription(user) && !showAddForm && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
               className="mb-6 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-4 border border-gray-700/40 shadow-md"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center">
                   <div className="bg-primary/10 p-2 rounded-full mr-3">
-                    <Coins className="h-5 w-5 text-primary" />
+                    <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="text-base font-medium text-white">
                       AI kredity
                     </h3>
                     <div className="flex items-center mt-1">
-                      <div className="w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden mr-3">
+                      <div className="w-24 sm:w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden mr-3">
                         <div
                           className="h-full bg-gradient-to-r from-primary to-blue-400"
                           style={{
                             width: `${
-                              ((hasSubscription(user)
-                                ? user.subscription.aiCreditsRemaining
-                                : 3) /
-                                (hasSubscription(user)
-                                  ? user.subscription.aiCreditsTotal
-                                  : 3)) *
+                              (user.subscription.aiCreditsRemaining /
+                                user.subscription.aiCreditsTotal) *
                               100
                             }%`,
                           }}
                         ></div>
                       </div>
                       <span className="text-sm font-medium text-primary">
-                        {hasSubscription(user)
-                          ? user.subscription.aiCreditsRemaining
-                          : 3}{" "}
-                        /{" "}
-                        {hasSubscription(user)
-                          ? user.subscription.aiCreditsTotal
-                          : 3}
+                        {user.subscription.aiCreditsRemaining} /{" "}
+                        {user.subscription.aiCreditsTotal}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  {(
-                    hasSubscription(user)
-                      ? user.subscription.aiCreditsRemaining ===
-                        user.subscription.aiCreditsTotal
-                      : true
-                  ) ? (
+                <div className="mt-3 sm:mt-0">
+                  {user.subscription.aiCreditsRemaining ===
+                  user.subscription.aiCreditsTotal ? (
                     <span className="text-xs bg-green-900/30 text-green-400 py-1 px-2 rounded-full border border-green-800/30">
                       Plný počet kreditů
                     </span>
-                  ) : hasSubscription(user) &&
-                    user.subscription.aiCreditsRemaining <=
-                      Math.ceil(user.subscription.aiCreditsTotal * 0.25) ? (
+                  ) : user.subscription.aiCreditsRemaining <=
+                    Math.ceil(user.subscription.aiCreditsTotal * 0.25) ? (
                     <Link href="/subscription">
                       <span className="text-xs bg-amber-900/30 text-amber-400 py-1 px-2 rounded-full border border-amber-800/30 cursor-pointer hover:bg-amber-900/40 transition-colors">
                         Získat více kreditů
@@ -906,11 +893,8 @@ export default function Home() {
                     <span className="text-xs bg-blue-900/30 text-blue-400 py-1 px-2 rounded-full border border-blue-800/30">
                       {(() => {
                         // Calculate next renewal date
+                        const startDate = new Date(user.subscription.startDate);
                         const today = new Date();
-                        const startDate = hasSubscription(user)
-                          ? new Date(user.subscription.startDate)
-                          : new Date(today.getFullYear(), today.getMonth(), 1);
-
                         const nextRenewal = new Date(
                           today.getFullYear(),
                           today.getMonth() + 1,
@@ -947,7 +931,7 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-16"
+                  className="text-center py-12 sm:py-16"
                 >
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
                     <Library className="h-8 w-8 text-primary" />
