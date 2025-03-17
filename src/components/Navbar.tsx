@@ -120,7 +120,6 @@ export default function Navbar({
               <span className="text-xl font-semibold hidden sm:inline-block">
                 Čtenářský deník
               </span>
-              <span className="text-xl font-semibold sm:hidden">ČD</span>
             </Link>
           </div>
 
@@ -253,52 +252,39 @@ export default function Navbar({
             transition={{ duration: 0.3 }}
             className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm"
           >
-            <div className="container max-w-7xl mx-auto px-4 py-3 space-y-2">
+            <div className="container max-w-7xl mx-auto px-4 py-4 space-y-3">
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md py-5"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   navigateToHome();
                 }}
               >
-                <Home className="h-4 w-4 mr-2" />
-                Domů
+                <Home className="h-5 w-5 mr-3" />
+                <span className="text-base">Domů</span>
               </Button>
 
               <Link href="/subscription" className="w-full">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                  className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md py-5"
                   onClick={() => {
                     setMobileMenuOpen(false);
                   }}
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Předplatné
+                  <Sparkles className="h-5 w-5 mr-3" />
+                  <span className="text-base">Předplatné</span>
                 </Button>
               </Link>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setShowKeyboardShortcuts(true);
-                }}
-              >
-                <Keyboard className="h-4 w-4 mr-2" />
-                Klávesové zkratky
-              </Button>
-
               {user && (
                 <>
-                  <div className="pt-2 border-t border-border/40">
-                    <div className="flex items-center space-x-3 px-2 py-1">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                  <div className="pt-3 mt-2 border-t border-border/40">
+                    <div className="flex items-center space-x-3 px-2 py-2">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center">
                         <UserIllustration name={user.name} email={user.email} />
                       </div>
                       <div className="flex-1">
@@ -317,25 +303,25 @@ export default function Navbar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                    className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md py-5"
                     onClick={() => {
                       setMobileMenuOpen(false);
                       navigateToSettings();
                     }}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Nastavení
+                    <Settings className="h-5 w-5 mr-3" />
+                    <span className="text-base">Nastavení</span>
                   </Button>
 
                   {signOut && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-red-400 transition-all duration-200 rounded-md"
+                      className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-red-400 transition-all duration-200 rounded-md py-5"
                       onClick={() => signOut()}
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Odhlásit se
+                      <LogOut className="h-5 w-5 mr-3" />
+                      <span className="text-base">Odhlásit se</span>
                     </Button>
                   )}
                 </>
