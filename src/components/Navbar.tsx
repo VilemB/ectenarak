@@ -11,6 +11,7 @@ import {
   LogOut,
   Home,
   ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -135,6 +136,17 @@ export default function Navbar({
               Domů
             </Button>
 
+            <Link href="/subscription">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Předplatné
+              </Button>
+            </Link>
+
             <Button
               variant="ghost"
               size="sm"
@@ -254,6 +266,20 @@ export default function Navbar({
                 <Home className="h-4 w-4 mr-2" />
                 Domů
               </Button>
+
+              <Link href="/subscription" className="w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Předplatné
+                </Button>
+              </Link>
 
               <Button
                 variant="ghost"

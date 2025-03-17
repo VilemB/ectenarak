@@ -13,8 +13,6 @@ import {
   User,
   Calendar,
   Copy,
-  Loader2,
-  BookOpen,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -155,7 +153,6 @@ const StudyContent = ({ content }: { content: string }) => {
 export default function BookComponent({
   book: initialBook,
   onDelete,
-  layout = "grid",
 }: BookProps) {
   // Validate the book object
   const safeBook: Book = useMemo(() => {
