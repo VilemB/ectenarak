@@ -1027,7 +1027,7 @@ export default function BookComponent({
   return (
     <motion.div
       ref={bookRef}
-      className="bg-background rounded-xl border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+      className="bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -1035,7 +1035,7 @@ export default function BookComponent({
     >
       {/* Book Header */}
       <motion.div
-        className={`p-5 cursor-pointer transition-colors duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${
+        className={`p-3 sm:p-4 cursor-pointer transition-colors duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${
           isExpanded ? "border-b border-border/40" : ""
         } ${isExpanded ? "bg-black/[0.01] dark:bg-white/[0.01]" : ""}`}
         onClick={toggleExpanded}
@@ -1048,18 +1048,18 @@ export default function BookComponent({
         whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
         whileTap={{ scale: 0.995 }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex-grow space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex-grow space-y-2">
             {/* Title and Author */}
             <div>
               <motion.h3
-                className="text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2"
+                className="text-lg sm:text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2"
                 whileHover={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
               >
                 {book.title}
               </motion.h3>
-              <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex items-center gap-1.5 mt-0.5">
                 <motion.span
                   className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors"
                   onClick={(e) => {
@@ -1251,9 +1251,9 @@ export default function BookComponent({
               opacity: { duration: 0.3, ease: "easeInOut" },
               height: { duration: 0.3, ease: "easeInOut" },
             }}
-            className="relative mx-5 my-3"
+            className="relative mx-3 sm:mx-4 my-2"
           >
-            <div className="flex flex-wrap items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between mb-2">
               <div className="flex items-center gap-2 mb-2 sm:mb-0">
                 <User className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-amber-600 dark:text-amber-400">
@@ -1377,11 +1377,11 @@ export default function BookComponent({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="p-4 sm:p-5 space-y-5 sm:space-y-6"
+            className="p-3 sm:p-4 space-y-4 sm:space-y-5"
           >
             {/* Notes Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-lg font-medium text-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-base sm:text-lg font-medium text-foreground">
                 Poznámky a shrnutí
               </h3>
               <div className="flex flex-wrap items-center gap-2">
@@ -1506,14 +1506,14 @@ export default function BookComponent({
                           y: -5,
                           transition: { duration: 0.2 },
                         }}
-                        className={`bg-background border border-border/60 rounded-lg p-4 relative ${
+                        className={`bg-background border border-border/60 rounded-lg p-3 relative ${
                           note.isAISummary
                             ? "bg-gradient-to-br from-amber-50/30 to-transparent dark:from-amber-950/10 dark:to-transparent"
                             : ""
                         }`}
                       >
                         {/* Note Header */}
-                        <div className="flex flex-wrap items-start justify-between mb-3">
+                        <div className="flex flex-wrap items-start justify-between mb-2">
                           <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
                             {note.isAISummary ? (
                               <Sparkles className="h-4 w-4 text-amber-500" />
