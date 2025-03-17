@@ -322,7 +322,7 @@ export default function LandingPage() {
         id="pricing-section"
         className="py-16 md:py-24 relative overflow-hidden"
       >
-        <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center">
+        <div className="container px-4 md:px-6 relative z-10">
           <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">
             <motion.h2
               className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground"
@@ -389,7 +389,7 @@ export default function LandingPage() {
           </div>
 
           {/* Pricing Cards Container */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl w-full mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
             {/* Free Plan */}
             <motion.div
               className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
@@ -535,7 +535,7 @@ export default function LandingPage() {
 
             {/* Premium Plan */}
             <motion.div
-              className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full"
+              className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 mt-8 md:mt-0"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
