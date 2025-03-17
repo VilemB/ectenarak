@@ -454,13 +454,13 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           exit="hidden"
-          className="bg-card border border-border/40 rounded-xl shadow-lg p-6 mb-8 relative overflow-hidden"
+          className="bg-card border border-border/40 rounded-xl shadow-lg p-7 mb-10 relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/80"></div>
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary/80 via-primary to-primary/80"></div>
 
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-7">
             <h2 className="text-xl font-semibold text-foreground flex items-center">
-              <BookOpen className="h-5 w-5 mr-2 text-primary" />
+              <BookOpen className="h-5 w-5 mr-2.5 text-primary" />
               Přidat novou knihu
             </h2>
             <Button
@@ -476,14 +476,14 @@ export default function Home() {
                 setTitleTouched(false);
                 setAuthorTouched(false);
               }}
-              className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+              className="h-9 w-9 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Progress indicator */}
-          <div className="w-full bg-muted/30 h-1 rounded-full mb-6 overflow-hidden">
+          <div className="w-full bg-muted/30 h-1.5 rounded-full mb-7 overflow-hidden">
             <motion.div
               className="h-full bg-primary"
               initial={{ width: "50%" }}
@@ -492,20 +492,20 @@ export default function Home() {
             />
           </div>
 
-          <form onSubmit={handleAddBook} className="space-y-5">
+          <form onSubmit={handleAddBook} className="space-y-6">
             {formStep === 1 ? (
               <motion.div
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"
-                className="space-y-5"
+                className="space-y-6"
               >
                 <div>
                   <label
                     htmlFor="title"
-                    className="flex items-center text-sm font-medium text-foreground mb-1.5"
+                    className="flex items-center text-sm font-medium text-foreground mb-2"
                   >
-                    <BookOpen className="h-4 w-4 mr-1.5 text-primary" />
+                    <BookOpen className="h-4 w-4 mr-2 text-primary" />
                     Název knihy
                   </label>
                   <div className="relative">
@@ -521,7 +521,7 @@ export default function Home() {
                       onFocus={() => setTitleFocus(true)}
                       onBlur={() => setTitleFocus(false)}
                       placeholder="Např. Hobit aneb Cesta tam a zase zpátky..."
-                      className={`w-full px-4 py-3 border ${
+                      className={`w-full px-4 py-3.5 border ${
                         titleTouched && !newBookTitle.trim()
                           ? "border-red-500/50"
                           : titleFocus
@@ -539,7 +539,7 @@ export default function Home() {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="text-xs text-red-500 mt-1 ml-1"
+                          className="text-xs text-red-500 mt-1.5 ml-1"
                         >
                           Prosím zadejte název knihy
                         </motion.p>
@@ -573,14 +573,14 @@ export default function Home() {
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"
-                className="space-y-5"
+                className="space-y-6"
               >
                 <div>
                   <label
                     htmlFor="author"
-                    className="flex items-center text-sm font-medium text-foreground mb-1.5"
+                    className="flex items-center text-sm font-medium text-foreground mb-2"
                   >
-                    <User className="h-4 w-4 mr-1.5 text-primary" />
+                    <User className="h-4 w-4 mr-2 text-primary" />
                     Autor
                   </label>
                   <div className="relative">
@@ -596,7 +596,7 @@ export default function Home() {
                       onFocus={() => setAuthorFocus(true)}
                       onBlur={() => setAuthorFocus(false)}
                       placeholder="Např. J.R.R. Tolkien..."
-                      className={`w-full px-4 py-3 border ${
+                      className={`w-full px-4 py-3.5 border ${
                         authorTouched && !newBookAuthor.trim()
                           ? "border-red-500/50"
                           : authorFocus
@@ -614,7 +614,7 @@ export default function Home() {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="text-xs text-red-500 mt-1 ml-1"
+                          className="text-xs text-red-500 mt-1.5 ml-1"
                         >
                           Prosím zadejte jméno autora
                         </motion.p>
@@ -627,11 +627,11 @@ export default function Home() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800/30"
+                  className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-5 border border-amber-200 dark:border-amber-800/30"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <div className="h-11 w-11 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                         <Sparkles className="h-5 w-5 text-amber-500" />
                       </div>
                     </div>
@@ -651,7 +651,7 @@ export default function Home() {
                             className="sr-only"
                           />
                           <div
-                            className={`block w-10 h-6 rounded-full transition-colors duration-200 ${
+                            className={`block w-11 h-6 rounded-full transition-colors duration-200 ${
                               includeAuthorSummary
                                 ? "bg-amber-500"
                                 : "bg-gray-300 dark:bg-gray-600"
@@ -660,12 +660,12 @@ export default function Home() {
                           <div
                             className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${
                               includeAuthorSummary
-                                ? "transform translate-x-4"
+                                ? "transform translate-x-5"
                                 : ""
                             }`}
                           ></div>
                         </div>
-                        <div className="ml-3">
+                        <div className="ml-3.5">
                           <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
                             Vygenerovat shrnutí o autorovi
                           </span>
@@ -684,14 +684,14 @@ export default function Home() {
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="mt-3 ml-13 pl-13"
+                      className="mt-4 ml-14"
                     >
-                      <div className="ml-13 pl-13 text-xs text-amber-700 dark:text-amber-300/70 bg-amber-100/50 dark:bg-amber-900/20 p-2 rounded-md border border-amber-200/50 dark:border-amber-800/20">
+                      <div className="text-xs text-amber-700 dark:text-amber-300/70 bg-amber-100/50 dark:bg-amber-900/20 p-3 rounded-md border border-amber-200/50 dark:border-amber-800/20">
                         <p>
                           <strong>Výchozí nastavení:</strong> Akademický styl,
                           střední délka, vyvážené zaměření, v češtině.
                         </p>
-                        <p className="mt-1">
+                        <p className="mt-1.5">
                           Nastavení můžete později změnit kliknutím na tlačítko
                           &quot;Aktualizovat informace o autorovi&quot;.
                         </p>
@@ -772,13 +772,13 @@ export default function Home() {
       {!user && !loading ? (
         <LandingPage />
       ) : (
-        <main className="container max-w-5xl mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <main className="container max-w-5xl mx-auto px-4 py-8 md:py-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                 Můj čtenářský deník
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1.5">
                 Zaznamenej si své myšlenky a poznámky ke knihám, které čteš
               </p>
             </div>
@@ -790,12 +790,12 @@ export default function Home() {
                   placeholder="Hledat knihy..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-border/50 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm bg-secondary/50"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border/50 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent transition-all duration-200 shadow-sm bg-secondary/50 hover:bg-secondary/70"
                 />
               </div>
               <Button
                 onClick={() => setShowAddForm(true)}
-                className="flex-none shadow-sm"
+                className="flex-none shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Přidat knihu
@@ -808,11 +808,11 @@ export default function Home() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="mb-4 text-sm text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
+              className="mb-6 text-sm text-white flex items-center bg-secondary/30 p-2.5 px-4 rounded-lg border border-border/30"
             >
-              <Search className="h-3.5 w-3.5 mr-2 text-primary" />
+              <Search className="h-3.5 w-3.5 mr-2.5 text-primary" />
               Nalezeno{" "}
-              <span className="font-medium text-primary mx-1">
+              <span className="font-medium text-primary mx-1.5">
                 {filteredBooks.length}
               </span>
               {filteredBooks.length === 1
@@ -821,17 +821,17 @@ export default function Home() {
                 ? "výsledky"
                 : "výsledků"}
               pro &quot;
-              <span className="text-white font-medium border-b border-primary/50 pb-0.5">
+              <span className="text-white font-medium border-b border-primary/50 pb-0.5 mx-1">
                 {searchQuery}
               </span>
               &quot;
               <Button
                 variant="ghost"
                 size="sm"
-                className="ml-2 h-7 px-2 text-xs hover:bg-primary/10 hover:text-primary"
+                className="ml-auto h-7 px-2.5 text-xs hover:bg-primary/10 hover:text-primary"
                 onClick={() => setSearchQuery("")}
               >
-                <X className="h-3.5 w-3.5 mr-1" />
+                <X className="h-3.5 w-3.5 mr-1.5" />
                 Zrušit
               </Button>
             </motion.div>
@@ -843,19 +843,19 @@ export default function Home() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mb-6 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-4 border border-gray-700/40 shadow-md"
+              className="mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-xl p-5 border border-gray-700/40 shadow-md"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="bg-primary/10 p-2 rounded-full mr-3">
+                  <div className="bg-primary/15 p-2.5 rounded-full mr-4">
                     <Coins className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="text-base font-medium text-white">
                       AI kredity
                     </h3>
-                    <div className="flex items-center mt-1">
-                      <div className="w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden mr-3">
+                    <div className="flex items-center mt-1.5">
+                      <div className="w-36 h-2 bg-gray-800 rounded-full overflow-hidden mr-3">
                         <div
                           className="h-full bg-gradient-to-r from-primary to-blue-400"
                           style={{
@@ -891,19 +891,19 @@ export default function Home() {
                         user.subscription.aiCreditsTotal
                       : true
                   ) ? (
-                    <span className="text-xs bg-green-900/30 text-green-400 py-1 px-2 rounded-full border border-green-800/30">
+                    <span className="text-xs bg-green-900/30 text-green-400 py-1.5 px-3 rounded-full border border-green-800/30">
                       Plný počet kreditů
                     </span>
                   ) : hasSubscription(user) &&
                     user.subscription.aiCreditsRemaining <=
                       Math.ceil(user.subscription.aiCreditsTotal * 0.25) ? (
                     <Link href="/subscription">
-                      <span className="text-xs bg-amber-900/30 text-amber-400 py-1 px-2 rounded-full border border-amber-800/30 cursor-pointer hover:bg-amber-900/40 transition-colors">
+                      <span className="text-xs bg-amber-900/30 text-amber-400 py-1.5 px-3 rounded-full border border-amber-800/30 cursor-pointer hover:bg-amber-900/40 transition-colors">
                         Získat více kreditů
                       </span>
                     </Link>
                   ) : (
-                    <span className="text-xs bg-blue-900/30 text-blue-400 py-1 px-2 rounded-full border border-blue-800/30">
+                    <span className="text-xs bg-blue-900/30 text-blue-400 py-1.5 px-3 rounded-full border border-blue-800/30">
                       {(() => {
                         // Calculate next renewal date
                         const today = new Date();
@@ -947,22 +947,23 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-16"
+                  className="text-center py-20 my-8"
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                    <Library className="h-8 w-8 text-primary" />
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+                    <Library className="h-10 w-10 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">
+                  <h2 className="text-2xl font-semibold text-foreground mb-3">
                     Zatím nemáš žádné knihy
                   </h2>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                     Začni přidáním své první knihy do čtenářského deníku.
                   </p>
                   <Button
                     onClick={() => setShowAddForm(true)}
-                    className="shadow-md"
+                    className="shadow-md hover:shadow-lg transition-all duration-200"
+                    size="lg"
                   >
-                    <PlusCircle className="h-4 w-4 mr-2" />
+                    <PlusCircle className="h-5 w-5 mr-2" />
                     Přidat první knihu
                   </Button>
                 </motion.div>
@@ -971,7 +972,7 @@ export default function Home() {
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
-                  className="grid grid-cols-1 gap-6"
+                  className="grid grid-cols-1 gap-8"
                 >
                   {(searchQuery ? filteredBooks : books).map((book) => {
                     // Debug each book before rendering
@@ -1008,23 +1009,23 @@ export default function Home() {
         title="Vítej v Čtenářském deníku!"
         showCloseButton={true}
       >
-        <div className="p-5 max-w-full overflow-x-hidden">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-primary/10 p-4 rounded-full">
-              <BookOpen className="h-10 w-10 text-primary" />
+        <div className="p-6 max-w-full overflow-x-hidden">
+          <div className="flex items-center justify-center mb-6">
+            <div className="bg-primary/15 p-5 rounded-full">
+              <BookOpen className="h-12 w-12 text-primary" />
             </div>
           </div>
 
-          <h3 className="text-lg font-medium text-center text-white">
+          <h3 className="text-xl font-medium text-center text-white mb-2">
             Tvůj osobní čtenářský deník
           </h3>
 
-          <p className="text-sm text-gray-300 text-center">
+          <p className="text-sm text-gray-300 text-center mb-8">
             Vítej v aplikaci, která ti pomůže sledovat knihy, které čteš, a
             zaznamenávat si k nim poznámky.
           </p>
 
-          <div className="space-y-3 mt-6">
+          <div className="space-y-4 mt-6">
             {[
               {
                 id: "feature-add-books",
@@ -1049,17 +1050,17 @@ export default function Home() {
               },
             ].map((feature) => (
               <div
-                className="flex items-start gap-3"
+                className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-800/30 transition-colors"
                 key={
                   feature.id ||
                   `feature-${Math.random().toString(36).substring(2, 11)}`
                 }
               >
-                <div className="bg-primary/10 p-2 rounded-full">
+                <div className="bg-primary/15 p-2.5 rounded-full">
                   {feature.icon}
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-white">
+                  <h4 className="text-base font-medium text-white mb-1">
                     {feature.title}
                   </h4>
                   <p className="text-sm text-gray-300">{feature.description}</p>
@@ -1068,8 +1069,12 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-gray-700/50 flex justify-center mt-6">
-            <Button onClick={() => setShowWelcome(false)}>
+          <div className="pt-6 border-t border-gray-700/50 flex justify-center mt-8">
+            <Button
+              onClick={() => setShowWelcome(false)}
+              className="px-6 py-2.5 shadow-md hover:shadow-lg transition-all duration-200"
+              size="lg"
+            >
               Začít používat aplikaci
             </Button>
           </div>
@@ -1083,7 +1088,7 @@ export default function Home() {
         title="Klávesové zkratky"
         showCloseButton={true}
       >
-        <div className="p-5 max-w-full overflow-x-hidden">
+        <div className="p-6 max-w-full overflow-x-hidden">
           <div className="space-y-4">
             <div className="space-y-2">
               {[
@@ -1108,19 +1113,28 @@ export default function Home() {
                     shortcut.id ||
                     `shortcut-${Math.random().toString(36).substring(2, 11)}`
                   }
-                  className="flex justify-between items-center py-2 border-b border-gray-700/50"
+                  className="flex justify-between items-center py-3 px-4 border-b border-gray-700/50 rounded-lg hover:bg-gray-800/20 transition-colors"
                 >
-                  <span className="text-sm text-gray-300">
+                  <span className="text-sm text-gray-300 flex items-center">
+                    {shortcut.label === "Vyhledávání" && (
+                      <Search className="h-4 w-4 mr-2 text-primary/70" />
+                    )}
+                    {shortcut.label === "Přidat novou knihu" && (
+                      <Plus className="h-4 w-4 mr-2 text-primary/70" />
+                    )}
+                    {shortcut.label === "Zavřít formulář" && (
+                      <X className="h-4 w-4 mr-2 text-primary/70" />
+                    )}
                     {shortcut.label}
                   </span>
-                  <kbd className="px-2 py-1 bg-gray-800 rounded-md text-xs font-mono text-gray-300">
+                  <kbd className="px-3 py-1.5 bg-gray-800 rounded-md text-xs font-mono text-gray-300 border border-gray-700/50 shadow-sm">
                     {shortcut.shortcut}
                   </kbd>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-start gap-3 mt-4 bg-amber-500/10 p-3 rounded-md">
+            <div className="flex items-start gap-3 mt-6 bg-amber-500/10 p-4 rounded-lg border border-amber-500/20">
               <Info className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-400">
                 Klávesové zkratky fungují pouze když není aktivní žádné textové
