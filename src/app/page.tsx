@@ -845,9 +845,9 @@ export default function Home() {
               transition={{ duration: 0.3 }}
               className="mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-xl p-5 border border-gray-700/40 shadow-md"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center">
-                  <div className="bg-primary/15 p-2.5 rounded-full mr-4">
+                  <div className="bg-primary/15 p-2.5 rounded-full mr-4 flex-shrink-0">
                     <Coins className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -855,7 +855,7 @@ export default function Home() {
                       AI kredity
                     </h3>
                     <div className="flex items-center mt-1.5">
-                      <div className="w-36 h-2 bg-gray-800 rounded-full overflow-hidden mr-3">
+                      <div className="w-28 sm:w-36 h-2 bg-gray-800 rounded-full overflow-hidden mr-3">
                         <div
                           className="h-full bg-gradient-to-r from-primary to-blue-400"
                           style={{
@@ -871,7 +871,7 @@ export default function Home() {
                           }}
                         ></div>
                       </div>
-                      <span className="text-sm font-medium text-primary">
+                      <span className="text-sm font-medium text-primary whitespace-nowrap">
                         {hasSubscription(user)
                           ? user.subscription.aiCreditsRemaining
                           : 3}{" "}
@@ -884,26 +884,26 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div>
+                <div className="ml-12 sm:ml-0 mt-1 sm:mt-0">
                   {(
                     hasSubscription(user)
                       ? user.subscription.aiCreditsRemaining ===
                         user.subscription.aiCreditsTotal
                       : true
                   ) ? (
-                    <span className="text-xs bg-green-900/30 text-green-400 py-1.5 px-3 rounded-full border border-green-800/30">
+                    <span className="text-xs bg-green-900/30 text-green-400 py-1.5 px-3 rounded-full border border-green-800/30 inline-block">
                       Plný počet kreditů
                     </span>
                   ) : hasSubscription(user) &&
                     user.subscription.aiCreditsRemaining <=
                       Math.ceil(user.subscription.aiCreditsTotal * 0.25) ? (
                     <Link href="/subscription">
-                      <span className="text-xs bg-amber-900/30 text-amber-400 py-1.5 px-3 rounded-full border border-amber-800/30 cursor-pointer hover:bg-amber-900/40 transition-colors">
+                      <span className="text-xs bg-amber-900/30 text-amber-400 py-1.5 px-3 rounded-full border border-amber-800/30 cursor-pointer hover:bg-amber-900/40 transition-colors inline-block">
                         Získat více kreditů
                       </span>
                     </Link>
                   ) : (
-                    <span className="text-xs bg-blue-900/30 text-blue-400 py-1.5 px-3 rounded-full border border-blue-800/30">
+                    <span className="text-xs bg-blue-900/30 text-blue-400 py-1.5 px-3 rounded-full border border-blue-800/30 inline-block">
                       {(() => {
                         // Calculate next renewal date
                         const today = new Date();

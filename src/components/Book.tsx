@@ -1048,18 +1048,18 @@ export default function BookComponent({
         whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
         whileTap={{ scale: 0.995 }}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-grow space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-grow space-y-2.5">
             {/* Title and Author */}
             <div>
               <motion.h3
-                className="text-xl font-medium text-foreground group-hover:text-primary transition-colors"
+                className="text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2"
                 whileHover={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
               >
                 {book.title}
               </motion.h3>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 mt-1">
                 <motion.span
                   className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors"
                   onClick={(e) => {
@@ -1088,7 +1088,7 @@ export default function BookComponent({
             </div>
 
             {/* Book Metadata */}
-            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <div className="flex items-center">
                 <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
                 <span>{formatDate(book.createdAt)}</span>
@@ -1110,9 +1110,9 @@ export default function BookComponent({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-wrap gap-2 mt-3 sm:mt-0 sm:flex-row">
             {book.authorSummary ? (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1194,7 +1194,7 @@ export default function BookComponent({
               </Button>
             )}
 
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 ml-auto sm:ml-0">
               <ExportButton book={book} notes={notes} />
 
               <Button
@@ -1253,8 +1253,8 @@ export default function BookComponent({
             }}
             className="relative mx-5 my-3"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between mb-3">
+              <div className="flex items-center gap-2 mb-2 sm:mb-0">
                 <User className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-amber-600 dark:text-amber-400">
                   Informace o autorovi
@@ -1302,7 +1302,7 @@ export default function BookComponent({
               </div>
             </div>
 
-            <motion.div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 border border-amber-200/50 dark:border-amber-800/30 shadow-inner">
+            <motion.div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-3 sm:p-4 border border-amber-200/50 dark:border-amber-800/30 shadow-inner">
               {/* Close button - positioned absolutely in the top-right corner */}
               <CloseButtonTop
                 onClick={handleCloseAuthorInfo}
@@ -1314,7 +1314,7 @@ export default function BookComponent({
               <div className="flex justify-between items-start mb-3">
                 <div></div> {/* Empty div for spacing */}
                 <motion.div
-                  className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+                  className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
@@ -1337,7 +1337,7 @@ export default function BookComponent({
               </div>
 
               {/* Study-friendly content */}
-              <div className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="prose prose-sm dark:prose-invert max-w-none text-sm sm:text-base">
                 <StudyContent content={book.authorSummary} />
               </div>
 
@@ -1346,7 +1346,7 @@ export default function BookComponent({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.2 }}
-                className="mt-5 pt-3 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
+                className="mt-4 sm:mt-5 pt-3 border-t border-amber-200/50 dark:border-amber-800/30 flex flex-wrap justify-between items-center gap-2"
               >
                 <div className="flex items-center gap-4">
                   <DeleteButton
@@ -1375,26 +1375,16 @@ export default function BookComponent({
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{
-              opacity: 0,
-              height: 0,
-              transition: {
-                opacity: { duration: 0.2, ease: "easeOut" },
-                height: { duration: 0.3, ease: "easeInOut" },
-              },
-            }}
-            transition={{
-              opacity: { duration: 0.3, ease: "easeInOut" },
-              height: { duration: 0.3, ease: "easeInOut" },
-            }}
-            className="p-5 space-y-6"
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="p-4 sm:p-5 space-y-5 sm:space-y-6"
           >
             {/* Notes Section */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-lg font-medium text-foreground">
                 Poznámky a shrnutí
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Note Filter Buttons */}
                 <div className="flex items-center bg-muted rounded-md p-0.5">
                   <motion.button
@@ -1523,8 +1513,8 @@ export default function BookComponent({
                         }`}
                       >
                         {/* Note Header */}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-start justify-between mb-3">
+                          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
                             {note.isAISummary ? (
                               <Sparkles className="h-4 w-4 text-amber-500" />
                             ) : (
@@ -1758,6 +1748,7 @@ export default function BookComponent({
                 isSubmitting={isAddingNote}
                 placeholder="Přidejte poznámku k této knize..."
                 buttonText="Přidat poznámku"
+                className="w-full"
               />
             </div>
           </motion.div>
@@ -1776,8 +1767,8 @@ export default function BookComponent({
                 exit={{ opacity: 0, y: -10 }}
                 className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-md"
               >
-                <div className="flex items-center">
-                  <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                <div className="flex items-start sm:items-center">
+                  <AlertCircle className="h-4 w-4 text-red-500 mr-2 mt-0.5 sm:mt-0 flex-shrink-0" />
                   <p className="text-sm text-red-600 dark:text-red-400">
                     {error.message}
                   </p>

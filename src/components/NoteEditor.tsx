@@ -40,6 +40,7 @@ interface NoteEditorProps {
   maxRows?: number;
   showPreview?: boolean;
   buttonText?: string;
+  className?: string;
 }
 
 export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
@@ -56,6 +57,7 @@ export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
       maxRows = 10,
       showPreview = false,
       buttonText = "Uložit",
+      className = "",
     },
     ref
   ) => {
@@ -204,7 +206,9 @@ export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
     };
 
     return (
-      <div className="w-full rounded-lg border border-border/60 bg-background/80 shadow-sm transition-all duration-200 hover:shadow">
+      <div
+        className={`w-full rounded-lg border border-border/60 bg-background/80 shadow-sm transition-all duration-200 hover:shadow ${className}`}
+      >
         {/* Simplified Toolbar - only essential formatting options */}
         <div className="flex items-center justify-between border-b border-border/40 bg-secondary/30 px-2 py-1 rounded-t-lg">
           <div className="flex flex-wrap items-center gap-0.5">
