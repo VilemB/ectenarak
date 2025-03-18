@@ -16,8 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { deleteUser } from "@/lib/api";
-import { motion } from "framer-motion";
-import { LogOut, Shield, User, AlertTriangle } from "lucide-react";
+import { LogOut, Shield, User, AlertTriangle, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, loading, error, sessionStatus, isAuthenticated, signOut } =
@@ -42,7 +41,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       console.log("Not authenticated, redirecting to home");
-      toast.error("Please sign in to access settings");
+      toast.error("Přihlaste se pro přístup k nastavení");
       router.push("/");
     }
   }, [loading, isAuthenticated, router]);
@@ -54,13 +53,13 @@ export default function SettingsPage() {
     try {
       setIsDeleting(true);
       await deleteUser();
-      toast.success("Your account has been deleted");
+      toast.success("Váš účet byl smazán");
       // Sign out the user after successful account deletion
       await signOut();
       router.push("/");
     } catch (error) {
       console.error("Error deleting account:", error);
-      toast.error("Failed to delete account");
+      toast.error("Nepodařilo se smazat účet");
     } finally {
       setIsDeleting(false);
       setDeleteConfirmation(false);
@@ -70,32 +69,11 @@ export default function SettingsPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="container max-w-4xl mx-auto py-10 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">
-                Settings
-              </CardTitle>
-              <CardDescription className="text-center text-muted-foreground">
-                Loading your account information...
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center py-8">
-              <div className="animate-pulse flex space-x-4 items-center">
-                <div className="rounded-full bg-primary/20 h-12 w-12"></div>
-                <div className="space-y-3">
-                  <div className="h-2 bg-primary/20 rounded w-32"></div>
-                  <div className="h-2 bg-primary/10 rounded w-24"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Načítání informací o účtu...</p>
+        </div>
       </div>
     );
   }
@@ -103,35 +81,29 @@ export default function SettingsPage() {
   // Prevent rendering if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="container max-w-4xl mx-auto py-10 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">
-                Settings
-              </CardTitle>
-              <CardDescription className="text-center text-red-400 flex items-center justify-center">
-                <Shield className="h-4 w-4 mr-2" />
-                Authentication required
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center py-6 text-muted-foreground">
-              Please sign in to access your account settings.
-            </CardContent>
-            <CardFooter className="flex justify-center pb-6">
-              <Button
-                onClick={() => router.push("/")}
-                className="px-6 transition-all duration-300 hover:scale-105"
-              >
-                Return to Home
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-md border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              Nastavení
+            </CardTitle>
+            <CardDescription className="text-center text-red-400 flex items-center justify-center">
+              <Shield className="h-4 w-4 mr-2" />
+              Vyžadována autentizace
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center py-6 text-muted-foreground">
+            Pro přístup k nastavení účtu se prosím přihlaste.
+          </CardContent>
+          <CardFooter className="flex justify-center pb-6">
+            <Button
+              onClick={() => router.push("/")}
+              className="px-6 transition-all duration-300 hover:scale-105"
+            >
+              Zpět na hlavní stránku
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
@@ -139,183 +111,159 @@ export default function SettingsPage() {
   // Show error state
   if (error) {
     return (
-      <div className="container max-w-4xl mx-auto py-10 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">
-                Settings
-              </CardTitle>
-              <CardDescription className="text-center text-red-400 flex items-center justify-center">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Error loading your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center py-6 text-red-400">
-              {error.message}
-            </CardContent>
-            <CardFooter className="flex justify-center pb-6">
-              <Button
-                onClick={() => router.push("/")}
-                className="px-6 transition-all duration-300 hover:scale-105"
-              >
-                Return to Home
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-md border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              Nastavení
+            </CardTitle>
+            <CardDescription className="text-center text-red-400 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Chyba při načítání účtu
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center py-6 text-red-400">
+            {error.message}
+          </CardContent>
+          <CardFooter className="flex justify-center pb-6">
+            <Button
+              onClick={() => router.push("/")}
+              className="px-6 transition-all duration-300 hover:scale-105"
+            >
+              Zpět na hlavní stránku
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
 
   // Show content when user is available
   return (
-    <div className="container max-w-4xl mx-auto py-10 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="space-y-1 border-b border-border/20 pb-7">
-            <CardTitle className="text-2xl font-bold">
-              Account Settings
-            </CardTitle>
-            <CardDescription>
-              Manage your profile and account preferences
-            </CardDescription>
-          </CardHeader>
+    <div className="container max-w-6xl mx-auto py-8 px-4">
+      <div className="w-full bg-card/90 backdrop-blur-sm border border-border/30 rounded-xl shadow-lg overflow-hidden">
+        {/* Header Section */}
+        <div className="px-8 py-6 border-b border-border/10">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Nastavení účtu
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Správa vašeho profilu a předvoleb účtu
+          </p>
+        </div>
 
-          <CardContent className="space-y-6 pt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-              className="flex items-center gap-4 p-4 rounded-lg bg-primary/5 border border-primary/10"
-            >
-              <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl shrink-0">
-                {user?.name
-                  ? user.name.charAt(0).toUpperCase()
-                  : user?.email?.charAt(0).toUpperCase()}
-              </div>
-              <div className="space-y-1 overflow-hidden">
-                <p className="font-medium text-foreground">
-                  {user?.name || "User"}
-                </p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {user?.email}
-                </p>
-              </div>
-            </motion.div>
-
-            <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="space-y-2"
-              >
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-medium flex items-center"
-                >
-                  <User className="h-3.5 w-3.5 mr-1.5 text-primary" />
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  value={user?.email || ""}
-                  disabled
-                  className="bg-secondary/50 border-border/50 focus:border-primary/50"
-                />
-                <p className="text-xs text-muted-foreground pl-1">
-                  Your login email address
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
-                className="space-y-2"
-              >
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium flex items-center"
-                >
-                  <User className="h-3.5 w-3.5 mr-1.5 text-primary" />
-                  Display Name
-                </Label>
-                <Input
-                  id="name"
-                  value={user?.name || ""}
-                  disabled
-                  className="bg-secondary/50 border-border/50 focus:border-primary/50"
-                />
-                <p className="text-xs text-muted-foreground pl-1">
-                  Your display name in the application
-                </p>
-              </motion.div>
+        <div className="p-8 space-y-8">
+          {/* Profile Card */}
+          <div className="flex items-center gap-5 p-5 rounded-xl bg-primary/5 border border-primary/10 transition-colors hover:bg-primary/8">
+            <div className="h-14 w-14 rounded-full bg-background flex items-center justify-center text-primary font-semibold text-xl shadow-sm">
+              {user?.name
+                ? user.name.charAt(0).toUpperCase()
+                : user?.email?.charAt(0).toUpperCase()}
             </div>
-          </CardContent>
+            <div className="space-y-1 overflow-hidden">
+              <p className="font-medium text-lg text-foreground">
+                {user?.name || "Uživatel"}
+              </p>
+              <p className="text-sm text-muted-foreground truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
 
-          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 border-t border-border/20 pt-6">
+          {/* Form Fields */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="flex items-center text-sm font-medium"
+              >
+                <User className="h-4 w-4 mr-2 text-primary opacity-70" />
+                E-mailová adresa
+              </Label>
+              <Input
+                id="email"
+                value={user?.email || ""}
+                disabled
+                className="bg-background/50 border-border/40 transition-colors focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5 ml-1">
+                Váš přihlašovací e-mail
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="name"
+                className="flex items-center text-sm font-medium"
+              >
+                <User className="h-4 w-4 mr-2 text-primary opacity-70" />
+                Zobrazované jméno
+              </Label>
+              <Input
+                id="name"
+                value={user?.name || ""}
+                disabled
+                className="bg-background/50 border-border/40 transition-colors focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5 ml-1">
+                Vaše jméno v aplikaci
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-8 py-6 border-t border-border/10 bg-muted/20">
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
             <Button
               variant="outline"
               onClick={() => router.push("/")}
-              className="w-full sm:w-auto transition-all duration-300 hover:bg-secondary/80"
+              className="w-full sm:w-auto hover:bg-secondary/50 transition-colors"
             >
-              Return to Home
+              Zpět na hlavní stránku
             </Button>
 
             {deleteConfirmation ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto"
-              >
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   onClick={() => setDeleteConfirmation(false)}
-                  className="border-red-400/30 text-red-400 hover:bg-red-400/10 transition-all duration-300"
+                  className="border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors"
                 >
-                  Cancel
+                  Zrušit
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={handleDeleteAccount}
                   disabled={isDeleting}
-                  className="transition-all duration-300 hover:bg-red-600"
+                  className="bg-red-500 hover:bg-red-600 transition-colors"
                 >
                   {isDeleting ? (
                     <>
-                      <span className="animate-pulse">Deleting...</span>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Mazání...
                     </>
                   ) : (
                     <>
                       <LogOut className="h-4 w-4 mr-2" />
-                      Confirm Delete
+                      Potvrdit smazání
                     </>
                   )}
                 </Button>
-              </motion.div>
+              </div>
             ) : (
               <Button
                 variant="outline"
                 onClick={() => setDeleteConfirmation(true)}
-                className="w-full sm:w-auto border-red-400/30 text-red-400 hover:bg-red-400/10 transition-all duration-300"
+                className="w-full sm:w-auto border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Delete Account
+                Smazat účet
               </Button>
             )}
-          </CardFooter>
-        </Card>
-      </motion.div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
