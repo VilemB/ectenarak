@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   PenLine,
   Sparkles,
@@ -538,7 +539,7 @@ export default function BookComponent({
 
   const handleConfirmDelete = async () => {
     if (!book.id) {
-      showErrorMessage("Nelze smazat knihu bez ID");
+      toast.error("Nelze smazat knihu bez ID");
       setDeleteModal({ isOpen: false, type: "book", isLoading: false });
       return;
     }
@@ -549,10 +550,10 @@ export default function BookComponent({
     try {
       // Call the onDelete function passed from the parent
       await onDelete(book.id);
-      showSuccessMessage("Kniha byla úspěšně smazána");
+      toast.success("Kniha byla úspěšně smazána");
     } catch (error) {
       console.error("Error deleting book:", error);
-      showErrorMessage("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
+      toast.error("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
     } finally {
       setDeleteModal({ isOpen: false, type: "book", isLoading: false });
     }
@@ -583,14 +584,15 @@ export default function BookComponent({
           (note: {
             _id: string;
             content: string;
+            type: string;
             createdAt: string;
-            isAISummary?: boolean;
+            updatedAt: string;
           }) => ({
             id: note._id,
-            bookId: book.id,
             content: note.content,
-            createdAt: new Date(note.createdAt).toISOString(),
-            isAISummary: note.isAISummary || false,
+            type: note.type,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
           })
         );
 
@@ -601,11 +603,14 @@ export default function BookComponent({
           notes: formattedNotes,
         }));
 
-        // Show success message
-        showSuccessMessage("Poznámka byla úspěšně smazána");
-      } catch (error) {
+        toast.success("Poznámka byla úspěšně smazána");
+      } catch (error: unknown) {
         console.error("Error deleting note:", error);
-        showErrorMessage("Nepodařilo se smazat poznámku");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Nepodařilo se smazat poznámku"
+        );
       } finally {
         // Always close the delete modal, even if there was an error
         setDeleteModal({ isOpen: false, type: "book", isLoading: false });
@@ -759,43 +764,29 @@ export default function BookComponent({
     setDeleteModal((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      // Call the DELETE endpoint
-      const apiUrl = `/api/author-summary?bookId=${book.id}`;
-      console.log("API URL:", apiUrl);
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`/api/books/${book.id}/authorSummary`, {
         method: "DELETE",
       });
 
-      console.log("API response status:", response.status);
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API error response:", errorData);
-        throw new Error(
-          errorData.error || "Nepodařilo se smazat informace o autorovi"
-        );
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete author summary");
       }
 
-      const data = await response.json();
-      console.log("API success response:", data);
-
-      // Update the book state to remove the author summary
-      setBook((prevBook) => ({
-        ...prevBook,
+      // Update the book state
+      await response.json(); // Process response but no need to store the data
+      setBook((prev) => ({
+        ...prev,
         authorSummary: undefined,
       }));
 
-      // Close the author info panel
-      setIsAuthorInfoVisible(false);
-
-      showSuccessMessage("Informace o autorovi byly úspěšně smazány");
-    } catch (error) {
+      toast.success("Shrnutí autora bylo úspěšně smazáno");
+    } catch (error: unknown) {
       console.error("Error deleting author summary:", error);
-      showErrorMessage(
+      toast.error(
         error instanceof Error
           ? error.message
-          : "Nepodařilo se smazat informace o autorovi"
+          : "Nepodařilo se smazat shrnutí autora"
       );
     } finally {
       // Reset the delete modal state
