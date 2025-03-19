@@ -12,6 +12,7 @@ import {
   Home,
   ChevronDown,
   Sparkles,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -141,7 +142,7 @@ export default function Navbar({
                 size="sm"
                 className="text-muted-foreground hover:text-foreground"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Wallet className="h-4 w-4 mr-2" />
                 Předplatné
               </Button>
             </Link>
@@ -275,7 +276,7 @@ export default function Navbar({
                     setMobileMenuOpen(false);
                   }}
                 >
-                  <Sparkles className="h-5 w-5 mr-3" />
+                  <Wallet className="h-5 w-5 mr-3" />
                   <span className="text-base">Předplatné</span>
                 </Button>
               </Link>
