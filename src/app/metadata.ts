@@ -21,6 +21,6 @@ export const metadata: Metadata = {
       type: "image/png",
       sizes: "180x180",
     },
-    shortcut: { url: "/logo-symbol.png" },
+    shortcut: { url: "/favicon.ico" },
   },
 };

@@ -13,6 +13,7 @@ import {
   ChevronDown,
   BookText,
 } from "lucide-react";
+import Logo from "@/components/Logo";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -62,7 +63,7 @@ export default function LandingPage() {
       >
         <div className="container max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <Logo size="md" showText={false} />
             <span className="text-lg sm:text-xl font-bold">
               Čtenářský deník
             </span>
@@ -164,7 +165,6 @@ export default function LandingPage() {
 
                 {/* Placeholder for app screenshot - fixed z-index */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm z-20">
-                  <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-primary/50 mb-4" />
                   <p className="text-muted-foreground text-center px-4 text-sm sm:text-base">
                     Zde bude screenshot aplikace
                     <br />
@@ -322,7 +322,7 @@ export default function LandingPage() {
         id="pricing-section"
         className="py-16 md:py-24 relative overflow-hidden"
       >
-        <div className="container px-4 md:px-6 relative z-10">
+        <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
           <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">
             <motion.h2
               className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground"
@@ -388,227 +388,235 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Pricing Cards Container */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
-            {/* Free Plan */}
-            <motion.div
-              className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="absolute top-4 right-4 z-10">
-                <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
-                  Zdarma
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 flex flex-col h-full">
-                <div className="flex items-center mb-4 sm:mb-6">
-                  <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                    <BookText className="h-6 w-6 text-muted-foreground" />
+          {/* Pricing Cards Container with flex wrapper */}
+          <div className="flex justify-center w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl w-full px-0 sm:px-4">
+              {/* Free Plan */}
+              <motion.div
+                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
+                    Zdarma
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold">Základní</h3>
                 </div>
-                <div className="flex items-baseline mb-4 sm:mb-6">
-                  <span className="text-4xl sm:text-5xl font-bold">0 Kč</span>
-                  <span className="text-muted-foreground ml-2 text-sm">
-                    navždy
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                  Základní funkce pro správu zápisků
-                </p>
-                <Button
-                  className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground rounded-full"
-                  variant="outline"
-                  onClick={() => scrollToSection("signup-section")}
-                >
-                  <span className="flex items-center justify-center font-medium">
-                    Začít zdarma
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </span>
-                </Button>
-                <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4 sm:pt-6">
-                  ZAHRNUJE
-                </div>
-                <ul className="space-y-3 sm:space-y-4">
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Až 20 knih v knihovně</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Manuální poznámky ke knihám</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">
-                      <span className="font-medium">3 AI kredity</span> měsíčně
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Jednoduchý formát poznámek</span>
-                  </li>
-                </ul>
-              </div>
-            </motion.div>
-
-            {/* Basic Plan */}
-            <motion.div
-              className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="absolute top-4 right-4 z-10">
-                <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
-                  Populární
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 flex flex-col h-full">
-                <div className="flex items-center mb-4 sm:mb-6">
-                  <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-[#3b82f6]" />
+                <div className="p-6 sm:p-8 flex flex-col h-full">
+                  <div className="flex items-center mb-4 sm:mb-6">
+                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
+                      <BookText className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold">Základní</h3>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold">Basic</h3>
-                </div>
-                <div className="flex items-baseline mb-4 sm:mb-6">
-                  <span className="text-4xl sm:text-5xl font-bold">
-                    {yearlyBilling ? "39 Kč" : "49 Kč"}
-                  </span>
-                  <span className="text-muted-foreground ml-2 text-sm">
-                    / měsíc
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                  Rozšířené funkce pro efektivnější práci
-                </p>
-                <Button
-                  className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
-                  variant="default"
-                  onClick={() => scrollToSection("signup-section")}
-                >
-                  <span className="flex items-center justify-center font-medium">
-                    Vyzkoušet Basic
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </span>
-                </Button>
-                <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
-                  ZAHRNUJE
-                </div>
-                <ul className="space-y-3 sm:space-y-4">
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Až 100 knih v knihovně</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">
-                      <span className="font-medium">50 AI kreditů</span> měsíčně
+                  <div className="flex items-baseline mb-4 sm:mb-6">
+                    <span className="text-4xl sm:text-5xl font-bold">0 Kč</span>
+                    <span className="text-muted-foreground ml-2 text-sm">
+                      navždy
                     </span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">
-                      <span className="font-medium">AI shrnutí autorů</span> a
-                      jejich děl
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
+                    Základní funkce pro správu zápisků
+                  </p>
+                  <Button
+                    className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground rounded-full"
+                    variant="outline"
+                    onClick={() => scrollToSection("signup-section")}
+                  >
+                    <span className="flex items-center justify-center font-medium">
+                      Začít zdarma
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">
-                      <span className="font-medium">
-                        Export poznámek do PDF
+                  </Button>
+                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4 sm:pt-6">
+                    ZAHRNUJE
+                  </div>
+                  <ul className="space-y-3 sm:space-y-4">
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Až 20 knih v knihovně</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Manuální poznámky ke knihám
                       </span>
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Pokročilý formát poznámek</span>
-                  </li>
-                </ul>
-              </div>
-            </motion.div>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">3 AI kredity</span>{" "}
+                        měsíčně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Jednoduchý formát poznámek
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </motion.div>
 
-            {/* Premium Plan */}
-            <motion.div
-              className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 mt-8 md:mt-0"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="absolute top-4 right-4 z-10">
-                <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-                  Doporučeno
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 flex flex-col h-full">
-                <div className="flex items-center mb-4 sm:mb-6">
-                  <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                    <Sparkles className="h-6 w-6 text-[#3b82f6]" />
+              {/* Basic Plan */}
+              <motion.div
+                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
+                    Populární
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold">Premium</h3>
                 </div>
-                <div className="flex items-baseline mb-4 sm:mb-6">
-                  <span className="text-4xl sm:text-5xl font-bold">
-                    {yearlyBilling ? "63 Kč" : "79 Kč"}
-                  </span>
-                  <span className="text-muted-foreground ml-2 text-sm">
-                    / měsíc
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                  Plný přístup ke všem funkcím bez omezení
-                </p>
-                <Button
-                  className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
-                  variant="default"
-                  onClick={() => scrollToSection("signup-section")}
-                >
-                  <span className="flex items-center justify-center font-medium">
-                    Získat Premium
-                    <Sparkles className="ml-2 h-4 w-4" />
-                  </span>
-                </Button>
-                <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
-                  ZAHRNUJE VŠE Z BASIC A NAVÍC
-                </div>
-                <ul className="space-y-3 sm:space-y-4">
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Neomezený počet knih</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">100 AI kreditů měsíčně</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">
-                      Pokročilá AI shrnutí s delším rozsahem
+                <div className="p-6 sm:p-8 flex flex-col h-full">
+                  <div className="flex items-center mb-4 sm:mb-6">
+                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
+                      <BookOpen className="h-6 w-6 text-[#3b82f6]" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold">Basic</h3>
+                  </div>
+                  <div className="flex items-baseline mb-4 sm:mb-6">
+                    <span className="text-4xl sm:text-5xl font-bold">
+                      {yearlyBilling ? "39 Kč" : "49 Kč"}
                     </span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">
-                      Detailní informace o autorech
+                    <span className="text-muted-foreground ml-2 text-sm">
+                      / měsíc
                     </span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Přizpůsobení AI shrnutí</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                    <span className="text-sm">Export poznámek do PDF</span>
-                  </li>
-                </ul>
-              </div>
-            </motion.div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
+                    Rozšířené funkce pro efektivnější práci
+                  </p>
+                  <Button
+                    className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
+                    variant="default"
+                    onClick={() => scrollToSection("signup-section")}
+                  >
+                    <span className="flex items-center justify-center font-medium">
+                      Vyzkoušet Basic
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </span>
+                  </Button>
+                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
+                    ZAHRNUJE
+                  </div>
+                  <ul className="space-y-3 sm:space-y-4">
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Až 100 knih v knihovně</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">50 AI kreditů</span>{" "}
+                        měsíčně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">AI shrnutí autorů</span> a
+                        jejich děl
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          Export poznámek do PDF
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Pokročilý formát poznámek</span>
+                    </li>
+                  </ul>
+                </div>
+              </motion.div>
+
+              {/* Premium Plan */}
+              <motion.div
+                className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 mt-8 md:mt-0"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
+                    Doporučeno
+                  </div>
+                </div>
+                <div className="p-6 sm:p-8 flex flex-col h-full">
+                  <div className="flex items-center mb-4 sm:mb-6">
+                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-[#3b82f6]" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold">Premium</h3>
+                  </div>
+                  <div className="flex items-baseline mb-4 sm:mb-6">
+                    <span className="text-4xl sm:text-5xl font-bold">
+                      {yearlyBilling ? "63 Kč" : "79 Kč"}
+                    </span>
+                    <span className="text-muted-foreground ml-2 text-sm">
+                      / měsíc
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
+                    Plný přístup ke všem funkcím bez omezení
+                  </p>
+                  <Button
+                    className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
+                    variant="default"
+                    onClick={() => scrollToSection("signup-section")}
+                  >
+                    <span className="flex items-center justify-center font-medium">
+                      Získat Premium
+                      <Sparkles className="ml-2 h-4 w-4" />
+                    </span>
+                  </Button>
+                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
+                    ZAHRNUJE VŠE Z BASIC A NAVÍC
+                  </div>
+                  <ul className="space-y-3 sm:space-y-4">
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Neomezený počet knih</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">100 AI kreditů měsíčně</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Pokročilá AI shrnutí s delším rozsahem
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Detailní informace o autorech
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Přizpůsobení AI shrnutí</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Export poznámek do PDF</span>
+                    </li>
+                  </ul>
+                </div>
+              </motion.div>
+            </div>
           </div>
 
           <motion.div

@@ -196,12 +196,16 @@ export default function Navbar({
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center space-x-2 text-foreground hover:text-amber-500 transition-colors"
+              className="flex items-center space-x-2 text-foreground hover:text-amber-500 transition-colors group"
             >
-              <Logo showText={false} size="md" />
-              <span className="text-xl font-semibold hidden sm:inline-block">
-                Čtenářský deník
-              </span>
+              <div className="transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:rotate-1">
+                <Logo
+                  showText
+                  variant="compact"
+                  size="md"
+                  className="group-hover:drop-shadow-md"
+                />
+              </div>
             </Link>
           </div>
 
@@ -210,7 +214,7 @@ export default function Navbar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-amber-500"
+              className="text-muted-foreground hover:text-amber-500 transition-colors"
               onClick={navigateToHome}
             >
               <Home className="h-4 w-4 mr-2" />
