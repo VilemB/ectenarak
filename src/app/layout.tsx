@@ -55,7 +55,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex-1 flex flex-col relative z-10">
             <NavbarWrapper />
-            <main className="flex-1 max-w-full mx-auto pt-4 pb-8 relative z-10">
+            <main className="flex-1 max-w-full mx-auto pt-4 pb-16 md:pb-24 w-full relative z-10">
               {children}
             </main>
             <Footer />

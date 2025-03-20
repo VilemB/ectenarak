@@ -13,7 +13,7 @@ export default function Footer() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="backdrop-blur-sm border-t border-border/40 py-8 bg-background/80"
+      className="backdrop-blur-sm border-t border-border/40 py-6 sm:py-8 md:py-10 bg-background/80 shadow-[0_-1px_5px_rgba(0,0,0,0.05)] relative z-10 mt-auto"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
