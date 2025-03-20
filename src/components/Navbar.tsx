@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  Menu,
   Keyboard,
   Settings,
   LogOut,
@@ -84,6 +83,42 @@ const UserIllustration = ({
   );
 };
 
+// Animated hamburger menu component
+const HamburgerMenuButton = ({
+  isOpen,
+  toggle,
+}: {
+  isOpen: boolean;
+  toggle: () => void;
+}) => {
+  return (
+    <button
+      className="flex items-center justify-center w-10 h-10 relative focus:outline-none rounded-full transition-colors hover:bg-amber-500/10 group"
+      onClick={toggle}
+      aria-label={isOpen ? "Close menu" : "Open menu"}
+    >
+      <div className="flex flex-col justify-center items-center w-6 h-6 relative">
+        <span
+          className={`w-full h-0.5 rounded-full bg-current block transition-all duration-300 ease-out ${
+            isOpen ? "absolute rotate-45" : "-translate-y-1.5"
+          }`}
+        ></span>
+        <span
+          className={`w-full h-0.5 rounded-full bg-current block transition-all duration-200 ease-out ${
+            isOpen ? "opacity-0" : "opacity-100"
+          }`}
+        ></span>
+        <span
+          className={`w-full h-0.5 rounded-full bg-current block transition-all duration-300 ease-out ${
+            isOpen ? "absolute -rotate-45" : "translate-y-1.5"
+          }`}
+        ></span>
+      </div>
+      <span className="absolute inset-0 rounded-full transition-colors group-hover:text-amber-500"></span>
+    </button>
+  );
+};
+
 export default function Navbar({
   user,
   signOut,
@@ -92,6 +127,19 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
+
+  // Close menus when route changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setMobileMenuOpen(false);
+      setUserMenuOpen(false);
+    };
+
+    window.addEventListener("popstate", handleRouteChange);
+    return () => {
+      window.removeEventListener("popstate", handleRouteChange);
+    };
+  }, []);
 
   const navigateToSettings = () => {
     router.push("/settings");
@@ -109,7 +157,7 @@ export default function Navbar({
       className="sticky top-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
     >
       {/* Amber accent line at bottom of navbar */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500/80 to-amber-500/40 w-full"></div>
 
       <div className="container max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center py-3 md:py-4">
@@ -236,15 +284,10 @@ export default function Navbar({
 
           {/* Mobile menu button */}
           <div className="flex md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-amber-500 p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <HamburgerMenuButton
+              isOpen={mobileMenuOpen}
+              toggle={() => setMobileMenuOpen(!mobileMenuOpen)}
+            />
           </div>
         </div>
       </div>
@@ -254,45 +297,86 @@ export default function Navbar({
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm relative"
+            animate={{
+              opacity: 1,
+              height: "auto",
+            }}
+            exit={{
+              opacity: 0,
+              height: 0,
+            }}
+            transition={{
+              duration: 0.4,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm overflow-hidden"
           >
-            {/* Subtle amber decoration at top of mobile menu */}
-            <div className="absolute top-0 left-4 right-4 h-0.5 bg-gradient-to-r from-amber-500/20 via-amber-500/60 to-amber-500/20"></div>
+            {/* Full width amber decoration at top of mobile menu */}
+            <div className="h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500/80 to-amber-500/40 w-full"></div>
 
-            <div className="container max-w-7xl mx-auto px-4 py-4 space-y-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigateToHome();
-                }}
+            <motion.div
+              className="container max-w-7xl mx-auto px-4 py-4 space-y-3"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                transition: {
+                  delay: 0.1,
+                  staggerChildren: 0.05,
+                },
+              }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
               >
-                <Home className="h-5 w-5 mr-3" />
-                <span className="text-base">Domů</span>
-              </Button>
-
-              <Link href="/subscription" className="w-full">
                 <Button
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
                   onClick={() => {
                     setMobileMenuOpen(false);
+                    navigateToHome();
                   }}
                 >
-                  <Wallet className="h-5 w-5 mr-3" />
-                  <span className="text-base">Předplatné</span>
+                  <Home className="h-5 w-5 mr-3" />
+                  <span className="text-base">Domů</span>
                 </Button>
-              </Link>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2, delay: 0.05 }}
+              >
+                <Link href="/subscription" className="w-full">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Wallet className="h-5 w-5 mr-3" />
+                    <span className="text-base">Předplatné</span>
+                  </Button>
+                </Link>
+              </motion.div>
 
               {user && (
                 <>
-                  <div className="pt-3 mt-2 border-t border-border/40">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.1 }}
+                    className="pt-3 mt-2 border-t border-border/40"
+                  >
                     <div className="flex items-center space-x-3 px-2 py-2">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center">
                         <UserIllustration name={user.name} email={user.email} />
@@ -308,35 +392,49 @@ export default function Navbar({
                         )}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigateToSettings();
-                    }}
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.15 }}
                   >
-                    <Settings className="h-5 w-5 mr-3" />
-                    <span className="text-base">Nastavení</span>
-                  </Button>
-
-                  {signOut && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-md py-5"
-                      onClick={() => signOut()}
+                      className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigateToSettings();
+                      }}
                     >
-                      <LogOut className="h-5 w-5 mr-3" />
-                      <span className="text-base">Odhlásit se</span>
+                      <Settings className="h-5 w-5 mr-3" />
+                      <span className="text-base">Nastavení</span>
                     </Button>
+                  </motion.div>
+
+                  {signOut && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2, delay: 0.2 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-md py-5"
+                        onClick={() => signOut()}
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        <span className="text-base">Odhlásit se</span>
+                      </Button>
+                    </motion.div>
                   )}
                 </>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
