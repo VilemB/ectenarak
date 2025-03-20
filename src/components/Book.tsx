@@ -33,6 +33,31 @@ import {
 } from "@/components/AuthorSummaryPreferencesModal";
 import { NoteEditor } from "@/components/NoteEditor";
 
+// Study-friendly content formatter component
+const StudyContent = ({ content }: { content: string }) => {
+  return (
+    <div className="study-summary">
+      <div
+        className="prose prose-amber prose-sm md:prose dark:prose-invert 
+                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-amber-800 dark:prose-headings:text-amber-300 
+                   prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                   prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed
+                   prose-li:ml-4 prose-li:my-1
+                   prose-strong:text-amber-700 dark:prose-strong:text-amber-400
+                   prose-em:text-amber-600 dark:prose-em:text-amber-300
+                   max-w-none"
+      >
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+};
+
 interface BookProps {
   book: Book;
   onDelete: (bookId: string) => void;
@@ -125,31 +150,6 @@ const CopyButton = ({
     <span>{text}</span>
   </motion.button>
 );
-
-// Study-friendly content formatter component
-const StudyContent = ({ content }: { content: string }) => {
-  return (
-    <div className="study-summary">
-      <div
-        className="prose prose-amber prose-sm dark:prose-invert 
-                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-amber-800 dark:prose-headings:text-amber-300 
-                   prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-                   prose-p:my-3 prose-p:text-sm prose-p:leading-relaxed
-                   prose-li:ml-4 prose-li:my-1
-                   prose-strong:text-amber-700 dark:prose-strong:text-amber-400
-                   prose-em:text-amber-600 dark:prose-em:text-amber-300
-                   max-w-none"
-      >
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {content}
-        </ReactMarkdown>
-      </div>
-    </div>
-  );
-};
 
 export default function BookComponent({
   book: initialBook,
@@ -1018,11 +1018,10 @@ export default function BookComponent({
   return (
     <motion.div
       ref={bookRef}
-      className="bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+      className="bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-visible"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      layout
     >
       {/* Book Header */}
       <motion.div
@@ -1242,7 +1241,7 @@ export default function BookComponent({
               opacity: { duration: 0.3, ease: "easeInOut" },
               height: { duration: 0.3, ease: "easeInOut" },
             }}
-            className="relative mx-3 sm:mx-4 my-2"
+            className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4"
           >
             <div className="flex flex-wrap items-center justify-between mb-2">
               <div className="flex items-center gap-2 mb-2 sm:mb-0">
@@ -1293,7 +1292,7 @@ export default function BookComponent({
               </div>
             </div>
 
-            <motion.div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-3 sm:p-4 border border-amber-200/50 dark:border-amber-800/30 shadow-inner">
+            <motion.div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
               {/* Close button - positioned absolutely in the top-right corner */}
               <CloseButtonTop
                 onClick={handleCloseAuthorInfo}
@@ -1302,10 +1301,10 @@ export default function BookComponent({
               />
 
               {/* ESC key indicator */}
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start mb-5">
                 <div></div> {/* Empty div for spacing */}
                 <motion.div
-                  className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+                  className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
@@ -1328,7 +1327,7 @@ export default function BookComponent({
               </div>
 
               {/* Study-friendly content */}
-              <div className="prose prose-sm dark:prose-invert max-w-none text-sm sm:text-base">
+              <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
                 <StudyContent content={book.authorSummary} />
               </div>
 
@@ -1337,7 +1336,7 @@ export default function BookComponent({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.2 }}
-                className="mt-4 sm:mt-5 pt-3 border-t border-amber-200/50 dark:border-amber-800/30 flex flex-wrap justify-between items-center gap-2"
+                className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex flex-wrap justify-between items-center gap-2"
               >
                 <div className="flex items-center gap-4">
                   <DeleteButton
@@ -1368,7 +1367,7 @@ export default function BookComponent({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="p-3 sm:p-4 space-y-4 sm:space-y-5"
+            className="p-3 sm:p-4 space-y-4 sm:space-y-5 w-full"
           >
             {/* Notes Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1619,7 +1618,7 @@ export default function BookComponent({
                                     ease: "easeInOut",
                                   },
                                 }}
-                                className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner"
+                                className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4"
                               >
                                 {/* Close button - positioned absolutely in the top-right corner */}
                                 <CloseButtonTop
@@ -1629,7 +1628,7 @@ export default function BookComponent({
                                 />
 
                                 {/* ESC key indicator */}
-                                <div className="flex justify-between items-start mb-3">
+                                <div className="flex justify-between items-start mb-5">
                                   <div></div> {/* Empty div for spacing */}
                                   <motion.div
                                     className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
@@ -1656,7 +1655,7 @@ export default function BookComponent({
                                 </div>
 
                                 {/* Study-friendly content */}
-                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
                                   <StudyContent content={note.content} />
                                 </div>
 
@@ -1664,7 +1663,7 @@ export default function BookComponent({
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
                                   transition={{ delay: 0.3, duration: 0.2 }}
-                                  className="mt-5 pt-3 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
+                                  className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
                                 >
                                   <div className="flex items-center gap-4">
                                     <CopyButton
