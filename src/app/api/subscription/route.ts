@@ -4,12 +4,13 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { SubscriptionTier } from "@/types/user";
+import mongoose from "mongoose";
 
 /**
  * GET /api/subscription
  * Get the current user's subscription details
  */
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export async function GET(_req: NextRequest): Promise<NextResponse> {
   try {
     // Get the current session
     const session = await getServerSession(authOptions);
@@ -21,8 +22,27 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Connect to the database
     await dbConnect();
 
-    // Find the user
-    const user = await User.findById(session.user.id);
+    // Find the user - try different lookup methods to handle both MongoDB IDs and OAuth IDs
+    let user;
+
+    // First, check if the ID is a valid MongoDB ObjectId
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(session.user.id);
+
+    if (isValidObjectId) {
+      // Try finding the user by MongoDB _id
+      user = await User.findById(session.user.id);
+    }
+
+    // If user wasn't found and it's not a valid ObjectId, or if we need a fallback
+    if (!user) {
+      // Try finding by OAuth provider ID
+      user = await User.findOne({
+        $or: [
+          { "auth.providerId": session.user.id },
+          { email: session.user.email },
+        ],
+      });
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -142,7 +162,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
  * PUT /api/subscription/use-credit
  * Use one AI credit
  */
-export async function PUT(req: NextRequest): Promise<NextResponse> {
+export async function PUT(_req: NextRequest): Promise<NextResponse> {
   try {
     // Get the current session
     const session = await getServerSession(authOptions);
@@ -154,8 +174,27 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     // Connect to the database
     await dbConnect();
 
-    // Find the user
-    const user = await User.findById(session.user.id);
+    // Find the user - try different lookup methods to handle both MongoDB IDs and OAuth IDs
+    let user;
+
+    // First, check if the ID is a valid MongoDB ObjectId
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(session.user.id);
+
+    if (isValidObjectId) {
+      // Try finding the user by MongoDB _id
+      user = await User.findById(session.user.id);
+    }
+
+    // If user wasn't found and it's not a valid ObjectId, or if we need a fallback
+    if (!user) {
+      // Try finding by OAuth provider ID
+      user = await User.findOne({
+        $or: [
+          { "auth.providerId": session.user.id },
+          { email: session.user.email },
+        ],
+      });
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

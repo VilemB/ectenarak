@@ -77,7 +77,20 @@ export const authOptions: NextAuthOptions = {
               email: user.email,
               name: user.name,
               image: user.image,
+              auth: {
+                provider: "google",
+                providerId: user.id,
+              },
             });
+            await dbUser.save();
+          }
+          // If user exists but doesn't have providerId, update it
+          else if (!dbUser.auth?.providerId) {
+            dbUser.auth = {
+              ...dbUser.auth,
+              provider: "google",
+              providerId: user.id,
+            };
             await dbUser.save();
           }
         } catch (error) {

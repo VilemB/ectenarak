@@ -32,6 +32,7 @@ import {
   AuthorSummaryPreferences,
 } from "@/components/AuthorSummaryPreferencesModal";
 import { NoteEditor } from "@/components/NoteEditor";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -125,7 +126,7 @@ const DeleteButton = ({
     className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1.5 transition-colors"
   >
     <Trash2 className="h-3.5 w-3.5" />
-    <span>{text}</span>
+    <span className="hidden sm:inline">{text}</span>
   </motion.button>
 );
 
@@ -147,7 +148,7 @@ const CopyButton = ({
     className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
   >
     <Copy className="h-3.5 w-3.5" />
-    <span>{text}</span>
+    <span className="hidden sm:inline">{text}</span>
   </motion.button>
 );
 
@@ -211,6 +212,15 @@ export default function BookComponent({
   const bookRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const notesEndRef = useRef<HTMLDivElement>(null);
+
+  // Get the auth context
+  const auth = useAuth();
+  const useAiCreditRef = useRef(auth.useAiCredit);
+
+  // Update the ref if auth changes
+  useEffect(() => {
+    useAiCreditRef.current = auth.useAiCredit;
+  }, [auth]);
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -404,39 +414,36 @@ export default function BookComponent({
   };
 
   // Expand/collapse the book card
-  const toggleExpanded = (e: React.MouseEvent | React.KeyboardEvent) => {
-    // Don't toggle if clicking on buttons or interactive elements
-    if (
-      e.target instanceof HTMLButtonElement ||
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement ||
-      (e.target instanceof HTMLElement &&
-        (e.target.closest("button") ||
-          e.target.closest(".modal-content") || // Don't collapse when clicking modal content
-          e.target.closest("[role='dialog']"))) // Don't collapse when clicking any dialog
-    ) {
-      return;
-    }
-
-    // If it's a keyboard event, only toggle on Enter or Space
-    if (e.type === "keydown") {
-      const keyEvent = e as React.KeyboardEvent;
-      if (keyEvent.key !== "Enter" && keyEvent.key !== " ") {
+  const toggleExpanded = useCallback(
+    (e?: React.MouseEvent | React.KeyboardEvent) => {
+      // Don't toggle if clicking on buttons or interactive elements
+      if (
+        e &&
+        e.target instanceof HTMLElement &&
+        (e.target instanceof HTMLButtonElement ||
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          e.target.tagName === "A" ||
+          e.target.tagName === "BUTTON" ||
+          e.target.tagName === "INPUT" ||
+          e.target.closest("button") ||
+          e.target.closest("a") ||
+          e.target.closest("input"))
+      ) {
         return;
       }
-      // Prevent scrolling when pressing space
-      if (keyEvent.key === " ") {
-        keyEvent.preventDefault();
+
+      // If it's a keyboard event, only toggle on Enter or Space
+      if (e && "key" in e) {
+        if (e.key !== "Enter" && e.key !== " ") {
+          return;
+        }
       }
-    }
 
-    // Add haptic feedback if supported
-    if (navigator.vibrate && window.innerWidth <= 768) {
-      navigator.vibrate(5); // Subtle vibration on mobile
-    }
-
-    setIsExpanded(!isExpanded);
-  };
+      setIsExpanded(!isExpanded);
+    },
+    [isExpanded]
+  );
 
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
@@ -490,44 +497,34 @@ export default function BookComponent({
           isAISummary: true,
         }),
       });
-      console.log("Save note response status:", summaryResponse.status);
 
       if (!summaryResponse.ok) {
         const errorData = await summaryResponse.json().catch(() => ({}));
-        console.error("API error response:", errorData);
-        throw new Error(errorData.error || "Failed to save summary");
+        console.error("Error saving AI summary:", errorData);
+        throw new Error(errorData.error || "Failed to save AI summary");
       }
 
-      const summaryData = await summaryResponse.json();
-      console.log("Summary saved successfully");
+      const noteData = await summaryResponse.json();
+      console.log("Summary saved successfully:", noteData);
 
-      // Transform the notes data
-      const formattedNotes = summaryData.notes.map(
-        (note: {
-          _id: string;
-          content: string;
-          createdAt: string;
-          isAISummary?: boolean;
-        }) => ({
-          id: note._id,
-          bookId: book.id,
-          content: note.content,
-          createdAt: new Date(note.createdAt).toISOString(),
-          isAISummary: note.isAISummary || false,
-        })
-      );
+      // Decrease the AI credits
+      await useAiCreditRef.current();
 
-      setNotes(formattedNotes);
+      // Update the notes list with the new summary
+      setNotes((prevNotes) => [...prevNotes, noteData.note]);
+
+      // Show success message
+      showSuccessMessage("Shrnutí bylo úspěšně vygenerováno");
+
+      // Close the summary modal
       setSummaryModal(false);
     } catch (error) {
       console.error("Error generating summary:", error);
-
-      // Use the new error message function
       showErrorMessage(
-        "Nastala chyba při generování shrnutí. Zkuste to prosím znovu později."
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se vygenerovat shrnutí"
       );
-
-      setSummaryModal(false);
     } finally {
       setIsGenerating(false);
     }
@@ -675,45 +672,67 @@ export default function BookComponent({
             bookId: book.id,
           }),
         });
-        console.log("API request sent");
       } catch (fetchError) {
-        console.error("Fetch error:", fetchError);
-        throw new Error(
-          `Network error: ${
-            fetchError instanceof Error
-              ? fetchError.message
-              : String(fetchError)
-          }`
-        );
+        console.error("Network error during fetch:", fetchError);
+        throw new Error("Připojení k serveru selhalo");
       }
 
       console.log("API response status:", response.status);
-      console.log(
-        "API response headers:",
-        Array.from(response.headers).reduce((obj, [key, value]) => {
-          obj[key] = value;
-          return obj;
-        }, {} as Record<string, string>)
-      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("API error response:", errorData);
-        throw new Error(
-          errorData.error || "Nepodařilo se získat informace o autorovi"
-        );
+
+        if (response.status === 403 && errorData.creditsRequired) {
+          throw new Error("Nemáte dostatek AI kreditů");
+        } else {
+          throw new Error(
+            errorData.error || "Nepodařilo se vygenerovat informace o autorovi"
+          );
+        }
       }
 
       const data = await response.json();
-      console.log("API success response:", data);
+      console.log("Author summary generated successfully");
 
+      // Update the book with the new author summary
+      console.log("Updating book with author summary...");
+      const bookUpdateResponse = await fetch(`/api/books/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorSummary: data.summary,
+        }),
+      });
+
+      if (!bookUpdateResponse.ok) {
+        const errorData = await bookUpdateResponse.json().catch(() => ({}));
+        console.error("Error updating book with author summary:", errorData);
+        throw new Error(errorData.error || "Failed to save author information");
+      }
+
+      const bookData = await bookUpdateResponse.json();
+      console.log("Book updated successfully:", bookData);
+
+      // Decrease the AI credits
+      await useAiCreditRef.current();
+
+      // Update the book in state with the new author summary
       setBook((prevBook) => ({
         ...prevBook,
         authorSummary: data.summary,
       }));
-      setAuthorSummaryModal(false); // Close the modal after successful generation
-      setIsAuthorInfoVisible(true);
+
+      // Show success message
       showSuccessMessage("Informace o autorovi byly úspěšně vygenerovány");
+
+      // Close the author summary modal
+      setAuthorSummaryModal(false);
+
+      // Show the author information
+      setIsAuthorInfoVisible(true);
     } catch (error) {
       console.error("Error generating author summary:", error);
       showErrorMessage(
@@ -1292,68 +1311,59 @@ export default function BookComponent({
               </div>
             </div>
 
-            <motion.div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
-              {/* Close button - positioned absolutely in the top-right corner */}
-              <CloseButtonTop
-                onClick={handleCloseAuthorInfo}
-                label="Zavřít informace o autorovi"
-                title="Zavřít informace o autorovi (ESC)"
-              />
-
-              {/* ESC key indicator */}
-              <div className="flex justify-between items-start mb-5">
-                <div></div> {/* Empty div for spacing */}
-                <motion.div
-                  className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: 0.3,
-                    duration: 0.2,
-                  }}
-                  whileHover={{
-                    scale: 1.03,
-                    backgroundColor: "rgba(251, 191, 36, 0.2)",
-                    borderColor: "rgba(251, 191, 36, 0.3)",
-                  }}
-                >
-                  <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
-                    ESC
-                  </kbd>
-                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                    zavřít panel
-                  </span>
-                </motion.div>
-              </div>
-
-              {/* Study-friendly content */}
-              <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
-                <StudyContent content={book.authorSummary} />
-              </div>
-
-              {/* Bottom buttons */}
+            {/* ESC key indicator - hidden on small screens */}
+            <div className="flex justify-between items-start mb-5">
+              <div></div> {/* Empty div for spacing */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.2 }}
-                className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex flex-wrap justify-between items-center gap-2"
+                className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: 0.3,
+                  duration: 0.2,
+                }}
+                whileHover={{
+                  scale: 1.03,
+                  backgroundColor: "rgba(251, 191, 36, 0.2)",
+                  borderColor: "rgba(251, 191, 36, 0.3)",
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <DeleteButton
-                    onClick={handleDeleteAuthorSummary}
-                    text="Smazat informace o autorovi"
-                  />
-                  <CopyButton
-                    onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                    text="Kopírovat text"
-                  />
-                </div>
-
-                <CloseButtonBottom
-                  onClick={handleCloseAuthorInfo}
-                  text="Zavřít informace"
-                />
+                <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
+                  ESC
+                </kbd>
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                  zavřít panel
+                </span>
               </motion.div>
+            </div>
+
+            {/* Study-friendly content */}
+            <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
+              <StudyContent content={book.authorSummary} />
+            </div>
+
+            {/* Bottom buttons */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.2 }}
+              className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex flex-wrap justify-between items-center gap-2"
+            >
+              <div className="flex items-center gap-4">
+                <DeleteButton
+                  onClick={handleDeleteAuthorSummary}
+                  text="Smazat informace o autorovi"
+                />
+                <CopyButton
+                  onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
+                  text="Kopírovat text"
+                />
+              </div>
+
+              <CloseButtonBottom
+                onClick={handleCloseAuthorInfo}
+                text="Zavřít informace"
+              />
             </motion.div>
           </motion.div>
         )}
@@ -1631,7 +1641,7 @@ export default function BookComponent({
                                 <div className="flex justify-between items-start mb-5">
                                   <div></div> {/* Empty div for spacing */}
                                   <motion.div
-                                    className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+                                    className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
                                     initial={{ opacity: 0, y: -5 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{

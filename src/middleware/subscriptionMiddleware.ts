@@ -49,8 +49,27 @@ export async function checkSubscription(
     // Connect to the database
     await dbConnect();
 
-    // Find the user
-    const user = await User.findById(session.user.id);
+    // Find the user - try different lookup methods to handle both MongoDB IDs and OAuth IDs
+    let user;
+
+    // First, check if the ID is a valid MongoDB ObjectId
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(session.user.id);
+
+    if (isValidObjectId) {
+      // Try finding the user by MongoDB _id
+      user = await User.findById(session.user.id);
+    }
+
+    // If user wasn't found and it's not a valid ObjectId, or if we need a fallback
+    if (!user) {
+      // Try finding by OAuth provider ID
+      user = await User.findOne({
+        $or: [
+          { "auth.providerId": session.user.id },
+          { email: session.user.email },
+        ],
+      });
+    }
 
     if (!user) {
       return {

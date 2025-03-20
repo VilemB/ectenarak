@@ -25,17 +25,14 @@ export async function POST(req: NextRequest) {
   console.log("=== CONSOLIDATED AUTHOR SUMMARY API ROUTE START ===");
 
   try {
-    // Check subscription requirements
+    // Check subscription requirements - only check for AI credits, not specific feature
     const subscriptionCheck = await checkSubscription(req, {
-      feature: "aiAuthorSummary",
       requireAiCredits: true,
     });
 
     if (!subscriptionCheck.allowed) {
       return subscriptionCheck.response as NextResponse;
     }
-
-    const user = subscriptionCheck.user;
 
     // Connect to database
     await dbConnect();
@@ -67,22 +64,14 @@ export async function POST(req: NextRequest) {
         bookId
       );
 
-      // If successful, deduct an AI credit
-      if (result.status === 200) {
-        await user.useAiCredit();
-      }
-
+      // Credit deduction is now handled client-side
       return result;
     }
 
     // Otherwise, handle as general author summary
     const result = await handleGeneralAuthorSummary(author, preferences);
 
-    // If successful, deduct an AI credit
-    if (result.status === 200) {
-      await user.useAiCredit();
-    }
-
+    // Credit deduction is now handled client-side
     return result;
   } catch (error) {
     console.error("Error in author summary API:", error);
