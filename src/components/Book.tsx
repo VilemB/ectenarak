@@ -1240,13 +1240,20 @@ export default function BookComponent({
         </div>
       </motion.div>
 
-      {/* Author Summary Panel */}
-      <AnimatePresence mode="wait" onExitComplete={handleAnimationComplete}>
+      {/* Author Info Panel */}
+      <AnimatePresence onExitComplete={handleAnimationComplete}>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
-            id={`author-summary-${book.id}`}
-            initial={{ opacity: 0, height: 0, overflow: "hidden" }}
-            animate={{ opacity: 1, height: "auto", overflow: "visible" }}
+            initial={{
+              opacity: 0,
+              height: 0,
+              overflow: "hidden",
+            }}
+            animate={{
+              opacity: 1,
+              height: "auto",
+              overflow: "visible",
+            }}
             exit={{
               opacity: 0,
               height: 0,
@@ -1260,111 +1267,116 @@ export default function BookComponent({
               opacity: { duration: 0.3, ease: "easeInOut" },
               height: { duration: 0.3, ease: "easeInOut" },
             }}
-            className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4"
+            className="relative w-full max-w-[800px] z-10 mx-auto my-4 overflow-hidden"
           >
-            <div className="flex flex-wrap items-center justify-between mb-2">
-              <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                <User className="h-4 w-4 text-amber-500" />
-                <span className="text-xs text-amber-600 dark:text-amber-400">
-                  Informace o autorovi
-                </span>
+            {/* Modern, flat card design */}
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden">
+              {/* Top accent line */}
+              <div className="h-1 bg-amber-500 w-full"></div>
+
+              {/* Close button */}
+              <CloseButtonTop
+                onClick={handleCloseAuthorInfo}
+                label="Zavřít informace o autorovi"
+                title="Zavřít informace o autorovi (ESC)"
+              />
+
+              {/* Author header with portrait area - more modern and flat design */}
+              <div className="px-5 py-4">
+                <div className="flex items-start gap-4">
+                  {/* Author portrait placeholder - simpler, flat design */}
+                  <div className="h-16 w-16 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 border border-amber-200 dark:border-amber-800/50">
+                    <User className="h-8 w-8 text-amber-500 dark:text-amber-400" />
+                  </div>
+
+                  {/* Author name and metadata */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-medium text-zinc-800 dark:text-zinc-100">
+                      {book.author}
+                    </h2>
+                    <div className="flex items-center mt-1">
+                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full border border-amber-200 dark:border-amber-800/50">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI generováno
+                      </span>
+                    </div>
+
+                    {/* Action buttons in header area */}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAuthorSummaryModal(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all duration-200 text-xs py-1"
+                      >
+                        <Sparkles className="h-3 w-3 mr-1.5" />
+                        <span>Aktualizovat</span>
+                      </Button>
+
+                      <ExportButton
+                        content={book.authorSummary}
+                        filename={`${book.author}_info.md`}
+                        buttonProps={{
+                          variant: "outline",
+                          size: "sm",
+                          className:
+                            "text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all text-xs py-1",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <ExportButton
-                    content={book.authorSummary}
-                    filename={`${book.author}_info.md`}
-                    buttonProps={{
-                      variant: "ghost",
-                      size: "sm",
-                      className:
-                        "h-7 w-7 p-0 text-muted-foreground hover:text-foreground",
-                    }}
-                  />
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <CopyButton
+
+              {/* Main content area - modern, clean design */}
+              <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="prose prose-zinc prose-sm md:prose dark:prose-invert max-w-none w-full prose-headings:text-amber-600 dark:prose-headings:text-amber-400 prose-headings:font-medium">
+                  <StudyContent content={book.authorSummary} />
+                </div>
+              </div>
+
+              {/* Footer area with utilities - modernized */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 px-5 py-3 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <button
                     onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                    text=""
-                  />
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 flex items-center gap-1.5 transition-colors"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Kopírovat text</span>
+                  </button>
+
+                  <button
                     onClick={handleDeleteAuthorSummary}
+                    className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1.5 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    <span className="sr-only">Smazat informace o autorovi</span>
-                  </Button>
-                </motion.div>
-              </div>
-            </div>
+                    <span className="hidden sm:inline">Smazat</span>
+                  </button>
+                </div>
 
-            {/* ESC key indicator - hidden on small screens */}
-            <div className="flex justify-between items-start mb-5">
-              <div></div> {/* Empty div for spacing */}
-              <motion.div
-                className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  delay: 0.3,
-                  duration: 0.2,
-                }}
-                whileHover={{
-                  scale: 1.03,
-                  backgroundColor: "rgba(251, 191, 36, 0.2)",
-                  borderColor: "rgba(251, 191, 36, 0.3)",
-                }}
-              >
-                <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
-                  ESC
-                </kbd>
-                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                  zavřít panel
-                </span>
-              </motion.div>
-            </div>
-
-            {/* Study-friendly content */}
-            <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
-              <StudyContent content={book.authorSummary} />
-            </div>
-
-            {/* Bottom buttons */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.2 }}
-              className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex flex-wrap justify-between items-center gap-2"
-            >
-              <div className="flex items-center gap-4">
-                <DeleteButton
-                  onClick={handleDeleteAuthorSummary}
-                  text="Smazat informace o autorovi"
-                />
-                <CopyButton
-                  onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                  text="Kopírovat text"
-                />
+                {/* Close button */}
+                <button
+                  onClick={handleCloseAuthorInfo}
+                  className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span>Zavřít</span>
+                </button>
               </div>
 
-              <CloseButtonBottom
-                onClick={handleCloseAuthorInfo}
-                text="Zavřít informace"
-              />
-            </motion.div>
+              {/* ESC key indicator - hidden on small screens, simplified design */}
+              <div className="absolute top-3 right-12 hidden sm:block">
+                <div className="bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-zinc-900 rounded border border-zinc-300 dark:border-zinc-700">
+                    ESC
+                  </kbd>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -116,7 +116,7 @@ export default function Navbar({
               href="/"
               className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors"
             >
-              <BookOpen className="h-6 w-6 text-primary" />
+              <BookOpen className="h-6 w-6 text-[#f59e0b]" />
               <span className="text-xl font-semibold hidden sm:inline-block">
                 Čtenářský deník
               </span>

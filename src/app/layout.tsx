@@ -1,5 +1,5 @@
 import React from "react";
-import { Inter, Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import NavbarWrapper from "@/components/NavbarWrapper";
@@ -9,12 +9,6 @@ import { metadata } from "./metadata";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-});
-
-const poppins = Poppins({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-poppins",
 });
 
 export { metadata };
@@ -40,7 +34,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#111827" />
       </head>
       <body
-        className={`${inter.variable} ${poppins.variable} font-sans min-h-screen flex flex-col bg-background antialiased`}
+        className={`${inter.variable} font-sans min-h-screen flex flex-col bg-background antialiased`}
       >
         {/* Background elements with improved responsive positioning */}
         <div className="fixed inset-0 bg-grid-pattern opacity-10 pointer-events-none z-[-1]"></div>
