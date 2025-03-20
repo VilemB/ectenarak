@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  BookOpen,
   Menu,
   Keyboard,
   Settings,
@@ -16,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 
 interface NavbarProps {
   user: {
@@ -108,15 +108,18 @@ export default function Navbar({
       transition={{ duration: 0.5 }}
       className="sticky top-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
     >
+      {/* Amber accent line at bottom of navbar */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent"></div>
+
       <div className="container max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center py-3 md:py-4">
           {/* Logo and brand */}
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors"
+              className="flex items-center space-x-2 text-foreground hover:text-amber-500 transition-colors"
             >
-              <BookOpen className="h-6 w-6 text-[#f59e0b]" />
+              <Logo showText={false} size="md" />
               <span className="text-xl font-semibold hidden sm:inline-block">
                 Čtenářský deník
               </span>
@@ -128,7 +131,7 @@ export default function Navbar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-amber-500"
               onClick={navigateToHome}
             >
               <Home className="h-4 w-4 mr-2" />
@@ -139,7 +142,7 @@ export default function Navbar({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-amber-500"
               >
                 <Wallet className="h-4 w-4 mr-2" />
                 Předplatné
@@ -149,7 +152,7 @@ export default function Navbar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-amber-500"
               onClick={() => setShowKeyboardShortcuts(true)}
             >
               <Keyboard className="h-4 w-4 mr-2" />
@@ -162,8 +165,9 @@ export default function Navbar({
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "flex items-center space-x-1 text-muted-foreground hover:text-foreground",
-                    userMenuOpen && "bg-accent/50 text-foreground"
+                    "flex items-center space-x-1 text-muted-foreground hover:text-amber-500",
+                    userMenuOpen &&
+                      "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                   )}
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                 >
@@ -190,11 +194,14 @@ export default function Navbar({
                       transition={{ duration: 0.2 }}
                       className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border/50 overflow-hidden z-50"
                     >
+                      {/* Amber accent line at top of dropdown */}
+                      <div className="h-0.5 bg-amber-500/70 w-full"></div>
+
                       <div className="p-2 flex flex-col gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md group"
+                          className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200 rounded-md group"
                           onClick={() => {
                             setUserMenuOpen(false);
                             navigateToSettings();
@@ -210,7 +217,7 @@ export default function Navbar({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-red-400 transition-all duration-200 rounded-md group"
+                            className="w-full justify-start text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-md group"
                             onClick={() => signOut()}
                           >
                             <LogOut className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
@@ -232,7 +239,7 @@ export default function Navbar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground p-2"
+              className="text-muted-foreground hover:text-amber-500 p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Menu"
             >
@@ -250,13 +257,16 @@ export default function Navbar({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm"
+            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm relative"
           >
+            {/* Subtle amber decoration at top of mobile menu */}
+            <div className="absolute top-0 left-4 right-4 h-0.5 bg-gradient-to-r from-amber-500/20 via-amber-500/60 to-amber-500/20"></div>
+
             <div className="container max-w-7xl mx-auto px-4 py-4 space-y-3">
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md py-5"
+                className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   navigateToHome();
@@ -270,7 +280,7 @@ export default function Navbar({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md py-5"
+                  className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
                   onClick={() => {
                     setMobileMenuOpen(false);
                   }}
@@ -303,7 +313,7 @@ export default function Navbar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-foreground hover:bg-accent/20 transition-all duration-200 rounded-md py-5"
+                    className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5"
                     onClick={() => {
                       setMobileMenuOpen(false);
                       navigateToSettings();
@@ -317,7 +327,7 @@ export default function Navbar({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-foreground hover:bg-accent/20 hover:text-red-400 transition-all duration-200 rounded-md py-5"
+                      className="w-full justify-start text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-md py-5"
                       onClick={() => signOut()}
                     >
                       <LogOut className="h-5 w-5 mr-3" />

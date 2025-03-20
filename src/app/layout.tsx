@@ -24,15 +24,6 @@ export default function RootLayout({
       className="h-full min-h-screen scroll-smooth"
       suppressHydrationWarning
     >
-      <head>
-        <title>Čtenářský Deník</title>
-        <meta
-          name="description"
-          content="Aplikace pro sledování vašich čtenářských aktivit a správu knih."
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="theme-color" content="#111827" />
-      </head>
       <body
         className={`${inter.variable} font-sans min-h-screen flex flex-col bg-background antialiased`}
       >

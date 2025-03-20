@@ -1,9 +1,10 @@
 "use client";
 
-import { Github, BookOpen } from "lucide-react";
+import { Github } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -19,7 +20,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col items-center md:items-start gap-2">
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
+              <Logo showText={false} size="sm" />
               <span className="font-medium">Čtenářský deník</span>
             </div>
             <p className="text-sm text-muted-foreground">
