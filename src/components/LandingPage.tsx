@@ -13,7 +13,7 @@ import {
   ChevronDown,
   BookText,
 } from "lucide-react";
-import Logo from "@/components/Logo";
+import LandingNavbar from "@/components/LandingNavbar";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -31,7 +31,15 @@ export default function LandingPage() {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      // Account for fixed header height when scrolling
+      const headerOffset = 70;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
     }
   };
 
@@ -53,31 +61,8 @@ export default function LandingPage() {
       {/* Background gradient overlay for consistent styling */}
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
 
-      {/* Landing page navbar - fixed position */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/70 border-b border-border/40 transition-all duration-300"
-        style={{
-          boxShadow: scrollY > 10 ? "0 4px 20px rgba(0, 0, 0, 0.1)" : "none",
-          padding: scrollY > 10 ? "0.5rem 0" : "0.75rem 0",
-        }}
-      >
-        <div className="container max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Logo size="md" showText={false} />
-            <span className="text-lg sm:text-xl font-bold">
-              Čtenářský deník
-            </span>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="hover:bg-primary/10 transition-all duration-300"
-            onClick={() => scrollToSection("signup-section")}
-          >
-            Přihlásit se
-          </Button>
-        </div>
-      </motion.div>
+      {/* Landing page navbar - now using the LandingNavbar component */}
+      <LandingNavbar scrollY={scrollY} scrollToSection={scrollToSection} />
 
       {/* Hero Section - added padding-top to account for fixed navbar */}
       <section className="relative overflow-hidden min-h-[90vh] flex items-center pt-16">
