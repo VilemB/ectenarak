@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -127,6 +127,8 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const userButtonRef = useRef<HTMLButtonElement>(null);
 
   // Close menus when route changes
   useEffect(() => {
@@ -140,6 +142,35 @@ export default function Navbar({
       window.removeEventListener("popstate", handleRouteChange);
     };
   }, []);
+
+  // Handle click outside to close user menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuOpen &&
+        userMenuRef.current &&
+        userButtonRef.current &&
+        !userMenuRef.current.contains(event.target as Node) &&
+        !userButtonRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && userMenuOpen) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [userMenuOpen]);
 
   const navigateToSettings = () => {
     router.push("/settings");
@@ -210,6 +241,7 @@ export default function Navbar({
             {user && (
               <div className="relative ml-2">
                 <Button
+                  ref={userButtonRef}
                   variant="ghost"
                   size="sm"
                   className={cn(
@@ -236,6 +268,7 @@ export default function Navbar({
                 <AnimatePresence>
                   {userMenuOpen && (
                     <motion.div
+                      ref={userMenuRef}
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -244,6 +277,13 @@ export default function Navbar({
                     >
                       {/* Amber accent line at top of dropdown */}
                       <div className="h-0.5 bg-amber-500/70 w-full"></div>
+
+                      {/* ESC key indicator */}
+                      <div className="absolute top-2 right-2">
+                        <div className="text-xs px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 dark:text-zinc-400 flex items-center gap-1 opacity-70">
+                          <kbd className="font-mono text-[10px]">ESC</kbd>
+                        </div>
+                      </div>
 
                       <div className="p-2 flex flex-col gap-1">
                         <Button
