@@ -493,6 +493,7 @@ const BookHeader = ({
   setAuthorSummaryModal,
   handleDeleteAuthorSummary,
   isGeneratingAuthorSummary,
+  handleAuthorSummaryToggle,
 }: {
   book: Book;
   isExpanded: boolean;
@@ -503,6 +504,7 @@ const BookHeader = ({
   setAuthorSummaryModal: (open: boolean) => void;
   handleDeleteAuthorSummary: () => void;
   isGeneratingAuthorSummary: boolean;
+  handleAuthorSummaryToggle: (e: React.MouseEvent) => void;
 }) => {
   return (
     <motion.div
@@ -566,26 +568,37 @@ const BookHeader = ({
             </motion.h3>
             <div className="flex items-center gap-1.5 mt-0.5">
               <motion.span
-                className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (book.authorSummary) {
-                    if (isAuthorInfoVisible) {
-                      setIsAuthorInfoVisible(false);
-                    } else {
-                      setIsAuthorInfoVisible(true);
-                    }
-                  } else {
-                    setAuthorSummaryModal(true);
-                  }
-                }}
+                className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors relative"
+                onClick={handleAuthorSummaryToggle}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
                 {book.author}
                 {book.authorSummary && (
-                  <span className="relative flex h-2 w-2 items-center justify-center">
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 opacity-80 transition-all"></span>
+                  <span
+                    className="relative flex h-2 w-2 items-center justify-center"
+                    aria-label={
+                      isAuthorInfoVisible
+                        ? "Zavřít informace o autorovi"
+                        : "Zobrazit informace o autorovi"
+                    }
+                  >
+                    <span
+                      className={`relative inline-flex rounded-full h-2 w-2 bg-amber-500 
+                                 ${
+                                   isAuthorInfoVisible
+                                     ? "opacity-100"
+                                     : "opacity-80"
+                                 } 
+                                 transition-all duration-300`}
+                    />
+                    {isAuthorInfoVisible && (
+                      <motion.span
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-amber-200 dark:bg-amber-700 animate-pulse"
+                      />
+                    )}
                   </span>
                 )}
               </motion.span>
@@ -796,6 +809,51 @@ export default function BookComponent({
       }
     }
   }, [initialBook, fetchNotes]);
+
+  // Add a function to handle closing the author summary with scroll position preservation
+  const handleCloseAuthorInfo = useCallback(() => {
+    // Save the current scroll position before closing
+    setSavedScrollPosition(window.scrollY);
+
+    // Close the author info immediately - this prevents the flashing issue
+    // by letting the AnimatePresence handle the exit animation properly
+    setIsAuthorInfoVisible(false);
+  }, []);
+
+  // Create a more robust function for handling author summary toggling
+  const handleAuthorSummaryToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent toggling the book
+
+      // If we already have an author summary, toggle its visibility
+      if (book.authorSummary) {
+        // Add a subtle animation effect on toggle
+        const authorElement = document.getElementById(`author-${book.id}`);
+        if (authorElement) {
+          if (!isAuthorInfoVisible) {
+            // When opening, start slightly scaled down and fade in
+            authorElement.style.opacity = "0";
+            authorElement.style.transform = "scale(0.98)";
+
+            // Force a reflow to ensure the initial state is applied
+            void authorElement.offsetWidth;
+
+            // Then animate to normal
+            authorElement.style.transition =
+              "opacity 0.25s ease, transform 0.3s ease";
+            authorElement.style.opacity = "1";
+            authorElement.style.transform = "scale(1)";
+          }
+        }
+
+        setIsAuthorInfoVisible(!isAuthorInfoVisible);
+      } else {
+        // If no author summary yet, open the modal to generate one
+        setAuthorSummaryModal(true);
+      }
+    },
+    [book.authorSummary, book.id, isAuthorInfoVisible, setAuthorSummaryModal]
+  );
 
   // Update the useEffect for the click outside handler to be more forgiving
   useEffect(() => {
@@ -1328,16 +1386,6 @@ export default function BookComponent({
     });
   };
 
-  // Add a function to handle closing the author summary with scroll position preservation
-  const handleCloseAuthorInfo = useCallback(() => {
-    // Save the current scroll position before closing
-    setSavedScrollPosition(window.scrollY);
-
-    // Close the author info immediately - this prevents the flashing issue
-    // by letting the AnimatePresence handle the exit animation properly
-    setIsAuthorInfoVisible(false);
-  }, []);
-
   // Handle animation completion after closing author summary
   const handleAnimationComplete = useCallback(() => {
     if (savedScrollPosition !== null) {
@@ -1542,71 +1590,118 @@ export default function BookComponent({
         setAuthorSummaryModal={setAuthorSummaryModal}
         handleDeleteAuthorSummary={handleDeleteAuthorSummary}
         isGeneratingAuthorSummary={isGeneratingAuthorSummary}
+        handleAuthorSummaryToggle={handleAuthorSummaryToggle}
       />
 
       {/* Author Info Panel - remains the same */}
       <AnimatePresence mode="sync" onExitComplete={handleAnimationComplete}>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
+            id={`author-${book.id}`}
             initial={{
               opacity: 0,
               height: 0,
               overflow: "hidden",
+              transformOrigin: "top center",
             }}
             animate={{
               opacity: 1,
               height: "auto",
               overflow: "visible",
+              y: 0,
             }}
             exit={{
               opacity: 0,
               height: 0,
               overflow: "hidden",
+              y: -5,
               transition: {
                 opacity: { duration: 0.2, ease: "easeOut" },
-                height: { duration: 0.25, ease: [0.32, 0.72, 0, 1] }, // More natural easing
+                height: { duration: 0.25, ease: [0.32, 0.72, 0, 1] },
+                y: { duration: 0.15, ease: "easeInOut" },
               },
             }}
             transition={{
-              opacity: { duration: 0.25, ease: "easeInOut" },
-              height: { duration: 0.3, ease: [0.65, 0, 0.35, 1] }, // Custom easing for more natural expansion
+              opacity: { duration: 0.3, ease: "easeIn" },
+              height: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
+              y: { duration: 0.25, ease: "easeOut" },
             }}
             className="relative w-full max-w-[800px] z-10 mx-auto my-4 overflow-hidden"
           >
-            {/* Modern, flat card design */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden">
-              {/* Top accent line */}
-              <div className="h-1 bg-amber-500 w-full"></div>
+            {/* Modern, flat card design with improved visual hierarchy */}
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden border border-amber-100 dark:border-amber-900/30">
+              {/* Top accent line with animation */}
+              <motion.div
+                className="h-1 bg-gradient-to-r from-amber-400 to-amber-500 w-full"
+                initial={{ scaleX: 0.7, opacity: 0.7 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ duration: 0.4 }}
+              ></motion.div>
 
-              {/* Close button */}
-              <CloseButtonTop
-                onClick={handleCloseAuthorInfo}
-                label="Zavřít informace o autorovi"
-                title="Zavřít informace o autorovi (ESC)"
-              />
+              {/* Close button with improved animation */}
+              <motion.div
+                className="absolute -top-2 -right-2 z-10"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.2 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-amber-100 dark:bg-amber-900 hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-700 dark:text-amber-300 h-7 w-7 p-0 rounded-full shadow-sm border border-amber-200/70 dark:border-amber-800/70 transition-all duration-200"
+                  onClick={handleCloseAuthorInfo}
+                  aria-label="Zavřít informace o autorovi"
+                  title="Zavřít informace o autorovi (ESC)"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span className="sr-only">Zavřít</span>
+                </Button>
+              </motion.div>
 
               {/* Author header with portrait area - more modern and flat design */}
               <div className="px-5 py-4">
                 <div className="flex items-start gap-4">
-                  {/* Author portrait placeholder - simpler, flat design */}
-                  <div className="h-16 w-16 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 border border-amber-200 dark:border-amber-800/50">
+                  {/* Author portrait placeholder with subtle animation */}
+                  <motion.div
+                    className="h-16 w-16 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/40 dark:to-amber-800/20 flex items-center justify-center flex-shrink-0 border border-amber-200 dark:border-amber-800/50 shadow-sm"
+                    initial={{ opacity: 0, scale: 0.9, rotateZ: -5 }}
+                    animate={{ opacity: 1, scale: 1, rotateZ: 0 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                  >
                     <User className="h-8 w-8 text-amber-500 dark:text-amber-400" />
-                  </div>
+                  </motion.div>
 
-                  {/* Author name and metadata */}
+                  {/* Author name and metadata with staggered animation */}
                   <div className="flex-1">
-                    <h2 className="text-xl font-medium text-zinc-800 dark:text-zinc-100">
+                    <motion.h2
+                      className="text-xl font-medium text-zinc-800 dark:text-zinc-100"
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15, duration: 0.3 }}
+                    >
                       {book.author}
-                    </h2>
-                    <div className="flex items-center mt-1">
+                    </motion.h2>
+                    <motion.div
+                      className="flex items-center mt-1"
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2, duration: 0.3 }}
+                    >
                       <span className="inline-flex items-center text-xs px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full border border-amber-200 dark:border-amber-800/50">
                         <Sparkles className="h-3 w-3 mr-1" />
                         AI generováno
                       </span>
-                    </div>
+                    </motion.div>
 
-                    {/* Action buttons in header area */}
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    {/* Action buttons in header area with staggered animation */}
+                    <motion.div
+                      className="flex flex-wrap gap-2 mt-3"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25, duration: 0.3 }}
+                    >
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1630,20 +1725,30 @@ export default function BookComponent({
                             "text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all text-xs py-1",
                         }}
                       />
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               </div>
 
-              {/* Main content area - modern, clean design */}
-              <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800">
+              {/* Main content area with fade-in animation */}
+              <motion.div
+                className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+              >
                 <div className="prose prose-zinc prose-sm md:prose dark:prose-invert max-w-none w-full prose-headings:text-amber-600 dark:prose-headings:text-amber-400 prose-headings:font-medium">
                   <StudyContent content={book.authorSummary} />
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Footer area with utilities - modernized */}
-              <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 px-5 py-3 flex justify-between items-center">
+              {/* Footer area with utilities - fade-in animation */}
+              <motion.div
+                className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 px-5 py-3 flex justify-between items-center"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.3 }}
+              >
                 <div className="flex items-center gap-4">
                   <button
                     onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
@@ -1662,24 +1767,32 @@ export default function BookComponent({
                   </button>
                 </div>
 
-                {/* Close button */}
-                <button
+                {/* Close button with hover animation */}
+                <motion.button
                   onClick={handleCloseAuthorInfo}
                   className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   <X className="h-3.5 w-3.5" />
                   <span>Zavřít</span>
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
 
-              {/* ESC key indicator - hidden on small screens, simplified design */}
-              <div className="absolute top-3 right-12 hidden sm:block">
-                <div className="bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-zinc-900 rounded border border-zinc-300 dark:border-zinc-700">
+              {/* ESC key indicator with fade-in animation */}
+              <motion.div
+                className="absolute top-4 right-12 hidden sm:flex items-center gap-1.5"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.3 }}
+              >
+                <div className="bg-amber-50 dark:bg-amber-900/40 px-2 py-0.5 rounded text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 shadow-sm border border-amber-100 dark:border-amber-800/50">
+                  <kbd className="px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-zinc-900 rounded border border-amber-200 dark:border-amber-700 shadow-sm">
                     ESC
                   </kbd>
+                  <span className="text-xs">pro zavření</span>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
