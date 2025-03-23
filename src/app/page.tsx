@@ -35,6 +35,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LandingPage from "@/components/LandingPage";
 import Link from "next/link";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
+import { AiCreditsExhaustedPrompt } from "@/components/FeatureGate";
 
 // Define interface for user with subscription
 interface UserWithSubscription {
@@ -147,6 +148,8 @@ export default function Home() {
     startDate?: Date;
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
+    useState(false);
 
   // Function to fetch subscription data from the API
   const refreshSubscriptionData = useCallback(async () => {
@@ -455,6 +458,29 @@ export default function Home() {
                 },
               }),
             });
+
+            // Handle no credits response
+            if (summaryResponse.status === 403) {
+              const errorData = await summaryResponse.json();
+              if (errorData.creditsRequired) {
+                setShowCreditExhaustedModal(true);
+                setShowAddForm(false);
+
+                // Still add the book without the summary
+                setBooks((prevBooks) => [newBook, ...prevBooks]);
+
+                // Reset the form
+                setNewBookTitle("");
+                setNewBookAuthor("");
+                setIncludeAuthorSummary(false);
+                setFormStep(1);
+                setTitleTouched(false);
+                setAuthorTouched(false);
+
+                setIsGeneratingAuthorSummary(false);
+                return;
+              }
+            }
 
             if (!summaryResponse.ok) {
               throw new Error("Failed to generate author summary");
@@ -1281,6 +1307,15 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </Modal>
+
+      {/* AI Credits Exhausted Modal */}
+      <Modal
+        isOpen={showCreditExhaustedModal}
+        onClose={() => setShowCreditExhaustedModal(false)}
+        title="AI Kredity"
+      >
+        <AiCreditsExhaustedPrompt />
       </Modal>
     </SubscriptionContext.Provider>
   );

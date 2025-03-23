@@ -35,6 +35,9 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSubscriptionContext } from "@/app/page";
+import { AiCreditsExhaustedPrompt } from "./FeatureGate";
+import { Modal } from "@/components/ui/modal";
+import BookActionButtons from "./BookActionButtons";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -154,6 +157,488 @@ const CopyButton = ({
   </motion.button>
 );
 
+// Break out the notes list into a separate component for better organization
+const NotesList = ({
+  notes,
+  activeNoteFilter,
+  activeNoteId,
+  handleDeleteNote,
+  handleCopyNote,
+  handleViewSummary,
+  handleCloseSummary,
+  bookTitle,
+}: {
+  notes: Note[];
+  activeNoteFilter: "all" | "manual" | "ai";
+  activeNoteId: string | null;
+  handleDeleteNote: (noteId: string) => void;
+  handleCopyNote: (content: string, e?: React.MouseEvent) => void;
+  handleViewSummary: (noteId: string, e?: React.KeyboardEvent) => void;
+  handleCloseSummary: () => void;
+  bookTitle: string;
+}) => {
+  const filteredNotes = notes.filter((note) => {
+    if (activeNoteFilter === "all") return true;
+    if (activeNoteFilter === "ai" && note.isAISummary) return true;
+    if (activeNoteFilter === "manual" && !note.isAISummary) return true;
+    return false;
+  });
+
+  if (filteredNotes.length === 0) {
+    return (
+      <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-border/40">
+        <p>Žádné poznámky odpovídající vybranému filtru.</p>
+        {activeNoteFilter !== "all" && (
+          <p className="text-sm mt-1">
+            Zkuste změnit filtr nebo přidat novou poznámku.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <AnimatePresence initial={false}>
+      {filteredNotes.map((note) => (
+        <NoteItem
+          key={note.id}
+          note={note}
+          isActive={activeNoteId === note.id}
+          onDelete={handleDeleteNote}
+          onCopy={handleCopyNote}
+          onView={handleViewSummary}
+          onClose={handleCloseSummary}
+          bookTitle={bookTitle}
+        />
+      ))}
+    </AnimatePresence>
+  );
+};
+
+// Break out AI summary content for better organization
+const AISummaryContent = ({
+  note,
+  isActive,
+  onView,
+  onClose,
+  onCopy,
+  onDelete,
+}: {
+  note: Note;
+  isActive: boolean;
+  onView: (noteId: string, e?: React.KeyboardEvent) => void;
+  onClose: () => void;
+  onCopy: (content: string, e?: React.MouseEvent) => void;
+  onDelete: (noteId: string) => void;
+}) => {
+  return (
+    <AnimatePresence mode="wait">
+      {isActive ? (
+        <motion.div
+          key="expanded-summary"
+          initial={{
+            opacity: 0,
+            height: 0,
+            overflow: "hidden",
+            transformOrigin: "top center",
+          }}
+          animate={{
+            opacity: 1,
+            height: "auto",
+            overflow: "visible",
+            scale: 1,
+          }}
+          exit={{
+            opacity: 0,
+            height: 0,
+            overflow: "hidden",
+            scale: 0.98,
+            transition: {
+              opacity: { duration: 0.15, ease: "easeOut" },
+              height: { duration: 0.25, ease: [0.32, 0.72, 0, 1] },
+              scale: { duration: 0.2 },
+            },
+          }}
+          transition={{
+            opacity: { duration: 0.3, ease: "easeIn" },
+            height: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
+            scale: {
+              duration: 0.3,
+              type: "spring",
+              stiffness: 400,
+              damping: 30,
+            },
+          }}
+          className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4"
+        >
+          {/* Close button - positioned absolutely in the top-right corner */}
+          <CloseButtonTop
+            onClick={onClose}
+            label="Zavřít shrnutí knihy"
+            title="Zavřít shrnutí knihy (ESC)"
+          />
+
+          {/* ESC key indicator */}
+          <div className="flex justify-between items-start mb-5">
+            <div></div> {/* Empty div for spacing */}
+            <motion.div
+              className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.2 }}
+              whileHover={{
+                scale: 1.03,
+                backgroundColor: "rgba(251, 191, 36, 0.2)",
+                borderColor: "rgba(251, 191, 36, 0.3)",
+              }}
+            >
+              <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
+                ESC
+              </kbd>
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                zavřít panel
+              </span>
+            </motion.div>
+          </div>
+
+          {/* Study-friendly content */}
+          <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
+            <StudyContent content={note.content} />
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.2 }}
+            className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
+          >
+            <div className="flex items-center gap-4">
+              <CopyButton
+                onClick={(e) => onCopy(note.content, e)}
+                text="Kopírovat text"
+              />
+              <DeleteButton
+                onClick={() => onDelete(note.id)}
+                text="Smazat shrnutí"
+              />
+            </div>
+
+            <CloseButtonBottom onClick={onClose} text="Zavřít shrnutí" />
+          </motion.div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="collapsed-summary"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="prose prose-amber prose-sm dark:prose-invert max-w-none relative"
+        >
+          <ReactMarkdown>{note.content.split("\n\n")[0]}</ReactMarkdown>
+          {note.content.split("\n\n").length > 1 && (
+            <motion.div
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+              className="mt-2 text-amber-600 dark:text-amber-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
+              onClick={() => onView(note.id)}
+              onKeyDown={(e) => onView(note.id, e)}
+              tabIndex={0}
+              role="button"
+              aria-expanded={isActive}
+              aria-controls={`expanded-summary-${note.id}`}
+            >
+              <span>Zobrazit celé shrnutí</span>
+              <ChevronDown className="h-3.5 w-3.5 group-hover:translate-y-0.5 transition-transform duration-200" />
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// Break out individual note items for better encapsulation
+const NoteItem = ({
+  note,
+  isActive,
+  onDelete,
+  onCopy,
+  onView,
+  onClose,
+  bookTitle,
+}: {
+  note: Note;
+  isActive: boolean;
+  onDelete: (noteId: string) => void;
+  onCopy: (content: string, e?: React.MouseEvent) => void;
+  onView: (noteId: string, e?: React.KeyboardEvent) => void;
+  onClose: () => void;
+  bookTitle: string;
+}) => {
+  return (
+    <motion.div
+      key={note.id}
+      id={`note-${note.id}`}
+      className={`bg-background rounded-lg p-3 sm:p-4 border border-border/60 ${
+        isActive ? "ring-1 ring-primary/20" : ""
+      } transition-all duration-200 hover:border-border/80 hover:shadow-sm`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: isActive ? 1.01 : 1,
+        boxShadow: isActive
+          ? "0 4px 12px rgba(0,0,0,0.08)"
+          : "0 1px 3px rgba(0,0,0,0.05)",
+      }}
+      exit={{ opacity: 0, y: -5 }}
+      transition={{
+        duration: 0.25,
+        type: "spring",
+        stiffness: 300,
+        damping: 25,
+      }}
+      whileHover={{ y: -1 }}
+    >
+      {/* Note Header */}
+      <div className="flex flex-wrap items-start justify-between mb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
+          {note.isAISummary ? (
+            <Sparkles className="h-4 w-4 text-amber-500" />
+          ) : (
+            <PenLine className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span
+            className={`text-xs ${
+              note.isAISummary
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-muted-foreground"
+            }`}
+          >
+            {note.isAISummary ? "AI Shrnutí" : "Moje poznámka"}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatDate(note.createdAt)}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          {note.isAISummary && (
+            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+              <ExportButton
+                content={note.content}
+                filename={`${bookTitle}_shrnutí.md`}
+                buttonProps={{
+                  variant: "ghost",
+                  size: "sm",
+                  className:
+                    "h-7 w-7 p-0 text-muted-foreground hover:text-foreground",
+                }}
+              />
+            </motion.div>
+          )}
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => onView(note.id)}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              <span className="sr-only">Zobrazit shrnutí</span>
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onDelete(note.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="sr-only">Smazat poznámku</span>
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Note Content */}
+      {note.isAISummary ? (
+        <AISummaryContent
+          note={note}
+          isActive={isActive}
+          onView={onView}
+          onClose={onClose}
+          onCopy={onCopy}
+          onDelete={onDelete}
+        />
+      ) : (
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown>{note.content}</ReactMarkdown>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+// Create a separate component for the book header with improved expand/collapse interaction
+const BookHeader = ({
+  book,
+  isExpanded,
+  toggleExpanded,
+  handleBookDelete,
+  setIsAuthorInfoVisible,
+  isAuthorInfoVisible,
+  setAuthorSummaryModal,
+  handleDeleteAuthorSummary,
+  isGeneratingAuthorSummary,
+}: {
+  book: Book;
+  isExpanded: boolean;
+  toggleExpanded: (e?: React.MouseEvent | React.KeyboardEvent) => void;
+  handleBookDelete: () => void;
+  setIsAuthorInfoVisible: (visible: boolean) => void;
+  isAuthorInfoVisible: boolean;
+  setAuthorSummaryModal: (open: boolean) => void;
+  handleDeleteAuthorSummary: () => void;
+  isGeneratingAuthorSummary: boolean;
+}) => {
+  return (
+    <motion.div
+      className={`p-3 sm:p-4 cursor-pointer transition-all duration-250 hover:bg-black/[0.03] dark:hover:bg-white/[0.03] ${
+        isExpanded ? "border-b border-border/40" : ""
+      } ${
+        isExpanded ? "bg-black/[0.01] dark:bg-white/[0.01]" : ""
+      } relative group`}
+      onClick={toggleExpanded}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleExpanded(e);
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-expanded={isExpanded}
+      aria-controls={`book-content-${book.id}`}
+      title={isExpanded ? "Klikněte pro zavření" : "Klikněte pro rozbalení"}
+      whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.03)" }}
+      whileTap={{ scale: 0.998 }}
+      transition={{ duration: 0.15 }}
+    >
+      {/* Enhanced clickable indicator with animation */}
+      <motion.div
+        className={`absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-muted/30 rounded-full flex items-center justify-center transition-shadow duration-200 shadow-sm ${
+          isExpanded ? "opacity-80" : "opacity-60 group-hover:opacity-80"
+        }`}
+        initial={false}
+        animate={{
+          rotate: isExpanded ? 180 : 0,
+          scale: isExpanded ? 1 : 0.95,
+          backgroundColor: isExpanded
+            ? "rgba(0, 0, 0, 0.04)"
+            : "rgba(0, 0, 0, 0.02)",
+        }}
+        transition={{
+          duration: 0.2, // Faster animation to match book expansion
+          ease: [0.32, 0.72, 0, 1], // Custom easing for more natural motion
+        }}
+        whileHover={{
+          scale: 1.1,
+          backgroundColor: "rgba(0, 0, 0, 0.06)",
+          opacity: 0.9,
+        }}
+      >
+        <ChevronDown className="h-4 w-4 text-foreground/70" />
+      </motion.div>
+
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex-grow space-y-2">
+          {/* Title and Author with enhanced interactive elements */}
+          <div>
+            <motion.h3
+              className="text-lg sm:text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2"
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+            >
+              {book.title}
+            </motion.h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <motion.span
+                className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (book.authorSummary) {
+                    if (isAuthorInfoVisible) {
+                      setIsAuthorInfoVisible(false);
+                    } else {
+                      setIsAuthorInfoVisible(true);
+                    }
+                  } else {
+                    setAuthorSummaryModal(true);
+                  }
+                }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                {book.author}
+                {book.authorSummary && (
+                  <span className="relative flex h-2 w-2 items-center justify-center">
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 opacity-80 transition-all"></span>
+                  </span>
+                )}
+              </motion.span>
+            </div>
+          </div>
+
+          {/* Book Metadata with simplified state indication */}
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center">
+              <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
+              <span>{formatDate(book.createdAt)}</span>
+            </div>
+            {book.notes && book.notes.length > 0 && (
+              <div className="flex items-center">
+                <PenLine className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
+                <span>
+                  {book.notes.length}{" "}
+                  {book.notes.length === 1
+                    ? "poznámka"
+                    : book.notes.length > 1 && book.notes.length < 5
+                    ? "poznámky"
+                    : "poznámek"}
+                </span>
+              </div>
+            )}
+            {/* Status message */}
+            <motion.div
+              className="flex items-center text-primary"
+              animate={{ opacity: 0.8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-xs font-medium italic pr-1">
+                {isExpanded ? "(kliknutím zavřete)" : "(kliknutím otevřete)"}
+              </span>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Import and use the standalone BookActionButtons component */}
+        <BookActionButtons
+          book={book}
+          setIsAuthorInfoVisible={setIsAuthorInfoVisible}
+          isAuthorInfoVisible={isAuthorInfoVisible}
+          setAuthorSummaryModal={setAuthorSummaryModal}
+          handleDeleteAuthorSummary={handleDeleteAuthorSummary}
+          isGeneratingAuthorSummary={isGeneratingAuthorSummary}
+          handleBookDelete={handleBookDelete}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
 export default function BookComponent({
   book: initialBook,
   onDelete,
@@ -224,7 +709,7 @@ export default function BookComponent({
     null
   );
   const [activeNoteFilter, setActiveNoteFilter] = useState<
-    "all" | "regular" | "ai"
+    "all" | "manual" | "ai"
   >("all");
   const [notes, setNotes] = useState<Note[]>([]);
   const [errorMessages, setErrorMessages] = useState<
@@ -233,6 +718,8 @@ export default function BookComponent({
   const [successMessages, setSuccessMessages] = useState<
     Array<{ id: string; message: string }>
   >([]);
+  const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
+    useState(false);
 
   // Refs
   const bookRef = useRef<HTMLDivElement>(null);
@@ -310,15 +797,48 @@ export default function BookComponent({
     }
   }, [initialBook, fetchNotes]);
 
-  // Handle clicks outside the book component to close it
+  // Update the useEffect for the click outside handler to be more forgiving
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Don't close if we're clicking inside a modal dialog
+      if (
+        event.target instanceof HTMLElement &&
+        (event.target.closest('[role="dialog"]') ||
+          event.target.closest(".modal-content"))
+      ) {
+        return;
+      }
+
+      // Only close if we're clicking far away from the book
       if (
         bookRef.current &&
         !bookRef.current.contains(event.target as Node) &&
         isExpanded
       ) {
-        setIsExpanded(false);
+        // Get the distance from the book element
+        const bookRect = bookRef.current.getBoundingClientRect();
+        const clickX = event.clientX;
+        const clickY = event.clientY;
+
+        // Calculate the distance from the click to the nearest edge of the book
+        const distX = Math.max(
+          bookRect.left - clickX,
+          clickX - bookRect.right,
+          0
+        );
+        const distY = Math.max(
+          bookRect.top - clickY,
+          clickY - bookRect.bottom,
+          0
+        );
+
+        // Calculate the Euclidean distance
+        const distance = Math.sqrt(distX * distX + distY * distY);
+
+        // Only close if the click is more than 100px away from the book
+        if (distance > 100) {
+          setIsExpanded(false);
+        }
       }
     };
 
@@ -328,30 +848,31 @@ export default function BookComponent({
     };
   }, [isExpanded]);
 
-  // Add a smooth scroll effect when expanding a book
+  // Improve the smooth scroll effect when expanding a book
   useEffect(() => {
     if (isExpanded) {
       // Wait for the animation to complete before scrolling
       setTimeout(() => {
         if (bookRef.current) {
           const bookRect = bookRef.current.getBoundingClientRect();
-          const isBookVisible =
-            bookRect.top >= 0 && bookRect.bottom <= window.innerHeight;
 
-          // Only scroll if the book isn't fully visible
-          if (!isBookVisible) {
-            const offset =
-              bookRect.height > window.innerHeight
-                ? 100 // If book is taller than viewport, just scroll to top with some padding
-                : window.innerHeight / 3; // Otherwise center it more or less
+          // Check if top of book is above viewport or bottom is below viewport
+          const isTooHigh = bookRect.top < 80; // Allow some space for header
+          const isTooLow = bookRect.bottom > window.innerHeight - 40;
+
+          // Only scroll if the book isn't optimally positioned
+          if (isTooHigh || isTooLow) {
+            // Calculate the best position - aim to have the book header at about 15% of screen height
+            const optimalPosition =
+              window.scrollY + bookRect.top - window.innerHeight * 0.15;
 
             window.scrollTo({
-              top: window.scrollY + bookRect.top - offset,
+              top: optimalPosition,
               behavior: "smooth",
             });
           }
         }
-      }, 400); // Wait for expansion animation to be mostly complete
+      }, 200); // Reduced wait time for better responsiveness
     }
   }, [isExpanded]);
 
@@ -430,23 +951,24 @@ export default function BookComponent({
     }
   };
 
-  // Expand/collapse the book card
+  // Improve the toggleExpanded function to have better event handling
   const toggleExpanded = useCallback(
     (e?: React.MouseEvent | React.KeyboardEvent) => {
-      // Don't toggle if clicking on buttons or interactive elements
+      // Only prevent toggling when clicking on specific interactive elements
       if (
         e &&
         e.target instanceof HTMLElement &&
-        (e.target instanceof HTMLButtonElement ||
-          e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement ||
-          e.target.tagName === "A" ||
-          e.target.tagName === "BUTTON" ||
+        (e.target.tagName === "BUTTON" ||
           e.target.tagName === "INPUT" ||
+          e.target.tagName === "TEXTAREA" ||
+          e.target.tagName === "A" ||
           e.target.closest("button") ||
           e.target.closest("a") ||
-          e.target.closest("input"))
+          e.target.closest("input") ||
+          e.target.closest("textarea") ||
+          e.target.closest("[data-no-toggle]"))
       ) {
+        // Allow the event to bubble up and be handled by the element
         return;
       }
 
@@ -455,6 +977,21 @@ export default function BookComponent({
         if (e.key !== "Enter" && e.key !== " ") {
           return;
         }
+
+        // Prevent scrolling on space press
+        if (e.key === " ") {
+          e.preventDefault();
+        }
+      }
+
+      // Add a subtle haptic-like feedback by slightly scaling the element temporarily
+      if (bookRef.current) {
+        bookRef.current.style.transform = "scale(0.995)";
+        setTimeout(() => {
+          if (bookRef.current) {
+            bookRef.current.style.transform = "";
+          }
+        }, 100);
       }
 
       setIsExpanded(!isExpanded);
@@ -480,6 +1017,16 @@ export default function BookComponent({
           preferences: preferencesToUse,
         }),
       });
+
+      // Handle no credits response
+      if (response.status === 403) {
+        const errorData = await response.json();
+        if (errorData.creditsRequired) {
+          setShowCreditExhaustedModal(true);
+          setSummaryModal(false);
+          return;
+        }
+      }
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -646,6 +1193,16 @@ export default function BookComponent({
         }),
       });
 
+      // Handle no credits response
+      if (response.status === 403) {
+        const errorData = await response.json();
+        if (errorData.creditsRequired) {
+          setShowCreditExhaustedModal(true);
+          setAuthorSummaryModal(false);
+          return;
+        }
+      }
+
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Failed to generate author summary");
@@ -771,34 +1328,6 @@ export default function BookComponent({
     });
   };
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle shortcuts when the book is expanded
-      if (!isExpanded) return;
-
-      // Check if no modal is open
-      const noModalOpen =
-        !deleteModal.isOpen && !summaryModal && !authorSummaryModal;
-
-      // Check if not typing in a text field
-      const notInTextField =
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA";
-
-      // Add note with Alt+N
-      if (e.altKey && e.key === "n" && noModalOpen && notInTextField) {
-        e.preventDefault();
-        textareaRef.current?.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isExpanded, deleteModal.isOpen, summaryModal, authorSummaryModal]);
-
   // Add a function to handle closing the author summary with scroll position preservation
   const handleCloseAuthorInfo = useCallback(() => {
     // Save the current scroll position before closing
@@ -856,37 +1385,22 @@ export default function BookComponent({
     };
   }, [isAuthorInfoVisible, book.id, handleCloseAuthorInfo]);
 
-  // Add a function to handle viewing a specific summary
-  const handleViewSummary = (
-    noteId: string,
-    event?: React.MouseEvent | React.KeyboardEvent
-  ) => {
-    // If it's a keyboard event, only toggle on Enter or Space
-    if (event && "key" in event) {
-      const keyEvent = event as React.KeyboardEvent;
-      if (keyEvent.key !== "Enter" && keyEvent.key !== " ") {
+  // Update the handleViewSummary function to improve the animation timing
+  const handleViewSummary = useCallback(
+    (noteId: string, e?: React.KeyboardEvent) => {
+      // Handle keyboard events for accessibility
+      if (e && e.key !== "Enter" && e.key !== " ") {
         return;
       }
-      // Prevent scrolling when pressing space
-      if (keyEvent.key === " ") {
-        keyEvent.preventDefault();
+
+      // Prevent space key from scrolling
+      if (e && e.key === " ") {
+        e.preventDefault();
       }
-    }
 
-    // Add haptic feedback if supported
-    if (navigator.vibrate && window.innerWidth <= 768) {
-      navigator.vibrate(5); // Subtle vibration on mobile
-    }
-
-    // Toggle the selected summary
-    if (noteId === activeNoteId) {
-      // If already selected, close it with animation
-      setActiveNoteId(null);
-    } else {
-      // If not selected, open it
       setActiveNoteId(noteId);
 
-      // Scroll the summary into view after a short delay to allow animation
+      // After expanding, scroll the summary into view with a small delay
       setTimeout(() => {
         const summaryElement = document.getElementById(`note-${noteId}`);
         if (summaryElement) {
@@ -896,47 +1410,86 @@ export default function BookComponent({
           });
         }
       }, 100);
-    }
-  };
+    },
+    []
+  );
+
+  // Add a new keydown handler for the ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close active note when pressing ESC
+      if (e.key === "Escape") {
+        if (activeNoteId) {
+          setActiveNoteId(null);
+          e.preventDefault();
+        } else if (isAuthorInfoVisible) {
+          handleCloseAuthorInfo();
+          e.preventDefault();
+        } else if (isExpanded) {
+          setIsExpanded(false);
+          e.preventDefault();
+        }
+      }
+
+      // Improve keyboard navigation - use arrows to move between books if not in a text field
+      if (
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+          const books = Array.from(
+            document.querySelectorAll("[aria-expanded]")
+          ).filter(
+            (el) =>
+              el.getAttribute("role") === "button" &&
+              el.closest(".book-component")
+          );
+
+          const currentIndex = books.findIndex(
+            (book) => book.getAttribute("aria-expanded") === "true"
+          );
+
+          if (currentIndex !== -1) {
+            let targetIndex = currentIndex;
+
+            if (e.key === "ArrowUp") {
+              targetIndex = Math.max(0, currentIndex - 1);
+            } else {
+              targetIndex = Math.min(books.length - 1, currentIndex + 1);
+            }
+
+            if (targetIndex !== currentIndex) {
+              (books[targetIndex] as HTMLElement).focus();
+              e.preventDefault();
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeNoteId, isAuthorInfoVisible, isExpanded, handleCloseAuthorInfo]);
 
   // Add a function to handle closing the summary with animation
   const handleCloseSummary = useCallback(() => {
-    // Close the summary
-    setActiveNoteId(null);
-  }, []);
+    // Use a more elegant fade out animation before closing
+    const elementToAnimate = document.getElementById(`note-${activeNoteId}`);
+    if (elementToAnimate) {
+      // Apply a subtle animation before closing
+      elementToAnimate.style.transition = "transform 0.15s ease";
+      elementToAnimate.style.transform = "scale(0.99)";
 
-  // Add ESC key handler for selected summary
-  useEffect(() => {
-    if (!activeNoteId) return;
-
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && activeNoteId) {
-        handleCloseSummary();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscKey);
-    return () => document.removeEventListener("keydown", handleEscKey);
-  }, [activeNoteId, handleCloseSummary]);
-
-  // Add click outside handler for book summary
-  useEffect(() => {
-    if (!activeNoteId) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // Check if the click is outside the summary
-      const target = event.target as Node;
-      const summaryElement = document.getElementById(`note-${activeNoteId}`);
-
-      if (summaryElement && !summaryElement.contains(target)) {
-        // Close the summary without the ripple effect
-        handleCloseSummary();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeNoteId, handleCloseSummary]);
+      // Short delay to allow the animation to be visible
+      setTimeout(() => {
+        setActiveNoteId(null);
+      }, 80);
+    } else {
+      setActiveNoteId(null);
+    }
+  }, [activeNoteId]);
 
   // Add a function to handle copying note content
   const handleCopyNote = (content: string, e?: React.MouseEvent) => {
@@ -969,214 +1522,30 @@ export default function BookComponent({
       });
   };
 
+  // Main rendering with the optimized structure
   return (
     <motion.div
       ref={bookRef}
-      className="bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-visible"
+      className="book-component bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-visible"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Book Header */}
-      <motion.div
-        className={`p-3 sm:p-4 cursor-pointer transition-colors duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${
-          isExpanded ? "border-b border-border/40" : ""
-        } ${isExpanded ? "bg-black/[0.01] dark:bg-white/[0.01]" : ""}`}
-        onClick={toggleExpanded}
-        onKeyDown={toggleExpanded}
-        tabIndex={0}
-        role="button"
-        aria-expanded={isExpanded}
-        aria-controls={`book-content-${book.id}`}
-        title={isExpanded ? "Klikněte pro zavření" : "Klikněte pro rozbalení"}
-        whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
-        whileTap={{ scale: 0.995 }}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div className="flex-grow space-y-2">
-            {/* Title and Author */}
-            <div>
-              <motion.h3
-                className="text-lg sm:text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2"
-                whileHover={{ scale: 1.01 }}
-                transition={{ duration: 0.2 }}
-              >
-                {book.title}
-              </motion.h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <motion.span
-                  className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (book.authorSummary) {
-                      if (isAuthorInfoVisible) {
-                        handleCloseAuthorInfo();
-                      } else {
-                        setIsAuthorInfoVisible(true);
-                      }
-                    } else {
-                      setAuthorSummaryModal(true);
-                    }
-                  }}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  {book.author}
-                  {book.authorSummary && (
-                    <span className="relative flex h-2 w-2 items-center justify-center">
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 opacity-80 transition-all"></span>
-                    </span>
-                  )}
-                </motion.span>
-              </div>
-            </div>
+      {/* Book Header - now using the BookHeader component */}
+      <BookHeader
+        book={book}
+        isExpanded={isExpanded}
+        toggleExpanded={toggleExpanded}
+        handleBookDelete={handleBookDelete}
+        setIsAuthorInfoVisible={setIsAuthorInfoVisible}
+        isAuthorInfoVisible={isAuthorInfoVisible}
+        setAuthorSummaryModal={setAuthorSummaryModal}
+        handleDeleteAuthorSummary={handleDeleteAuthorSummary}
+        isGeneratingAuthorSummary={isGeneratingAuthorSummary}
+      />
 
-            {/* Book Metadata */}
-            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <div className="flex items-center">
-                <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
-                <span>{formatDate(book.createdAt)}</span>
-              </div>
-              {notes.length > 0 && (
-                <div className="flex items-center">
-                  <PenLine className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
-                  <span>
-                    {notes.length}{" "}
-                    {notes.length === 1
-                      ? "poznámka"
-                      : notes.length > 1 && notes.length < 5
-                      ? "poznámky"
-                      : "poznámek"}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2 mt-3 sm:mt-0 sm:flex-row">
-            {book.authorSummary ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsAuthorInfoVisible(!isAuthorInfoVisible);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
-                >
-                  <User className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="hidden sm:inline">Informace o autorovi</span>
-                  <span className="sm:hidden">Info</span>
-                </Button>
-                <div className="flex">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setAuthorSummaryModal(true);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200 rounded-r-none border-r-0"
-                    disabled={isGeneratingAuthorSummary}
-                  >
-                    {isGeneratingAuthorSummary ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                        <span>Generuji...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                        <span className="hidden sm:inline">
-                          Aktualizovat informace o autorovi
-                        </span>
-                        <span className="sm:hidden">Aktualizovat</span>
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteAuthorSummary();
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="text-amber-600 border-amber-200 hover:bg-destructive/10 hover:text-destructive dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-destructive/20 transition-all duration-200 rounded-l-none px-2"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span className="sr-only">Smazat info o autorovi</span>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAuthorSummaryModal(true);
-                }}
-                variant="outline"
-                size="sm"
-                className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
-                disabled={!book.id || isGeneratingAuthorSummary}
-              >
-                {isGeneratingAuthorSummary ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                    <span>Generuji...</span>
-                  </>
-                ) : (
-                  <>
-                    <User className="h-3.5 w-3.5 mr-1.5" />
-                    <span className="hidden sm:inline">
-                      Informace o autorovi
-                    </span>
-                    <span className="sm:hidden">Info</span>
-                  </>
-                )}
-              </Button>
-            )}
-
-            <div className="flex gap-1.5 ml-auto sm:ml-0">
-              <ExportButton book={book} notes={notes} />
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive hover:bg-destructive/10 hover:border-destructive/30"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBookDelete();
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-
-              <Button
-                variant={isExpanded ? "default" : "outline"}
-                size="sm"
-                className="transition-all duration-300"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExpanded(!isExpanded);
-                }}
-                aria-expanded={isExpanded}
-              >
-                <ChevronDown
-                  className={`h-4 w-4 mr-1.5 transition-transform duration-300 ease-in-out ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                />
-                <span>{isExpanded ? "Skrýt" : "Zobrazit"}</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Author Info Panel */}
-      <AnimatePresence onExitComplete={handleAnimationComplete}>
+      {/* Author Info Panel - remains the same */}
+      <AnimatePresence mode="sync" onExitComplete={handleAnimationComplete}>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
             initial={{
@@ -1195,12 +1564,12 @@ export default function BookComponent({
               overflow: "hidden",
               transition: {
                 opacity: { duration: 0.2, ease: "easeOut" },
-                height: { duration: 0.3, ease: "easeInOut" },
+                height: { duration: 0.25, ease: [0.32, 0.72, 0, 1] }, // More natural easing
               },
             }}
             transition={{
-              opacity: { duration: 0.3, ease: "easeInOut" },
-              height: { duration: 0.3, ease: "easeInOut" },
+              opacity: { duration: 0.25, ease: "easeInOut" },
+              height: { duration: 0.3, ease: [0.65, 0, 0.35, 1] }, // Custom easing for more natural expansion
             }}
             className="relative w-full max-w-[800px] z-10 mx-auto my-4 overflow-hidden"
           >
@@ -1317,16 +1686,21 @@ export default function BookComponent({
       </AnimatePresence>
 
       {/* Expanded Content (Notes) */}
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} mode="sync">
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
+            id={`book-content-${book.id}`}
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -5 }}
+            transition={{
+              duration: 0.3,
+              height: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
+              opacity: { duration: 0.25 },
+            }}
             className="p-3 sm:p-4 space-y-4 sm:space-y-5 w-full"
           >
-            {/* Notes Section */}
+            {/* Notes Section Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="text-base sm:text-lg font-medium text-foreground">
                 Poznámky a shrnutí
@@ -1352,17 +1726,15 @@ export default function BookComponent({
                   <motion.button
                     whileHover={{
                       backgroundColor:
-                        activeNoteFilter === "regular"
-                          ? ""
-                          : "rgba(0,0,0,0.03)",
+                        activeNoteFilter === "manual" ? "" : "rgba(0,0,0,0.03)",
                     }}
                     whileTap={{ scale: 0.98 }}
                     className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                      activeNoteFilter === "regular"
+                      activeNoteFilter === "manual"
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground"
                     }`}
-                    onClick={() => setActiveNoteFilter("regular")}
+                    onClick={() => setActiveNoteFilter("manual")}
                   >
                     Moje
                   </motion.button>
@@ -1411,7 +1783,7 @@ export default function BookComponent({
               </div>
             </div>
 
-            {/* Notes List */}
+            {/* Notes List - now using the NotesList component */}
             {notes.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>Zatím nemáte žádné poznámky k této knize.</p>
@@ -1426,258 +1798,16 @@ export default function BookComponent({
                 transition={{ duration: 0.3 }}
                 className="space-y-4"
               >
-                <AnimatePresence initial={false}>
-                  {notes
-                    .filter((note) => {
-                      if (activeNoteFilter === "all") return true;
-                      if (activeNoteFilter === "regular")
-                        return !note.isAISummary;
-                      if (activeNoteFilter === "ai") return note.isAISummary;
-                      return true;
-                    })
-                    .map((note) => (
-                      <motion.div
-                        key={`note-${note.id}`}
-                        id={`note-${note.id}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                        }}
-                        exit={{
-                          opacity: 0,
-                          y: -5,
-                          transition: { duration: 0.2 },
-                        }}
-                        className={`bg-background border border-border/60 rounded-lg p-3 relative ${
-                          note.isAISummary
-                            ? "bg-gradient-to-br from-amber-50/30 to-transparent dark:from-amber-950/10 dark:to-transparent"
-                            : ""
-                        }`}
-                      >
-                        {/* Note Header */}
-                        <div className="flex flex-wrap items-start justify-between mb-2">
-                          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
-                            {note.isAISummary ? (
-                              <Sparkles className="h-4 w-4 text-amber-500" />
-                            ) : (
-                              <PenLine className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <span
-                              className={`text-xs ${
-                                note.isAISummary
-                                  ? "text-amber-600 dark:text-amber-400"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              {note.isAISummary
-                                ? "AI Shrnutí"
-                                : "Moje poznámka"}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(note.createdAt)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {note.isAISummary && (
-                              <motion.div
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                              >
-                                <ExportButton
-                                  content={note.content}
-                                  filename={`${book.title}_shrnutí.md`}
-                                  buttonProps={{
-                                    variant: "ghost",
-                                    size: "sm",
-                                    className:
-                                      "h-7 w-7 p-0 text-muted-foreground hover:text-foreground",
-                                  }}
-                                />
-                              </motion.div>
-                            )}
-                            <motion.div
-                              whileHover={{ scale: 1.01 }}
-                              whileTap={{ scale: 0.99 }}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                                onClick={(e) => handleViewSummary(note.id, e)}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                                <span className="sr-only">
-                                  Zobrazit shrnutí
-                                </span>
-                              </Button>
-                            </motion.div>
-                            <motion.div
-                              whileHover={{ scale: 1.01 }}
-                              whileTap={{ scale: 0.99 }}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                onClick={() => handleDeleteNote(note.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                <span className="sr-only">Smazat poznámku</span>
-                              </Button>
-                            </motion.div>
-                          </div>
-                        </div>
-
-                        {/* Note Content */}
-                        {note.isAISummary ? (
-                          <AnimatePresence mode="wait">
-                            {activeNoteId === note.id ? (
-                              <motion.div
-                                key="expanded-summary"
-                                initial={{
-                                  opacity: 0,
-                                  height: 0,
-                                  overflow: "hidden",
-                                }}
-                                animate={{
-                                  opacity: 1,
-                                  height: "auto",
-                                  overflow: "visible",
-                                }}
-                                exit={{
-                                  opacity: 0,
-                                  height: 0,
-                                  overflow: "hidden",
-                                  transition: {
-                                    opacity: {
-                                      duration: 0.2,
-                                      ease: "easeOut",
-                                    },
-                                    height: {
-                                      duration: 0.3,
-                                      delay: 0.1,
-                                      ease: "easeInOut",
-                                    },
-                                  },
-                                }}
-                                transition={{
-                                  opacity: {
-                                    duration: 0.3,
-                                    ease: "easeInOut",
-                                  },
-                                  height: {
-                                    duration: 0.3,
-                                    ease: "easeInOut",
-                                  },
-                                }}
-                                className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4"
-                              >
-                                {/* Close button - positioned absolutely in the top-right corner */}
-                                <CloseButtonTop
-                                  onClick={handleCloseSummary}
-                                  label="Zavřít shrnutí knihy"
-                                  title="Zavřít shrnutí knihy (ESC)"
-                                />
-
-                                {/* ESC key indicator */}
-                                <div className="flex justify-between items-start mb-5">
-                                  <div></div> {/* Empty div for spacing */}
-                                  <motion.div
-                                    className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
-                                    initial={{ opacity: 0, y: -5 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                      delay: 0.3,
-                                      duration: 0.2,
-                                    }}
-                                    whileHover={{
-                                      scale: 1.03,
-                                      backgroundColor:
-                                        "rgba(251, 191, 36, 0.2)",
-                                      borderColor: "rgba(251, 191, 36, 0.3)",
-                                    }}
-                                  >
-                                    <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
-                                      ESC
-                                    </kbd>
-                                    <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                                      zavřít panel
-                                    </span>
-                                  </motion.div>
-                                </div>
-
-                                {/* Study-friendly content */}
-                                <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
-                                  <StudyContent content={note.content} />
-                                </div>
-
-                                <motion.div
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ delay: 0.3, duration: 0.2 }}
-                                  className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <CopyButton
-                                      onClick={(e) =>
-                                        handleCopyNote(note.content, e)
-                                      }
-                                      text="Kopírovat text"
-                                    />
-                                    <DeleteButton
-                                      onClick={() => handleDeleteNote(note.id)}
-                                      text="Smazat shrnutí"
-                                    />
-                                  </div>
-
-                                  <CloseButtonBottom
-                                    onClick={handleCloseSummary}
-                                    text="Zavřít shrnutí"
-                                  />
-                                </motion.div>
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                key="collapsed-summary"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="prose prose-amber prose-sm dark:prose-invert max-w-none"
-                              >
-                                <ReactMarkdown>
-                                  {note.content.split("\n\n")[0]}
-                                </ReactMarkdown>
-                                {note.content.split("\n\n").length > 1 && (
-                                  <motion.div
-                                    whileHover={{ scale: 1.01, y: -1 }}
-                                    whileTap={{ scale: 0.99 }}
-                                    className="mt-2 text-amber-600 dark:text-amber-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
-                                    onClick={() => handleViewSummary(note.id)}
-                                    onKeyDown={(e) =>
-                                      handleViewSummary(note.id, e)
-                                    }
-                                    tabIndex={0}
-                                    role="button"
-                                    aria-expanded={activeNoteId === note.id}
-                                    aria-controls={`expanded-summary-${note.id}`}
-                                  >
-                                    <span>Zobrazit celé shrnutí</span>
-                                    <ChevronDown className="h-3.5 w-3.5 group-hover:translate-y-0.5 transition-transform" />
-                                  </motion.div>
-                                )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        ) : (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown>{note.content}</ReactMarkdown>
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                </AnimatePresence>
+                <NotesList
+                  notes={notes}
+                  activeNoteFilter={activeNoteFilter}
+                  activeNoteId={activeNoteId}
+                  handleDeleteNote={handleDeleteNote}
+                  handleCopyNote={handleCopyNote}
+                  handleViewSummary={handleViewSummary}
+                  handleCloseSummary={handleCloseSummary}
+                  bookTitle={book.title}
+                />
               </motion.div>
             )}
 
@@ -1698,7 +1828,7 @@ export default function BookComponent({
         )}
       </AnimatePresence>
 
-      {/* Error Messages */}
+      {/* Error and Success Messages remain the same */}
       <AnimatePresence>
         {errorMessages.length > 0 && (
           <div className="p-4 space-y-2">
@@ -1722,7 +1852,6 @@ export default function BookComponent({
         )}
       </AnimatePresence>
 
-      {/* Success Messages */}
       <AnimatePresence>
         {successMessages.length > 0 && (
           <div className="p-4 space-y-2">
@@ -1758,7 +1887,7 @@ export default function BookComponent({
         )}
       </AnimatePresence>
 
-      {/* Confirmation Dialogs */}
+      {/* Modals remain the same */}
       <ConfirmationDialog
         isOpen={deleteModal.isOpen}
         onClose={() =>
@@ -1797,7 +1926,6 @@ export default function BookComponent({
         variant="destructive"
       />
 
-      {/* Summary Preferences Modal */}
       <SummaryPreferencesModal
         isOpen={summaryModal}
         onClose={() => setSummaryModal(false)}
@@ -1807,7 +1935,6 @@ export default function BookComponent({
         description="Vyberte preferovaný styl a zaměření shrnutí knihy."
       />
 
-      {/* Add Author Summary Preferences Modal */}
       <AuthorSummaryPreferencesModal
         isOpen={authorSummaryModal}
         onClose={() => setAuthorSummaryModal(false)}
@@ -1816,6 +1943,14 @@ export default function BookComponent({
         title="Generovat informace o autorovi"
         description="Vyberte preferovaný styl a zaměření informací o autorovi."
       />
+
+      <Modal
+        isOpen={showCreditExhaustedModal}
+        onClose={() => setShowCreditExhaustedModal(false)}
+        title="AI Kredity"
+      >
+        <AiCreditsExhaustedPrompt />
+      </Modal>
     </motion.div>
   );
 }
