@@ -33,6 +33,7 @@ import {
 } from "@/components/AuthorSummaryPreferencesModal";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -156,6 +157,9 @@ export default function BookComponent({
   book: initialBook,
   onDelete,
 }: BookProps) {
+  // Add subscription hook to refresh credits
+  const { refreshSubscription } = useSubscription();
+
   // Validate the book object
   const safeBook: Book = useMemo(() => {
     return {
@@ -479,11 +483,48 @@ export default function BookComponent({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("API error response:", errorData);
+
+        // Handle specific error for no credits remaining
+        if (response.status === 403 && errorData.creditsRequired) {
+          throw new Error("Nemáte dostatek AI kreditů pro generování shrnutí");
+        }
+
         throw new Error(errorData.error || "Failed to generate summary");
       }
 
       const data = await response.json();
       console.log("Summary generated successfully");
+
+      // Log the remaining credits if returned from API
+      if (data.creditsRemaining !== undefined) {
+        console.log(`Remaining AI credits: ${data.creditsRemaining}`);
+
+        // Refresh subscription data globally to update UI
+        refreshSubscription();
+      }
+
+      // Create a new note object for the summary
+      const newNote = {
+        id: "temp-" + Date.now(), // Using id instead of _id to match Note interface
+        content: data.summary,
+        isAISummary: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Add the new note to the state immediately
+      setNotes((prevNotes) => [...prevNotes, newNote]);
+
+      // Close the modal
+      setSummaryModal(false);
+
+      // Show success message
+      showSuccessMessage("Shrnutí bylo úspěšně vygenerováno");
+
+      // View the newly generated summary immediately
+      setTimeout(() => {
+        handleViewSummary(newNote.id);
+      }, 300);
 
       // Add the AI summary as a note in the database
       console.log("Saving summary as a note...");
@@ -507,57 +548,10 @@ export default function BookComponent({
       const noteData = await summaryResponse.json();
       console.log("AI summary saved as note:", noteData);
 
-      // Decrease the AI credits after successful generation - CRITICAL STEP!
-      console.log("Decreasing AI credits via API...");
-      try {
-        const creditResponse = await fetch("/api/subscription/use-credit", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!creditResponse.ok) {
-          console.error(
-            "Failed to decrease AI credits via API:",
-            creditResponse.status
-          );
-          const errorText = await creditResponse.text().catch(() => "");
-          console.error("Error response:", errorText);
-        } else {
-          const creditData = await creditResponse.json();
-          console.log("AI credits decreased successfully:", creditData);
-        }
-      } catch (creditError) {
-        console.error("Error decreasing AI credits:", creditError);
-        // Fallback to client-side credit reduction if server fails
-        try {
-          const creditDecreasedSuccessfully = await useAiCreditRef.current();
-          console.log(
-            "AI credits decreased via client-side:",
-            creditDecreasedSuccessfully
-          );
-        } catch (fallbackError) {
-          console.error(
-            "Fallback credit reduction also failed:",
-            fallbackError
-          );
-        }
-      }
-
-      // Add the new note to the state
-      setNotes((prevNotes) => [...prevNotes, noteData]);
-
-      // Close the modal
-      setSummaryModal(false);
-
-      // Show success message
-      showSuccessMessage("Shrnutí bylo úspěšně vygenerováno");
-
-      // View the newly generated summary
-      setTimeout(() => {
-        handleViewSummary(noteData._id);
-      }, 300);
+      // Update the temporary note with the real one
+      setNotes((prevNotes) =>
+        prevNotes.map((note) => (note.id === newNote.id ? noteData : note))
+      );
     } catch (error) {
       console.error("Error generating summary:", error);
       showErrorMessage(
@@ -724,7 +718,9 @@ export default function BookComponent({
         console.error("API error response:", errorData);
 
         if (response.status === 403 && errorData.creditsRequired) {
-          throw new Error("Nemáte dostatek AI kreditů");
+          throw new Error(
+            "Nemáte dostatek AI kreditů pro generování informací o autorovi"
+          );
         } else {
           throw new Error(
             errorData.error || "Nepodařilo se vygenerovat informace o autorovi"
@@ -735,7 +731,30 @@ export default function BookComponent({
       const data = await response.json();
       console.log("Author summary generated successfully");
 
-      // Update the book with the new author summary
+      // Log the remaining credits if returned from API
+      if (data.creditsRemaining !== undefined) {
+        console.log(`Remaining AI credits: ${data.creditsRemaining}`);
+
+        // Refresh subscription data globally to update UI
+        refreshSubscription();
+      }
+
+      // Update the book with the new author summary immediately in the UI
+      setBook((prevBook) => ({
+        ...prevBook,
+        authorSummary: data.summary,
+      }));
+
+      // Close the author summary modal
+      setAuthorSummaryModal(false);
+
+      // Show success message
+      showSuccessMessage("Informace o autorovi byly úspěšně vygenerovány");
+
+      // Show the author information
+      setIsAuthorInfoVisible(true);
+
+      // Update the book with the new author summary in the database
       console.log("Updating book with author summary...");
       const bookUpdateResponse = await fetch(`/api/books/${book.id}`, {
         method: "PATCH",
@@ -755,29 +774,6 @@ export default function BookComponent({
 
       const bookData = await bookUpdateResponse.json();
       console.log("Book updated successfully:", bookData);
-
-      // Decrease the AI credits after successful generation - CRITICAL STEP!
-      console.log("Decreasing AI credits for author summary...");
-      const creditDecreasedSuccessfully = await useAiCreditRef.current();
-      console.log(
-        "AI credits decreased successfully:",
-        creditDecreasedSuccessfully
-      );
-
-      // Update the book in state with the new author summary
-      setBook((prevBook) => ({
-        ...prevBook,
-        authorSummary: data.summary,
-      }));
-
-      // Show success message
-      showSuccessMessage("Informace o autorovi byly úspěšně vygenerovány");
-
-      // Close the author summary modal
-      setAuthorSummaryModal(false);
-
-      // Show the author information
-      setIsAuthorInfoVisible(true);
     } catch (error) {
       console.error("Error generating author summary:", error);
       showErrorMessage(

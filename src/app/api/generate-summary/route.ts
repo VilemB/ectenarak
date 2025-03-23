@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import OpenAI from "openai";
 import { SummaryPreferences } from "@/components/SummaryPreferencesModal";
 import { createHash } from "crypto";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import dbConnect from "@/lib/mongodb";
+import { checkSubscription } from "@/middleware/subscriptionMiddleware";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -484,6 +488,35 @@ export async function POST(request: Request) {
   console.log("=== GENERATE SUMMARY API ROUTE CALLED ===");
 
   try {
+    // Connect to database
+    await dbConnect();
+
+    // Check if user has remaining AI credits
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      console.log("Unauthorized: No user session found");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check subscription requirements - verify AI credits
+    const subscriptionCheck = await checkSubscription(
+      request as unknown as NextRequest,
+      {
+        requireAiCredits: true,
+      }
+    );
+
+    if (!subscriptionCheck.allowed) {
+      return subscriptionCheck.response as NextResponse;
+    }
+
+    const user = subscriptionCheck.user;
+
+    if (!user) {
+      console.log("User not found in subscription check");
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { bookTitle, bookAuthor, notes, preferences } = body;
 
@@ -675,15 +708,36 @@ export async function POST(request: Request) {
       console.log("Summary cached with key:", cacheKey);
     }
 
-    console.log("=== GENERATE SUMMARY API ROUTE SUCCESS ===");
-    return NextResponse.json({
-      summary: processedSummary,
-      fromCache: false,
-    });
+    // After successful generation, deduct one AI credit
+    try {
+      const remainingCredits = await user.useAiCredit();
+      console.log(`AI credit used. Remaining credits: ${remainingCredits}`);
+
+      return NextResponse.json({
+        summary: processedSummary,
+        fromCache: false,
+        creditsRemaining: remainingCredits,
+      });
+    } catch (creditError) {
+      console.error("Error deducting AI credit:", creditError);
+      return NextResponse.json(
+        {
+          error: "Došly vám AI kredity",
+          creditsRequired: true,
+          creditsRemaining: user.subscription?.aiCreditsRemaining || 0,
+        },
+        { status: 403 }
+      );
+    }
   } catch (error) {
     console.error("Error generating summary:", error);
     return NextResponse.json(
-      { error: "Nepodařilo se vygenerovat shrnutí" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Chyba při generování shrnutí",
+      },
       { status: 500 }
     );
   }

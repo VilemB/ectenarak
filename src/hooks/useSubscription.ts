@@ -113,7 +113,7 @@ export function useSubscription() {
     }
 
     try {
-      const response = await fetch("/api/subscription", {
+      const response = await fetch("/api/use-credit", {
         method: "PUT",
       });
 

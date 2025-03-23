@@ -10,7 +10,7 @@ import mongoose from "mongoose";
  * GET /api/subscription
  * Get the current user's subscription details
  */
-export async function GET(_req: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   try {
     // Get the current session
     const session = await getServerSession(authOptions);
@@ -153,74 +153,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error("Error updating subscription:", error);
     return NextResponse.json(
       { error: "Failed to update subscription" },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * POST /api/subscription/use-credit
- * Use one AI credit - This is the same as PUT but works better with fetch in some environments
- */
-export async function POST(_req: NextRequest): Promise<NextResponse> {
-  try {
-    // Get the current session
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Connect to the database
-    await dbConnect();
-
-    // Find the user - try different lookup methods to handle both MongoDB IDs and OAuth IDs
-    let user;
-
-    // First, check if the ID is a valid MongoDB ObjectId
-    const isValidObjectId = mongoose.Types.ObjectId.isValid(session.user.id);
-
-    if (isValidObjectId) {
-      // Try finding the user by MongoDB _id
-      user = await User.findById(session.user.id);
-    }
-
-    // If user wasn't found and it's not a valid ObjectId, or if we need a fallback
-    if (!user) {
-      // Try finding by OAuth provider ID
-      user = await User.findOne({
-        $or: [
-          { "auth.providerId": session.user.id },
-          { email: session.user.email },
-        ],
-      });
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Check if user has remaining credits
-    if (!user.hasRemainingAiCredits()) {
-      return NextResponse.json(
-        { error: "No AI credits remaining", creditsRemaining: 0 },
-        { status: 403 }
-      );
-    }
-
-    // Use one credit
-    const creditsRemaining = await user.useAiCredit();
-
-    // Return the updated credit count
-    return NextResponse.json({
-      success: true,
-      creditsRemaining,
-      creditsTotal: user.subscription?.aiCreditsTotal || 0,
-    });
-  } catch (error) {
-    console.error("Error using AI credit:", error);
-    return NextResponse.json(
-      { error: "Failed to use AI credit" },
       { status: 500 }
     );
   }
