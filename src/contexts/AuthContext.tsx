@@ -184,8 +184,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) throw new Error("User not authenticated");
     if (user.subscription.aiCreditsRemaining <= 0) return false;
 
-    setIsLoading(true);
     try {
+      console.log("Decreasing AI credits...");
+      console.log("Current credits:", user.subscription.aiCreditsRemaining);
+
       // In a real app, this would be an API call to use an AI credit
       const updatedUser = {
         ...user,
@@ -196,15 +198,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         updatedAt: new Date(),
       };
 
-      await mockApiCall(updatedUser);
+      // Update the user state
       setUser(updatedUser);
+
+      // Save to localStorage (important for the change to persist)
+      console.log("Saving updated user to localStorage");
       localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      console.log("AI credits decreased successfully");
+      console.log("New credits:", updatedUser.subscription.aiCreditsRemaining);
+
       return true;
     } catch (error) {
       console.error("Use AI credit error:", error);
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 

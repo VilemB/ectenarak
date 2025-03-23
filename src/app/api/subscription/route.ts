@@ -159,10 +159,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * PUT /api/subscription/use-credit
- * Use one AI credit
+ * POST /api/subscription/use-credit
+ * Use one AI credit - This is the same as PUT but works better with fetch in some environments
  */
-export async function PUT(_req: NextRequest): Promise<NextResponse> {
+export async function POST(_req: NextRequest): Promise<NextResponse> {
   try {
     // Get the current session
     const session = await getServerSession(authOptions);

@@ -214,13 +214,13 @@ export default function BookComponent({
   const notesEndRef = useRef<HTMLDivElement>(null);
 
   // Get the auth context
-  const auth = useAuth();
-  const useAiCreditRef = useRef(auth.useAiCredit);
+  const { useAiCredit } = useAuth();
+  const useAiCreditRef = useRef(useAiCredit);
 
   // Update the ref if auth changes
   useEffect(() => {
-    useAiCreditRef.current = auth.useAiCredit;
-  }, [auth]);
+    useAiCreditRef.current = useAiCredit;
+  }, [useAiCredit]);
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -505,19 +505,59 @@ export default function BookComponent({
       }
 
       const noteData = await summaryResponse.json();
-      console.log("Summary saved successfully:", noteData);
+      console.log("AI summary saved as note:", noteData);
 
-      // Decrease the AI credits
-      await useAiCreditRef.current();
+      // Decrease the AI credits after successful generation - CRITICAL STEP!
+      console.log("Decreasing AI credits via API...");
+      try {
+        const creditResponse = await fetch("/api/subscription/use-credit", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-      // Update the notes list with the new summary
-      setNotes((prevNotes) => [...prevNotes, noteData.note]);
+        if (!creditResponse.ok) {
+          console.error(
+            "Failed to decrease AI credits via API:",
+            creditResponse.status
+          );
+          const errorText = await creditResponse.text().catch(() => "");
+          console.error("Error response:", errorText);
+        } else {
+          const creditData = await creditResponse.json();
+          console.log("AI credits decreased successfully:", creditData);
+        }
+      } catch (creditError) {
+        console.error("Error decreasing AI credits:", creditError);
+        // Fallback to client-side credit reduction if server fails
+        try {
+          const creditDecreasedSuccessfully = await useAiCreditRef.current();
+          console.log(
+            "AI credits decreased via client-side:",
+            creditDecreasedSuccessfully
+          );
+        } catch (fallbackError) {
+          console.error(
+            "Fallback credit reduction also failed:",
+            fallbackError
+          );
+        }
+      }
+
+      // Add the new note to the state
+      setNotes((prevNotes) => [...prevNotes, noteData]);
+
+      // Close the modal
+      setSummaryModal(false);
 
       // Show success message
       showSuccessMessage("Shrnutí bylo úspěšně vygenerováno");
 
-      // Close the summary modal
-      setSummaryModal(false);
+      // View the newly generated summary
+      setTimeout(() => {
+        handleViewSummary(noteData._id);
+      }, 300);
     } catch (error) {
       console.error("Error generating summary:", error);
       showErrorMessage(
@@ -716,8 +756,13 @@ export default function BookComponent({
       const bookData = await bookUpdateResponse.json();
       console.log("Book updated successfully:", bookData);
 
-      // Decrease the AI credits
-      await useAiCreditRef.current();
+      // Decrease the AI credits after successful generation - CRITICAL STEP!
+      console.log("Decreasing AI credits for author summary...");
+      const creditDecreasedSuccessfully = await useAiCreditRef.current();
+      console.log(
+        "AI credits decreased successfully:",
+        creditDecreasedSuccessfully
+      );
 
       // Update the book in state with the new author summary
       setBook((prevBook) => ({
@@ -1148,7 +1193,7 @@ export default function BookComponent({
                   >
                     {isGeneratingAuthorSummary ? (
                       <>
-                        <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                        <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
                         <span>Generuji...</span>
                       </>
                     ) : (
@@ -1188,7 +1233,7 @@ export default function BookComponent({
               >
                 {isGeneratingAuthorSummary ? (
                   <>
-                    <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                    <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
                     <span>Generuji...</span>
                   </>
                 ) : (
@@ -1462,7 +1507,7 @@ export default function BookComponent({
                   >
                     {isGenerating ? (
                       <>
-                        <div className="animate-spin mr-1.5 h-3 w-3 border-t-2 border-b-2 border-current rounded-full"></div>
+                        <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
                         <span>Generuji...</span>
                       </>
                     ) : (
@@ -1500,18 +1545,14 @@ export default function BookComponent({
                       if (activeNoteFilter === "ai") return note.isAISummary;
                       return true;
                     })
-                    .map((note, index) => (
+                    .map((note) => (
                       <motion.div
-                        key={note.id}
+                        key={`note-${note.id}`}
                         id={`note-${note.id}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{
                           opacity: 1,
                           y: 0,
-                          transition: {
-                            delay: index * 0.03,
-                            duration: 0.2,
-                          },
                         }}
                         exit={{
                           opacity: 0,

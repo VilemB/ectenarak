@@ -5,7 +5,6 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
-  Loader2,
   BookText,
   AlignJustify,
   Info,
@@ -862,7 +861,7 @@ export function SummaryPreferencesModal({
               >
                 {isGenerating ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    <div className="w-5 h-5 border-2 border-t-2 border-amber-500 border-t-transparent rounded-full animate-spin mr-1.5"></div>
                     <span>Generuji...</span>
                   </div>
                 ) : (
