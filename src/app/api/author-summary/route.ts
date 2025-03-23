@@ -57,6 +57,10 @@ export async function POST(req: NextRequest) {
 
     // If bookId is provided, handle as book-specific summary
     if (bookId) {
+      // Use an AI credit
+      const user = subscriptionCheck.user;
+      await user?.useAiCredit();
+
       const result = await handleBookSpecificSummary(
         req,
         author,
@@ -64,14 +68,16 @@ export async function POST(req: NextRequest) {
         bookId
       );
 
-      // Credit deduction is now handled client-side
       return result;
     }
 
     // Otherwise, handle as general author summary
+    // Use an AI credit
+    const user = subscriptionCheck.user;
+    await user?.useAiCredit();
+
     const result = await handleGeneralAuthorSummary(author, preferences);
 
-    // Credit deduction is now handled client-side
     return result;
   } catch (error) {
     console.error("Error in author summary API:", error);
