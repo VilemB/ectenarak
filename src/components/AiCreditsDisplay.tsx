@@ -15,6 +15,8 @@ export default function AiCreditsDisplay({
 }: AiCreditsDisplayProps) {
   // Calculate if credits are low (25% or less remaining)
   const isLowCredits = aiCreditsRemaining <= Math.ceil(aiCreditsTotal * 0.25);
+  // Check if credits are completely depleted
+  const isZeroCredits = aiCreditsRemaining === 0;
 
   // Calculate percentage for progress bar
   const percentRemaining = (aiCreditsRemaining / aiCreditsTotal) * 100;
@@ -26,7 +28,9 @@ export default function AiCreditsDisplay({
           <div className="h-2.5 bg-[#0f1729] rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-700 ease-out ${
-                isLowCredits
+                isZeroCredits
+                  ? "bg-red-600/70"
+                  : isLowCredits
                   ? "bg-gradient-to-r from-amber-600/70 to-amber-500"
                   : "bg-gradient-to-r from-amber-600/70 to-amber-400"
               }`}
@@ -39,7 +43,11 @@ export default function AiCreditsDisplay({
         <div className="ml-4 flex items-center">
           <span
             className={`font-medium text-sm ${
-              isLowCredits ? "text-amber-400" : "text-amber-500"
+              isZeroCredits
+                ? "text-red-400"
+                : isLowCredits
+                ? "text-amber-400"
+                : "text-amber-500"
             }`}
           >
             {aiCreditsRemaining}
@@ -56,7 +64,7 @@ export default function AiCreditsDisplay({
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-3.5 h-3.5"
+              className={`w-3.5 h-3.5 ${isZeroCredits ? "text-red-400" : ""}`}
             >
               <path
                 fillRule="evenodd"
@@ -65,7 +73,9 @@ export default function AiCreditsDisplay({
               />
             </svg>
           </span>
-          Docházejí vám kredity pro AI
+          {isZeroCredits
+            ? "Vyčerpali jste všechny AI kredity. Kredit se využívá při generování AI obsahu."
+            : "Docházejí vám kredity. Kredit se využívá při generování AI obsahu."}
         </p>
       )}
     </div>

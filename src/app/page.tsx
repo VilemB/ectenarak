@@ -1052,7 +1052,13 @@ export default function Home() {
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
                       fill="currentColor"
-                      className="w-3.5 h-3.5"
+                      className={`w-3.5 h-3.5 ${
+                        subscriptionData?.aiCreditsRemaining === 0 ||
+                        (hasSubscription(user) &&
+                          user.subscription.aiCreditsRemaining === 0)
+                          ? "text-red-400"
+                          : ""
+                      }`}
                     >
                       <path
                         fillRule="evenodd"
@@ -1061,8 +1067,11 @@ export default function Home() {
                       />
                     </svg>
                   </span>
-                  Docházejí vám kredity. Kredit se využívá při generování AI
-                  obsahu.
+                  {subscriptionData?.aiCreditsRemaining === 0 ||
+                  (hasSubscription(user) &&
+                    user.subscription.aiCreditsRemaining === 0)
+                    ? "Vyčerpali jste všechny AI kredity. Kredit se využívá při generování AI obsahu."
+                    : "Docházejí vám kredity. Kredit se využívá při generování AI obsahu."}
                 </p>
               )}
             </motion.div>
