@@ -10,6 +10,7 @@ import FeatureGate, {
 import { hasRemainingAiCredits } from "@/types/user";
 import { motion } from "framer-motion";
 import { Sparkles, Download } from "lucide-react";
+import AiCreditsDisplay from "./AiCreditsDisplay";
 
 export default function ExampleUsage() {
   const { user, useAiCredit: spendAiCredit } = useAuth();
@@ -112,13 +113,16 @@ export default function ExampleUsage() {
                   </div>
                 ) : (
                   <div>
-                    <p className="text-gray-400 mb-4">
-                      Zbývající AI kredity:{" "}
-                      <span className="text-blue-400 font-medium">
-                        {user?.subscription.aiCreditsRemaining || 0} /{" "}
-                        {user?.subscription.aiCreditsTotal || 0}
-                      </span>
-                    </p>
+                    <div className="mb-4">
+                      <AiCreditsDisplay
+                        aiCreditsRemaining={
+                          user?.subscription.aiCreditsRemaining || 0
+                        }
+                        aiCreditsTotal={user?.subscription.aiCreditsTotal || 0}
+                        showLowCreditsWarning={false}
+                        className="w-full"
+                      />
+                    </div>
                     <button
                       className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full font-medium transition-all shadow-lg hover:shadow-xl"
                       onClick={handleGenerateAiSummary}

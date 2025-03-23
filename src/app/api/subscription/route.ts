@@ -54,8 +54,10 @@ export async function GET(): Promise<NextResponse> {
         tier: "free",
         startDate: new Date(),
         isYearly: false,
-        aiCreditsRemaining: 3,
-        aiCreditsTotal: 3,
+        aiCreditsRemaining:
+          user.aiCreditsRemaining !== undefined ? user.aiCreditsRemaining : 3,
+        aiCreditsTotal:
+          user.aiCreditsTotal !== undefined ? user.aiCreditsTotal : 3,
         autoRenew: false,
       },
     });

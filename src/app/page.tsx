@@ -27,6 +27,7 @@ import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
 import LandingPage from "@/components/LandingPage";
 import Link from "next/link";
+import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 
 // Define interface for user with subscription
 interface UserWithSubscription {
@@ -115,6 +116,37 @@ export default function Home() {
   const [authorFocus, setAuthorFocus] = useState(false);
   const [titleTouched, setTitleTouched] = useState(false);
   const [authorTouched, setAuthorTouched] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState<{
+    aiCreditsRemaining?: number;
+    aiCreditsTotal?: number;
+    startDate?: Date;
+  } | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+
+  // Fetch subscription data from the API
+  useEffect(() => {
+    const fetchSubscriptionData = async () => {
+      if (!user) return;
+
+      setIsLoadingSubscription(true);
+      try {
+        const response = await fetch("/api/subscription");
+        if (!response.ok) {
+          throw new Error("Failed to fetch subscription data");
+        }
+
+        const data = await response.json();
+        console.log("Subscription data from API:", data);
+        setSubscriptionData(data.subscription || null);
+      } catch (error) {
+        console.error("Error fetching subscription data:", error);
+      } finally {
+        setIsLoadingSubscription(false);
+      }
+    };
+
+    fetchSubscriptionData();
+  }, [user]);
 
   // Fetch books from the database when the component mounts or user changes
   useEffect(() => {
@@ -867,69 +899,47 @@ export default function Home() {
                       )}
                     </div>
                     <div className="flex items-center mt-1.5">
-                      <div className="w-24 sm:w-36 h-2 bg-gray-800 rounded-full overflow-hidden mr-2.5">
-                        <div
-                          className={`h-full transition-all duration-700 ease-out ${
-                            (hasSubscription(user)
+                      {isLoadingSubscription ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-amber-500 mr-2"></div>
+                          <span className="text-xs text-gray-400">
+                            Načítání kreditů...
+                          </span>
+                        </div>
+                      ) : (
+                        <AiCreditsDisplay
+                          aiCreditsRemaining={
+                            subscriptionData?.aiCreditsRemaining !== undefined
+                              ? subscriptionData.aiCreditsRemaining
+                              : hasSubscription(user)
                               ? user.subscription.aiCreditsRemaining
-                              : 3) <=
-                            Math.ceil(
-                              (hasSubscription(user)
-                                ? user.subscription.aiCreditsTotal
-                                : 3) * 0.25
-                            )
-                              ? "bg-gradient-to-r from-amber-600/70 to-amber-500"
-                              : "bg-gradient-to-r from-amber-600/70 to-amber-400"
-                          }`}
-                          style={{
-                            width: `${
-                              ((hasSubscription(user)
-                                ? user.subscription.aiCreditsRemaining
-                                : 3) /
-                                (hasSubscription(user)
-                                  ? user.subscription.aiCreditsTotal
-                                  : 3)) *
-                              100
-                            }%`,
-                          }}
-                        ></div>
-                      </div>
-                      <div className="flex items-center">
-                        <span
-                          className={`font-medium text-xs ${
-                            (hasSubscription(user)
-                              ? user.subscription.aiCreditsRemaining
-                              : 3) <=
-                            Math.ceil(
-                              (hasSubscription(user)
-                                ? user.subscription.aiCreditsTotal
-                                : 3) * 0.25
-                            )
-                              ? "text-amber-400"
-                              : "text-amber-500"
-                          }`}
-                        >
-                          {hasSubscription(user)
-                            ? user.subscription.aiCreditsRemaining
-                            : 3}
-                        </span>
-                        <span className="text-gray-500 mx-1 text-xs">/</span>
-                        <span className="text-gray-400 text-xs">
-                          {hasSubscription(user)
-                            ? user.subscription.aiCreditsTotal
-                            : 3}
-                        </span>
-                      </div>
+                              : 0
+                          }
+                          aiCreditsTotal={
+                            subscriptionData?.aiCreditsTotal !== undefined
+                              ? subscriptionData.aiCreditsTotal
+                              : hasSubscription(user)
+                              ? user.subscription.aiCreditsTotal
+                              : 3
+                          }
+                          showLowCreditsWarning={false}
+                          className="w-48 sm:w-64"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
 
                 <div className="ml-9 sm:ml-0 mt-0.5 sm:mt-0 flex items-center">
                   {(
-                    hasSubscription(user)
+                    subscriptionData &&
+                    subscriptionData.aiCreditsRemaining !== undefined
+                      ? subscriptionData.aiCreditsRemaining ===
+                        subscriptionData.aiCreditsTotal
+                      : hasSubscription(user)
                       ? user.subscription.aiCreditsRemaining ===
                         user.subscription.aiCreditsTotal
-                      : true
+                      : false
                   ) ? (
                     <div className="flex items-center text-xs bg-green-900/30 text-green-400 py-1 px-2.5 rounded-full border border-green-800/30">
                       <svg
@@ -946,9 +956,15 @@ export default function Home() {
                       </svg>
                       <span>Plný počet kreditů</span>
                     </div>
-                  ) : hasSubscription(user) &&
-                    user.subscription.aiCreditsRemaining <=
-                      Math.ceil(user.subscription.aiCreditsTotal * 0.25) ? (
+                  ) : (subscriptionData &&
+                      subscriptionData.aiCreditsRemaining !== undefined &&
+                      subscriptionData.aiCreditsRemaining <=
+                        Math.ceil(
+                          (subscriptionData.aiCreditsTotal || 3) * 0.25
+                        )) ||
+                    (hasSubscription(user) &&
+                      user.subscription.aiCreditsRemaining <=
+                        Math.ceil(user.subscription.aiCreditsTotal * 0.25)) ? (
                     <Link href="/subscription" className="group">
                       <div className="flex items-center text-xs bg-amber-900/30 text-amber-400 py-1 px-2.5 rounded-full border border-amber-800/30 cursor-pointer group-hover:bg-amber-900/40 transition-colors">
                         <svg
@@ -984,28 +1000,32 @@ export default function Home() {
                 </div>
               </div>
 
-              {hasSubscription(user) &&
-                user.subscription.aiCreditsRemaining <=
-                  Math.ceil(user.subscription.aiCreditsTotal * 0.25) && (
-                  <p className="text-xs text-amber-400/80 mt-2 pl-11 flex items-center">
-                    <span className="inline-block mr-1.5">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="w-3.5 h-3.5"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </span>
-                    Docházejí vám kredity. Kredit se využívá při generování AI
-                    obsahu.
-                  </p>
-                )}
+              {((subscriptionData &&
+                subscriptionData.aiCreditsRemaining !== undefined &&
+                subscriptionData.aiCreditsRemaining <=
+                  Math.ceil((subscriptionData.aiCreditsTotal || 3) * 0.25)) ||
+                (hasSubscription(user) &&
+                  user.subscription.aiCreditsRemaining <=
+                    Math.ceil(user.subscription.aiCreditsTotal * 0.25))) && (
+                <p className="text-xs text-amber-400/80 mt-2 pl-11 flex items-center">
+                  <span className="inline-block mr-1.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-3.5 h-3.5"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                  Docházejí vám kredity. Kredit se využívá při generování AI
+                  obsahu.
+                </p>
+              )}
             </motion.div>
           )}
 
