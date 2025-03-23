@@ -34,6 +34,7 @@ import {
 import { NoteEditor } from "@/components/NoteEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscriptionContext } from "@/app/page";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -157,8 +158,29 @@ export default function BookComponent({
   book: initialBook,
   onDelete,
 }: BookProps) {
-  // Add subscription hook to refresh credits
+  // Only import what we actually use from useSubscription
   const { refreshSubscription } = useSubscription();
+  const { refreshSubscriptionData } = useSubscriptionContext();
+
+  // Function to refresh all subscription data
+  const refreshAllSubscriptionData = useCallback(async () => {
+    try {
+      // Refresh the data in both contexts
+      await refreshSubscription();
+      await refreshSubscriptionData();
+    } catch (error) {
+      console.error("Error refreshing subscription data:", error);
+    }
+  }, [refreshSubscription, refreshSubscriptionData]);
+
+  // Get the auth context properly
+  const authContext = useAuth();
+  const useAiCreditRef = useRef(authContext.useAiCredit);
+
+  // Update the ref if auth changes
+  useEffect(() => {
+    useAiCreditRef.current = authContext.useAiCredit;
+  }, [authContext]);
 
   // Validate the book object
   const safeBook: Book = useMemo(() => {
@@ -169,7 +191,7 @@ export default function BookComponent({
       authorId: initialBook.authorId || "",
       userId: initialBook.userId || "",
       status: initialBook.status || "not_started",
-      notes: initialBook.notes || [],
+      notes: Array.isArray(initialBook.notes) ? initialBook.notes : [],
       createdAt: initialBook.createdAt || new Date().toISOString(),
       updatedAt: initialBook.updatedAt || new Date().toISOString(),
       authorSummary: initialBook.authorSummary,
@@ -186,14 +208,8 @@ export default function BookComponent({
     useState(false);
   const [summaryModal, setSummaryModal] = useState(false);
   const [authorSummaryModal, setAuthorSummaryModal] = useState(false);
-  const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
-  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
-    null
-  );
-  const [activeNoteFilter, setActiveNoteFilter] = useState<
-    "all" | "regular" | "ai"
-  >("all");
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note" | "authorSummary";
@@ -204,6 +220,12 @@ export default function BookComponent({
     type: "book",
     isLoading: false,
   });
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
+    null
+  );
+  const [activeNoteFilter, setActiveNoteFilter] = useState<
+    "all" | "regular" | "ai"
+  >("all");
   const [notes, setNotes] = useState<Note[]>([]);
   const [errorMessages, setErrorMessages] = useState<
     Array<{ id: string; message: string }>
@@ -216,15 +238,6 @@ export default function BookComponent({
   const bookRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const notesEndRef = useRef<HTMLDivElement>(null);
-
-  // Get the auth context
-  const { useAiCredit } = useAuth();
-  const useAiCreditRef = useRef(useAiCredit);
-
-  // Update the ref if auth changes
-  useEffect(() => {
-    useAiCreditRef.current = useAiCredit;
-  }, [useAiCredit]);
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -452,20 +465,9 @@ export default function BookComponent({
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
   ) => {
-    console.log("=== HANDLE GENERATE SUMMARY CALLED ===");
-    console.log("Preferences:", preferencesToUse);
-
     setIsGenerating(true);
+
     try {
-      // Get notes text if available, but don't require it
-      const notesText = notes
-        .filter((note) => !note.isAISummary)
-        .map((note) => note.content)
-        .join("\n\n");
-
-      console.log("Notes text length:", notesText.length);
-
-      console.log("Sending API request to generate summary...");
       const response = await fetch("/api/generate-summary", {
         method: "POST",
         headers: {
@@ -474,90 +476,63 @@ export default function BookComponent({
         body: JSON.stringify({
           bookTitle: book.title,
           bookAuthor: book.author,
-          notes: notesText, // This can now be empty
+          bookId: book.id,
           preferences: preferencesToUse,
         }),
       });
-      console.log("API response status:", response.status);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API error response:", errorData);
-
-        // Handle specific error for no credits remaining
-        if (response.status === 403 && errorData.creditsRequired) {
-          throw new Error("Nemáte dostatek AI kreditů pro generování shrnutí");
-        }
-
-        throw new Error(errorData.error || "Failed to generate summary");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to generate summary");
       }
 
       const data = await response.json();
-      console.log("Summary generated successfully");
 
-      // Log the remaining credits if returned from API
-      if (data.creditsRemaining !== undefined) {
-        console.log(`Remaining AI credits: ${data.creditsRemaining}`);
-
-        // Refresh subscription data globally to update UI
-        refreshSubscription();
-      }
-
-      // Create a new note object for the summary
-      const newNote = {
-        id: "temp-" + Date.now(), // Using id instead of _id to match Note interface
+      // Create a note object with only properties defined in the Note type
+      const newNote: Note = {
+        id: `ai-summary-${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(2, 11)}`,
         content: data.summary,
-        isAISummary: true,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        isAISummary: true,
       };
 
-      // Add the new note to the state immediately
-      setNotes((prevNotes) => [...prevNotes, newNote]);
+      // Handle notes array safely with proper type checking
+      setBook((prev) => ({
+        ...prev,
+        notes: Array.isArray(prev.notes) ? [...prev.notes, newNote] : [newNote],
+      }));
 
-      // Close the modal
-      setSummaryModal(false);
+      // Add the note to the database
+      try {
+        const noteResponse = await fetch(`/api/books/${book.id}/notes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: data.summary,
+            isAISummary: true,
+          }),
+        });
 
-      // Show success message
-      showSuccessMessage("Shrnutí bylo úspěšně vygenerováno");
-
-      // View the newly generated summary immediately
-      setTimeout(() => {
-        handleViewSummary(newNote.id);
-      }, 300);
-
-      // Add the AI summary as a note in the database
-      console.log("Saving summary as a note...");
-      const summaryResponse = await fetch(`/api/books/${book.id}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: data.summary,
-          isAISummary: true,
-        }),
-      });
-
-      if (!summaryResponse.ok) {
-        const errorData = await summaryResponse.json().catch(() => ({}));
-        console.error("Error saving AI summary:", errorData);
-        throw new Error(errorData.error || "Failed to save AI summary");
+        if (!noteResponse.ok) {
+          console.error("Failed to save the generated summary to database");
+        }
+      } catch (noteError) {
+        console.error("Error saving summary to database:", noteError);
       }
 
-      const noteData = await summaryResponse.json();
-      console.log("AI summary saved as note:", noteData);
-
-      // Update the temporary note with the real one
-      setNotes((prevNotes) =>
-        prevNotes.map((note) => (note.id === newNote.id ? noteData : note))
-      );
+      setSummaryModal(false);
+      toast.success("Shrnutí bylo úspěšně vygenerováno!");
+      refreshAllSubscriptionData();
     } catch (error) {
       console.error("Error generating summary:", error);
       showErrorMessage(
         error instanceof Error
           ? error.message
-          : "Nepodařilo se vygenerovat shrnutí"
+          : "Nepodařilo se vygenerovat shrnutí. Zkuste to prosím znovu."
       );
     } finally {
       setIsGenerating(false);
@@ -656,130 +631,49 @@ export default function BookComponent({
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
-    console.log("=== HANDLE GENERATE AUTHOR SUMMARY CALLED ===");
-
-    if (!book.id) {
-      showErrorMessage("Nelze generovat informace o autorovi pro knihu bez ID");
-      return;
-    }
-
-    if (!book.author) {
-      showErrorMessage("Nelze generovat informace o autorovi bez jména autora");
-      return;
-    }
-
-    console.log("Generating author summary for:", book.author);
-    console.log("Book ID:", book.id);
-    console.log("Preferences:", preferencesToUse);
-
     setIsGeneratingAuthorSummary(true);
 
     try {
-      // Use the new consolidated API endpoint
-      const apiUrl = `/api/author-summary`;
-      console.log("API URL:", apiUrl);
-      console.log(
-        "Request payload:",
-        JSON.stringify(
-          {
-            author: book.author,
-            preferences: preferencesToUse,
-            bookId: book.id,
-          },
-          null,
-          2
-        )
-      );
-
-      console.log("Sending API request...");
-
-      let response;
-      try {
-        response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            author: book.author,
-            preferences: preferencesToUse,
-            bookId: book.id,
-          }),
-        });
-      } catch (fetchError) {
-        console.error("Network error during fetch:", fetchError);
-        throw new Error("Připojení k serveru selhalo");
-      }
-
-      console.log("API response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API error response:", errorData);
-
-        if (response.status === 403 && errorData.creditsRequired) {
-          throw new Error(
-            "Nemáte dostatek AI kreditů pro generování informací o autorovi"
-          );
-        } else {
-          throw new Error(
-            errorData.error || "Nepodařilo se vygenerovat informace o autorovi"
-          );
-        }
-      }
-
-      const data = await response.json();
-      console.log("Author summary generated successfully");
-
-      // Log the remaining credits if returned from API
-      if (data.creditsRemaining !== undefined) {
-        console.log(`Remaining AI credits: ${data.creditsRemaining}`);
-
-        // Refresh subscription data globally to update UI
-        refreshSubscription();
-      }
-
-      // Update the book with the new author summary immediately in the UI
-      setBook((prevBook) => ({
-        ...prevBook,
-        authorSummary: data.summary,
-      }));
-
-      // Close the author summary modal
-      setAuthorSummaryModal(false);
-
-      // Show success message
-      showSuccessMessage("Informace o autorovi byly úspěšně vygenerovány");
-
-      // Show the author information
-      setIsAuthorInfoVisible(true);
-
-      // Update the book with the new author summary in the database
-      console.log("Updating book with author summary...");
-      const bookUpdateResponse = await fetch(`/api/books/${book.id}`, {
-        method: "PATCH",
+      const response = await fetch("/api/author-summary", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          authorSummary: data.summary,
+          author: book.author,
+          bookId: book.id,
+          preferences: preferencesToUse,
         }),
       });
 
-      if (!bookUpdateResponse.ok) {
-        const errorData = await bookUpdateResponse.json().catch(() => ({}));
-        console.error("Error updating book with author summary:", errorData);
-        throw new Error(errorData.error || "Failed to save author information");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to generate author summary");
       }
 
-      const bookData = await bookUpdateResponse.json();
-      console.log("Book updated successfully:", bookData);
+      const data = await response.json();
+
+      // Update the book with the author summary and authorId
+      setBook((prev) => ({
+        ...prev,
+        authorSummary: data.summary,
+        authorId: data.authorId || prev.authorId,
+      }));
+
+      // Close the preferences modal
+      setAuthorSummaryModal(false);
+
+      // Show success message
+      toast.success("Informace o autorovi byla úspěšně vygenerována!");
+
+      // Refresh subscription data to update credit count
+      refreshAllSubscriptionData();
     } catch (error) {
       console.error("Error generating author summary:", error);
       showErrorMessage(
         error instanceof Error
           ? error.message
-          : "Nepodařilo se vygenerovat informace o autorovi"
+          : "Nepodařilo se vygenerovat informace o autorovi. Zkuste to prosím znovu."
       );
     } finally {
       setIsGeneratingAuthorSummary(false);
@@ -985,12 +879,12 @@ export default function BookComponent({
     }
 
     // Toggle the selected summary
-    if (noteId === selectedSummary) {
+    if (noteId === activeNoteId) {
       // If already selected, close it with animation
-      setSelectedSummary(null);
+      setActiveNoteId(null);
     } else {
       // If not selected, open it
-      setSelectedSummary(noteId);
+      setActiveNoteId(noteId);
 
       // Scroll the summary into view after a short delay to allow animation
       setTimeout(() => {
@@ -1008,31 +902,31 @@ export default function BookComponent({
   // Add a function to handle closing the summary with animation
   const handleCloseSummary = useCallback(() => {
     // Close the summary
-    setSelectedSummary(null);
+    setActiveNoteId(null);
   }, []);
 
   // Add ESC key handler for selected summary
   useEffect(() => {
-    if (!selectedSummary) return;
+    if (!activeNoteId) return;
 
     const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && selectedSummary) {
+      if (event.key === "Escape" && activeNoteId) {
         handleCloseSummary();
       }
     };
 
     document.addEventListener("keydown", handleEscKey);
     return () => document.removeEventListener("keydown", handleEscKey);
-  }, [selectedSummary, handleCloseSummary]);
+  }, [activeNoteId, handleCloseSummary]);
 
   // Add click outside handler for book summary
   useEffect(() => {
-    if (!selectedSummary) return;
+    if (!activeNoteId) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       // Check if the click is outside the summary
       const target = event.target as Node;
-      const summaryElement = document.getElementById(`note-${selectedSummary}`);
+      const summaryElement = document.getElementById(`note-${activeNoteId}`);
 
       if (summaryElement && !summaryElement.contains(target)) {
         // Close the summary without the ripple effect
@@ -1042,7 +936,7 @@ export default function BookComponent({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selectedSummary, handleCloseSummary]);
+  }, [activeNoteId, handleCloseSummary]);
 
   // Add a function to handle copying note content
   const handleCopyNote = (content: string, e?: React.MouseEvent) => {
@@ -1638,7 +1532,7 @@ export default function BookComponent({
                         {/* Note Content */}
                         {note.isAISummary ? (
                           <AnimatePresence mode="wait">
-                            {selectedSummary === note.id ? (
+                            {activeNoteId === note.id ? (
                               <motion.div
                                 key="expanded-summary"
                                 initial={{
@@ -1766,7 +1660,7 @@ export default function BookComponent({
                                     }
                                     tabIndex={0}
                                     role="button"
-                                    aria-expanded={selectedSummary === note.id}
+                                    aria-expanded={activeNoteId === note.id}
                                     aria-controls={`expanded-summary-${note.id}`}
                                   >
                                     <span>Zobrazit celé shrnutí</span>

@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  useCallback,
+  useMemo,
+} from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Book } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -96,6 +103,24 @@ const itemVariants = {
   },
 };
 
+// Create a context for subscription refreshing
+export const SubscriptionContext = createContext<{
+  refreshSubscriptionData: () => Promise<void>;
+  isLoadingSubscription: boolean;
+  subscriptionData: {
+    aiCreditsRemaining?: number;
+    aiCreditsTotal?: number;
+    startDate?: Date;
+  } | null;
+}>({
+  refreshSubscriptionData: async () => {},
+  isLoadingSubscription: false,
+  subscriptionData: null,
+});
+
+// Create a hook to use the subscription context
+export const useSubscriptionContext = () => useContext(SubscriptionContext);
+
 export default function Home() {
   const { user, loading } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
@@ -123,30 +148,44 @@ export default function Home() {
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
 
-  // Fetch subscription data from the API
-  useEffect(() => {
-    const fetchSubscriptionData = async () => {
-      if (!user) return;
+  // Function to fetch subscription data from the API
+  const refreshSubscriptionData = useCallback(async () => {
+    if (!user) return;
 
-      setIsLoadingSubscription(true);
-      try {
-        const response = await fetch("/api/subscription");
-        if (!response.ok) {
-          throw new Error("Failed to fetch subscription data");
-        }
-
-        const data = await response.json();
-        console.log("Subscription data from API:", data);
-        setSubscriptionData(data.subscription || null);
-      } catch (error) {
-        console.error("Error fetching subscription data:", error);
-      } finally {
-        setIsLoadingSubscription(false);
+    setIsLoadingSubscription(true);
+    try {
+      const response = await fetch("/api/subscription");
+      if (!response.ok) {
+        throw new Error("Failed to fetch subscription data");
       }
-    };
 
-    fetchSubscriptionData();
+      const data = await response.json();
+      console.log("Subscription data from API:", data);
+      setSubscriptionData(data.subscription || null);
+    } catch (error) {
+      console.error("Error fetching subscription data:", error);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
   }, [user]);
+
+  // Fetch subscription data when user changes - properly memoized with useCallback
+  // This avoids creating a new function on every render
+  useMemo(() => {
+    if (user) {
+      refreshSubscriptionData();
+    }
+  }, [user, refreshSubscriptionData]);
+
+  // Make the subscription context provider with memoized value
+  const subscriptionContextValue = useMemo(
+    () => ({
+      refreshSubscriptionData,
+      isLoadingSubscription,
+      subscriptionData,
+    }),
+    [refreshSubscriptionData, isLoadingSubscription, subscriptionData]
+  );
 
   // Fetch books from the database when the component mounts or user changes
   useEffect(() => {
@@ -800,7 +839,7 @@ export default function Home() {
   }
 
   return (
-    <>
+    <SubscriptionContext.Provider value={subscriptionContextValue}>
       {!user && !loading ? (
         <LandingPage />
       ) : (
@@ -1234,6 +1273,6 @@ export default function Home() {
           </div>
         </div>
       </Modal>
-    </>
+    </SubscriptionContext.Provider>
   );
 }
