@@ -16,41 +16,90 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { deleteUser } from "@/lib/api";
+import { motion } from "framer-motion";
 import {
   LogOut,
   Shield,
   AlertTriangle,
   Loader2,
   User,
-  Lock,
-  Bell,
   Mail,
   Home,
+  ChevronLeft,
+  Settings as SettingsIcon,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// User illustration component from NavBar
+const UserIllustration = ({
+  name,
+  email,
+  size = "default",
+}: {
+  name?: string | null;
+  email?: string | null;
+  size?: "default" | "large";
+}) => {
+  // Generate a consistent color based on user name or email
+  const getColor = (identifier: string) => {
+    const colors = [
+      "bg-primary/20 text-primary",
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+      "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+    ];
+
+    // Simple hash function to get consistent index
+    let hash = 0;
+    for (let i = 0; i < identifier.length; i++) {
+      hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Get initials from name or email
+  const getInitials = (name?: string | null, email?: string | null) => {
+    if (name) {
+      return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2);
+    } else if (email) {
+      return email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const identifier = name || email || "User";
+  const colorClass = getColor(identifier);
+  const initials = getInitials(name, email);
+
+  const sizeClass = size === "large" ? "w-16 h-16 text-lg" : "w-9 h-9 text-xs";
+
+  return (
+    <div
+      className={`flex items-center justify-center rounded-full shadow-sm ${sizeClass} ${colorClass}`}
+    >
+      <span className="font-medium">{initials}</span>
+    </div>
+  );
+};
 
 export default function SettingsPage() {
-  const { user, loading, error, sessionStatus, isAuthenticated, signOut } =
-    useAuth();
+  const { user, loading, error, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
-
-  // Debug information
-  useEffect(() => {
-    console.log("Settings page loaded");
-    console.log("Auth state:", {
-      user,
-      loading,
-      error,
-      sessionStatus,
-      isAuthenticated,
-    });
-  }, [user, loading, error, sessionStatus, isAuthenticated]);
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Redirect to home if not authenticated after loading completes
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      console.log("Not authenticated, redirecting to home");
       toast.error("Přihlaste se pro přístup k nastavení");
       router.push("/");
     }
@@ -79,11 +128,16 @@ export default function SettingsPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Načítání informací o účtu...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="text-center"
+        >
+          <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground">Načítání...</p>
+        </motion.div>
       </div>
     );
   }
@@ -91,29 +145,30 @@ export default function SettingsPage() {
   // Prevent rendering if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
-              Nastavení
-            </CardTitle>
-            <CardDescription className="text-center text-red-400 flex items-center justify-center">
-              <Shield className="h-4 w-4 mr-2" />
-              Vyžadována autentizace
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center py-6 text-muted-foreground">
-            Pro přístup k nastavení účtu se prosím přihlaste.
-          </CardContent>
-          <CardFooter className="flex justify-center pb-6">
-            <Button
-              onClick={() => router.push("/")}
-              className="px-6 transition-all duration-300 hover:scale-105"
-            >
-              Zpět na hlavní stránku
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md px-4"
+        >
+          <Card className="border border-border/40 shadow-sm">
+            <CardHeader className="text-center space-y-2">
+              <div className="mx-auto">
+                <Shield className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              </div>
+              <CardTitle>Nastavení</CardTitle>
+              <CardDescription>
+                Pro přístup k nastavení účtu se prosím přihlaste
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="flex justify-center pt-2 pb-6">
+              <Button onClick={() => router.push("/")} className="px-6">
+                <Home className="h-4 w-4 mr-2" /> Zpět na hlavní stránku
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -121,218 +176,273 @@ export default function SettingsPage() {
   // Show error state
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md border border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
-              Nastavení
-            </CardTitle>
-            <CardDescription className="text-center text-red-400 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Chyba při načítání účtu
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center py-6 text-red-400">
-            {error.message}
-          </CardContent>
-          <CardFooter className="flex justify-center pb-6">
-            <Button
-              onClick={() => router.push("/")}
-              className="px-6 transition-all duration-300 hover:scale-105"
-            >
-              Zpět na hlavní stránku
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md px-4"
+        >
+          <Card className="border border-border/40 shadow-sm">
+            <CardHeader className="text-center space-y-2">
+              <div className="mx-auto">
+                <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              </div>
+              <CardTitle>Chyba</CardTitle>
+              <CardDescription className="text-red-500">
+                {error.message}
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="flex justify-center pt-2 pb-6">
+              <Button onClick={() => router.push("/")} className="px-6">
+                <Home className="h-4 w-4 mr-2" /> Zpět na hlavní stránku
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
       </div>
     );
   }
 
   // Show content when user is available
   return (
-    <div className="container max-w-5xl mx-auto py-12 px-4 md:px-6">
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold tracking-tight">Nastavení účtu</h1>
-        <div className="h-1 w-20 bg-primary/50 mt-3 rounded-full"></div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="container max-w-3xl mx-auto py-8 md:py-12 px-4"
+    >
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-3 mb-8">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/")}
+          className="h-9 w-9 p-0 rounded-full hover:bg-muted/80 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-2xl font-bold">Nastavení účtu</h1>
       </div>
 
-      <div className="grid md:grid-cols-[240px_1fr] gap-10">
-        {/* Sidebar Navigation */}
-        <aside className="space-y-8 md:border-r border-border/20 pr-6 hidden md:block">
-          <div className="sticky top-6">
-            <div className="flex items-center gap-3 mb-8">
-              <div>
-                <p className="font-medium">{user?.name || "Uživatel"}</p>
-                <p className="text-xs text-muted-foreground truncate max-w-[160px]">
-                  {user?.email}
-                </p>
+      {/* User Profile Card */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Card className="mb-8 overflow-hidden border border-border/50 shadow-md">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/5 pt-8 pb-6 px-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <div className="relative">
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-transparent blur-sm"></div>
+                <UserIllustration
+                  name={user?.name}
+                  email={user?.email}
+                  size="large"
+                />
               </div>
-            </div>
-
-            <nav className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start font-medium text-primary"
-              >
-                <User className="h-4 w-4 mr-3" /> Profil
-              </Button>
-              {/* Placeholder for future navigation options */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground"
-                disabled
-              >
-                <Lock className="h-4 w-4 mr-3" /> Zabezpečení
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground"
-                disabled
-              >
-                <Bell className="h-4 w-4 mr-3" /> Oznámení
-              </Button>
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="space-y-12">
-          {/* Profile Card - Mobile Only */}
-          <div className="flex items-center gap-4 md:hidden">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/80 to-primary/30 flex items-center justify-center text-background font-semibold text-lg shadow-sm">
-              {user?.name
-                ? user.name.charAt(0).toUpperCase()
-                : user?.email?.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-medium">{user?.name || "Uživatel"}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <div className="text-center sm:text-left space-y-1.5">
+                <h2 className="text-xl font-medium">
+                  {user?.name || "Uživatel"}
+                </h2>
+                <p className="text-muted-foreground text-sm">{user?.email}</p>
+                <div className="inline-block mt-2 text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 text-primary font-medium border border-primary/10">
+                  Čtenářský deník
+                </div>
+              </div>
             </div>
           </div>
+        </Card>
+      </motion.div>
 
-          {/* Profile Section */}
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Osobní údaje</h2>
-              <div className="h-8 px-3 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center">
-                Pouze pro čtení
-              </div>
-            </div>
+      {/* Tabs Navigation */}
+      <Tabs
+        defaultValue="profile"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full mb-8"
+      >
+        <TabsList className="w-full grid grid-cols-2 mb-6 p-1 bg-muted/50 border border-border/40 rounded-lg">
+          <TabsTrigger value="profile" className="rounded-md">
+            <User className="h-4 w-4 mr-2" /> Profil
+          </TabsTrigger>
+          <TabsTrigger value="account" className="rounded-md">
+            <SettingsIcon className="h-4 w-4 mr-2" /> Akce účtu
+          </TabsTrigger>
+        </TabsList>
 
-            <div className="grid gap-8 sm:grid-cols-2">
-              <div className="space-y-2.5">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  E-mailová adresa
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    value={user?.email || ""}
-                    disabled
-                    className="bg-muted/30 border-muted/50 pr-10 transition-all focus-visible:ring-1 focus-visible:ring-primary/50"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <Mail className="h-4 w-4" />
+        <TabsContent value="profile" className="mt-0 space-y-4">
+          <Card className="border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <CardHeader className="pb-3 border-b border-border/10">
+              <CardTitle className="text-lg flex items-center">
+                <div className="rounded-full bg-primary/10 p-1.5 mr-3">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                Osobní údaje
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm flex items-center">
+                    <Mail className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />{" "}
+                    E-mailová adresa
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="bg-muted/30 pr-10"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <Mail className="h-4 w-4 text-muted-foreground/50" />
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Používá se pro přihlášení do aplikace
-                </p>
-              </div>
 
-              <div className="space-y-2.5">
-                <Label htmlFor="name" className="text-sm font-medium">
-                  Zobrazované jméno
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="name"
-                    value={user?.name || ""}
-                    disabled
-                    className="bg-muted/30 border-muted/50 pr-10 transition-all focus-visible:ring-1 focus-visible:ring-primary/50"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <User className="h-4 w-4" />
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm flex items-center">
+                    <User className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />{" "}
+                    Zobrazované jméno
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="name"
+                      value={user?.name || ""}
+                      disabled
+                      className="bg-muted/30 pr-10"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <User className="h-4 w-4 text-muted-foreground/50" />
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Zobrazuje se v aplikaci a u vašich příspěvků
-                </p>
               </div>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Account Actions */}
-          <section className="border-t border-border/20 pt-10 space-y-6">
-            <h2 className="text-xl font-semibold">Akce účtu</h2>
-
-            <div className="rounded-xl border border-border/30 overflow-hidden bg-card">
-              <div className="p-5">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-red-100 text-red-600 mt-1">
-                    <LogOut className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-lg">Smazání účtu</h3>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      Tato akce trvale odstraní váš účet a všechna související
-                      data. Tuto akci nelze vrátit zpět.
+        <TabsContent value="account" className="mt-0 space-y-4">
+          <Card className="border border-red-100 dark:border-red-900/20 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <CardHeader className="pb-3 border-b border-red-100 dark:border-red-900/20">
+              <CardTitle className="text-lg flex items-center text-red-500 dark:text-red-400">
+                <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-1.5 mr-3">
+                  <LogOut className="h-5 w-5 text-red-500 dark:text-red-400" />
+                </div>
+                Smazání účtu
+              </CardTitle>
+              <CardDescription className="text-muted-foreground mt-2">
+                Tato akce trvale odstraní váš účet a všechna související data.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 pb-6">
+              {deleteConfirmation ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-col"
+                >
+                  <div className="flex gap-4 items-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        delay: 0.1,
+                        type: "spring",
+                        stiffness: 200,
+                      }}
+                      className="rounded-full bg-red-100 dark:bg-red-900/30 p-1.5"
+                    >
+                      <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
+                    </motion.div>
+                    <p className="text-sm text-red-500 dark:text-red-400 font-medium">
+                      Všechna data budou nenávratně ztracena
                     </p>
                   </div>
-                </div>
-              </div>
 
-              <div className="bg-muted/20 px-5 py-4 border-t border-border/20 flex flex-wrap gap-3 justify-end">
-                {deleteConfirmation ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => setDeleteConfirmation(false)}
-                      className="text-sm"
+                  <div className="flex items-center gap-3 mt-5">
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full"
                     >
-                      Zrušit
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setDeleteConfirmation(false)}
+                        className="w-full border border-border"
+                      >
+                        Zrušit
+                      </Button>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full"
+                    >
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="w-full"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                            Mazání...
+                          </>
+                        ) : (
+                          "Potvrdit smazání"
+                        )}
+                      </Button>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div className="flex justify-center">
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  >
                     <Button
                       variant="destructive"
-                      onClick={handleDeleteAccount}
-                      disabled={isDeleting}
-                      className="text-sm"
+                      onClick={() => setDeleteConfirmation(true)}
+                      className="px-6 group relative overflow-hidden"
                     >
-                      {isDeleting ? (
-                        <>
-                          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                          Mazání účtu...
-                        </>
-                      ) : (
-                        "Potvrdit smazání"
-                      )}
+                      <div className="relative z-10 flex items-center">
+                        <motion.div
+                          animate={{ rotate: [0, 0, 12, 0] }}
+                          transition={{
+                            repeat: Infinity,
+                            repeatDelay: 3,
+                            duration: 1,
+                          }}
+                        >
+                          <LogOut className="h-4 w-4 mr-2 text-red-100 dark:text-red-200" />
+                        </motion.div>
+                        <span>Smazat účet</span>
+                      </div>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700"
+                        initial={{ x: "100%" }}
+                        whileHover={{ x: "0%" }}
+                        transition={{ duration: 0.2 }}
+                      />
+                      <motion.div
+                        className="absolute inset-0 opacity-0 bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800"
+                        whileHover={{ opacity: 1 }}
+                        transition={{ duration: 0.2, delay: 0.1 }}
+                      />
                     </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setDeleteConfirmation(true)}
-                    className="text-sm"
-                  >
-                    Smazat účet
-                  </Button>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* Back Link */}
-          <div className="border-t border-border/20 pt-6">
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/")}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Home className="h-4 w-4 mr-2" /> Zpět na hlavní stránku
-            </Button>
-          </div>
-        </main>
-      </div>
-    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </motion.div>
   );
 }
