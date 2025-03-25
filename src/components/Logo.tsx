@@ -45,7 +45,7 @@ export default function Logo({
             variant === "compact" ? "lg:inline-block" : "sm:inline-block"
           }`}
         >
-          Čtenářský deník
+          eČtenářák
         </span>
       )}
     </div>

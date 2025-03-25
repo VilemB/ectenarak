@@ -21,7 +21,7 @@ export default function Footer() {
           <div className="flex flex-col items-center md:items-start gap-2">
             <div className="flex items-center gap-2">
               <Logo showText={false} size="sm" />
-              <span className="font-medium">Čtenářský deník</span>
+              <span className="font-medium">eČtenářák</span>
             </div>
             <p className="text-sm text-muted-foreground">
               &copy; {currentYear} Všechna práva vyhrazena

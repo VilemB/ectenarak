@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { motion } from "framer-motion";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -52,7 +53,24 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1729] text-white flex items-center justify-center p-4">
+    <div className="flex min-h-[100dvh]">
+      <motion.div
+        initial={{ opacity: 0, x: -30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+        className="hidden lg:block relative h-full w-1/2 bg-gradient-to-bl from-blue-600 via-blue-700 to-indigo-800"
+      >
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="relative z-20 flex h-full w-full items-center justify-center p-8">
+          <div className="text-center">
+            <h1 className="text-5xl font-extrabold tracking-tight text-white mb-6">
+              eČtenářák
+            </h1>
+            <p className="text-gray-400 mt-2">Vytvořte si nový účet</p>
+          </div>
+        </div>
+      </motion.div>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold">

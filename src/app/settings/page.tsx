@@ -247,7 +247,7 @@ export default function SettingsPage() {
                 </h2>
                 <p className="text-muted-foreground text-sm">{user?.email}</p>
                 <div className="inline-block mt-2 text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 text-primary font-medium border border-primary/10">
-                  Čtenářský deník
+                  eČtenářák
                 </div>
               </div>
             </div>

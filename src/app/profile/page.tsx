@@ -50,7 +50,7 @@ export default function ProfilePage() {
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold text-white">
-                Čtenářský Deník
+                eČtenářák
               </Link>
             </div>
             <nav className="flex space-x-4">
@@ -227,9 +227,9 @@ export default function ProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Čtenářský Deník</h3>
+              <h3 className="text-lg font-semibold mb-4">eČtenářák</h3>
               <p className="text-gray-400">
-                Aplikace pro sledování vašich čtenářských aktivit a správu knih.
+                Elektronická aplikace pro správu čtenářského deníku
               </p>
             </div>
             <div>
@@ -277,7 +277,7 @@ export default function ProfilePage() {
           </div>
           <div className="mt-8 pt-8 border-t border-[#2a3548] text-center text-gray-500">
             <p>
-              &copy; {new Date().getFullYear()} Čtenářský Deník. Všechna práva
+              &copy; {new Date().getFullYear()} eČtenářák. Všechna práva
               vyhrazena.
             </p>
           </div>

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Čtenářský deník",
-  description: "Sledujte své čtenářské zážitky a pokrok",
+  title: "eČtenářák",
+  description:
+    "Jednoduchá online aplikace pro správu čtenářského deníku a knih",
   icons: {
     icon: [
       {

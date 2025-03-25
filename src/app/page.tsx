@@ -872,11 +872,11 @@ export default function Home() {
         <main className="container max-w-5xl mx-auto px-2 sm:px-4 py-3 md:py-5">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                Můj čtenářský deník
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                eČtenářák
               </h1>
-              <p className="text-muted-foreground mt-1">
-                Zaznamenej si své myšlenky a poznámky ke knihám, které čteš
+              <p className="text-muted-foreground">
+                Tvůj osobní elektronický čtenářský deník
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -1170,7 +1170,7 @@ export default function Home() {
       <Modal
         isOpen={showWelcome}
         onClose={() => setShowWelcome(false)}
-        title="Vítej v Čtenářském deníku!"
+        title="Vítej v eČtenářáku!"
         showCloseButton={true}
       >
         <div className="p-6 max-w-full overflow-x-hidden">

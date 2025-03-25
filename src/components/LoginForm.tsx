@@ -17,6 +17,7 @@ import {
   Mail,
   ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -197,7 +198,7 @@ export default function LoginForm() {
 
       <div className="mb-10 text-center">
         <h2 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
-          Čtenářský deník
+          eČtenářák
         </h2>
         <p className="text-muted-foreground text-sm">
           Přihlaste se nebo si vytvořte účet
@@ -509,23 +510,15 @@ export default function LoginForm() {
 
                 <motion.div variants={itemVariants} className="mt-8">
                   <div className="text-center text-xs text-muted-foreground">
-                    Registrací souhlasíte s našimi{" "}
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-xs text-blue-400 hover:text-blue-300"
-                      type="button"
+                    Registrací souhlasíte s{" "}
+                    <Link
+                      href="/terms"
+                      className="text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       podmínkami použití
-                    </Button>{" "}
-                    a{" "}
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-xs text-blue-400 hover:text-blue-300"
-                      type="button"
-                    >
-                      zásadami ochrany osobních údajů
-                    </Button>
-                    .
+                    </Link>{" "}
+                    eČtenářáku
                   </div>
                 </motion.div>
               </motion.div>

@@ -1,6 +1,6 @@
-# Čtenářský deník
+# eČtenářák
 
-Aplikace pro správu vašich knih a poznámek s podporou AI pro generování shrnutí.
+Moderní webová aplikace pro správu čtenářského deníku a sledování vaší četby. Umožňuje uživatelům zaznamenávat přečtené knihy, psát poznámky a snadněji si pamatovat obsah a myšlenky z četby.
 
 ## Nové funkce
 
