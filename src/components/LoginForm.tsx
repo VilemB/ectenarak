@@ -22,7 +22,9 @@ import Link from "next/link";
 export default function LoginForm() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("login");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
@@ -40,7 +42,7 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSigningIn(true);
     setError("");
 
     try {
@@ -52,7 +54,7 @@ export default function LoginForm() {
 
       if (result?.error) {
         setError("Nesprávné přihlašovací údaje. Zkuste to znovu.");
-        setIsLoading(false);
+        setIsSigningIn(false);
         return;
       }
 
@@ -63,26 +65,26 @@ export default function LoginForm() {
     } catch (err) {
       console.error("Login error:", err);
       setError("Došlo k chybě při přihlašování. Zkuste to znovu později.");
-      setIsLoading(false);
+      setIsSigningIn(false);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSigningUp(true);
     setError("");
     setSuccess("");
 
     // Basic validation
     if (!formData.name || !formData.email || !formData.password) {
       setError("Vyplňte prosím všechna pole.");
-      setIsLoading(false);
+      setIsSigningUp(false);
       return;
     }
 
     if (formData.password.length < 6) {
       setError("Heslo musí mít alespoň 6 znaků.");
-      setIsLoading(false);
+      setIsSigningUp(false);
       return;
     }
 
@@ -118,18 +120,18 @@ export default function LoginForm() {
         err instanceof Error ? err.message : "Došlo k chybě při registraci.";
       setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsSigningUp(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+    setIsGoogleSigningIn(true);
     try {
       await signIn("google", { callbackUrl: "/" });
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError("Došlo k chybě při přihlašování přes Google.");
-      setIsLoading(false);
+      setIsGoogleSigningIn(false);
     }
   };
 
@@ -317,9 +319,9 @@ export default function LoginForm() {
                     <Button
                       type="submit"
                       className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
-                      disabled={isLoading}
+                      disabled={isSigningIn}
                     >
-                      {isLoading ? (
+                      {isSigningIn ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
                         <ArrowRight className="h-4 w-4 mr-2" />
@@ -346,9 +348,9 @@ export default function LoginForm() {
                     variant="outline"
                     className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-md hover:bg-white/5 border-white/10 backdrop-blur-sm"
                     onClick={handleGoogleSignIn}
-                    disabled={isLoading}
+                    disabled={isGoogleSigningIn}
                   >
-                    {isLoading ? (
+                    {isGoogleSigningIn ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <svg
@@ -496,9 +498,9 @@ export default function LoginForm() {
                     <Button
                       type="submit"
                       className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
-                      disabled={isLoading}
+                      disabled={isSigningUp}
                     >
-                      {isLoading ? (
+                      {isSigningUp ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
                         <User className="h-4 w-4 mr-2" />
