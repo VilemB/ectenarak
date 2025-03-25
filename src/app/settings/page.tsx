@@ -385,16 +385,33 @@ export default function SettingsPage() {
                         variant="destructive"
                         onClick={handleDeleteAccount}
                         disabled={isDeleting}
-                        className="w-full"
+                        className="w-full font-medium relative overflow-hidden group"
                       >
-                        {isDeleting ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                            Mazání...
-                          </>
-                        ) : (
-                          "Potvrdit smazání"
-                        )}
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative z-10 flex items-center justify-center">
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              <span>Mazání účtu...</span>
+                            </>
+                          ) : (
+                            <>
+                              <motion.div
+                                initial={{ scale: 1 }}
+                                animate={{ scale: [1, 1.15, 1] }}
+                                transition={{
+                                  repeat: Infinity,
+                                  repeatDelay: 2,
+                                  duration: 1,
+                                }}
+                                className="flex items-center justify-center"
+                              >
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                              </motion.div>
+                              <span>Ano, smazat účet</span>
+                            </>
+                          )}
+                        </div>
                       </Button>
                     </motion.div>
                   </div>
@@ -409,31 +426,26 @@ export default function SettingsPage() {
                     <Button
                       variant="destructive"
                       onClick={() => setDeleteConfirmation(true)}
-                      className="px-6 group relative overflow-hidden"
+                      className="px-6 relative group"
                     >
-                      <div className="relative z-10 flex items-center">
+                      <div className="flex items-center">
                         <motion.div
                           animate={{ rotate: [0, 0, 12, 0] }}
                           transition={{
                             repeat: Infinity,
-                            repeatDelay: 3,
-                            duration: 1,
+                            repeatDelay: 4,
+                            duration: 0.8,
                           }}
                         >
-                          <LogOut className="h-4 w-4 mr-2 text-red-100 dark:text-red-200" />
+                          <LogOut className="h-4 w-4 mr-2" />
                         </motion.div>
                         <span>Smazat účet</span>
                       </div>
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700"
-                        initial={{ x: "100%" }}
-                        whileHover={{ x: "0%" }}
-                        transition={{ duration: 0.2 }}
-                      />
-                      <motion.div
-                        className="absolute inset-0 opacity-0 bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800"
+                        className="absolute inset-0 bg-red-600/20 dark:bg-red-900/30 rounded-md"
+                        initial={{ opacity: 0 }}
                         whileHover={{ opacity: 1 }}
-                        transition={{ duration: 0.2, delay: 0.1 }}
+                        transition={{ duration: 0.2 }}
                       />
                     </Button>
                   </motion.div>
