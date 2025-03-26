@@ -10,6 +10,7 @@ import { ButtonProps } from "@/components/ui/button";
 interface BookExportProps {
   book: Book;
   notes: Note[];
+  buttonProps?: ButtonProps;
 }
 
 // Single note export props
@@ -939,12 +940,16 @@ export function ExportButton(props: ExportButtonProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 gap-1 px-2 rounded-md transition-all duration-200 ease-in-out"
+        className={`
+          text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 gap-1 px-2 rounded-md transition-all duration-200 ease-in-out
+          disabled:opacity-60 disabled:cursor-not-allowed
+        `}
         onClick={(e) => {
           e.stopPropagation();
           setIsExportModalOpen(true);
         }}
         aria-label="Export options"
+        {...("buttonProps" in props ? props.buttonProps : {})}
       >
         <Download className="h-4 w-4" />
         <span className="hidden sm:inline">Export</span>

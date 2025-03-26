@@ -38,6 +38,7 @@ import { useSubscriptionContext } from "@/app/page";
 import { AiCreditsExhaustedPrompt } from "./FeatureGate";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -659,11 +660,13 @@ export default function BookComponent({
   // Only import what we actually use from useSubscription
   const { refreshSubscription } = useSubscription();
   const { refreshSubscriptionData } = useSubscriptionContext();
+  // Add useFeatureAccess hook
+  const { canAccess, hasAiCredits } = useFeatureAccess();
 
   // Function to refresh all subscription data
   const refreshAllSubscriptionData = useCallback(async () => {
     try {
-      // Refresh the data in both contexts
+      // Await both promises to ensure they complete
       await refreshSubscription();
       await refreshSubscriptionData();
     } catch (error) {
@@ -1060,6 +1063,21 @@ export default function BookComponent({
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
   ) => {
+    // Check for feature access first
+    if (!canAccess("aiAuthorSummary")) {
+      // Do not allow generating if user doesn't have access
+      toast.error("Pro generování shrnutí je potřeba alespoň Basic předplatné");
+      setSummaryModal(false);
+      return;
+    }
+
+    // Check for AI credits
+    if (!hasAiCredits()) {
+      setShowCreditExhaustedModal(true);
+      setSummaryModal(false);
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
@@ -1236,6 +1254,23 @@ export default function BookComponent({
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
+    // Check for feature access first
+    if (!canAccess("aiAuthorSummary")) {
+      // Do not allow generating if user doesn't have access
+      toast.error(
+        "Pro generování informací o autorovi je potřeba alespoň Basic předplatné"
+      );
+      setAuthorSummaryModal(false);
+      return;
+    }
+
+    // Check for AI credits
+    if (!hasAiCredits()) {
+      setShowCreditExhaustedModal(true);
+      setAuthorSummaryModal(false);
+      return;
+    }
+
     setIsGeneratingAuthorSummary(true);
 
     try {

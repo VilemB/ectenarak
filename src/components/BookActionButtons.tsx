@@ -1,126 +1,143 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
+import React from "react";
 import { Book } from "@/types";
-import { Trash2, User, Sparkles } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import PremiumFeatureLock from "./FeatureLockIndicator";
 import { ExportButton } from "./ExportButton";
 
 // Create a separate component for action buttons in the book header
-const BookActionButtons = ({
+export default function BookActionButtons({
   book,
-  setIsAuthorInfoVisible,
-  isAuthorInfoVisible,
-  setAuthorSummaryModal,
+  handleAuthorSummaryModal,
   handleDeleteAuthorSummary,
   isGeneratingAuthorSummary,
   handleBookDelete,
+  handleGenerateSummary,
+  isGenerating,
 }: {
   book: Book;
-  setIsAuthorInfoVisible: (visible: boolean) => void;
-  isAuthorInfoVisible: boolean;
-  setAuthorSummaryModal: (open: boolean) => void;
+  handleAuthorSummaryModal: () => void;
   handleDeleteAuthorSummary: () => void;
   isGeneratingAuthorSummary: boolean;
   handleBookDelete: () => void;
-}) => {
+  handleGenerateSummary?: () => void;
+  isGenerating?: boolean;
+}) {
+  const { canAccess, hasAiCredits } = useFeatureAccess();
+
+  // Check if the user has access to features
+  const canUseAuthorSummary = canAccess("aiAuthorSummary") && hasAiCredits();
+  const canUseAiSummary =
+    handleGenerateSummary && canAccess("aiCustomization") && hasAiCredits();
+  const canExportToPdf = canAccess("exportToPdf");
+
   return (
-    <div className="flex flex-wrap gap-2 mt-3 sm:mt-0 sm:flex-row">
-      {book.authorSummary ? (
-        <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Author Summary Button Group */}
+      <div className="flex items-center">
+        {/* Generate author summary button */}
+        <div className="relative">
           <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsAuthorInfoVisible(!isAuthorInfoVisible);
-            }}
+            variant="outline"
+            size="sm"
+            className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200 rounded-r-none border-r-0"
+            disabled={isGeneratingAuthorSummary || !canUseAuthorSummary}
+            onClick={handleAuthorSummaryModal}
+          >
+            {isGeneratingAuthorSummary && (
+              <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-md"></div>
+            )}
+            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-primary" />
+            <span className="hidden sm:inline">O autorovi</span>
+            <span className="sm:hidden">Info</span>
+          </Button>
+
+          {/* Lock indicator if feature is not available */}
+          {!canUseAuthorSummary && (
+            <PremiumFeatureLock
+              feature="aiAuthorSummary"
+              requiredTier={canAccess("aiAuthorSummary") ? undefined : "basic"}
+            />
+          )}
+        </div>
+
+        {/* Delete author summary button - only show if we have an author summary */}
+        {book.authorSummary && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-600 border-red-200/50 dark:text-red-500 dark:border-red-800/30 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 rounded-l-none transition-all duration-200"
+            onClick={handleDeleteAuthorSummary}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span className="sr-only">Smazat informace o autorovi</span>
+          </Button>
+        )}
+      </div>
+
+      {/* AI Summary Button - if provided */}
+      {handleGenerateSummary && (
+        <div className="relative">
+          <Button
             variant="outline"
             size="sm"
             className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+            disabled={isGenerating || !canUseAiSummary}
+            onClick={handleGenerateSummary}
           >
-            <User className="h-3.5 w-3.5 mr-1.5" />
-            <span className="hidden sm:inline">Informace o autorovi</span>
-            <span className="sm:hidden">Info</span>
+            {isGenerating && (
+              <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-md"></div>
+            )}
+            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-primary" />
+            <span className="hidden sm:inline">AI shrnutí</span>
+            <span className="sm:hidden">AI</span>
           </Button>
-          <div className="flex">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                setAuthorSummaryModal(true);
-              }}
-              variant="outline"
-              size="sm"
-              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200 rounded-r-none border-r-0"
-              disabled={isGeneratingAuthorSummary}
-            >
-              {isGeneratingAuthorSummary ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                  <span>Generuji...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="hidden sm:inline">
-                    Aktualizovat informace o autorovi
-                  </span>
-                  <span className="sm:hidden">Aktualizovat</span>
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteAuthorSummary();
-              }}
-              variant="outline"
-              size="sm"
-              className="text-amber-600 border-amber-200 hover:bg-destructive/10 hover:text-destructive dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-destructive/20 transition-all duration-200 rounded-l-none px-2"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span className="sr-only">Smazat info o autorovi</span>
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            setAuthorSummaryModal(true);
-          }}
-          variant="outline"
-          size="sm"
-          className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
-          disabled={!book.id || isGeneratingAuthorSummary}
-        >
-          {isGeneratingAuthorSummary ? (
-            <>
-              <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-              <span>Generuji...</span>
-            </>
-          ) : (
-            <>
-              <User className="h-3.5 w-3.5 mr-1.5" />
-              <span className="hidden sm:inline">Informace o autorovi</span>
-              <span className="sm:hidden">Info</span>
-            </>
+
+          {/* Lock indicator if feature is not available */}
+          {!canUseAiSummary && (
+            <PremiumFeatureLock
+              feature="aiCustomization"
+              requiredTier={canAccess("aiCustomization") ? undefined : "basic"}
+            />
           )}
-        </Button>
+        </div>
       )}
 
-      <div className="flex gap-1.5 ml-auto sm:ml-0">
-        <ExportButton book={book} notes={book.notes || []} />
+      {/* Export Button */}
+      {book.notes && book.notes.length > 0 && (
+        <div className="relative">
+          <ExportButton
+            book={book}
+            notes={book.notes}
+            buttonProps={{
+              disabled: !canExportToPdf,
+              variant: "outline",
+              size: "sm",
+              className:
+                "text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-950/50 transition-all duration-200",
+            }}
+          />
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-destructive hover:bg-destructive/10 hover:border-destructive/30"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleBookDelete();
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
+          {/* Lock indicator for export feature */}
+          {!canExportToPdf && (
+            <PremiumFeatureLock feature="exportToPdf" requiredTier="basic" />
+          )}
+        </div>
+      )}
+
+      {/* Delete book button */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-red-600 dark:text-red-500 border-red-200/50 dark:border-red-800/30 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 px-2.5 ml-auto"
+        onClick={handleBookDelete}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+        <span className="sr-only">Smazat</span>
+      </Button>
     </div>
   );
-};
-
-export default BookActionButtons;
+}
