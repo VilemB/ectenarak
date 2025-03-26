@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import LoginForm from "@/components/LoginForm";
 import {
   ArrowRight,
-  BookOpen,
-  PenLine,
-  Check,
-  Sparkles,
-  ChevronDown,
   BookText,
+  BookOpen,
+  Sparkles,
+  PenLine,
+  ChevronDown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import Link from "next/link";
+import SubscriptionCard from "@/components/SubscriptionCard";
 import LandingNavbar from "@/components/LandingNavbar";
+import LoginForm from "@/components/LoginForm";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -377,230 +379,140 @@ export default function LandingPage() {
           <div className="flex justify-center w-full">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl w-full px-0 sm:px-4">
               {/* Free Plan */}
-              <motion.div
-                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
-                    Zdarma
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8 flex flex-col h-full">
-                  <div className="flex items-center mb-4 sm:mb-6">
-                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                      <BookText className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold">Základní</h3>
-                  </div>
-                  <div className="flex items-baseline mb-4 sm:mb-6">
-                    <span className="text-4xl sm:text-5xl font-bold">0 Kč</span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      navždy
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                    Základní funkce pro správu zápisků
-                  </p>
-                  <Button
-                    className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground rounded-full"
-                    variant="outline"
-                    onClick={() => scrollToSection("signup-section")}
-                  >
-                    <span className="flex items-center justify-center font-medium">
-                      Začít zdarma
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </span>
-                  </Button>
-                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4 sm:pt-6">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Až 20 knih v knihovně</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Manuální poznámky ke knihám
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">3 AI kredity</span>{" "}
-                        měsíčně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Jednoduchý formát poznámek
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </motion.div>
+              <SubscriptionCard
+                title="Základní"
+                subtitle="Pro začátek"
+                description="Základní funkce pro správu zápisků"
+                price="0 Kč"
+                pricePeriod="navždy"
+                icon={<BookText className="h-6 w-6 text-muted-foreground" />}
+                badge={{
+                  text: "Zdarma",
+                  color: "bg-[#2a3548] text-muted-foreground",
+                }}
+                isCurrentPlan={false}
+                isLoading={false}
+                isSelected={false}
+                accentColor="#6b7280"
+                mutedColor="#6b7280"
+                buttonText="Začít zdarma"
+                onSelect={() => scrollToSection("signup-section")}
+                animationDelay={0.1}
+                features={[
+                  {
+                    name: "Až 20 knih v knihovně",
+                    included: true,
+                  },
+                  {
+                    name: "Manuální poznámky ke knihám",
+                    included: true,
+                  },
+                  {
+                    name: "3 AI kredity",
+                    description: "měsíčně",
+                    included: true,
+                  },
+                  {
+                    name: "Jednoduchý formát poznámek",
+                    included: true,
+                  },
+                ]}
+              />
 
               {/* Basic Plan */}
-              <motion.div
-                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
-                    Populární
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8 flex flex-col h-full">
-                  <div className="flex items-center mb-4 sm:mb-6">
-                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                      <BookOpen className="h-6 w-6 text-[#3b82f6]" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold">Basic</h3>
-                  </div>
-                  <div className="flex items-baseline mb-4 sm:mb-6">
-                    <span className="text-4xl sm:text-5xl font-bold">
-                      {yearlyBilling ? "39 Kč" : "49 Kč"}
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      / měsíc
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                    Rozšířené funkce pro efektivnější práci
-                  </p>
-                  <Button
-                    className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
-                    variant="default"
-                    onClick={() => scrollToSection("signup-section")}
-                  >
-                    <span className="flex items-center justify-center font-medium">
-                      Vyzkoušet Basic
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </span>
-                  </Button>
-                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Až 100 knih v knihovně</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">50 AI kreditů</span>{" "}
-                        měsíčně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">AI shrnutí autorů</span> a
-                        jejich děl
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          Export poznámek do PDF
-                        </span>
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Pokročilý formát poznámek</span>
-                    </li>
-                  </ul>
-                </div>
-              </motion.div>
+              <SubscriptionCard
+                title="Basic"
+                subtitle="Pro aktivní čtenáře"
+                description="Rozšířené funkce pro efektivnější práci"
+                price={yearlyBilling ? "39" : "49"}
+                pricePeriod="/ měsíc"
+                icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
+                badge={{
+                  text: "Populární",
+                  color: "bg-[#2a3548] text-[#3b82f6]",
+                }}
+                isCurrentPlan={false}
+                isLoading={false}
+                isSelected={false}
+                accentColor="#3b82f6"
+                mutedColor="#3b82f6"
+                buttonText="Vyzkoušet Basic"
+                onSelect={() => scrollToSection("signup-section")}
+                animationDelay={0.2}
+                features={[
+                  {
+                    name: "Až 100 knih v knihovně",
+                    included: true,
+                  },
+                  {
+                    name: "50 AI kreditů",
+                    description: "měsíčně",
+                    included: true,
+                  },
+                  {
+                    name: "AI shrnutí autorů",
+                    description: "a jejich děl",
+                    included: true,
+                  },
+                  {
+                    name: "Export poznámek do PDF",
+                    included: true,
+                  },
+                  {
+                    name: "Pokročilý formát poznámek",
+                    included: true,
+                  },
+                ]}
+              />
 
               {/* Premium Plan */}
-              <motion.div
-                className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 mt-8 md:mt-0"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-                    Doporučeno
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8 flex flex-col h-full">
-                  <div className="flex items-center mb-4 sm:mb-6">
-                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-[#3b82f6]" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold">Premium</h3>
-                  </div>
-                  <div className="flex items-baseline mb-4 sm:mb-6">
-                    <span className="text-4xl sm:text-5xl font-bold">
-                      {yearlyBilling ? "63 Kč" : "79 Kč"}
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      / měsíc
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 sm:mb-8">
-                    Plný přístup ke všem funkcím bez omezení
-                  </p>
-                  <Button
-                    className="w-full mb-8 sm:mb-10 py-4 sm:py-6 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white rounded-full"
-                    variant="default"
-                    onClick={() => scrollToSection("signup-section")}
-                  >
-                    <span className="flex items-center justify-center font-medium">
-                      Získat Premium
-                      <Sparkles className="ml-2 h-4 w-4" />
-                    </span>
-                  </Button>
-                  <div className="text-xs uppercase tracking-wider mb-4 sm:mb-6 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4 sm:pt-6">
-                    ZAHRNUJE VŠE Z BASIC A NAVÍC
-                  </div>
-                  <ul className="space-y-3 sm:space-y-4">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Neomezený počet knih</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">100 AI kreditů měsíčně</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Pokročilá AI shrnutí s delším rozsahem
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Detailní informace o autorech
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Přizpůsobení AI shrnutí</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Export poznámek do PDF</span>
-                    </li>
-                  </ul>
-                </div>
-              </motion.div>
+              <SubscriptionCard
+                title="Premium"
+                subtitle="Pro vášnivé čtenáře"
+                description="Plný přístup ke všem funkcím bez omezení"
+                price={yearlyBilling ? "63" : "79"}
+                pricePeriod="/ měsíc"
+                icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
+                badge={{
+                  text: "Doporučeno",
+                  color: "bg-[#3b82f6] text-white",
+                }}
+                isCurrentPlan={false}
+                isLoading={false}
+                isSelected={false}
+                accentColor="#3b82f6"
+                mutedColor="#3b82f6"
+                buttonText="Získat Premium"
+                onSelect={() => scrollToSection("signup-section")}
+                isPremium={true}
+                animationDelay={0.3}
+                features={[
+                  {
+                    name: "Neomezený počet knih",
+                    included: true,
+                  },
+                  {
+                    name: "100 AI kreditů měsíčně",
+                    included: true,
+                  },
+                  {
+                    name: "Pokročilá AI shrnutí s delším rozsahem",
+                    included: true,
+                  },
+                  {
+                    name: "Detailní informace o autorech",
+                    included: true,
+                  },
+                  {
+                    name: "Přizpůsobení AI shrnutí",
+                    included: true,
+                  },
+                  {
+                    name: "Export poznámek do PDF",
+                    included: true,
+                  },
+                ]}
+              />
             </div>
           </div>
 

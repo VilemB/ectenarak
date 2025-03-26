@@ -3,14 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, Check, BookText, BookOpen } from "lucide-react";
+import { Sparkles, BookText, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
+import SubscriptionCard from "@/components/SubscriptionCard";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -211,323 +211,143 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            {/* Subscription tiers - improved alignment */}
+            {/* Subscription tiers using the SubscriptionCard component */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto px-2">
               {/* Free tier */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                whileHover={{ y: -5 }}
-                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative flex flex-col h-full"
-              >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
-                    Zdarma
-                  </div>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col h-full">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                      <BookText className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold">Základní</h3>
-                  </div>
-                  <div className="flex items-baseline mb-4">
-                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
-                      0 Kč
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      navždy
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
-                    Základní funkce pro správu zápisků
-                  </p>
-
-                  <Button
-                    className={`w-full mb-6 sm:mb-8 py-5 ${
-                      currentTier === "free"
-                        ? "bg-muted/20 text-muted-foreground"
-                        : "bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground"
-                    } rounded-full shadow-sm hover:shadow-md transition-all duration-300`}
-                    variant="outline"
-                    onClick={() => handleChangeTier("free")}
-                    disabled={
-                      currentTier === "free" || loading || selectedTier !== null
-                    }
-                  >
-                    {selectedTier === "free" ? (
-                      <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
-                    ) : currentTier === "free" ? (
-                      <span className="flex items-center justify-center font-medium">
-                        Aktivní plán <Check className="ml-2 h-4 w-4" />
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center font-medium">
-                        Vybrat plán
-                      </span>
-                    )}
-                  </Button>
-
-                  <div className="text-xs uppercase tracking-wider mb-4 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-2.5 sm:space-y-3">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Až {SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Manuální poznámky ke knihám
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          {SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI
-                          kredity
-                        </span>{" "}
-                        měsíčně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Jednoduchý formát poznámek
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </motion.div>
+              <SubscriptionCard
+                title="Základní"
+                subtitle="Pro začátek"
+                description="Základní funkce pro správu zápisků"
+                price="0 Kč"
+                pricePeriod="navždy"
+                icon={<BookText className="h-6 w-6 text-muted-foreground" />}
+                badge={{
+                  text: "Zdarma",
+                  color: "bg-[#2a3548] text-muted-foreground",
+                }}
+                isCurrentPlan={currentTier === "free"}
+                isLoading={loading}
+                isSelected={selectedTier === "free"}
+                accentColor="#6b7280"
+                mutedColor="#6b7280"
+                onSelect={() => handleChangeTier("free")}
+                animationDelay={0.1}
+                features={[
+                  {
+                    name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
+                    included: true,
+                  },
+                  {
+                    name: "Manuální poznámky ke knihám",
+                    included: true,
+                  },
+                  {
+                    name: `${SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI kredity`,
+                    description: "měsíčně",
+                    included: true,
+                  },
+                  {
+                    name: "Jednoduchý formát poznámek",
+                    included: true,
+                  },
+                ]}
+              />
 
               {/* Basic tier */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                whileHover={{ y: -5 }}
-                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative flex flex-col h-full"
-              >
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
-                    Populární
-                  </div>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col h-full">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                      <BookOpen className="h-6 w-6 text-[#3b82f6]" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold">Basic</h3>
-                  </div>
-                  <div className="flex items-baseline mb-4">
-                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
-                      {billingCycle === "yearly" ? "39 Kč" : "49 Kč"}
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      / měsíc
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
-                    Rozšířené funkce pro efektivnější práci
-                  </p>
-
-                  <Button
-                    className={`w-full mb-6 sm:mb-8 py-5 ${
-                      currentTier === "basic"
-                        ? "bg-blue-600/10 text-blue-500"
-                        : "bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white"
-                    } rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
-                    variant={currentTier === "basic" ? "outline" : "default"}
-                    onClick={() => handleChangeTier("basic")}
-                    disabled={
-                      currentTier === "basic" ||
-                      loading ||
-                      selectedTier !== null
-                    }
-                  >
-                    {selectedTier === "basic" ? (
-                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin mx-auto"></div>
-                    ) : currentTier === "basic" ? (
-                      <span className="flex items-center justify-center font-medium">
-                        Aktivní plán <Check className="ml-2 h-4 w-4" />
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center font-medium">
-                        Vybrat plán
-                      </span>
-                    )}
-                  </Button>
-
-                  <div className="text-xs uppercase tracking-wider mb-4 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-2.5 sm:space-y-3">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Až {SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          {SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI
-                          kreditů
-                        </span>{" "}
-                        měsíčně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">AI shrnutí autorů</span> a
-                        jejich děl
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          Export poznámek do PDF
-                        </span>
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">Pokročilý formát poznámek</span>
-                    </li>
-                  </ul>
-                </div>
-              </motion.div>
+              <SubscriptionCard
+                title="Basic"
+                subtitle="Pro aktivní čtenáře"
+                description="Rozšířené funkce pro efektivnější práci"
+                price={billingCycle === "yearly" ? "39" : "49"}
+                pricePeriod="/ měsíc"
+                icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
+                badge={{
+                  text: "Populární",
+                  color: "bg-[#2a3548] text-[#3b82f6]",
+                }}
+                isCurrentPlan={currentTier === "basic"}
+                isLoading={loading}
+                isSelected={selectedTier === "basic"}
+                accentColor="#3b82f6"
+                mutedColor="#3b82f6"
+                onSelect={() => handleChangeTier("basic")}
+                animationDelay={0.2}
+                features={[
+                  {
+                    name: `Až ${SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně`,
+                    included: true,
+                  },
+                  {
+                    name: `${SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI kreditů`,
+                    description: "měsíčně",
+                    included: true,
+                  },
+                  {
+                    name: "AI shrnutí autorů",
+                    description: "a jejich děl",
+                    included: true,
+                  },
+                  {
+                    name: "Export poznámek do PDF",
+                    included: true,
+                  },
+                  {
+                    name: "Pokročilý formát poznámek",
+                    included: true,
+                  },
+                ]}
+              />
 
               {/* Premium tier */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-                whileHover={{ y: -5 }}
-                className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 z-10"
-              >
-                {/* Premium background glow effect */}
-                <div className="absolute -inset-1 bg-blue-500/20 blur-xl opacity-30 rounded-xl"></div>
-
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
-                    Doporučeno
-                  </div>
-                </div>
-                <div className="relative z-1 p-5 sm:p-6 flex flex-col h-full">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-[#3b82f6]" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold">Premium</h3>
-                  </div>
-                  <div className="flex items-baseline mb-4">
-                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
-                      {billingCycle === "yearly" ? "79 Kč" : "99 Kč"}
-                    </span>
-                    <span className="text-muted-foreground ml-2 text-sm">
-                      / měsíc
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
-                    Kompletní sada nástrojů pro náročné čtenáře
-                  </p>
-
-                  <Button
-                    className={`w-full mb-6 sm:mb-8 py-5 ${
-                      currentTier === "premium"
-                        ? "bg-blue-600/10 text-blue-500"
-                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
-                    } rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300`}
-                    variant={currentTier === "premium" ? "outline" : "default"}
-                    onClick={() => handleChangeTier("premium")}
-                    disabled={
-                      currentTier === "premium" ||
-                      loading ||
-                      selectedTier !== null
-                    }
-                  >
-                    {selectedTier === "premium" ? (
-                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin mx-auto"></div>
-                    ) : currentTier === "premium" ? (
-                      <span className="flex items-center justify-center font-medium">
-                        Aktivní plán <Check className="ml-2 h-4 w-4" />
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center font-medium">
-                        Vybrat plán
-                      </span>
-                    )}
-                  </Button>
-
-                  <div className="text-xs uppercase tracking-wider mb-4 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4">
-                    ZAHRNUJE
-                  </div>
-                  <ul className="space-y-2.5 sm:space-y-3">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        Neomezený počet knih v knihovně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          {SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI
-                          kreditů
-                        </span>{" "}
-                        měsíčně
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          Pokročilé AI přizpůsobení
-                        </span>{" "}
-                        poznámek
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          Detailní informace o autorech
-                        </span>
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">
-                          Rozšířené AI shrnutí
-                        </span>{" "}
-                        knih
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">Prioritní podpora</span>
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </motion.div>
+              <SubscriptionCard
+                title="Premium"
+                subtitle="Pro vášnivé čtenáře"
+                description="Kompletní sada nástrojů pro náročné čtenáře"
+                price={billingCycle === "yearly" ? "79" : "99"}
+                pricePeriod="/ měsíc"
+                icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
+                badge={{
+                  text: "Doporučeno",
+                  color: "bg-[#3b82f6] text-white",
+                }}
+                isCurrentPlan={currentTier === "premium"}
+                isLoading={loading}
+                isSelected={selectedTier === "premium"}
+                accentColor="#3b82f6"
+                mutedColor="#3b82f6"
+                onSelect={() => handleChangeTier("premium")}
+                isPremium={true}
+                animationDelay={0.3}
+                features={[
+                  {
+                    name: "Neomezený počet knih v knihovně",
+                    included: true,
+                  },
+                  {
+                    name: `${SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI kreditů`,
+                    description: "měsíčně",
+                    included: true,
+                  },
+                  {
+                    name: "Pokročilé AI přizpůsobení",
+                    description: "poznámek",
+                    included: true,
+                  },
+                  {
+                    name: "Detailní informace o autorech",
+                    included: true,
+                  },
+                  {
+                    name: "Rozšířené AI shrnutí",
+                    description: "knih",
+                    included: true,
+                  },
+                  {
+                    name: "Prioritní podpora",
+                    included: true,
+                  },
+                ]}
+              />
             </div>
           </motion.div>
 
