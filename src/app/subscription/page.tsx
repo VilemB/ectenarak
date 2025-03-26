@@ -3,26 +3,33 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import ExampleUsage from "@/components/ExampleUsage";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles, Check, BookText, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SUBSCRIPTION_LIMITS } from "@/types/user";
+import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [yearlyBilling, setYearlyBilling] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
+  const [selectedTier, setSelectedTier] = useState<
+    "free" | "basic" | "premium" | null
+  >(null);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Auth state:", { user, isLoading, isAuthenticated });
-  }, [user, isLoading, isAuthenticated]);
+  const { subscription, loading, updateSubscription } = useSubscription();
+  const { getSubscriptionTier } = useFeatureAccess();
+
+  const currentTier = getSubscriptionTier();
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log("User not authenticated, redirecting to login...");
       router.push("/login?redirect=/subscription");
     }
   }, [isLoading, isAuthenticated, router]);
@@ -48,27 +55,27 @@ export default function SubscriptionPage() {
     },
   };
 
-  const handleSubscribe = (plan: string) => {
-    setSelectedPlan(plan);
+  const handleChangeTier = async (tier: "free" | "basic" | "premium") => {
+    try {
+      if (tier === currentTier) {
+        // Already on this tier
+        return;
+      }
 
-    console.log(`Selected plan: ${plan}`);
+      // Set selected tier for UI feedback
+      setSelectedTier(tier);
 
-    // You could redirect to a checkout page here
-    // router.push(`/checkout?plan=${plan}`);
-  };
+      // Update the subscription
+      await updateSubscription(tier, billingCycle === "yearly");
 
-  const handleUpgrade = () => {
-    if (!selectedPlan) {
-      alert("Prosím vyberte plán");
-      return;
+      // Show success message
+      alert(`Předplatné bylo úspěšně změněno na ${tier}`);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      alert("Nastala chyba při aktualizaci předplatného");
+    } finally {
+      setSelectedTier(null);
     }
-
-    alert(
-      `Váš plán byl změněn na ${selectedPlan} (${
-        yearlyBilling ? "roční" : "měsíční"
-      })`
-    );
-    // Here you would implement the actual subscription upgrade logic
   };
 
   if (isLoading) {
@@ -90,32 +97,72 @@ export default function SubscriptionPage() {
       {/* Background gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10 flex-grow">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10 flex-grow">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="space-y-20"
+          className="space-y-12 md:space-y-20"
         >
           {/* Header */}
           <motion.div
             variants={itemVariants}
             className="text-center max-w-3xl mx-auto"
           >
-            <h1 className="text-4xl sm:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
               Vyberte si ideální plán
             </h1>
-            <p className="text-xl text-gray-300 leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-6">
               Odemkněte plný potenciál vaší čtenářské cesty s naším prémiovým
               předplatným.
             </p>
+
+            {/* Current subscription info and AI credits visualization */}
+            {user && subscription && (
+              <motion.div
+                variants={itemVariants}
+                className="mt-8 md:mt-10 bg-[#1a2436] border border-[#2a3548] rounded-xl p-5 md:p-6 max-w-lg mx-auto shadow-lg"
+              >
+                <h2 className="text-xl font-bold mb-3">
+                  Vaše předplatné:{" "}
+                  <span className="text-blue-400">
+                    {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
+                  </span>
+                </h2>
+
+                <div className="bg-[#0f1729] rounded-lg p-4 mb-4 shadow-inner">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-300">
+                      AI Kredity tento měsíc
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      Obnovení:{" "}
+                      {new Date(
+                        new Date().setMonth(new Date().getMonth() + 1)
+                      ).toLocaleDateString("cs-CZ")}
+                    </span>
+                  </div>
+
+                  <AiCreditsDisplay
+                    aiCreditsRemaining={subscription.aiCreditsRemaining}
+                    aiCreditsTotal={subscription.aiCreditsTotal}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="text-sm text-center text-gray-400 mt-3">
+                  Změňte své předplatné níže pro přístup k více funkcím nebo
+                  kreditům
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
-          {/* Landing Page Style Pricing */}
+          {/* Pricing Section */}
           <motion.div variants={itemVariants}>
-            <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">
+            <div className="text-center mb-8 md:mb-12 max-w-3xl mx-auto">
               <motion.h2
-                className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground"
+                className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4 text-foreground"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -124,7 +171,7 @@ export default function SubscriptionPage() {
                 {user ? "Změnit předplatné" : "Vyberte si plán"}
               </motion.h2>
               <motion.p
-                className="text-muted-foreground text-lg md:text-xl mb-8"
+                className="text-muted-foreground text-base md:text-lg lg:text-xl mb-6 md:mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -134,377 +181,408 @@ export default function SubscriptionPage() {
               </motion.p>
 
               {/* Simple Pricing Toggle */}
+              <div className="flex justify-center mb-8 md:mb-12">
+                <Tabs
+                  defaultValue="monthly"
+                  value={billingCycle}
+                  onValueChange={(value) =>
+                    setBillingCycle(value as "monthly" | "yearly")
+                  }
+                  className="w-full max-w-md"
+                >
+                  <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/30 backdrop-blur-sm border border-white/5 shadow-md">
+                    <TabsTrigger
+                      value="monthly"
+                      className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+                    >
+                      Měsíčně
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="yearly"
+                      className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+                    >
+                      Ročně{" "}
+                      <span className="ml-1 text-xs font-normal text-emerald-400">
+                        Ušetříte 20%
+                      </span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </div>
+
+            {/* Subscription tiers - improved alignment */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto px-2">
+              {/* Free tier */}
               <motion.div
-                className="flex flex-col items-center justify-center mb-10"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                whileHover={{ y: -5 }}
+                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative flex flex-col h-full"
               >
-                <div className="flex items-center space-x-3 bg-[#1a2436] p-1.5 rounded-full border border-[#2a3548] shadow-sm mb-3">
-                  <button
-                    onClick={() => setYearlyBilling(false)}
-                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                      !yearlyBilling
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
-                    }`}
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="bg-[#2a3548] text-muted-foreground text-xs font-medium px-3 py-1 rounded-full">
+                    Zdarma
+                  </div>
+                </div>
+                <div className="p-5 sm:p-6 flex flex-col h-full">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
+                      <BookText className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold">Základní</h3>
+                  </div>
+                  <div className="flex items-baseline mb-4">
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
+                      0 Kč
+                    </span>
+                    <span className="text-muted-foreground ml-2 text-sm">
+                      navždy
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
+                    Základní funkce pro správu zápisků
+                  </p>
+
+                  <Button
+                    className={`w-full mb-6 sm:mb-8 py-5 ${
+                      currentTier === "free"
+                        ? "bg-muted/20 text-muted-foreground"
+                        : "bg-transparent border border-[#2a3548] hover:bg-[#2a3548]/20 text-foreground"
+                    } rounded-full shadow-sm hover:shadow-md transition-all duration-300`}
+                    variant="outline"
+                    onClick={() => handleChangeTier("free")}
+                    disabled={
+                      currentTier === "free" || loading || selectedTier !== null
+                    }
                   >
-                    Měsíčně
-                  </button>
-                  <button
-                    onClick={() => setYearlyBilling(true)}
-                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                      yearlyBilling
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
-                    }`}
-                  >
-                    Ročně{" "}
-                    <span className="text-xs opacity-90 ml-1">(-20%)</span>
-                  </button>
-                </div>
-
-                {yearlyBilling && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center text-sm text-primary font-medium"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                    Ušetříte 20% s ročním předplatným
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-
-            {/* Pricing Cards */}
-            <motion.div
-              variants={itemVariants}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            >
-              {/* Free Plan */}
-              <motion.div
-                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-gray-900/80 to-gray-950/80 border border-gray-800 shadow-xl flex flex-col h-full"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800/10 to-gray-900/10 pointer-events-none"></div>
-                <div className="p-8 flex flex-col flex-grow">
-                  <div>
-                    <h3 className="text-2xl font-bold mb-4 text-gray-100">
-                      Základní
-                    </h3>
-                    <div className="flex items-baseline mb-6">
-                      <span className="text-5xl font-extrabold text-white">
-                        0 Kč
+                    {selectedTier === "free" ? (
+                      <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
+                    ) : currentTier === "free" ? (
+                      <span className="flex items-center justify-center font-medium">
+                        Aktivní plán <Check className="ml-2 h-4 w-4" />
                       </span>
-                      <span className="ml-2 text-gray-400">navždy</span>
-                    </div>
-                    <ul className="space-y-4 mb-8">
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-green-400 mr-3" />
-                        <span>Až 20 knih v knihovně</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-green-400 mr-3" />
-                        <span>Manuální poznámky ke knihám</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-green-400 mr-3" />
-                        <span>
-                          <span className="font-medium">3 AI kredity</span>{" "}
-                          měsíčně
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-green-400 mr-3" />
-                        <span>Jednoduchý formát poznámek</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-auto">
-                    <Button
-                      variant="outline"
-                      className="w-full py-6 text-lg border-gray-700 hover:bg-gray-800/50 text-gray-300"
-                      onClick={() => router.push("/dashboard")}
-                    >
-                      Pokračovat zdarma
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Standard Plan */}
-              <motion.div
-                whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-blue-900/80 to-blue-950/80 border border-blue-800/50 shadow-xl flex flex-col h-full"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-700/10 pointer-events-none"></div>
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
-                <div className="p-8 flex flex-col flex-grow">
-                  <div>
-                    <div className="absolute top-4 right-4 z-10">
-                      <div className="bg-blue-900/80 text-blue-200 text-xs font-medium px-3 py-1 rounded-full">
-                        Populární
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-blue-100">
-                      Basic
-                    </h3>
-                    <div className="flex items-baseline mb-6">
-                      <span className="text-5xl font-extrabold text-white">
-                        {yearlyBilling ? "39 Kč" : "49 Kč"}
+                    ) : (
+                      <span className="flex items-center justify-center font-medium">
+                        Vybrat plán
                       </span>
-                      <span className="ml-2 text-gray-400">/ měsíc</span>
-                    </div>
-                    <ul className="space-y-4 mb-8">
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-blue-400 mr-3" />
-                        <span>Až 100 knih v knihovně</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-blue-400 mr-3" />
-                        <span>
-                          <span className="font-medium">50 AI kreditů</span>{" "}
-                          měsíčně
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-blue-400 mr-3" />
-                        <span>
-                          <span className="font-medium">AI shrnutí autorů</span>{" "}
-                          a jejich děl
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-blue-400 mr-3" />
-                        <span>
-                          <span className="font-medium">
-                            Export poznámek do PDF
-                          </span>
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-blue-400 mr-3" />
-                        <span>Pokročilý formát poznámek</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-auto">
-                    <Button
-                      className="w-full py-6 text-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-600/20"
-                      onClick={() => handleSubscribe("basic")}
-                    >
-                      Vybrat plán
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
+                    )}
+                  </Button>
 
-              {/* Premium Plan */}
-              <motion.div
-                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-purple-900/80 to-purple-950/80 border border-purple-800/50 shadow-xl flex flex-col h-full"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-purple-700/10 pointer-events-none"></div>
-                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl pointer-events-none"></div>
-                <div className="p-8 flex flex-col flex-grow">
-                  <div>
-                    <div className="absolute top-4 right-4 z-10">
-                      <div className="bg-purple-900/80 text-white text-xs font-medium px-3 py-1 rounded-full">
-                        Doporučeno
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-purple-100">
-                      Premium
-                    </h3>
-                    <div className="flex items-baseline mb-6">
-                      <span className="text-5xl font-extrabold text-white">
-                        {yearlyBilling ? "63 Kč" : "79 Kč"}
+                  <div className="text-xs uppercase tracking-wider mb-4 font-medium text-[#6b7280] border-t border-[#2a3548] pt-4">
+                    ZAHRNUJE
+                  </div>
+                  <ul className="space-y-2.5 sm:space-y-3">
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Až {SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně
                       </span>
-                      <span className="ml-2 text-gray-400">/ měsíc</span>
-                    </div>
-                    <ul className="space-y-4 mb-8">
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-purple-400 mr-3" />
-                        <span>Neomezený počet knih</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-purple-400 mr-3" />
-                        <span>100 AI kreditů měsíčně</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-purple-400 mr-3" />
-                        <span>Pokročilá AI shrnutí s delším rozsahem</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-purple-400 mr-3" />
-                        <span>Detailní informace o autorech</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-purple-400 mr-3" />
-                        <span>Přizpůsobení AI shrnutí</span>
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-5 w-5 text-purple-400 mr-3" />
-                        <span>Export poznámek do PDF</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-auto">
-                    <Button
-                      className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-600/20"
-                      onClick={() => handleSubscribe("premium")}
-                    >
-                      Vybrat plán
-                    </Button>
-                  </div>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Manuální poznámky ke knihám
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          {SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI
+                          kredity
+                        </span>{" "}
+                        měsíčně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Jednoduchý formát poznámek
+                      </span>
+                    </li>
+                  </ul>
                 </div>
               </motion.div>
-            </motion.div>
 
-            {/* Upgrade Button */}
-            <div className="mt-10 flex justify-center">
-              <motion.button
-                onClick={handleUpgrade}
-                disabled={!selectedPlan}
-                className={`px-10 py-4 rounded-full font-medium text-white transition-all ${
-                  selectedPlan
-                    ? "bg-[#3b82f6] hover:bg-[#3b82f6]/90"
-                    : "bg-[#2a3548] cursor-not-allowed"
-                }`}
-                whileHover={selectedPlan ? { scale: 1.05 } : {}}
-                whileTap={selectedPlan ? { scale: 0.95 } : {}}
+              {/* Basic tier */}
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  boxShadow: selectedPlan
-                    ? "0 10px 25px -5px rgba(59, 130, 246, 0.5)"
-                    : "none",
-                }}
-                transition={{ duration: 0.3 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                whileHover={{ y: -5 }}
+                className="bg-[#1a2436] border border-[#2a3548] rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative flex flex-col h-full"
               >
-                <span className="flex items-center justify-center text-lg">
-                  {user ? "Změnit předplatné" : "Aktivovat předplatné"}
-                  <Sparkles className="ml-2 h-5 w-5" />
-                </span>
-              </motion.button>
-            </div>
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="bg-[#2a3548] text-[#3b82f6] text-xs font-medium px-3 py-1 rounded-full">
+                    Populární
+                  </div>
+                </div>
+                <div className="p-5 sm:p-6 flex flex-col h-full">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
+                      <BookOpen className="h-6 w-6 text-[#3b82f6]" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold">Basic</h3>
+                  </div>
+                  <div className="flex items-baseline mb-4">
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
+                      {billingCycle === "yearly" ? "39 Kč" : "49 Kč"}
+                    </span>
+                    <span className="text-muted-foreground ml-2 text-sm">
+                      / měsíc
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
+                    Rozšířené funkce pro efektivnější práci
+                  </p>
 
-            {selectedPlan && (
-              <motion.div
-                className="mt-4 text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <p className="text-sm text-[#3b82f6]">
-                  {selectedPlan === "Free"
-                    ? "Vybrali jste Free plán"
-                    : `Vybrali jste ${selectedPlan} plán (${
-                        yearlyBilling ? "roční" : "měsíční"
-                      })`}
-                </p>
-              </motion.div>
-            )}
+                  <Button
+                    className={`w-full mb-6 sm:mb-8 py-5 ${
+                      currentTier === "basic"
+                        ? "bg-blue-600/10 text-blue-500"
+                        : "bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white"
+                    } rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
+                    variant={currentTier === "basic" ? "outline" : "default"}
+                    onClick={() => handleChangeTier("basic")}
+                    disabled={
+                      currentTier === "basic" ||
+                      loading ||
+                      selectedTier !== null
+                    }
+                  >
+                    {selectedTier === "basic" ? (
+                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin mx-auto"></div>
+                    ) : currentTier === "basic" ? (
+                      <span className="flex items-center justify-center font-medium">
+                        Aktivní plán <Check className="ml-2 h-4 w-4" />
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center font-medium">
+                        Vybrat plán
+                      </span>
+                    )}
+                  </Button>
 
-            <motion.div
-              className="mt-10 sm:mt-16 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-                Všechny plány zahrnují základní funkce pro správu čtenářských
-                zápisků. Předplatné můžete zrušit kdykoliv.
-                {yearlyBilling &&
-                  " Při ročním předplatném ušetříte 20% oproti měsíční platbě."}
-              </p>
-            </motion.div>
-          </motion.div>
-
-          {/* Features Section */}
-          <motion.div
-            variants={itemVariants}
-            className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-gray-900/60 to-gray-950/60 border border-gray-800/50 shadow-xl p-8 md:p-12"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="text-center mb-12 relative z-10">
-              <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200">
-                Vyzkoušejte prémiové funkce
-              </h2>
-              <p className="text-gray-300 max-w-2xl mx-auto">
-                Podívejte se na ukázky funkcí, které získáte s předplatným.
-              </p>
-            </div>
-
-            <ExampleUsage />
-          </motion.div>
-
-          {/* FAQ Section */}
-          <motion.div
-            variants={itemVariants}
-            className="relative rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-b from-gray-900/60 to-gray-950/60 border border-gray-800/50 shadow-xl p-8 md:p-12"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
-            <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="text-center mb-12 relative z-10">
-              <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200">
-                Často kladené otázky
-              </h2>
-              <p className="text-gray-300 max-w-2xl mx-auto">
-                Odpovědi na nejčastější dotazy o našem předplatném.
-              </p>
-            </div>
-
-            <div className="max-w-3xl mx-auto space-y-6 relative z-10">
-              {/* FAQ Item 1 */}
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 shadow-lg"
-              >
-                <h3 className="text-xl font-semibold mb-3 text-white">
-                  Jak mohu zrušit předplatné?
-                </h3>
-                <p className="text-gray-300">
-                  Předplatné můžete kdykoliv zrušit ve svém profilu. Po zrušení
-                  budete moci využívat prémiové funkce až do konce aktuálního
-                  fakturačního období.
-                </p>
+                  <div className="text-xs uppercase tracking-wider mb-4 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4">
+                    ZAHRNUJE
+                  </div>
+                  <ul className="space-y-2.5 sm:space-y-3">
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Až {SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          {SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI
+                          kreditů
+                        </span>{" "}
+                        měsíčně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">AI shrnutí autorů</span> a
+                        jejich děl
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          Export poznámek do PDF
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">Pokročilý formát poznámek</span>
+                    </li>
+                  </ul>
+                </div>
               </motion.div>
 
-              {/* FAQ Item 2 */}
+              {/* Premium tier */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                whileHover={{ y: -5 }}
+                className="bg-[#1a2436] border-2 border-[#3b82f6] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col h-full md:scale-[1.03] md:-translate-y-1 z-10"
+              >
+                {/* Premium background glow effect */}
+                <div className="absolute -inset-1 bg-blue-500/20 blur-xl opacity-30 rounded-xl"></div>
+
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="bg-[#3b82f6] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
+                    Doporučeno
+                  </div>
+                </div>
+                <div className="relative z-1 p-5 sm:p-6 flex flex-col h-full">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 mr-3 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-[#3b82f6]" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold">Premium</h3>
+                  </div>
+                  <div className="flex items-baseline mb-4">
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
+                      {billingCycle === "yearly" ? "79 Kč" : "99 Kč"}
+                    </span>
+                    <span className="text-muted-foreground ml-2 text-sm">
+                      / měsíc
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-5 sm:mb-6">
+                    Kompletní sada nástrojů pro náročné čtenáře
+                  </p>
+
+                  <Button
+                    className={`w-full mb-6 sm:mb-8 py-5 ${
+                      currentTier === "premium"
+                        ? "bg-blue-600/10 text-blue-500"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
+                    } rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300`}
+                    variant={currentTier === "premium" ? "outline" : "default"}
+                    onClick={() => handleChangeTier("premium")}
+                    disabled={
+                      currentTier === "premium" ||
+                      loading ||
+                      selectedTier !== null
+                    }
+                  >
+                    {selectedTier === "premium" ? (
+                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin mx-auto"></div>
+                    ) : currentTier === "premium" ? (
+                      <span className="flex items-center justify-center font-medium">
+                        Aktivní plán <Check className="ml-2 h-4 w-4" />
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center font-medium">
+                        Vybrat plán
+                      </span>
+                    )}
+                  </Button>
+
+                  <div className="text-xs uppercase tracking-wider mb-4 font-medium text-[#3b82f6] border-t border-[#2a3548] pt-4">
+                    ZAHRNUJE
+                  </div>
+                  <ul className="space-y-2.5 sm:space-y-3">
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        Neomezený počet knih v knihovně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          {SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI
+                          kreditů
+                        </span>{" "}
+                        měsíčně
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          Pokročilé AI přizpůsobení
+                        </span>{" "}
+                        poznámek
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          Detailní informace o autorech
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">
+                          Rozšířené AI shrnutí
+                        </span>{" "}
+                        knih
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-4 w-4 text-[#3b82f6] mr-3 mt-0.5 shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">Prioritní podpora</span>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* FAQ */}
+          <motion.div
+            variants={itemVariants}
+            className="max-w-3xl mx-auto mt-16 md:mt-20"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center">
+              Často kladené otázky
+            </h2>
+            <div className="space-y-4 md:space-y-6">
               <motion.div
                 whileHover={{ scale: 1.01 }}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 shadow-lg"
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className="bg-[#1a2436] border border-[#2a3548] rounded-lg p-5 md:p-6 shadow-md hover:shadow-lg transition-all duration-300"
               >
-                <h3 className="text-xl font-semibold mb-3 text-white">
+                <h3 className="font-bold text-lg md:text-xl mb-2">
                   Co jsou AI kredity?
                 </h3>
-                <p className="text-gray-300">
-                  AI kredity slouží k využívání funkcí umělé inteligence, jako
-                  je generování shrnutí knih nebo analýza textu. Každý plán
-                  obsahuje určitý počet kreditů, které se obnovují každý měsíc.
+                <p className="text-gray-300 text-sm md:text-base">
+                  AI kredity jsou využívány pro generování obsahu pomocí umělé
+                  inteligence. Každé použití AI funkcí (jako je generování
+                  shrnutí knih nebo informací o autorech) spotřebuje jeden
+                  kredit. Kredity se obnovují každý měsíc podle vašeho
+                  předplatného.
                 </p>
               </motion.div>
-
-              {/* FAQ Item 3 */}
               <motion.div
                 whileHover={{ scale: 1.01 }}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 shadow-lg"
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className="bg-[#1a2436] border border-[#2a3548] rounded-lg p-5 md:p-6 shadow-md hover:shadow-lg transition-all duration-300"
               >
-                <h3 className="text-xl font-semibold mb-3 text-white">
-                  Mohu změnit svůj plán?
+                <h3 className="font-bold text-lg md:text-xl mb-2">
+                  Jak mohu změnit své předplatné?
                 </h3>
-                <p className="text-gray-300">
-                  Ano, svůj plán můžete kdykoliv upgradovat nebo downgradovat.
-                  Změny se projeví na začátku dalšího fakturačního období.
+                <p className="text-gray-300 text-sm md:text-base">
+                  Jednoduše vyberte požadovaný plán výše a klikněte na
+                  &quot;Vybrat plán&quot;. Změna bude provedena okamžitě a nové
+                  funkce budou ihned dostupné. Při snížení úrovně předplatného
+                  můžete ztratit přístup k některým funkcím a datům.
+                </p>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className="bg-[#1a2436] border border-[#2a3548] rounded-lg p-5 md:p-6 shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                <h3 className="font-bold text-lg md:text-xl mb-2">
+                  Kdy se obnoví moje AI kredity?
+                </h3>
+                <p className="text-gray-300 text-sm md:text-base">
+                  AI kredity se obnovují automaticky na začátku každého
+                  předplatného cyklu. Nevyužité kredity z předchozího období se
+                  nepřenášejí do následujícího cyklu.
                 </p>
               </motion.div>
             </div>
