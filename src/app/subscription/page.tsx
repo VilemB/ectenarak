@@ -274,11 +274,11 @@ export default function SubscriptionPage() {
                 animationDelay={0.2}
                 features={[
                   {
-                    name: `Až ${SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně`,
+                    name: "Až 100 knih v knihovně",
                     included: true,
                   },
                   {
-                    name: `${SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI kreditů`,
+                    name: "50 AI kreditů",
                     description: "měsíčně",
                     included: true,
                   },
@@ -303,7 +303,7 @@ export default function SubscriptionPage() {
                 title="Premium"
                 subtitle="Pro vášnivé čtenáře"
                 description="Kompletní sada nástrojů pro náročné čtenáře"
-                price={billingCycle === "yearly" ? "79" : "99"}
+                price={billingCycle === "yearly" ? "63" : "79"}
                 pricePeriod="/ měsíc"
                 icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
@@ -324,7 +324,7 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                   {
-                    name: `${SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI kreditů`,
+                    name: "100 AI kreditů",
                     description: "měsíčně",
                     included: true,
                   },
