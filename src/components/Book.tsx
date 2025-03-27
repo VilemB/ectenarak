@@ -507,11 +507,14 @@ const BookHeader = ({
 }) => {
   return (
     <motion.div
-      className={`p-3 sm:p-4 cursor-pointer transition-all duration-250 hover:bg-black/[0.03] dark:hover:bg-white/[0.03] ${
-        isExpanded ? "border-b border-border/40" : ""
-      } ${
-        isExpanded ? "bg-black/[0.01] dark:bg-white/[0.01]" : ""
-      } relative group`}
+      className={`relative cursor-pointer transition-all duration-250 
+                  ${
+                    isExpanded
+                      ? "bg-white dark:bg-zinc-900 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
+                      : "bg-zinc-50/60 dark:bg-zinc-950/60 p-3 sm:p-4"
+                  } 
+                  ${isExpanded ? "border-b border-border/40" : ""} 
+                  group hover:bg-zinc-50/80 dark:hover:bg-zinc-950/80`}
       onClick={toggleExpanded}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -524,95 +527,87 @@ const BookHeader = ({
       aria-expanded={isExpanded}
       aria-controls={`book-content-${book.id}`}
       title={isExpanded ? "Klikněte pro zavření" : "Klikněte pro rozbalení"}
-      whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.03)" }}
-      whileTap={{ scale: 0.998 }}
-      transition={{ duration: 0.15 }}
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.2 }}
     >
-      {/* Enhanced clickable indicator with animation */}
-      <motion.div
-        className={`absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-muted/30 rounded-full flex items-center justify-center transition-shadow duration-200 shadow-sm ${
-          isExpanded ? "opacity-80" : "opacity-60 group-hover:opacity-80"
-        }`}
-        initial={false}
-        animate={{
-          rotate: isExpanded ? 180 : 0,
-          scale: isExpanded ? 1 : 0.95,
-          backgroundColor: isExpanded
-            ? "rgba(0, 0, 0, 0.04)"
-            : "rgba(0, 0, 0, 0.02)",
-        }}
-        transition={{
-          duration: 0.2, // Faster animation to match book expansion
-          ease: [0.32, 0.72, 0, 1], // Custom easing for more natural motion
-        }}
-        whileHover={{
-          scale: 1.1,
-          backgroundColor: "rgba(0, 0, 0, 0.06)",
-          opacity: 0.9,
-        }}
-      >
-        <ChevronDown className="h-4 w-4 text-foreground/70" />
-      </motion.div>
+      {/* Book bookmark indicator */}
+      <div className="absolute right-3 sm:right-4 top-0 w-2 h-10 pointer-events-none overflow-hidden">
+        <motion.div
+          className="absolute inset-0 bg-amber-400 dark:bg-amber-600 rounded-b-sm shadow-sm"
+          initial={{ y: -30, height: "60%" }}
+          animate={{
+            y: isExpanded ? 0 : -30,
+            height: isExpanded ? "100%" : "60%",
+          }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* Fold shadow effect */}
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-500/20 to-transparent dark:from-black/10"></div>
+        </motion.div>
+      </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div className="flex-grow space-y-2">
-          {/* Title and Author with enhanced interactive elements */}
-          <div>
-            <motion.h3
-              className="text-lg sm:text-xl font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2"
+      {/* Main header content */}
+      <div className="flex flex-col gap-2 pr-10 sm:pr-12">
+        {/* Title and Author section */}
+        <div>
+          <motion.h3
+            className={`text-lg sm:text-xl font-medium text-foreground group-hover:text-foreground transition-colors line-clamp-2 ${
+              isExpanded ? "text-primary" : ""
+            }`}
+            transition={{ duration: 0.2 }}
+          >
+            {book.title}
+          </motion.h3>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <motion.span
+              className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-foreground transition-colors relative"
+              onClick={handleAuthorSummaryToggle}
               whileHover={{ scale: 1.01 }}
-              transition={{ duration: 0.2 }}
+              whileTap={{ scale: 0.99 }}
             >
-              {book.title}
-            </motion.h3>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <motion.span
-                className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-primary transition-colors relative"
-                onClick={handleAuthorSummaryToggle}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
-                {book.author}
-                {book.authorSummary && (
+              {book.author}
+              {book.authorSummary && (
+                <span
+                  className="relative flex h-2 w-2 items-center justify-center"
+                  aria-label={
+                    isAuthorInfoVisible
+                      ? "Zavřít informace o autorovi"
+                      : "Zobrazit informace o autorovi"
+                  }
+                >
                   <span
-                    className="relative flex h-2 w-2 items-center justify-center"
-                    aria-label={
-                      isAuthorInfoVisible
-                        ? "Zavřít informace o autorovi"
-                        : "Zobrazit informace o autorovi"
-                    }
-                  >
-                    <span
-                      className={`relative inline-flex rounded-full h-2 w-2 bg-amber-500 
-                                 ${
-                                   isAuthorInfoVisible
-                                     ? "opacity-100"
-                                     : "opacity-80"
-                                 } 
-                                 transition-all duration-300`}
+                    className={`relative inline-flex rounded-full h-2 w-2 bg-amber-500 
+                               ${
+                                 isAuthorInfoVisible
+                                   ? "opacity-100"
+                                   : "opacity-70"
+                               } 
+                               transition-all duration-300`}
+                  />
+                  {isAuthorInfoVisible && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-amber-200 dark:bg-amber-700 animate-pulse"
                     />
-                    {isAuthorInfoVisible && (
-                      <motion.span
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-amber-200 dark:bg-amber-700 animate-pulse"
-                      />
-                    )}
-                  </span>
-                )}
-              </motion.span>
-            </div>
+                  )}
+                </span>
+              )}
+            </motion.span>
           </div>
+        </div>
 
-          {/* Book Metadata with simplified state indication */}
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        {/* Improved metadata and action buttons layout */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          {/* Book Metadata with improved wrapping */}
+          <div className="flex flex-wrap gap-2 sm:gap-3 text-xs text-muted-foreground">
             <div className="flex items-center">
-              <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
+              <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
               <span>{formatDate(book.createdAt)}</span>
             </div>
             {book.notes && book.notes.length > 0 && (
               <div className="flex items-center">
-                <PenLine className="h-3.5 w-3.5 mr-1.5 text-primary/60" />
+                <PenLine className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
                 <span>
                   {book.notes.length}{" "}
                   {book.notes.length === 1
@@ -623,27 +618,19 @@ const BookHeader = ({
                 </span>
               </div>
             )}
-            {/* Status message */}
-            <motion.div
-              className="flex items-center text-primary"
-              animate={{ opacity: 0.8 }}
-              transition={{ duration: 0.2 }}
-            >
-              <span className="text-xs font-medium italic pr-1">
-                {isExpanded ? "(kliknutím zavřete)" : "(kliknutím otevřete)"}
-              </span>
-            </motion.div>
+          </div>
+
+          {/* Import and use the standalone BookActionButtons component with improved positioning */}
+          <div className="flex justify-start sm:justify-end mt-1 sm:mt-0">
+            <BookActionButtons
+              book={book}
+              handleAuthorSummaryModal={() => setAuthorSummaryModal(true)}
+              handleDeleteAuthorSummary={handleDeleteAuthorSummary}
+              isGeneratingAuthorSummary={isGeneratingAuthorSummary}
+              handleBookDelete={handleBookDelete}
+            />
           </div>
         </div>
-
-        {/* Import and use the standalone BookActionButtons component */}
-        <BookActionButtons
-          book={book}
-          handleAuthorSummaryModal={() => setAuthorSummaryModal(true)}
-          handleDeleteAuthorSummary={handleDeleteAuthorSummary}
-          isGeneratingAuthorSummary={isGeneratingAuthorSummary}
-          handleBookDelete={handleBookDelete}
-        />
       </div>
     </motion.div>
   );
@@ -736,7 +723,6 @@ export default function BookComponent({
   // Refs
   const bookRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const notesEndRef = useRef<HTMLDivElement>(null);
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -808,6 +794,19 @@ export default function BookComponent({
       }
     }
   }, [initialBook, fetchNotes]);
+
+  // Add a helper function to scroll to newly added notes
+  const scrollToNewlyAddedNote = useCallback((noteId: string) => {
+    setTimeout(() => {
+      const noteElement = document.getElementById(`note-${noteId}`);
+      if (noteElement) {
+        noteElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }, 150);
+  }, []);
 
   // Add a function to handle closing the author summary with scroll position preservation
   const handleCloseAuthorInfo = useCallback(() => {
@@ -936,13 +935,19 @@ export default function BookComponent({
   // Add a smooth scroll to the notes section when adding a new note
   useEffect(() => {
     if (notes.length > 0 && isExpanded) {
-      // Scroll to the bottom of notes when a new note is added
-      notesEndRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      // Get the most recent note and scroll to it if available
+      const mostRecentNoteId = notes[notes.length - 1]?.id;
+      if (mostRecentNoteId) {
+        const noteElement = document.getElementById(`note-${mostRecentNoteId}`);
+        if (noteElement) {
+          noteElement.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }
     }
-  }, [notes.length, isExpanded]);
+  }, [notes.length, isExpanded, notes]);
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -996,10 +1001,11 @@ export default function BookComponent({
         setActiveNoteFilter("all");
       }
 
-      // Scroll to the bottom of the notes list after a short delay
-      setTimeout(() => {
-        notesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      // Scroll to the newly added note
+      const newNoteId = formattedNotes[formattedNotes.length - 1]?.id;
+      if (newNoteId) {
+        scrollToNewlyAddedNote(newNoteId);
+      }
     } catch (error) {
       console.error("Error adding note:", error);
       showErrorMessage("Nepodařilo se přidat poznámku");
@@ -1039,16 +1045,6 @@ export default function BookComponent({
         if (e.key === " ") {
           e.preventDefault();
         }
-      }
-
-      // Add a subtle haptic-like feedback by slightly scaling the element temporarily
-      if (bookRef.current) {
-        bookRef.current.style.transform = "scale(0.995)";
-        setTimeout(() => {
-          if (bookRef.current) {
-            bookRef.current.style.transform = "";
-          }
-        }, 100);
       }
 
       setIsExpanded(!isExpanded);
@@ -1605,11 +1601,38 @@ export default function BookComponent({
   return (
     <motion.div
       ref={bookRef}
-      className="book-component bg-background rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-visible"
+      className={`book-component rounded-lg overflow-hidden transition-all duration-500 relative
+                 ${
+                   isExpanded
+                     ? "shadow-lg scale-100 bg-white dark:bg-zinc-900 border border-amber-100/50 dark:border-amber-900/30"
+                     : "shadow-md hover:shadow-lg hover:-translate-y-px bg-gradient-to-b from-white to-zinc-50/90 dark:from-zinc-900 dark:to-zinc-950/90 border border-border/60"
+                 }`}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+      }}
+      transition={{
+        duration: 0.4,
+        type: "spring",
+        stiffness: 300,
+        damping: 25,
+      }}
     >
+      {/* Book spine decoration only when not expanded */}
+      {!isExpanded && (
+        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-amber-400 dark:bg-amber-600 opacity-70"></div>
+      )}
+
+      {/* Book corner fold effect only when not expanded */}
+      {!isExpanded && (
+        <div className="absolute right-0 top-0 w-8 h-8 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 right-0 w-12 h-12 bg-zinc-50 dark:bg-zinc-900 shadow-inner transform rotate-45 translate-x-6 -translate-y-6"></div>
+          <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-br from-transparent to-amber-100/20 dark:to-amber-800/10 transform rotate-45 translate-x-4 -translate-y-4"></div>
+        </div>
+      )}
+
       {/* Book Header - now using the BookHeader component */}
       <BookHeader
         book={book}
@@ -1833,34 +1856,35 @@ export default function BookComponent({
         {isExpanded && (
           <motion.div
             id={`book-content-${book.id}`}
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -5 }}
+            initial={{ opacity: 0, height: 0, transformOrigin: "top" }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
             transition={{
-              duration: 0.3,
-              height: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
-              opacity: { duration: 0.25 },
+              height: { duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] },
+              opacity: { duration: 0.3, ease: "easeInOut" },
             }}
-            className="p-3 sm:p-4 space-y-4 sm:space-y-5 w-full"
+            className="p-2 sm:p-4 space-y-4 sm:space-y-5 w-full"
           >
             {/* Notes Section Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-base sm:text-lg font-medium text-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-amber-100/50 dark:border-amber-900/30">
+              <h3 className="text-base sm:text-lg font-medium text-amber-800 dark:text-amber-200">
                 Poznámky a shrnutí
               </h3>
               <div className="flex flex-wrap items-center gap-2">
                 {/* Note Filter Buttons */}
-                <div className="flex items-center bg-muted rounded-md p-0.5">
+                <div className="flex items-center bg-amber-50 dark:bg-amber-950/70 rounded-md p-0.5 border border-amber-100/70 dark:border-amber-900/50">
                   <motion.button
                     whileHover={{
                       backgroundColor:
-                        activeNoteFilter === "all" ? "" : "rgba(0,0,0,0.03)",
+                        activeNoteFilter === "all"
+                          ? ""
+                          : "rgba(217, 119, 6, 0.05)",
                     }}
                     whileTap={{ scale: 0.98 }}
                     className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                       activeNoteFilter === "all"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground"
+                        ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
+                        : "text-amber-700 dark:text-amber-400"
                     }`}
                     onClick={() => setActiveNoteFilter("all")}
                   >
@@ -1869,13 +1893,15 @@ export default function BookComponent({
                   <motion.button
                     whileHover={{
                       backgroundColor:
-                        activeNoteFilter === "manual" ? "" : "rgba(0,0,0,0.03)",
+                        activeNoteFilter === "manual"
+                          ? ""
+                          : "rgba(217, 119, 6, 0.05)",
                     }}
                     whileTap={{ scale: 0.98 }}
                     className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                       activeNoteFilter === "manual"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground"
+                        ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
+                        : "text-amber-700 dark:text-amber-400"
                     }`}
                     onClick={() => setActiveNoteFilter("manual")}
                   >
@@ -1884,13 +1910,15 @@ export default function BookComponent({
                   <motion.button
                     whileHover={{
                       backgroundColor:
-                        activeNoteFilter === "ai" ? "" : "rgba(0,0,0,0.03)",
+                        activeNoteFilter === "ai"
+                          ? ""
+                          : "rgba(217, 119, 6, 0.05)",
                     }}
                     whileTap={{ scale: 0.98 }}
                     className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                       activeNoteFilter === "ai"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground"
+                        ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
+                        : "text-amber-700 dark:text-amber-400"
                     }`}
                     onClick={() => setActiveNoteFilter("ai")}
                   >
@@ -1928,10 +1956,21 @@ export default function BookComponent({
 
             {/* Notes List - now using the NotesList component */}
             {notes.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Zatím nemáte žádné poznámky k této knize.</p>
-                <p className="text-sm mt-1">
-                  Přidejte poznámku pomocí formuláře níže.
+              <div className="flex flex-col items-center justify-center py-8 px-4">
+                <div className="relative w-20 h-20 mb-4">
+                  <div className="absolute inset-0 bg-amber-50 dark:bg-amber-900/30 rounded-lg shadow-inner flex items-center justify-center border border-amber-100 dark:border-amber-800/50">
+                    <PenLine className="h-8 w-8 text-amber-300 dark:text-amber-700" />
+                  </div>
+                  <div className="absolute inset-0 animate-pulse opacity-70">
+                    <div className="w-full h-full bg-amber-100 dark:bg-amber-800 rounded-lg blur-xl"></div>
+                  </div>
+                </div>
+                <p className="text-center text-amber-800 dark:text-amber-200 font-medium">
+                  Zatím nemáte žádné poznámky k této knize
+                </p>
+                <p className="text-center text-amber-600/80 dark:text-amber-400/80 text-sm mt-1 max-w-md">
+                  Přidejte poznámku pomocí formuláře níže nebo vygenerujte
+                  shrnutí pomocí AI asistenta
                 </p>
               </div>
             ) : (
@@ -1955,18 +1994,23 @@ export default function BookComponent({
             )}
 
             {/* Add Note Form */}
-            <div className="pt-4 border-t border-border/40">
-              <NoteEditor
-                ref={textareaRef}
-                value={newNote}
-                onChange={setNewNote}
-                onSubmit={handleAddNote}
-                isSubmitting={isAddingNote}
-                placeholder="Přidejte poznámku k této knize..."
-                buttonText="Přidat poznámku"
-                className="w-full"
-              />
+            <div className="pt-4 border-t border-amber-100/50 dark:border-amber-900/30 mt-6">
+              <div className="bg-white dark:bg-zinc-900/80 rounded-lg p-4 shadow-sm border border-zinc-100 dark:border-zinc-800/50">
+                <NoteEditor
+                  ref={textareaRef}
+                  value={newNote}
+                  onChange={setNewNote}
+                  onSubmit={handleAddNote}
+                  isSubmitting={isAddingNote}
+                  placeholder="Přidejte poznámku k této knize..."
+                  buttonText="Přidat poznámku"
+                  className="w-full"
+                />
+              </div>
             </div>
+
+            {/* Reference point for scrolling to the end of notes */}
+            <div className="h-0 w-full" aria-hidden="true" />
           </motion.div>
         )}
       </AnimatePresence>
