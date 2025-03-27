@@ -489,7 +489,6 @@ const BookHeader = ({
   isExpanded,
   toggleExpanded,
   handleBookDelete,
-  setIsAuthorInfoVisible,
   isAuthorInfoVisible,
   setAuthorSummaryModal,
   handleDeleteAuthorSummary,
@@ -500,7 +499,6 @@ const BookHeader = ({
   isExpanded: boolean;
   toggleExpanded: (e?: React.MouseEvent | React.KeyboardEvent) => void;
   handleBookDelete: () => void;
-  setIsAuthorInfoVisible: (visible: boolean) => void;
   isAuthorInfoVisible: boolean;
   setAuthorSummaryModal: (open: boolean) => void;
   handleDeleteAuthorSummary: () => void;
@@ -641,9 +639,7 @@ const BookHeader = ({
         {/* Import and use the standalone BookActionButtons component */}
         <BookActionButtons
           book={book}
-          setIsAuthorInfoVisible={setIsAuthorInfoVisible}
-          isAuthorInfoVisible={isAuthorInfoVisible}
-          setAuthorSummaryModal={setAuthorSummaryModal}
+          handleAuthorSummaryModal={() => setAuthorSummaryModal(true)}
           handleDeleteAuthorSummary={handleDeleteAuthorSummary}
           isGeneratingAuthorSummary={isGeneratingAuthorSummary}
           handleBookDelete={handleBookDelete}
@@ -1620,7 +1616,6 @@ export default function BookComponent({
         isExpanded={isExpanded}
         toggleExpanded={toggleExpanded}
         handleBookDelete={handleBookDelete}
-        setIsAuthorInfoVisible={setIsAuthorInfoVisible}
         isAuthorInfoVisible={isAuthorInfoVisible}
         setAuthorSummaryModal={setAuthorSummaryModal}
         handleDeleteAuthorSummary={handleDeleteAuthorSummary}
