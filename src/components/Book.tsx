@@ -199,7 +199,7 @@ const NotesList = ({
   }
 
   return (
-    <AnimatePresence initial={false}>
+    <div className="space-y-4">
       {filteredNotes.map((note) => (
         <NoteItem
           key={note.id}
@@ -212,7 +212,7 @@ const NotesList = ({
           bookTitle={bookTitle}
         />
       ))}
-    </AnimatePresence>
+    </div>
   );
 };
 
@@ -233,45 +233,9 @@ const AISummaryContent = ({
   onDelete: (noteId: string) => void;
 }) => {
   return (
-    <AnimatePresence mode="wait">
+    <div>
       {isActive ? (
-        <motion.div
-          key="expanded-summary"
-          initial={{
-            opacity: 0,
-            height: 0,
-            overflow: "hidden",
-            transformOrigin: "top center",
-          }}
-          animate={{
-            opacity: 1,
-            height: "auto",
-            overflow: "visible",
-            scale: 1,
-          }}
-          exit={{
-            opacity: 0,
-            height: 0,
-            overflow: "hidden",
-            scale: 0.98,
-            transition: {
-              opacity: { duration: 0.15, ease: "easeOut" },
-              height: { duration: 0.25, ease: [0.32, 0.72, 0, 1] },
-              scale: { duration: 0.2 },
-            },
-          }}
-          transition={{
-            opacity: { duration: 0.3, ease: "easeIn" },
-            height: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
-            scale: {
-              duration: 0.3,
-              type: "spring",
-              stiffness: 400,
-              damping: 30,
-            },
-          }}
-          className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4"
-        >
+        <div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
           {/* Close button - positioned absolutely in the top-right corner */}
           <CloseButtonTop
             onClick={onClose}
@@ -282,24 +246,14 @@ const AISummaryContent = ({
           {/* ESC key indicator */}
           <div className="flex justify-between items-start mb-5">
             <div></div> {/* Empty div for spacing */}
-            <motion.div
-              className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm"
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.2 }}
-              whileHover={{
-                scale: 1.03,
-                backgroundColor: "rgba(251, 191, 36, 0.2)",
-                borderColor: "rgba(251, 191, 36, 0.3)",
-              }}
-            >
+            <div className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm">
               <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
                 ESC
               </kbd>
               <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
                 zavřít panel
               </span>
-            </motion.div>
+            </div>
           </div>
 
           {/* Study-friendly content */}
@@ -307,12 +261,7 @@ const AISummaryContent = ({
             <StudyContent content={note.content} />
           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.2 }}
-            className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center"
-          >
+          <div className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <CopyButton
                 onClick={(e) => onCopy(note.content, e)}
@@ -325,23 +274,13 @@ const AISummaryContent = ({
             </div>
 
             <CloseButtonBottom onClick={onClose} text="Zavřít shrnutí" />
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       ) : (
-        <motion.div
-          key="collapsed-summary"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="prose prose-amber prose-sm dark:prose-invert max-w-none relative"
-        >
+        <div className="prose prose-amber prose-sm dark:prose-invert max-w-none relative">
           <ReactMarkdown>{note.content.split("\n\n")[0]}</ReactMarkdown>
           {note.content.split("\n\n").length > 1 && (
-            <motion.div
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.15 }}
+            <div
               className="mt-2 text-amber-600 dark:text-amber-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
               onClick={() => onView(note.id)}
               onKeyDown={(e) => onView(note.id, e)}
@@ -352,11 +291,11 @@ const AISummaryContent = ({
             >
               <span>Zobrazit celé shrnutí</span>
               <ChevronDown className="h-3.5 w-3.5 group-hover:translate-y-0.5 transition-transform duration-200" />
-            </motion.div>
+            </div>
           )}
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </div>
   );
 };
 
@@ -379,29 +318,15 @@ const NoteItem = ({
   bookTitle: string;
 }) => {
   return (
-    <motion.div
+    <div
       key={note.id}
       id={`note-${note.id}`}
-      className={`bg-background rounded-lg p-3 sm:p-4 border border-border/60 ${
-        isActive ? "ring-1 ring-primary/20" : ""
-      } transition-all duration-200 hover:border-border/80 hover:shadow-sm`}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        scale: isActive ? 1.01 : 1,
-        boxShadow: isActive
-          ? "0 4px 12px rgba(0,0,0,0.08)"
-          : "0 1px 3px rgba(0,0,0,0.05)",
-      }}
-      exit={{ opacity: 0, y: -5 }}
-      transition={{
-        duration: 0.25,
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-      }}
-      whileHover={{ y: -1 }}
+      className={`bg-background rounded-lg p-3 sm:p-4 border border-border/60 transition-all duration-300 ease-out
+                ${
+                  isActive
+                    ? "ring-1 ring-primary/20 shadow-md"
+                    : "hover:border-border/80 hover:shadow-sm"
+                }`}
     >
       {/* Note Header */}
       <div className="flex flex-wrap items-start justify-between mb-2">
@@ -426,7 +351,7 @@ const NoteItem = ({
         </div>
         <div className="flex items-center gap-1">
           {note.isAISummary && (
-            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <div>
               <ExportButton
                 content={note.content}
                 filename={`${bookTitle}_shrnutí.md`}
@@ -437,9 +362,9 @@ const NoteItem = ({
                     "h-7 w-7 p-0 text-muted-foreground hover:text-foreground",
                 }}
               />
-            </motion.div>
+            </div>
           )}
-          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+          <div>
             <Button
               variant="ghost"
               size="sm"
@@ -449,8 +374,8 @@ const NoteItem = ({
               <Copy className="h-3.5 w-3.5" />
               <span className="sr-only">Zobrazit shrnutí</span>
             </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+          </div>
+          <div>
             <Button
               variant="ghost"
               size="sm"
@@ -460,26 +385,32 @@ const NoteItem = ({
               <Trash2 className="h-3.5 w-3.5" />
               <span className="sr-only">Smazat poznámku</span>
             </Button>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Note Content */}
-      {note.isAISummary ? (
-        <AISummaryContent
-          note={note}
-          isActive={isActive}
-          onView={onView}
-          onClose={onClose}
-          onCopy={onCopy}
-          onDelete={onDelete}
-        />
-      ) : (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown>{note.content}</ReactMarkdown>
-        </div>
-      )}
-    </motion.div>
+      <div
+        className={`transition-all duration-300 ease-out ${
+          isActive ? "opacity-100" : "opacity-90"
+        }`}
+      >
+        {note.isAISummary ? (
+          <AISummaryContent
+            note={note}
+            isActive={isActive}
+            onView={onView}
+            onClose={onClose}
+            onCopy={onCopy}
+            onDelete={onDelete}
+          />
+        ) : (
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{note.content}</ReactMarkdown>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -506,8 +437,8 @@ const BookHeader = ({
   handleAuthorSummaryToggle: (e: React.MouseEvent) => void;
 }) => {
   return (
-    <motion.div
-      className={`relative cursor-pointer transition-all duration-250 
+    <div
+      className={`relative cursor-pointer
                   ${
                     isExpanded
                       ? "bg-white dark:bg-zinc-900 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
@@ -527,43 +458,37 @@ const BookHeader = ({
       aria-expanded={isExpanded}
       aria-controls={`book-content-${book.id}`}
       title={isExpanded ? "Klikněte pro zavření" : "Klikněte pro rozbalení"}
-      whileHover={{ y: -1 }}
-      transition={{ duration: 0.2 }}
     >
       {/* Book bookmark indicator */}
       <div className="absolute right-3 sm:right-4 top-0 w-2 h-10 pointer-events-none overflow-hidden">
-        <motion.div
-          className="absolute inset-0 bg-amber-400 dark:bg-amber-600 rounded-b-sm shadow-sm"
-          initial={{ y: -30, height: "60%" }}
-          animate={{
-            y: isExpanded ? 0 : -30,
-            height: isExpanded ? "100%" : "60%",
+        <div
+          className="absolute inset-0 bg-amber-400 dark:bg-amber-600 rounded-b-sm shadow-sm transition-all ease"
+          style={{
+            transform: isExpanded ? "translateY(0)" : "translateY(-20px)",
+            height: isExpanded ? "100%" : "70%",
+            transitionDuration: "250ms",
           }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
           {/* Fold shadow effect */}
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-500/20 to-transparent dark:from-black/10"></div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Main header content */}
       <div className="flex flex-col gap-2 pr-10 sm:pr-12">
         {/* Title and Author section */}
         <div>
-          <motion.h3
+          <h3
             className={`text-lg sm:text-xl font-medium text-foreground group-hover:text-foreground transition-colors line-clamp-2 ${
               isExpanded ? "text-primary" : ""
             }`}
-            transition={{ duration: 0.2 }}
           >
             {book.title}
-          </motion.h3>
+          </h3>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <motion.span
+            <span
               className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-foreground transition-colors relative"
               onClick={handleAuthorSummaryToggle}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
             >
               {book.author}
               {book.authorSummary && (
@@ -585,15 +510,11 @@ const BookHeader = ({
                                transition-all duration-300`}
                   />
                   {isAuthorInfoVisible && (
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-amber-200 dark:bg-amber-700 animate-pulse"
-                    />
+                    <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-amber-200 dark:bg-amber-700 animate-pulse" />
                   )}
                 </span>
               )}
-            </motion.span>
+            </span>
           </div>
         </div>
 
@@ -632,7 +553,7 @@ const BookHeader = ({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -891,8 +812,8 @@ export default function BookComponent({
         // Calculate the Euclidean distance
         const distance = Math.sqrt(distX * distX + distY * distY);
 
-        // Only close if the click is more than 100px away from the book
-        if (distance > 100) {
+        // Only close if the click is more than 50px away from the book
+        if (distance > 50) {
           setIsExpanded(false);
         }
       }
@@ -907,8 +828,7 @@ export default function BookComponent({
   // Improve the smooth scroll effect when expanding a book
   useEffect(() => {
     if (isExpanded) {
-      // Wait for the animation to complete before scrolling
-      setTimeout(() => {
+      const scrollTimeout = setTimeout(() => {
         if (bookRef.current) {
           const bookRect = bookRef.current.getBoundingClientRect();
 
@@ -928,7 +848,9 @@ export default function BookComponent({
             });
           }
         }
-      }, 200); // Reduced wait time for better responsiveness
+      }, 50); // Reduced wait time for better responsiveness
+
+      return () => clearTimeout(scrollTimeout);
     }
   }, [isExpanded]);
 
@@ -1550,21 +1472,9 @@ export default function BookComponent({
 
   // Add a function to handle closing the summary with animation
   const handleCloseSummary = useCallback(() => {
-    // Use a more elegant fade out animation before closing
-    const elementToAnimate = document.getElementById(`note-${activeNoteId}`);
-    if (elementToAnimate) {
-      // Apply a subtle animation before closing
-      elementToAnimate.style.transition = "transform 0.15s ease";
-      elementToAnimate.style.transform = "scale(0.99)";
-
-      // Short delay to allow the animation to be visible
-      setTimeout(() => {
-        setActiveNoteId(null);
-      }, 80);
-    } else {
-      setActiveNoteId(null);
-    }
-  }, [activeNoteId]);
+    // Set activeNoteId to null directly without DOM manipulations
+    setActiveNoteId(null);
+  }, []);
 
   // Add a function to handle copying note content
   const handleCopyNote = (content: string, e?: React.MouseEvent) => {
@@ -1599,25 +1509,16 @@ export default function BookComponent({
 
   // Main rendering with the optimized structure
   return (
-    <motion.div
+    <div
       ref={bookRef}
-      className={`book-component rounded-lg overflow-hidden transition-all duration-500 relative
+      className={`book-component rounded-lg overflow-hidden relative transition-all ease
                  ${
                    isExpanded
-                     ? "shadow-lg scale-100 bg-white dark:bg-zinc-900 border border-amber-100/50 dark:border-amber-900/30"
-                     : "shadow-md hover:shadow-lg hover:-translate-y-px bg-gradient-to-b from-white to-zinc-50/90 dark:from-zinc-900 dark:to-zinc-950/90 border border-border/60"
+                     ? "shadow-lg bg-white dark:bg-zinc-900 border border-amber-100/50 dark:border-amber-900/30"
+                     : "shadow-md hover:shadow-lg bg-gradient-to-b from-white to-zinc-50/90 dark:from-zinc-900 dark:to-zinc-950/90 border border-border/60"
                  }`}
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        scale: 1,
-      }}
-      transition={{
-        duration: 0.4,
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
+      style={{
+        transitionDuration: "250ms",
       }}
     >
       {/* Book spine decoration only when not expanded */}
@@ -1647,7 +1548,7 @@ export default function BookComponent({
       />
 
       {/* Author Info Panel - remains the same */}
-      <AnimatePresence mode="sync" onExitComplete={handleAnimationComplete}>
+      <AnimatePresence mode="wait" onExitComplete={handleAnimationComplete}>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
             id={`author-${book.id}`}
@@ -1655,29 +1556,20 @@ export default function BookComponent({
               opacity: 0,
               height: 0,
               overflow: "hidden",
-              transformOrigin: "top center",
             }}
             animate={{
               opacity: 1,
               height: "auto",
               overflow: "visible",
-              y: 0,
             }}
             exit={{
               opacity: 0,
               height: 0,
               overflow: "hidden",
-              y: -5,
-              transition: {
-                opacity: { duration: 0.2, ease: "easeOut" },
-                height: { duration: 0.25, ease: [0.32, 0.72, 0, 1] },
-                y: { duration: 0.15, ease: "easeInOut" },
-              },
             }}
             transition={{
-              opacity: { duration: 0.3, ease: "easeIn" },
-              height: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
-              y: { duration: 0.25, ease: "easeOut" },
+              duration: 0.3,
+              ease: "easeInOut",
             }}
             className="relative w-full max-w-[800px] z-10 mx-auto my-4 overflow-hidden"
           >
@@ -1852,109 +1744,86 @@ export default function BookComponent({
       </AnimatePresence>
 
       {/* Expanded Content (Notes) */}
-      <AnimatePresence initial={false} mode="sync">
-        {isExpanded && (
-          <motion.div
-            id={`book-content-${book.id}`}
-            initial={{ opacity: 0, height: 0, transformOrigin: "top" }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{
-              height: { duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] },
-              opacity: { duration: 0.3, ease: "easeInOut" },
-            }}
-            className="p-2 sm:p-4 space-y-4 sm:space-y-5 w-full"
-          >
-            {/* Notes Section Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-amber-100/50 dark:border-amber-900/30">
-              <h3 className="text-base sm:text-lg font-medium text-amber-800 dark:text-amber-200">
-                Poznámky a shrnutí
-              </h3>
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Note Filter Buttons */}
-                <div className="flex items-center bg-amber-50 dark:bg-amber-950/70 rounded-md p-0.5 border border-amber-100/70 dark:border-amber-900/50">
-                  <motion.button
-                    whileHover={{
-                      backgroundColor:
-                        activeNoteFilter === "all"
-                          ? ""
-                          : "rgba(217, 119, 6, 0.05)",
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                      activeNoteFilter === "all"
-                        ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
-                        : "text-amber-700 dark:text-amber-400"
-                    }`}
-                    onClick={() => setActiveNoteFilter("all")}
-                  >
-                    Vše
-                  </motion.button>
-                  <motion.button
-                    whileHover={{
-                      backgroundColor:
-                        activeNoteFilter === "manual"
-                          ? ""
-                          : "rgba(217, 119, 6, 0.05)",
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                      activeNoteFilter === "manual"
-                        ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
-                        : "text-amber-700 dark:text-amber-400"
-                    }`}
-                    onClick={() => setActiveNoteFilter("manual")}
-                  >
-                    Moje
-                  </motion.button>
-                  <motion.button
-                    whileHover={{
-                      backgroundColor:
-                        activeNoteFilter === "ai"
-                          ? ""
-                          : "rgba(217, 119, 6, 0.05)",
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                      activeNoteFilter === "ai"
-                        ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
-                        : "text-amber-700 dark:text-amber-400"
-                    }`}
-                    onClick={() => setActiveNoteFilter("ai")}
-                  >
-                    AI
-                  </motion.button>
-                </div>
-
-                {/* Generate Summary Button */}
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
-                    onClick={() => setSummaryModal(true)}
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                        <span>Generuji...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                        <span>Generovat shrnutí</span>
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              </div>
+      <div
+        id={`book-content-${book.id}`}
+        className={`transition-all overflow-hidden
+                   ${
+                     isExpanded
+                       ? "opacity-100 max-h-[5000px] p-3 sm:p-4 lg:p-5 space-y-4"
+                       : "opacity-0 max-h-0 p-0 space-y-0"
+                   }`}
+        style={{
+          transitionProperty: "max-height, opacity, padding",
+          transitionTimingFunction: "ease",
+          transitionDuration: isExpanded ? "400ms" : "250ms",
+        }}
+      >
+        {/* Notes Section Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-amber-100/50 dark:border-amber-900/30">
+          <h3 className="text-base sm:text-lg font-medium text-amber-800 dark:text-amber-200">
+            Poznámky a shrnutí
+          </h3>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Note Filter Buttons */}
+            <div className="flex items-center bg-amber-50 dark:bg-amber-950/70 rounded-md p-0.5 border border-amber-100/70 dark:border-amber-900/50">
+              <button
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  activeNoteFilter === "all"
+                    ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
+                    : "text-amber-700 dark:text-amber-400"
+                }`}
+                onClick={() => setActiveNoteFilter("all")}
+              >
+                Vše
+              </button>
+              <button
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  activeNoteFilter === "manual"
+                    ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
+                    : "text-amber-700 dark:text-amber-400"
+                }`}
+                onClick={() => setActiveNoteFilter("manual")}
+              >
+                Moje
+              </button>
+              <button
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  activeNoteFilter === "ai"
+                    ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
+                    : "text-amber-700 dark:text-amber-400"
+                }`}
+                onClick={() => setActiveNoteFilter("ai")}
+              >
+                AI
+              </button>
             </div>
 
-            {/* Notes List - now using the NotesList component */}
+            {/* Generate Summary Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+              onClick={() => setSummaryModal(true)}
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                  <span>Generuji...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  <span>Generovat shrnutí</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Notes List - now using the NotesList component */}
+        {isExpanded && (
+          <>
             {notes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 px-4">
                 <div className="relative w-20 h-20 mb-4">
@@ -1974,12 +1843,7 @@ export default function BookComponent({
                 </p>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
+              <div className="space-y-4">
                 <NotesList
                   notes={notes}
                   activeNoteFilter={activeNoteFilter}
@@ -1990,7 +1854,7 @@ export default function BookComponent({
                   handleCloseSummary={handleCloseSummary}
                   bookTitle={book.title}
                 />
-              </motion.div>
+              </div>
             )}
 
             {/* Add Note Form */}
@@ -2008,12 +1872,12 @@ export default function BookComponent({
                 />
               </div>
             </div>
-
-            {/* Reference point for scrolling to the end of notes */}
-            <div className="h-0 w-full" aria-hidden="true" />
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+
+        {/* Reference point for scrolling to the end of notes */}
+        <div className="h-0 w-full" aria-hidden="true" />
+      </div>
 
       {/* Error and Success Messages remain the same */}
       <AnimatePresence>
@@ -2138,6 +2002,6 @@ export default function BookComponent({
       >
         <AiCreditsExhaustedPrompt />
       </Modal>
-    </motion.div>
+    </div>
   );
 }
