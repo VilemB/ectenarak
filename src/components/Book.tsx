@@ -474,26 +474,6 @@ const BookHeader = ({
         </div>
       </div>
 
-      {/* Close button when expanded */}
-      {isExpanded && (
-        <div
-          className="absolute right-4 top-4 z-10"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleExpanded(e);
-          }}
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
-          >
-            <X className="h-3.5 w-3.5" />
-            <span className="sr-only">Zavřít</span>
-          </Button>
-        </div>
-      )}
-
       {/* Main header content */}
       <div className="flex flex-col gap-2 pr-10 sm:pr-12">
         {/* Title and Author section */}
@@ -1589,28 +1569,6 @@ export default function BookComponent({
                 transition={{ duration: 0.4 }}
               ></motion.div>
 
-              {/* Close button with improved animation */}
-              <motion.div
-                className="absolute -top-2 -right-2 z-10"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.2 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="bg-amber-100 dark:bg-amber-900 hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-700 dark:text-amber-300 h-7 w-7 p-0 rounded-full shadow-sm border border-amber-200/70 dark:border-amber-800/70 transition-all duration-200"
-                  onClick={handleCloseAuthorInfo}
-                  aria-label="Zavřít informace o autorovi"
-                  title="Zavřít informace o autorovi (ESC)"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span className="sr-only">Zavřít</span>
-                </Button>
-              </motion.div>
-
               {/* Author header with portrait area - more modern and flat design */}
               <div className="px-5 py-4">
                 <div className="flex items-start gap-4">
@@ -1648,34 +1606,38 @@ export default function BookComponent({
 
                     {/* Action buttons in header area with staggered animation */}
                     <motion.div
-                      className="flex flex-wrap gap-2 mt-3"
+                      className="flex items-start space-x-3 mt-3"
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.25, duration: 0.3 }}
                     >
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAuthorSummaryModal(true);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all duration-200 text-xs py-1"
-                      >
-                        <Sparkles className="h-3 w-3 mr-1.5" />
-                        <span>Aktualizovat</span>
-                      </Button>
+                      <div className="flex-shrink-0">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAuthorSummaryModal(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all duration-200 text-xs py-1"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1.5" />
+                          <span>Aktualizovat</span>
+                        </Button>
+                      </div>
 
-                      <ExportButton
-                        content={book.authorSummary}
-                        filename={`${book.author}_info.md`}
-                        buttonProps={{
-                          variant: "outline",
-                          size: "sm",
-                          className:
-                            "text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all text-xs py-1",
-                        }}
-                      />
+                      <div className="flex-shrink-0">
+                        <ExportButton
+                          content={book.authorSummary}
+                          filename={`${book.author}_info.md`}
+                          buttonProps={{
+                            variant: "outline",
+                            size: "sm",
+                            className:
+                              "text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all text-xs py-1",
+                          }}
+                        />
+                      </div>
                     </motion.div>
                   </div>
                 </div>
@@ -1695,45 +1657,42 @@ export default function BookComponent({
 
               {/* Footer area with utilities - fade-in animation */}
               <motion.div
-                className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 px-5 py-3 flex justify-between items-center"
+                className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 px-5 py-3 flex justify-center items-center"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.3 }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center space-x-4 md:space-x-8">
                   <button
                     onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 flex items-center gap-1.5 transition-colors"
+                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Kopírovat text</span>
+                    <span className="hidden sm:inline">Kopírovat</span>
+                  </button>
+
+                  <button
+                    onClick={handleCloseAuthorInfo}
+                    className="flex-shrink-0 text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span>Zavřít</span>
                   </button>
 
                   <button
                     onClick={handleDeleteAuthorSummary}
-                    className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1.5 transition-colors"
+                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 flex items-center gap-1.5 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Smazat</span>
                   </button>
                 </div>
-
-                {/* Close button with hover animation */}
-                <motion.button
-                  onClick={handleCloseAuthorInfo}
-                  className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span>Zavřít</span>
-                </motion.button>
               </motion.div>
 
               {/* ESC key indicator with fade-in animation */}
               <motion.div
-                className="absolute top-4 right-12 hidden sm:flex items-center gap-1.5"
-                initial={{ opacity: 0, y: -5 }}
+                className="w-full flex justify-center mt-2 mb-3"
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.3 }}
               >
