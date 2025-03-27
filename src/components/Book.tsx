@@ -474,6 +474,26 @@ const BookHeader = ({
         </div>
       </div>
 
+      {/* Close button when expanded */}
+      {isExpanded && (
+        <div
+          className="absolute right-4 top-4 z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleExpanded(e);
+          }}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
+          >
+            <X className="h-3.5 w-3.5" />
+            <span className="sr-only">Zavřít</span>
+          </Button>
+        </div>
+      )}
+
       {/* Main header content */}
       <div className="flex flex-col gap-2 pr-10 sm:pr-12">
         {/* Title and Author section */}
@@ -539,6 +559,26 @@ const BookHeader = ({
                 </span>
               </div>
             )}
+
+            {/* Toggle indicator */}
+            <div className="flex items-center ml-1">
+              <div className="text-xs flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transform transition-transform duration-200 ease ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+                <span className="hidden sm:inline text-xs">
+                  {isExpanded ? "Zavřít" : "Rozbalit"}
+                </span>
+
+                <span className="hidden sm:inline-flex text-xs ml-1 items-center text-zinc-400">
+                  <kbd className="px-1 py-0.5 text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700">
+                    {isExpanded ? "ESC" : "Enter"}
+                  </kbd>
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Import and use the standalone BookActionButtons component with improved positioning */}
@@ -786,37 +826,8 @@ export default function BookComponent({
         return;
       }
 
-      // Only close if we're clicking far away from the book
-      if (
-        bookRef.current &&
-        !bookRef.current.contains(event.target as Node) &&
-        isExpanded
-      ) {
-        // Get the distance from the book element
-        const bookRect = bookRef.current.getBoundingClientRect();
-        const clickX = event.clientX;
-        const clickY = event.clientY;
-
-        // Calculate the distance from the click to the nearest edge of the book
-        const distX = Math.max(
-          bookRect.left - clickX,
-          clickX - bookRect.right,
-          0
-        );
-        const distY = Math.max(
-          bookRect.top - clickY,
-          clickY - bookRect.bottom,
-          0
-        );
-
-        // Calculate the Euclidean distance
-        const distance = Math.sqrt(distX * distX + distY * distY);
-
-        // Only close if the click is more than 50px away from the book
-        if (distance > 50) {
-          setIsExpanded(false);
-        }
-      }
+      // Only close if explicitly clicking the close button or pressing ESC
+      // This prevents accidental closing when clicking elsewhere
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -827,39 +838,20 @@ export default function BookComponent({
 
   // Improve the smooth scroll effect when expanding a book
   useEffect(() => {
-    if (isExpanded) {
-      const scrollTimeout = setTimeout(() => {
-        if (bookRef.current) {
-          const bookRect = bookRef.current.getBoundingClientRect();
-
-          // Check if top of book is above viewport or bottom is below viewport
-          const isTooHigh = bookRect.top < 80; // Allow some space for header
-          const isTooLow = bookRect.bottom > window.innerHeight - 40;
-
-          // Only scroll if the book isn't optimally positioned
-          if (isTooHigh || isTooLow) {
-            // Calculate the best position - aim to have the book header at about 15% of screen height
-            const optimalPosition =
-              window.scrollY + bookRect.top - window.innerHeight * 0.15;
-
-            window.scrollTo({
-              top: optimalPosition,
-              behavior: "smooth",
-            });
-          }
-        }
-      }, 50); // Reduced wait time for better responsiveness
-
-      return () => clearTimeout(scrollTimeout);
-    }
+    // Remove the automatic scrolling when expanding the book
+    // This allows the user to remain where they are in the page
   }, [isExpanded]);
 
   // Add a smooth scroll to the notes section when adding a new note
   useEffect(() => {
     if (notes.length > 0 && isExpanded) {
-      // Get the most recent note and scroll to it if available
+      // Only scroll to a new note if we just added one (not on initial load)
       const mostRecentNoteId = notes[notes.length - 1]?.id;
-      if (mostRecentNoteId) {
+      if (
+        mostRecentNoteId &&
+        notes.length > 0 &&
+        textareaRef.current?.value === ""
+      ) {
         const noteElement = document.getElementById(`note-${mostRecentNoteId}`);
         if (noteElement) {
           noteElement.scrollIntoView({
@@ -1428,6 +1420,19 @@ export default function BookComponent({
         }
       }
 
+      // Toggle the book with Enter key when focused
+      if (e.key === "Enter" || e.key === " ") {
+        const activeElement = document.activeElement;
+        if (
+          activeElement &&
+          activeElement.getAttribute("role") === "button" &&
+          activeElement.closest(".book-component") === bookRef.current
+        ) {
+          e.preventDefault();
+          setIsExpanded(!isExpanded);
+        }
+      }
+
       // Improve keyboard navigation - use arrows to move between books if not in a text field
       if (
         document.activeElement?.tagName !== "INPUT" &&
@@ -1516,7 +1521,8 @@ export default function BookComponent({
                    isExpanded
                      ? "shadow-lg bg-white dark:bg-zinc-900 border border-amber-100/50 dark:border-amber-900/30"
                      : "shadow-md hover:shadow-lg bg-gradient-to-b from-white to-zinc-50/90 dark:from-zinc-900 dark:to-zinc-950/90 border border-border/60"
-                 }`}
+                 }
+                 focus-within:ring-2 focus-within:ring-amber-200 dark:focus-within:ring-amber-800 focus-within:ring-opacity-50`}
       style={{
         transitionDuration: "250ms",
       }}
@@ -1755,7 +1761,7 @@ export default function BookComponent({
         style={{
           transitionProperty: "max-height, opacity, padding",
           transitionTimingFunction: "ease",
-          transitionDuration: isExpanded ? "400ms" : "250ms",
+          transitionDuration: isExpanded ? "350ms" : "200ms",
         }}
       >
         {/* Notes Section Header */}
