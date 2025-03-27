@@ -660,6 +660,7 @@ export default function BookComponent({
   >([]);
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
     useState(false);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
 
   // Refs
   const bookRef = useRef<HTMLDivElement>(null);
@@ -691,6 +692,7 @@ export default function BookComponent({
   const fetchNotes = useCallback(
     async (bookId: string) => {
       try {
+        setIsLoadingNotes(true);
         const response = await fetch(`/api/books/${bookId}/notes`);
         if (!response.ok) {
           throw new Error("Failed to fetch notes");
@@ -719,6 +721,8 @@ export default function BookComponent({
         showErrorMessage(
           "Nepodařilo se načíst poznámky. Zkuste to prosím znovu."
         );
+      } finally {
+        setIsLoadingNotes(false);
       }
     },
     [showErrorMessage]
@@ -942,8 +946,13 @@ export default function BookComponent({
       }
 
       setIsExpanded(!isExpanded);
+
+      // If we're expanding and don't have notes yet, fetch them
+      if (!isExpanded && notes.length === 0 && book.id) {
+        fetchNotes(book.id);
+      }
     },
-    [isExpanded]
+    [isExpanded, notes.length, book.id, fetchNotes]
   );
 
   const handleGenerateSummary = async (
@@ -1789,7 +1798,16 @@ export default function BookComponent({
         {/* Notes List - now using the NotesList component */}
         {isExpanded && (
           <>
-            {notes.length === 0 ? (
+            {isLoadingNotes ? (
+              <div className="flex flex-col items-center justify-center py-10 px-4">
+                <div className="relative mb-3">
+                  <div className="w-8 h-8 border-2 border-amber-300/50 dark:border-amber-700/50 border-t-amber-500 dark:border-t-amber-400 rounded-full animate-spin"></div>
+                </div>
+                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                  Načítání...
+                </p>
+              </div>
+            ) : notes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 px-4">
                 <div className="relative w-20 h-20 mb-4">
                   <div className="absolute inset-0 bg-amber-50 dark:bg-amber-900/30 rounded-lg shadow-inner flex items-center justify-center border border-amber-100 dark:border-amber-800/50">
