@@ -349,19 +349,6 @@ const NoteItem = ({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          {note.isAISummary && (
-            <div>
-              <ExportButton
-                content={note.content}
-                filename={`${bookTitle}_shrnutí.md`}
-                buttonProps={{
-                  variant: "ghost",
-                  size: "sm",
-                  className: "h-7 w-7 p-0 text-blue-300 hover:text-blue-200",
-                }}
-              />
-            </div>
-          )}
           <div>
             <Button
               variant="ghost"
@@ -384,6 +371,19 @@ const NoteItem = ({
               <span className="sr-only">Smazat poznámku</span>
             </Button>
           </div>
+          {note.isAISummary && (
+            <div>
+              <ExportButton
+                content={note.content}
+                filename={`${bookTitle}_shrnutí.md`}
+                buttonProps={{
+                  variant: "ghost",
+                  size: "sm",
+                  className: "h-7 w-7 p-0 text-blue-300 hover:text-blue-200",
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -1548,19 +1548,6 @@ export default function BookComponent({
                           <Sparkles className="h-3 w-3 mr-1.5 text-orange-500" />
                           <span>Aktualizovat</span>
                         </Button>
-                      </div>
-
-                      <div className="flex-shrink-0">
-                        <ExportButton
-                          content={book.authorSummary}
-                          filename={`${book.author}_info.md`}
-                          buttonProps={{
-                            variant: "outline",
-                            size: "sm",
-                            className:
-                              "text-orange-400 border-blue-800/50 hover:bg-blue-950/50 transition-all text-xs py-1",
-                          }}
-                        />
                       </div>
                     </motion.div>
                   </div>
