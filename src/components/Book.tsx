@@ -738,19 +738,6 @@ export default function BookComponent({
     }
   }, [initialBook, fetchNotes]);
 
-  // Add a helper function to scroll to newly added notes
-  const scrollToNewlyAddedNote = useCallback((noteId: string) => {
-    setTimeout(() => {
-      const noteElement = document.getElementById(`note-${noteId}`);
-      if (noteElement) {
-        noteElement.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }
-    }, 150);
-  }, []);
-
   // Add a function to handle closing the author summary with scroll position preservation
   const handleCloseAuthorInfo = useCallback(() => {
     // Save the current scroll position before closing
@@ -796,55 +783,67 @@ export default function BookComponent({
     [book.authorSummary, book.id, isAuthorInfoVisible, setAuthorSummaryModal]
   );
 
-  // Update the useEffect for the click outside handler to be more forgiving
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Don't close if we're clicking inside a modal dialog
-      if (
-        event.target instanceof HTMLElement &&
-        (event.target.closest('[role="dialog"]') ||
-          event.target.closest(".modal-content"))
-      ) {
-        return;
+  // Add a helper function to scroll to newly added notes
+  const scrollToNewlyAddedNote = useCallback((noteId: string) => {
+    // Use setTimeout to ensure the DOM has updated
+    setTimeout(() => {
+      const noteElement = document.getElementById(`note-${noteId}`);
+
+      if (noteElement) {
+        // Get the position of the book element
+        const bookRect = bookRef.current?.getBoundingClientRect();
+        const bookTopOffset = bookRect ? bookRect.top + window.scrollY : 0;
+
+        // Get the note's position relative to the document
+        const noteRect = noteElement.getBoundingClientRect();
+
+        // Calculate the target scroll position
+        // Ensures the note is visible with some space above it
+        const scrollTarget = window.scrollY + noteRect.top - 120;
+
+        // Only scroll if the target is below the book's top position
+        // This prevents scrolling above the book element
+        const finalScrollTarget = Math.max(scrollTarget, bookTopOffset);
+
+        window.scrollTo({
+          top: finalScrollTarget,
+          behavior: "smooth",
+        });
+
+        // Add a temporary highlight effect to the new note
+        noteElement.classList.add(
+          "ring-2",
+          "ring-orange-400",
+          "ring-opacity-70"
+        );
+
+        // Remove the highlight effect after 1.5 seconds
+        setTimeout(() => {
+          noteElement.classList.remove(
+            "ring-2",
+            "ring-orange-400",
+            "ring-opacity-70"
+          );
+        }, 1500);
       }
+    }, 100);
+  }, []);
 
-      // Only close if explicitly clicking the close button or pressing ESC
-      // This prevents accidental closing when clicking elsewhere
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isExpanded]);
-
-  // Improve the smooth scroll effect when expanding a book
-  useEffect(() => {
-    // Remove the automatic scrolling when expanding the book
-    // This allows the user to remain where they are in the page
-  }, [isExpanded]);
-
-  // Add a smooth scroll to the notes section when adding a new note
-  useEffect(() => {
-    if (notes.length > 0 && isExpanded) {
-      // Only scroll to a new note if we just added one (not on initial load)
-      const mostRecentNoteId = notes[notes.length - 1]?.id;
-      if (
-        mostRecentNoteId &&
-        notes.length > 0 &&
-        textareaRef.current?.value === ""
-      ) {
-        const noteElement = document.getElementById(`note-${mostRecentNoteId}`);
-        if (noteElement) {
-          noteElement.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
+  // Handle animation completion after closing author summary
+  const handleAnimationComplete = useCallback(() => {
+    if (savedScrollPosition !== null) {
+      // Scroll to the book element instead of restoring previous position
+      if (bookRef.current) {
+        bookRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }
+      setSavedScrollPosition(null);
     }
-  }, [notes.length, isExpanded, notes]);
+  }, [savedScrollPosition]);
 
+  // Function to handle adding a new note
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
@@ -910,7 +909,7 @@ export default function BookComponent({
     }
   };
 
-  // Improve the toggleExpanded function to have better event handling
+  // Improve the toggleExpanded function to maintain scroll position
   const toggleExpanded = useCallback(
     (e?: React.MouseEvent | React.KeyboardEvent) => {
       // Only prevent toggling when clicking on specific interactive elements
@@ -943,15 +942,150 @@ export default function BookComponent({
         }
       }
 
+      // Save the current scroll position
+      const scrollPosition = window.scrollY;
+
+      // Get the book element's position before toggle
+      const bookPosition = bookRef.current?.getBoundingClientRect()?.top;
+      const bookTopRelativeToPage =
+        bookPosition !== undefined ? bookPosition + window.scrollY : null;
+
+      // Toggle the expanded state
       setIsExpanded(!isExpanded);
 
       // If we're expanding and don't have notes yet, fetch them
       if (!isExpanded && notes.length === 0 && book.id) {
         fetchNotes(book.id);
       }
+
+      // Maintain the book's position in the viewport after toggling
+      // This prevents unwanted scrolling when expanding or collapsing
+      if (bookTopRelativeToPage !== null && bookPosition !== undefined) {
+        // Use requestAnimationFrame to apply this after the DOM has updated
+        requestAnimationFrame(() => {
+          const newBookPosition = bookRef.current?.getBoundingClientRect()?.top;
+          if (newBookPosition !== undefined) {
+            // Calculate the difference after expanding/collapsing
+            const positionDiff = newBookPosition - bookPosition;
+
+            // Adjust scroll position to keep the book header in same relative position
+            window.scrollTo({
+              top: scrollPosition + positionDiff,
+              behavior: "auto", // Use 'auto' instead of 'smooth' to prevent visible jumping
+            });
+          }
+        });
+      }
     },
     [isExpanded, notes.length, book.id, fetchNotes]
   );
+
+  // Update the handleViewSummary function to improve the animation timing
+  const handleViewSummary = useCallback(
+    (noteId: string, e?: React.KeyboardEvent) => {
+      // Handle keyboard events for accessibility
+      if (e && e.key !== "Enter" && e.key !== " ") {
+        return;
+      }
+
+      // Prevent space key from scrolling
+      if (e && e.key === " ") {
+        e.preventDefault();
+      }
+
+      setActiveNoteId(noteId);
+    },
+    []
+  );
+
+  const handleDeleteNote = async (noteId: string) => {
+    setDeleteModal({ isOpen: true, type: "note", noteId, isLoading: false });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!book.id) {
+      toast.error("Nelze smazat knihu bez ID");
+      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+      return;
+    }
+
+    // Set loading state
+    setDeleteModal((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      // Call the onDelete function passed from the parent
+      await onDelete(book.id);
+      toast.success("Kniha byla úspěšně smazána");
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast.error("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
+    } finally {
+      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+    }
+  };
+
+  const handleConfirmDeleteNote = async () => {
+    if (deleteModal.type === "note" && deleteModal.noteId && book.id) {
+      // Set loading state
+      setDeleteModal((prev) => ({ ...prev, isLoading: true }));
+
+      try {
+        const response = await fetch(
+          `/api/books/${book.id}/notes/${deleteModal.noteId}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete note");
+        }
+
+        const data = await response.json();
+
+        // Update the notes list with the returned data
+        const formattedNotes = data.notes.map(
+          (note: {
+            _id: string;
+            content: string;
+            type: string;
+            createdAt: string;
+            updatedAt: string;
+          }) => ({
+            id: note._id,
+            content: note.content,
+            type: note.type,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+          })
+        );
+
+        // Update both the local notes state and the book state
+        setNotes(formattedNotes);
+        setBook((prevBook) => ({
+          ...prevBook,
+          notes: formattedNotes,
+        }));
+
+        toast.success("Poznámka byla úspěšně smazána");
+      } catch (error: unknown) {
+        console.error("Error deleting note:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Nepodařilo se smazat poznámku"
+        );
+      } finally {
+        // Always close the delete modal, even if there was an error
+        setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+      }
+    } else {
+      // Close the modal if the required IDs are missing
+      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
+      showErrorMessage("Chybí ID poznámky nebo knihy");
+    }
+  };
 
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
@@ -1052,95 +1186,6 @@ export default function BookComponent({
       );
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const handleDeleteNote = async (noteId: string) => {
-    setDeleteModal({ isOpen: true, type: "note", noteId, isLoading: false });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!book.id) {
-      toast.error("Nelze smazat knihu bez ID");
-      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
-      return;
-    }
-
-    // Set loading state
-    setDeleteModal((prev) => ({ ...prev, isLoading: true }));
-
-    try {
-      // Call the onDelete function passed from the parent
-      await onDelete(book.id);
-      toast.success("Kniha byla úspěšně smazána");
-    } catch (error) {
-      console.error("Error deleting book:", error);
-      toast.error("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
-    } finally {
-      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
-    }
-  };
-
-  const handleConfirmDeleteNote = async () => {
-    if (deleteModal.type === "note" && deleteModal.noteId && book.id) {
-      // Set loading state
-      setDeleteModal((prev) => ({ ...prev, isLoading: true }));
-
-      try {
-        const response = await fetch(
-          `/api/books/${book.id}/notes/${deleteModal.noteId}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete note");
-        }
-
-        const data = await response.json();
-
-        // Update the notes list with the returned data
-        const formattedNotes = data.notes.map(
-          (note: {
-            _id: string;
-            content: string;
-            type: string;
-            createdAt: string;
-            updatedAt: string;
-          }) => ({
-            id: note._id,
-            content: note.content,
-            type: note.type,
-            createdAt: note.createdAt,
-            updatedAt: note.updatedAt,
-          })
-        );
-
-        // Update both the local notes state and the book state
-        setNotes(formattedNotes);
-        setBook((prevBook) => ({
-          ...prevBook,
-          notes: formattedNotes,
-        }));
-
-        toast.success("Poznámka byla úspěšně smazána");
-      } catch (error: unknown) {
-        console.error("Error deleting note:", error);
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Nepodařilo se smazat poznámku"
-        );
-      } finally {
-        // Always close the delete modal, even if there was an error
-        setDeleteModal({ isOpen: false, type: "book", isLoading: false });
-      }
-    } else {
-      // Close the modal if the required IDs are missing
-      setDeleteModal({ isOpen: false, type: "book", isLoading: false });
-      showErrorMessage("Chybí ID poznámky nebo knihy");
     }
   };
 
@@ -1313,154 +1358,6 @@ export default function BookComponent({
       isLoading: false,
     });
   };
-
-  // Handle animation completion after closing author summary
-  const handleAnimationComplete = useCallback(() => {
-    if (savedScrollPosition !== null) {
-      // Scroll to the book element instead of restoring previous position
-      if (bookRef.current) {
-        bookRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-      setSavedScrollPosition(null);
-    }
-  }, [savedScrollPosition]);
-
-  // Add click outside handler for author summary
-  useEffect(() => {
-    if (!isAuthorInfoVisible) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // Check if the click is outside the author summary
-      const target = event.target as Node;
-      const authorSummaryElement = document.getElementById(
-        `author-summary-${book.id}`
-      );
-
-      if (authorSummaryElement && !authorSummaryElement.contains(target)) {
-        // Close the author info without the ripple effect
-        handleCloseAuthorInfo();
-      }
-    };
-
-    // Add escape key handler to close author summary
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isAuthorInfoVisible) {
-        handleCloseAuthorInfo();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscKey);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscKey);
-    };
-  }, [isAuthorInfoVisible, book.id, handleCloseAuthorInfo]);
-
-  // Update the handleViewSummary function to improve the animation timing
-  const handleViewSummary = useCallback(
-    (noteId: string, e?: React.KeyboardEvent) => {
-      // Handle keyboard events for accessibility
-      if (e && e.key !== "Enter" && e.key !== " ") {
-        return;
-      }
-
-      // Prevent space key from scrolling
-      if (e && e.key === " ") {
-        e.preventDefault();
-      }
-
-      setActiveNoteId(noteId);
-
-      // After expanding, scroll the summary into view with a small delay
-      setTimeout(() => {
-        const summaryElement = document.getElementById(`note-${noteId}`);
-        if (summaryElement) {
-          summaryElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
-        }
-      }, 100);
-    },
-    []
-  );
-
-  // Add a new keydown handler for the ESC key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Close active note when pressing ESC
-      if (e.key === "Escape") {
-        if (activeNoteId) {
-          setActiveNoteId(null);
-          e.preventDefault();
-        } else if (isAuthorInfoVisible) {
-          handleCloseAuthorInfo();
-          e.preventDefault();
-        } else if (isExpanded) {
-          setIsExpanded(false);
-          e.preventDefault();
-        }
-      }
-
-      // Toggle the book with Enter key when focused
-      if (e.key === "Enter" || e.key === " ") {
-        const activeElement = document.activeElement;
-        if (
-          activeElement &&
-          activeElement.getAttribute("role") === "button" &&
-          activeElement.closest(".book-component") === bookRef.current
-        ) {
-          e.preventDefault();
-          setIsExpanded(!isExpanded);
-        }
-      }
-
-      // Improve keyboard navigation - use arrows to move between books if not in a text field
-      if (
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
-      ) {
-        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-          const books = Array.from(
-            document.querySelectorAll("[aria-expanded]")
-          ).filter(
-            (el) =>
-              el.getAttribute("role") === "button" &&
-              el.closest(".book-component")
-          );
-
-          const currentIndex = books.findIndex(
-            (book) => book.getAttribute("aria-expanded") === "true"
-          );
-
-          if (currentIndex !== -1) {
-            let targetIndex = currentIndex;
-
-            if (e.key === "ArrowUp") {
-              targetIndex = Math.max(0, currentIndex - 1);
-            } else {
-              targetIndex = Math.min(books.length - 1, currentIndex + 1);
-            }
-
-            if (targetIndex !== currentIndex) {
-              (books[targetIndex] as HTMLElement).focus();
-              e.preventDefault();
-            }
-          }
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [activeNoteId, isAuthorInfoVisible, isExpanded, handleCloseAuthorInfo]);
 
   // Add a function to handle closing the summary with animation
   const handleCloseSummary = useCallback(() => {
