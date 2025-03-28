@@ -278,11 +278,11 @@ const AISummaryContent = ({
           </div>
         </div>
       ) : (
-        <div className="prose prose-amber prose-sm dark:prose-invert max-w-none relative">
+        <div className="prose prose-sm dark:prose-invert max-w-none relative prose-headings:text-blue-300 prose-strong:text-blue-200 prose-em:text-blue-300/90 prose-p:text-blue-100">
           <ReactMarkdown>{note.content.split("\n\n")[0]}</ReactMarkdown>
           {note.content.split("\n\n").length > 1 && (
             <div
-              className="mt-2 text-orange-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
+              className="mt-2 text-blue-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
               onClick={() => onView(note.id)}
               onKeyDown={(e) => onView(note.id, e)}
               tabIndex={0}
