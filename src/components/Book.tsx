@@ -1396,6 +1396,26 @@ export default function BookComponent({
       });
   };
 
+  // Add ESC key handler to close the book
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isExpanded) {
+        // Only handle ESC if we're not in an active note view
+        if (!activeNoteId) {
+          toggleExpanded();
+        } else {
+          // If a note is active, close that first
+          handleCloseSummary();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleEscapeKey);
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [isExpanded, activeNoteId, toggleExpanded, handleCloseSummary]);
+
   // Main rendering with the optimized structure
   return (
     <div
