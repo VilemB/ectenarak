@@ -235,7 +235,7 @@ const AISummaryContent = ({
   return (
     <div>
       {isActive ? (
-        <div className="relative bg-gradient-to-br from-blue-950/30 to-blue-900/20 rounded-lg p-4 mt-2 border border-blue-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
+        <div className="relative bg-gradient-to-br from-blue-950 to-blue-900/80 rounded-lg p-4 mt-2 border border-blue-800/40 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
           {/* Close button - positioned absolutely in the top-right corner */}
           <CloseButtonTop
             onClick={onClose}
@@ -256,24 +256,25 @@ const AISummaryContent = ({
             </div>
           </div>
 
-          {/* Study-friendly content */}
-          <div className="prose prose-sm md:prose dark:prose-invert max-w-none w-full px-2 sm:px-4 py-2">
-            <StudyContent content={note.content} />
+          {/* AI summary content with improved contrast */}
+          <div className="prose prose-invert prose-headings:text-orange-300 prose-strong:text-orange-200 prose-em:text-orange-300/90 max-w-none">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+            >
+              {note.content}
+            </ReactMarkdown>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-blue-800/30 flex justify-between items-center">
+          <div className="mt-6 pt-4 border-t border-blue-800/40 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <CopyButton
                 onClick={(e) => onCopy(note.content, e)}
-                text="Kopírovat text"
+                text="Kopírovat"
               />
-              <DeleteButton
-                onClick={() => onDelete(note.id)}
-                text="Smazat shrnutí"
-              />
+              <DeleteButton onClick={() => onDelete(note.id)} text="Smazat" />
             </div>
-
-            <CloseButtonBottom onClick={onClose} text="Zavřít shrnutí" />
+            <CloseButtonBottom onClick={onClose} text="Zavřít" />
           </div>
         </div>
       ) : (
@@ -332,15 +333,13 @@ const NoteItem = ({
       <div className="flex flex-wrap items-start justify-between mb-2">
         <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
           {note.isAISummary ? (
-            <Sparkles className="h-4 w-4 text-amber-500" />
+            <Sparkles className="h-4 w-4 text-orange-500" />
           ) : (
             <PenLine className="h-4 w-4 text-muted-foreground" />
           )}
           <span
             className={`text-xs ${
-              note.isAISummary
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-muted-foreground"
+              note.isAISummary ? "text-orange-400" : "text-muted-foreground"
             }`}
           >
             {note.isAISummary ? "AI Shrnutí" : "Moje poznámka"}
@@ -441,11 +440,11 @@ const BookHeader = ({
       className={`relative cursor-pointer
                   ${
                     isExpanded
-                      ? "bg-blue-950/40 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
-                      : "bg-blue-950/40 p-3 sm:p-4"
+                      ? "bg-blue-950 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
+                      : "bg-blue-950 p-3 sm:p-4"
                   } 
-                  ${isExpanded ? "border-b border-blue-900/30" : ""} 
-                  group hover:bg-blue-950/50`}
+                  ${isExpanded ? "border-b border-blue-900/60" : ""} 
+                  group hover:bg-blue-950/90`}
       onClick={toggleExpanded}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -1607,8 +1606,8 @@ export default function BookComponent({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2, duration: 0.3 }}
                     >
-                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-blue-900/40 text-blue-300 rounded-full border border-blue-800/50">
-                        <Sparkles className="h-3 w-3 mr-1" />
+                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-blue-900/40 text-orange-300 rounded-full border border-blue-800/50">
+                        <Sparkles className="h-3 w-3 mr-1 text-orange-400" />
                         AI generováno
                       </span>
                     </motion.div>
@@ -1628,9 +1627,9 @@ export default function BookComponent({
                           }}
                           variant="outline"
                           size="sm"
-                          className="text-blue-400 border-blue-800/50 hover:bg-blue-950/50 transition-all duration-200 text-xs py-1"
+                          className="text-orange-400 border-blue-800/50 hover:bg-blue-950/50 transition-all duration-200 text-xs py-1"
                         >
-                          <Sparkles className="h-3 w-3 mr-1.5" />
+                          <Sparkles className="h-3 w-3 mr-1.5 text-orange-500" />
                           <span>Aktualizovat</span>
                         </Button>
                       </div>
@@ -1659,7 +1658,7 @@ export default function BookComponent({
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.3 }}
               >
-                <div className="prose prose-invert max-w-none w-full prose-headings:text-blue-400 prose-headings:font-medium">
+                <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200">
                   <StudyContent content={book.authorSummary} />
                 </div>
               </motion.div>
@@ -1763,12 +1762,15 @@ export default function BookComponent({
               <button
                 className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   activeNoteFilter === "ai"
-                    ? "bg-blue-800/40 text-blue-100 shadow-sm"
+                    ? "bg-orange-800/40 text-orange-100 shadow-sm"
                     : "text-blue-300"
                 }`}
                 onClick={() => setActiveNoteFilter("ai")}
               >
-                AI
+                <span className="flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-orange-400" />
+                  AI
+                </span>
               </button>
             </div>
 
@@ -1776,7 +1778,7 @@ export default function BookComponent({
             <Button
               variant="outline"
               size="sm"
-              className="text-blue-400 border-blue-900/50 hover:bg-blue-950/50 transition-all duration-200"
+              className="text-orange-400 border-blue-900/50 hover:bg-blue-950/80 transition-all duration-200"
               onClick={() => setSummaryModal(true)}
               disabled={isGenerating}
             >
@@ -1787,7 +1789,7 @@ export default function BookComponent({
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-500" />
                   <span>Generovat shrnutí</span>
                 </>
               )}
@@ -1801,7 +1803,7 @@ export default function BookComponent({
             {isLoadingNotes ? (
               <div className="flex flex-col items-center justify-center py-10 px-4">
                 <div className="relative mb-3">
-                  <div className="w-8 h-8 border-2 border-blue-500/30 dark:border-blue-500/30 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin"></div>
+                  <div className="w-8 h-8 border-2 border-blue-500/30 border-t-orange-500 rounded-full animate-spin"></div>
                 </div>
                 <p className="text-sm text-blue-400 font-medium">Načítání...</p>
               </div>
