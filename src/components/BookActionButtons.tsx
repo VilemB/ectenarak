@@ -43,14 +43,24 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 text-orange-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-orange-300 transition-all duration-200 rounded-r-none border-r-0 px-2 sm:px-3"
+            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-r-none border-r-0 px-2 sm:px-3 ${
+              isGeneratingAuthorSummary || !canUseAuthorSummary
+                ? "text-orange-400/50 opacity-60 cursor-not-allowed"
+                : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
+            }`}
             disabled={isGeneratingAuthorSummary || !canUseAuthorSummary}
             onClick={handleAuthorSummaryModal}
           >
             {isGeneratingAuthorSummary && (
               <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
             )}
-            <Sparkles className="h-3.5 w-3.5 sm:mr-1.5 text-orange-500" />
+            <Sparkles
+              className={`h-3.5 w-3.5 sm:mr-1.5 ${
+                isGeneratingAuthorSummary || !canUseAuthorSummary
+                  ? "text-orange-500/50"
+                  : "text-orange-500"
+              }`}
+            />
             <span className="hidden sm:inline">O autorovi</span>
           </Button>
 
@@ -83,14 +93,24 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 text-orange-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-orange-300 transition-all duration-200 px-2 sm:px-3"
+            className={`h-8 border-blue-800/60 transition-all duration-200 px-2 sm:px-3 ${
+              isGenerating || !canUseAiSummary
+                ? "text-orange-400/50 opacity-60 cursor-not-allowed"
+                : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
+            }`}
             disabled={isGenerating || !canUseAiSummary}
             onClick={handleGenerateSummary}
           >
             {isGenerating && (
               <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
             )}
-            <Sparkles className="h-3.5 w-3.5 sm:mr-1.5 text-orange-500" />
+            <Sparkles
+              className={`h-3.5 w-3.5 sm:mr-1.5 ${
+                isGenerating || !canUseAiSummary
+                  ? "text-orange-500/50"
+                  : "text-orange-500"
+              }`}
+            />
             <span className="hidden sm:inline">AI shrnutí</span>
           </Button>
 
@@ -114,8 +134,9 @@ export default function BookActionButtons({
               disabled: !canExportToPdf,
               variant: "outline",
               size: "sm",
-              className:
-                "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 transition-all duration-200 px-2 sm:px-3",
+              className: !canExportToPdf
+                ? "h-8 text-blue-300/50 opacity-60 border-blue-800/60 cursor-not-allowed"
+                : "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 cursor-pointer",
             }}
           />
 
@@ -130,7 +151,7 @@ export default function BookActionButtons({
       <Button
         variant="outline"
         size="sm"
-        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 px-2"
+        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 px-2 cursor-pointer"
         onClick={handleBookDelete}
       >
         <Trash2 className="h-3.5 w-3.5" />
