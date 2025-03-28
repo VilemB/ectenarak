@@ -19,11 +19,13 @@ export default function PremiumFeatureLock({
   requiredTier = "premium",
   customMessage,
   placement = { top: "-4px", right: "-4px" },
+  hasAiCredits,
 }: {
   feature: SubscriptionFeature;
   requiredTier?: "basic" | "premium";
   customMessage?: string;
   placement?: { top?: string; right?: string; bottom?: string; left?: string };
+  hasAiCredits: boolean;
 }) {
   // Define feature names for display
   const featureNames: Record<SubscriptionFeature, string> = {
@@ -46,6 +48,34 @@ export default function PremiumFeatureLock({
       gradient: "from-purple-500 to-indigo-600",
       glow: "rgba(147, 51, 234, 0.5)", // purple-500 with opacity
     },
+  };
+
+  const isAiFeature =
+    feature === "aiAuthorSummary" ||
+    feature === "aiCustomization" ||
+    feature === "extendedAiSummary";
+
+  // If it's an AI feature and user still has credits, don't show the lock
+  if (isAiFeature && hasAiCredits) {
+    return null;
+  }
+
+  const getFeatureMessage = () => {
+    if (isAiFeature) {
+      return "Došly vám AI kredity. Pro získání kreditů si upgradujte předplatné.";
+    }
+    return (
+      customMessage || (
+        <>
+          Pro přístup k{" "}
+          <span className="font-medium text-white">
+            {featureNames[feature]}
+          </span>{" "}
+          potřebujete {requiredTier === "premium" ? "Premium" : "Basic"}{" "}
+          předplatné.
+        </>
+      )
+    );
   };
 
   return (
@@ -83,19 +113,7 @@ export default function PremiumFeatureLock({
 
               {/* Content */}
               <div className="p-3 bg-black/60">
-                <p className="text-sm text-white">
-                  {customMessage || `Pro přístup k `}
-                  {!customMessage && (
-                    <>
-                      <span className="font-medium text-white">
-                        {featureNames[feature]}
-                      </span>{" "}
-                      potřebujete{" "}
-                      {requiredTier === "premium" ? "Premium" : "Basic"}{" "}
-                      předplatné.
-                    </>
-                  )}
-                </p>
+                <p className="text-sm text-white">{getFeatureMessage()}</p>
 
                 {/* Action button */}
                 <Link
