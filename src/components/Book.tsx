@@ -1581,51 +1581,42 @@ export default function BookComponent({
 
               {/* Footer area with utilities - fade-in animation */}
               <motion.div
-                className="border-t border-blue-900/30 bg-blue-950/50 px-5 py-3 flex justify-center items-center"
+                className="border-t border-blue-900/30 bg-blue-950/80 px-5 py-4 flex justify-between items-center"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.3 }}
               >
-                <div className="flex items-center justify-center space-x-4 md:space-x-8">
-                  <button
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-blue-800/30 text-blue-200 flex items-center gap-1.5 transition-colors"
+                    className="h-8 text-xs text-blue-300 hover:text-blue-200 hover:bg-blue-900/50"
                   >
-                    <Copy className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Kopírovat</span>
-                  </button>
+                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Kopírovat</span>
+                  </Button>
 
-                  <button
-                    onClick={handleCloseAuthorInfo}
-                    className="flex-shrink-0 text-xs bg-blue-800/30 hover:bg-blue-800/40 text-blue-200 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                    <span>Zavřít</span>
-                  </button>
-
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={handleDeleteAuthorSummary}
-                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-red-900/20 text-red-400 flex items-center gap-1.5 transition-colors"
+                    className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/30"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                     <span className="hidden sm:inline">Smazat</span>
-                  </button>
+                  </Button>
                 </div>
-              </motion.div>
 
-              {/* ESC key indicator with fade-in animation */}
-              <motion.div
-                className="w-full flex justify-center mt-2 mb-3"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.3 }}
-              >
-                <div className="bg-blue-950/50 px-2 py-0.5 rounded text-xs text-blue-200 flex items-center gap-1.5 shadow-sm border border-blue-900/30">
-                  <kbd className="px-1.5 py-0.5 text-xs font-mono bg-blue-800/40 rounded border border-blue-800/30 text-blue-200">
-                    ESC
-                  </kbd>
-                  <span className="text-xs">pro zavření</span>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCloseAuthorInfo}
+                  className="h-8 text-xs bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 border-blue-800/50"
+                >
+                  <X className="h-3.5 w-3.5 mr-1.5" />
+                  <span>Zavřít</span>
+                </Button>
               </motion.div>
             </div>
           </motion.div>
