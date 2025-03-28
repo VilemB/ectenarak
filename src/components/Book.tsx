@@ -39,6 +39,7 @@ import { AiCreditsExhaustedPrompt } from "./FeatureGate";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import PremiumFeatureLock from "./FeatureLockIndicator";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -423,6 +424,7 @@ const BookHeader = ({
   handleDeleteAuthorSummary,
   isGeneratingAuthorSummary,
   handleAuthorSummaryToggle,
+  showPremiumFeatureLock,
 }: {
   book: Book;
   isExpanded: boolean;
@@ -433,6 +435,7 @@ const BookHeader = ({
   handleDeleteAuthorSummary: () => void;
   isGeneratingAuthorSummary: boolean;
   handleAuthorSummaryToggle: (e: React.MouseEvent) => void;
+  showPremiumFeatureLock: boolean;
 }) => {
   return (
     <div
@@ -489,7 +492,7 @@ const BookHeader = ({
               onClick={handleAuthorSummaryToggle}
             >
               {book.author}
-              {book.authorSummary && (
+              {book.authorSummary ? (
                 <span
                   className="relative flex h-2 w-2 items-center justify-center"
                   aria-label={
@@ -511,6 +514,16 @@ const BookHeader = ({
                     <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-blue-700 animate-pulse" />
                   )}
                 </span>
+              ) : (
+                showPremiumFeatureLock && (
+                  <span className="relative ml-1">
+                    <PremiumFeatureLock
+                      feature="aiAuthorSummary"
+                      requiredTier="basic"
+                      placement={{ top: "-8px", right: "-8px" }}
+                    />
+                  </span>
+                )
               )}
             </span>
           </div>
@@ -1455,6 +1468,7 @@ export default function BookComponent({
         handleDeleteAuthorSummary={handleDeleteAuthorSummary}
         isGeneratingAuthorSummary={isGeneratingAuthorSummary}
         handleAuthorSummaryToggle={handleAuthorSummaryToggle}
+        showPremiumFeatureLock={!canAccess("aiAuthorSummary")}
       />
 
       {/* Author Info Panel */}
@@ -1522,7 +1536,7 @@ export default function BookComponent({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2, duration: 0.3 }}
                     >
-                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-blue-900/40 text-orange-300 rounded-full border border-blue-800/50">
+                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-orange-950/40 text-orange-300 rounded-full border border-orange-800/50">
                         <Sparkles className="h-3 w-3 mr-1 text-orange-400" />
                         AI generováno
                       </span>
@@ -1535,19 +1549,46 @@ export default function BookComponent({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.25, duration: 0.3 }}
                     >
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 relative">
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setAuthorSummaryModal(true);
+                            if (!canAccess("aiAuthorSummary")) {
+                              // Show the upgrade modal
+                              e.preventDefault();
+                            } else {
+                              setAuthorSummaryModal(true);
+                            }
                           }}
                           variant="outline"
                           size="sm"
-                          className="text-orange-400 border-blue-800/50 hover:bg-blue-950/50 transition-all duration-200 text-xs py-1"
+                          className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 ${
+                            !canAccess("aiAuthorSummary") ||
+                            isGeneratingAuthorSummary
+                              ? "text-orange-400/50 opacity-60 hover:bg-orange-950/30 hover:text-orange-400/50 cursor-not-allowed"
+                              : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
+                          }`}
+                          disabled={
+                            !canAccess("aiAuthorSummary") ||
+                            isGeneratingAuthorSummary
+                          }
                         >
-                          <Sparkles className="h-3 w-3 mr-1.5 text-orange-500" />
+                          <Sparkles
+                            className={`h-3 w-3 mr-1.5 ${
+                              !canAccess("aiAuthorSummary")
+                                ? "text-orange-400/50"
+                                : "text-orange-400"
+                            }`}
+                          />
                           <span>Aktualizovat</span>
                         </Button>
+                        {!canAccess("aiAuthorSummary") && (
+                          <PremiumFeatureLock
+                            feature="aiAuthorSummary"
+                            requiredTier="basic"
+                            placement={{ top: "-4px", right: "-4px" }}
+                          />
+                        )}
                       </div>
                     </motion.div>
                   </div>
@@ -1669,25 +1710,50 @@ export default function BookComponent({
             </div>
 
             {/* Generate Summary Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-orange-400 border-blue-900/50 hover:bg-blue-950/80 transition-all duration-200"
-              onClick={() => setSummaryModal(true)}
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                  <span>Generuji...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-500" />
-                  <span>Generovat shrnutí</span>
-                </>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 ${
+                  !canAccess("aiAuthorSummary") || isGenerating
+                    ? "text-orange-400/50 opacity-60 hover:bg-orange-950/30 hover:text-orange-400/50 cursor-not-allowed"
+                    : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
+                }`}
+                onClick={() => {
+                  if (!canAccess("aiAuthorSummary")) {
+                    // Show the upgrade modal
+                  } else {
+                    setSummaryModal(true);
+                  }
+                }}
+                disabled={!canAccess("aiAuthorSummary") || isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                    <span>Generuji...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles
+                      className={`h-3.5 w-3.5 mr-1.5 ${
+                        !canAccess("aiAuthorSummary")
+                          ? "text-orange-400/50"
+                          : "text-orange-400"
+                      }`}
+                    />
+                    <span>Generovat shrnutí</span>
+                  </>
+                )}
+              </Button>
+              {!canAccess("aiAuthorSummary") && (
+                <PremiumFeatureLock
+                  feature="aiAuthorSummary"
+                  requiredTier="basic"
+                  placement={{ top: "-4px", right: "-4px" }}
+                />
               )}
-            </Button>
+            </div>
           </div>
         </div>
 
