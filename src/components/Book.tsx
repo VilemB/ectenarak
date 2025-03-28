@@ -45,13 +45,13 @@ const StudyContent = ({ content }: { content: string }) => {
   return (
     <div className="study-summary">
       <div
-        className="prose prose-amber prose-sm md:prose dark:prose-invert 
-                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-amber-800 dark:prose-headings:text-amber-300 
+        className="prose prose-amber prose-sm md:prose prose-invert 
+                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-blue-300 
                    prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
                    prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed
                    prose-li:ml-4 prose-li:my-1
-                   prose-strong:text-amber-700 dark:prose-strong:text-amber-400
-                   prose-em:text-amber-600 dark:prose-em:text-amber-300
+                   prose-strong:text-blue-400
+                   prose-em:text-blue-300
                    max-w-none"
       >
         <ReactMarkdown
@@ -86,7 +86,7 @@ const CloseButtonTop = ({
       <Button
         variant="ghost"
         size="sm"
-        className="bg-amber-100 dark:bg-amber-900 hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-700 dark:text-amber-300 h-7 w-7 p-0 rounded-full shadow-sm border border-amber-200/70 dark:border-amber-800/70 transition-all duration-200"
+        className="bg-blue-900 hover:bg-blue-800 text-blue-300 h-7 w-7 p-0 rounded-full shadow-sm border border-blue-800/70 transition-all duration-200"
         onClick={onClick}
         aria-label={label}
         title={title}
@@ -109,7 +109,7 @@ const CloseButtonBottom = ({
   <Button
     variant="outline"
     size="sm"
-    className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+    className="text-blue-400 border-blue-800/50 hover:bg-blue-950/50 transition-all duration-200"
     onClick={onClick}
   >
     <X className="h-3.5 w-3.5 mr-1.5" />
@@ -129,7 +129,7 @@ const DeleteButton = ({
     onClick={onClick}
     whileHover={{ scale: 1.01 }}
     whileTap={{ scale: 0.99 }}
-    className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1.5 transition-colors"
+    className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1.5 transition-colors"
   >
     <Trash2 className="h-3.5 w-3.5" />
     <span className="hidden sm:inline">{text}</span>
@@ -235,7 +235,7 @@ const AISummaryContent = ({
   return (
     <div>
       {isActive ? (
-        <div className="relative bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg p-4 mt-2 border border-amber-200/50 dark:border-amber-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
+        <div className="relative bg-gradient-to-br from-blue-950/30 to-blue-900/20 rounded-lg p-4 mt-2 border border-blue-800/30 shadow-inner w-[95%] max-w-[650px] z-10 mx-auto my-4">
           {/* Close button - positioned absolutely in the top-right corner */}
           <CloseButtonTop
             onClick={onClose}
@@ -246,11 +246,11 @@ const AISummaryContent = ({
           {/* ESC key indicator */}
           <div className="flex justify-between items-start mb-5">
             <div></div> {/* Empty div for spacing */}
-            <div className="hidden sm:flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/60 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/70 shadow-sm">
-              <kbd className="px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-200 dark:bg-amber-800 rounded border border-amber-300 dark:border-amber-700 shadow-sm">
+            <div className="hidden sm:flex items-center gap-1.5 bg-blue-900/60 px-2.5 py-1 rounded-md border border-blue-800/70 shadow-sm">
+              <kbd className="px-2 py-0.5 text-xs font-semibold text-blue-200 bg-blue-800 rounded border border-blue-700 shadow-sm">
                 ESC
               </kbd>
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+              <span className="text-xs font-medium text-blue-300">
                 zavřít panel
               </span>
             </div>
@@ -261,7 +261,7 @@ const AISummaryContent = ({
             <StudyContent content={note.content} />
           </div>
 
-          <div className="mt-6 pt-4 border-t border-amber-200/50 dark:border-amber-800/30 flex justify-between items-center">
+          <div className="mt-6 pt-4 border-t border-blue-800/30 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <CopyButton
                 onClick={(e) => onCopy(note.content, e)}
@@ -441,11 +441,11 @@ const BookHeader = ({
       className={`relative cursor-pointer
                   ${
                     isExpanded
-                      ? "bg-white dark:bg-zinc-900 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
-                      : "bg-zinc-50/60 dark:bg-zinc-950/60 p-3 sm:p-4"
+                      ? "bg-blue-950/40 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
+                      : "bg-blue-950/40 p-3 sm:p-4"
                   } 
-                  ${isExpanded ? "border-b border-border/40" : ""} 
-                  group hover:bg-zinc-50/80 dark:hover:bg-zinc-950/80`}
+                  ${isExpanded ? "border-b border-blue-900/30" : ""} 
+                  group hover:bg-blue-950/50`}
       onClick={toggleExpanded}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -462,7 +462,7 @@ const BookHeader = ({
       {/* Book bookmark indicator */}
       <div className="absolute right-3 sm:right-4 top-0 w-2 h-10 pointer-events-none overflow-hidden">
         <div
-          className="absolute inset-0 bg-amber-400 dark:bg-amber-600 rounded-b-sm shadow-sm transition-all ease"
+          className="absolute inset-0 bg-blue-600 rounded-b-sm shadow-sm transition-all ease"
           style={{
             transform: isExpanded ? "translateY(0)" : "translateY(-20px)",
             height: isExpanded ? "100%" : "70%",
@@ -470,7 +470,7 @@ const BookHeader = ({
           }}
         >
           {/* Fold shadow effect */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-500/20 to-transparent dark:from-black/10"></div>
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-black/10 to-transparent"></div>
         </div>
       </div>
 
@@ -501,7 +501,7 @@ const BookHeader = ({
                   }
                 >
                   <span
-                    className={`relative inline-flex rounded-full h-2 w-2 bg-amber-500 
+                    className={`relative inline-flex rounded-full h-2 w-2 bg-blue-500 
                                ${
                                  isAuthorInfoVisible
                                    ? "opacity-100"
@@ -510,7 +510,7 @@ const BookHeader = ({
                                transition-all duration-300`}
                   />
                   {isAuthorInfoVisible && (
-                    <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-amber-200 dark:bg-amber-700 animate-pulse" />
+                    <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-blue-700 animate-pulse" />
                   )}
                 </span>
               )}
@@ -542,7 +542,7 @@ const BookHeader = ({
 
             {/* Toggle indicator */}
             <div className="flex items-center ml-1">
-              <div className="text-xs flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+              <div className="text-xs flex items-center gap-1.5 text-blue-400">
                 <ChevronDown
                   className={`h-3.5 w-3.5 transform transition-transform duration-200 ease ${
                     isExpanded ? "rotate-180" : ""
@@ -553,7 +553,7 @@ const BookHeader = ({
                 </span>
 
                 <span className="hidden sm:inline-flex text-xs ml-1 items-center text-zinc-400">
-                  <kbd className="px-1 py-0.5 text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700">
+                  <kbd className="px-1 py-0.5 text-[10px] font-mono bg-blue-900/40 rounded border border-blue-800/50">
                     {isExpanded ? "ESC" : "Enter"}
                   </kbd>
                 </span>
@@ -1508,24 +1508,24 @@ export default function BookComponent({
       className={`book-component rounded-lg overflow-hidden relative transition-all ease
                  ${
                    isExpanded
-                     ? "shadow-lg bg-white dark:bg-zinc-900 border border-amber-100/50 dark:border-amber-900/30"
-                     : "shadow-md hover:shadow-lg bg-gradient-to-b from-white to-zinc-50/90 dark:from-zinc-900 dark:to-zinc-950/90 border border-border/60"
+                     ? "shadow-lg bg-blue-950/40 border border-blue-900/30"
+                     : "shadow-md hover:shadow-lg bg-gradient-to-b from-blue-950/40 to-blue-950/30 border border-blue-900/20"
                  }
-                 focus-within:ring-2 focus-within:ring-amber-200 dark:focus-within:ring-amber-800 focus-within:ring-opacity-50`}
+                 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-opacity-50`}
       style={{
         transitionDuration: "250ms",
       }}
     >
       {/* Book spine decoration only when not expanded */}
       {!isExpanded && (
-        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-amber-400 dark:bg-amber-600 opacity-70"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-600/50 opacity-70"></div>
       )}
 
       {/* Book corner fold effect only when not expanded */}
       {!isExpanded && (
         <div className="absolute right-0 top-0 w-8 h-8 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 right-0 w-12 h-12 bg-zinc-50 dark:bg-zinc-900 shadow-inner transform rotate-45 translate-x-6 -translate-y-6"></div>
-          <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-br from-transparent to-amber-100/20 dark:to-amber-800/10 transform rotate-45 translate-x-4 -translate-y-4"></div>
+          <div className="absolute top-0 right-0 w-12 h-12 bg-blue-900/30 shadow-inner transform rotate-45 translate-x-6 -translate-y-6"></div>
+          <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-br from-transparent to-blue-800/20 transform rotate-45 translate-x-4 -translate-y-4"></div>
         </div>
       )}
 
@@ -1542,7 +1542,7 @@ export default function BookComponent({
         handleAuthorSummaryToggle={handleAuthorSummaryToggle}
       />
 
-      {/* Author Info Panel - remains the same */}
+      {/* Author Info Panel */}
       <AnimatePresence mode="wait" onExitComplete={handleAnimationComplete}>
         {isAuthorInfoVisible && book.authorSummary && (
           <motion.div
@@ -1569,10 +1569,10 @@ export default function BookComponent({
             className="relative w-full max-w-[800px] z-10 mx-auto my-4 overflow-hidden"
           >
             {/* Modern, flat card design with improved visual hierarchy */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden border border-amber-100 dark:border-amber-900/30">
+            <div className="bg-blue-950/40 rounded-xl shadow-lg overflow-hidden border border-blue-900/30">
               {/* Top accent line with animation */}
               <motion.div
-                className="h-1 bg-gradient-to-r from-amber-400 to-amber-500 w-full"
+                className="h-1 bg-gradient-to-r from-blue-400 to-blue-500 w-full"
                 initial={{ scaleX: 0.7, opacity: 0.7 }}
                 animate={{ scaleX: 1, opacity: 1 }}
                 transition={{ duration: 0.4 }}
@@ -1583,18 +1583,18 @@ export default function BookComponent({
                 <div className="flex items-start gap-4">
                   {/* Author portrait placeholder with subtle animation */}
                   <motion.div
-                    className="h-16 w-16 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/40 dark:to-amber-800/20 flex items-center justify-center flex-shrink-0 border border-amber-200 dark:border-amber-800/50 shadow-sm"
+                    className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-900/40 to-blue-800/20 flex items-center justify-center flex-shrink-0 border border-blue-800/50 shadow-sm"
                     initial={{ opacity: 0, scale: 0.9, rotateZ: -5 }}
                     animate={{ opacity: 1, scale: 1, rotateZ: 0 }}
                     transition={{ delay: 0.1, duration: 0.3 }}
                   >
-                    <User className="h-8 w-8 text-amber-500 dark:text-amber-400" />
+                    <User className="h-8 w-8 text-blue-400" />
                   </motion.div>
 
                   {/* Author name and metadata with staggered animation */}
                   <div className="flex-1">
                     <motion.h2
-                      className="text-xl font-medium text-zinc-800 dark:text-zinc-100"
+                      className="text-xl font-medium text-zinc-100"
                       initial={{ opacity: 0, x: -5 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.15, duration: 0.3 }}
@@ -1607,7 +1607,7 @@ export default function BookComponent({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2, duration: 0.3 }}
                     >
-                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full border border-amber-200 dark:border-amber-800/50">
+                      <span className="inline-flex items-center text-xs px-2 py-0.5 bg-blue-900/40 text-blue-300 rounded-full border border-blue-800/50">
                         <Sparkles className="h-3 w-3 mr-1" />
                         AI generováno
                       </span>
@@ -1628,7 +1628,7 @@ export default function BookComponent({
                           }}
                           variant="outline"
                           size="sm"
-                          className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all duration-200 text-xs py-1"
+                          className="text-blue-400 border-blue-800/50 hover:bg-blue-950/50 transition-all duration-200 text-xs py-1"
                         >
                           <Sparkles className="h-3 w-3 mr-1.5" />
                           <span>Aktualizovat</span>
@@ -1643,7 +1643,7 @@ export default function BookComponent({
                             variant: "outline",
                             size: "sm",
                             className:
-                              "text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800/50 dark:hover:bg-amber-950/50 transition-all text-xs py-1",
+                              "text-blue-400 border-blue-800/50 hover:bg-blue-950/50 transition-all text-xs py-1",
                           }}
                         />
                       </div>
@@ -1654,19 +1654,19 @@ export default function BookComponent({
 
               {/* Main content area with fade-in animation */}
               <motion.div
-                className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800"
+                className="px-5 py-4 border-t border-blue-900/30"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.3 }}
               >
-                <div className="prose prose-zinc prose-sm md:prose dark:prose-invert max-w-none w-full prose-headings:text-amber-600 dark:prose-headings:text-amber-400 prose-headings:font-medium">
+                <div className="prose prose-invert max-w-none w-full prose-headings:text-blue-400 prose-headings:font-medium">
                   <StudyContent content={book.authorSummary} />
                 </div>
               </motion.div>
 
               {/* Footer area with utilities - fade-in animation */}
               <motion.div
-                className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 px-5 py-3 flex justify-center items-center"
+                className="border-t border-blue-900/30 bg-blue-950/50 px-5 py-3 flex justify-center items-center"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.3 }}
@@ -1674,7 +1674,7 @@ export default function BookComponent({
                 <div className="flex items-center justify-center space-x-4 md:space-x-8">
                   <button
                     onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
-                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 transition-colors"
+                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-blue-800/30 text-blue-200 flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Kopírovat</span>
@@ -1682,7 +1682,7 @@ export default function BookComponent({
 
                   <button
                     onClick={handleCloseAuthorInfo}
-                    className="flex-shrink-0 text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
+                    className="flex-shrink-0 text-xs bg-blue-800/30 hover:bg-blue-800/40 text-blue-200 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1.5"
                   >
                     <X className="h-3.5 w-3.5" />
                     <span>Zavřít</span>
@@ -1690,7 +1690,7 @@ export default function BookComponent({
 
                   <button
                     onClick={handleDeleteAuthorSummary}
-                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 flex items-center gap-1.5 transition-colors"
+                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md hover:bg-red-900/20 text-red-400 flex items-center gap-1.5 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Smazat</span>
@@ -1705,8 +1705,8 @@ export default function BookComponent({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.3 }}
               >
-                <div className="bg-amber-50 dark:bg-amber-900/40 px-2 py-0.5 rounded text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 shadow-sm border border-amber-100 dark:border-amber-800/50">
-                  <kbd className="px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-zinc-900 rounded border border-amber-200 dark:border-amber-700 shadow-sm">
+                <div className="bg-blue-950/50 px-2 py-0.5 rounded text-xs text-blue-200 flex items-center gap-1.5 shadow-sm border border-blue-900/30">
+                  <kbd className="px-1.5 py-0.5 text-xs font-mono bg-blue-800/40 rounded border border-blue-800/30 text-blue-200">
                     ESC
                   </kbd>
                   <span className="text-xs">pro zavření</span>
@@ -1733,18 +1733,18 @@ export default function BookComponent({
         }}
       >
         {/* Notes Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-amber-100/50 dark:border-amber-900/30">
-          <h3 className="text-base sm:text-lg font-medium text-amber-800 dark:text-amber-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-blue-900/30">
+          <h3 className="text-base sm:text-lg font-medium text-blue-200">
             Poznámky a shrnutí
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             {/* Note Filter Buttons */}
-            <div className="flex items-center bg-amber-50 dark:bg-amber-950/70 rounded-md p-0.5 border border-amber-100/70 dark:border-amber-900/50">
+            <div className="flex items-center bg-blue-950/40 rounded-md p-0.5 border border-blue-900/30">
               <button
                 className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   activeNoteFilter === "all"
-                    ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
-                    : "text-amber-700 dark:text-amber-400"
+                    ? "bg-blue-800/40 text-blue-100 shadow-sm"
+                    : "text-blue-300"
                 }`}
                 onClick={() => setActiveNoteFilter("all")}
               >
@@ -1753,8 +1753,8 @@ export default function BookComponent({
               <button
                 className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   activeNoteFilter === "manual"
-                    ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
-                    : "text-amber-700 dark:text-amber-400"
+                    ? "bg-blue-800/40 text-blue-100 shadow-sm"
+                    : "text-blue-300"
                 }`}
                 onClick={() => setActiveNoteFilter("manual")}
               >
@@ -1763,8 +1763,8 @@ export default function BookComponent({
               <button
                 className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   activeNoteFilter === "ai"
-                    ? "bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 shadow-sm"
-                    : "text-amber-700 dark:text-amber-400"
+                    ? "bg-blue-800/40 text-blue-100 shadow-sm"
+                    : "text-blue-300"
                 }`}
                 onClick={() => setActiveNoteFilter("ai")}
               >
@@ -1776,13 +1776,13 @@ export default function BookComponent({
             <Button
               variant="outline"
               size="sm"
-              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200"
+              className="text-blue-400 border-blue-900/50 hover:bg-blue-950/50 transition-all duration-200"
               onClick={() => setSummaryModal(true)}
               disabled={isGenerating}
             >
               {isGenerating ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-t-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
                   <span>Generuji...</span>
                 </>
               ) : (
@@ -1801,26 +1801,24 @@ export default function BookComponent({
             {isLoadingNotes ? (
               <div className="flex flex-col items-center justify-center py-10 px-4">
                 <div className="relative mb-3">
-                  <div className="w-8 h-8 border-2 border-amber-300/50 dark:border-amber-700/50 border-t-amber-500 dark:border-t-amber-400 rounded-full animate-spin"></div>
+                  <div className="w-8 h-8 border-2 border-blue-500/30 dark:border-blue-500/30 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin"></div>
                 </div>
-                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                  Načítání...
-                </p>
+                <p className="text-sm text-blue-400 font-medium">Načítání...</p>
               </div>
             ) : notes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 px-4">
                 <div className="relative w-20 h-20 mb-4">
-                  <div className="absolute inset-0 bg-amber-50 dark:bg-amber-900/30 rounded-lg shadow-inner flex items-center justify-center border border-amber-100 dark:border-amber-800/50">
-                    <PenLine className="h-8 w-8 text-amber-300 dark:text-amber-700" />
+                  <div className="absolute inset-0 bg-blue-900/30 rounded-lg shadow-inner flex items-center justify-center border border-blue-800/50">
+                    <PenLine className="h-8 w-8 text-blue-700" />
                   </div>
                   <div className="absolute inset-0 animate-pulse opacity-70">
-                    <div className="w-full h-full bg-amber-100 dark:bg-amber-800 rounded-lg blur-xl"></div>
+                    <div className="w-full h-full bg-blue-800 rounded-lg blur-xl"></div>
                   </div>
                 </div>
-                <p className="text-center text-amber-800 dark:text-amber-200 font-medium">
+                <p className="text-center text-blue-200 font-medium">
                   Zatím nemáte žádné poznámky k této knize
                 </p>
-                <p className="text-center text-amber-600/80 dark:text-amber-400/80 text-sm mt-1 max-w-md">
+                <p className="text-center text-blue-400/80 text-sm mt-1 max-w-md">
                   Přidejte poznámku pomocí formuláře níže nebo vygenerujte
                   shrnutí pomocí AI asistenta
                 </p>
@@ -1841,8 +1839,8 @@ export default function BookComponent({
             )}
 
             {/* Add Note Form */}
-            <div className="pt-4 border-t border-amber-100/50 dark:border-amber-900/30 mt-6">
-              <div className="bg-white dark:bg-zinc-900/80 rounded-lg p-4 shadow-sm border border-zinc-100 dark:border-zinc-800/50">
+            <div className="pt-4 border-t border-blue-900/30 mt-6">
+              <div className="bg-blue-950/40 rounded-lg p-4 shadow-sm border border-blue-900/30">
                 <NoteEditor
                   ref={textareaRef}
                   value={newNote}
@@ -1862,7 +1860,7 @@ export default function BookComponent({
         <div className="h-0 w-full" aria-hidden="true" />
       </div>
 
-      {/* Error and Success Messages remain the same */}
+      {/* Error and Success Messages */}
       <AnimatePresence>
         {errorMessages.length > 0 && (
           <div className="p-4 space-y-2">
@@ -1872,13 +1870,11 @@ export default function BookComponent({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-md"
+                className="p-3 bg-red-900/20 border border-red-800/30 rounded-md"
               >
                 <div className="flex items-start sm:items-center">
                   <AlertCircle className="h-4 w-4 text-red-500 mr-2 mt-0.5 sm:mt-0 flex-shrink-0" />
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    {error.message}
-                  </p>
+                  <p className="text-sm text-red-400">{error.message}</p>
                 </div>
               </motion.div>
             ))}
@@ -1895,7 +1891,7 @@ export default function BookComponent({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded-md"
+                className="p-3 bg-green-900/20 border border-green-800/30 rounded-md"
               >
                 <div className="flex items-center">
                   <svg
@@ -1911,9 +1907,7 @@ export default function BookComponent({
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                   </svg>
-                  <p className="text-sm text-green-600 dark:text-green-400">
-                    {success.message}
-                  </p>
+                  <p className="text-sm text-green-400">{success.message}</p>
                 </div>
               </motion.div>
             ))}

@@ -213,22 +213,22 @@ export function SummaryPreferencesModal({
 
         <form onSubmit={handleSubmit}>
           {/* Header with AI icon */}
-          <div className="flex items-center mb-4 text-amber-600 dark:text-amber-400">
-            <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
+          <div className="flex items-center mb-4 text-blue-600 dark:text-blue-400">
+            <Sparkles className="h-5 w-5 mr-2 text-blue-500" />
             <h3 className="text-lg font-medium">Přizpůsobte si AI shrnutí</h3>
           </div>
 
           {/* Preview section */}
-          <div className="bg-amber-50/30 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 rounded-lg p-4 mb-6">
-            <div className="flex items-center text-amber-700 dark:text-amber-400 mb-2">
-              <BookText className="h-4 w-4 mr-2" />
+          <div className="bg-blue-50/30 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center text-blue-700 dark:text-blue-400 mb-2">
+              <BookText className="h-4 w-4 mr-2 text-blue-500" />
               <h4 className="font-medium text-sm">Náhled nastavení</h4>
             </div>
-            <p className="text-sm text-amber-800/80 dark:text-amber-300/80">
+            <p className="text-sm text-blue-800/80 dark:text-blue-300/80">
               {getPreviewText()}
             </p>
             {showLongWarning && (
-              <div className="mt-2 text-xs flex items-start gap-1.5 text-amber-600 dark:text-amber-400">
+              <div className="mt-2 text-xs flex items-start gap-1.5 text-blue-600 dark:text-blue-400">
                 <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                 <p>
                   Dlouhé shrnutí může být obsáhlejší, ale generování trvá déle a
@@ -241,7 +241,7 @@ export function SummaryPreferencesModal({
           {/* Maturita Exam Features */}
           <div className="space-y-3 mb-6">
             <label className="text-sm font-medium text-foreground flex items-center">
-              <BookText className="h-4 w-4 mr-2 text-amber-500" />
+              <BookText className="h-4 w-4 mr-2 text-blue-500" />
               Další možnosti
             </label>
             <div className="space-y-2">
@@ -253,8 +253,8 @@ export function SummaryPreferencesModal({
                   relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
                   ${
                     preferences.examFocus
-                      ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
-                      : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
+                      ? "border-blue-500/30 bg-blue-500/10"
+                      : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
                   }
                 `}
                 onClick={() =>
@@ -265,7 +265,7 @@ export function SummaryPreferencesModal({
                 }
               >
                 <div className="flex items-center">
-                  <BookOpen className="h-4 w-4 mr-2 text-amber-500" />
+                  <BookOpen className="h-4 w-4 mr-2 text-blue-500" />
                   <div className="text-sm font-medium">Pro maturitu</div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
@@ -284,8 +284,8 @@ export function SummaryPreferencesModal({
                   relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
                   ${
                     preferences.literaryContext
-                      ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
-                      : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
+                      ? "border-blue-500/30 bg-blue-500/10"
+                      : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
                   }
                 `}
                 onClick={() =>
@@ -296,7 +296,7 @@ export function SummaryPreferencesModal({
                 }
               >
                 <div className="flex items-center">
-                  <BookText className="h-4 w-4 mr-2 text-amber-500" />
+                  <BookText className="h-4 w-4 mr-2 text-blue-500" />
                   <div className="text-sm font-medium">Literární kontext</div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
@@ -312,8 +312,8 @@ export function SummaryPreferencesModal({
                   relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
                   ${
                     preferences.studyGuide
-                      ? "border-amber-500/50 bg-amber-500/10 dark:border-amber-500/30 dark:bg-amber-500/10"
-                      : "border-border/60 bg-background hover:border-amber-500/30 hover:bg-amber-500/5"
+                      ? "border-blue-500/30 bg-blue-500/10"
+                      : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
                   }
                 `}
                 onClick={() =>
@@ -324,7 +324,7 @@ export function SummaryPreferencesModal({
                 }
               >
                 <div className="flex items-center">
-                  <Sparkles className="h-4 w-4 mr-2 text-amber-500" />
+                  <Sparkles className="h-4 w-4 mr-2 text-blue-500" />
                   <div className="text-sm font-medium">Studijní průvodce</div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
@@ -339,7 +339,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-amber-500" />
+                  <BookText className="h-4 w-4 text-blue-500" />
                   <label className="text-sm font-medium text-foreground">
                     Styl shrnutí
                   </label>
@@ -398,7 +398,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.style === "academic"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -421,7 +421,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.style === "casual"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -446,7 +446,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.style === "creative"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -462,7 +462,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <AlignJustify className="h-4 w-4 text-amber-500" />
+                  <AlignJustify className="h-4 w-4 text-blue-500" />
                   <label className="text-sm font-medium text-foreground">
                     Délka shrnutí
                   </label>
@@ -519,7 +519,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.length === "short"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -542,7 +542,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.length === "medium"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -565,7 +565,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.length === "long"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -581,7 +581,7 @@ export function SummaryPreferencesModal({
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-amber-500" />
+                  <BookText className="h-4 w-4 text-blue-500" />
                   <label className="text-sm font-medium text-foreground">
                     Zaměření
                   </label>
@@ -640,7 +640,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "plot"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -665,7 +665,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "characters"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -688,7 +688,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "themes"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -713,7 +713,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.focus === "balanced"
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() =>
@@ -731,7 +731,7 @@ export function SummaryPreferencesModal({
           <div className="bg-background p-4 rounded-lg border border-border shadow-sm mt-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <BookText className="h-4 w-4 text-amber-500" />
+                <BookText className="h-4 w-4 text-blue-500" />
                 <label className="text-sm font-medium text-foreground">
                   Jazyk
                 </label>
@@ -789,7 +789,7 @@ export function SummaryPreferencesModal({
                     }
                     className={`w-full ${
                       preferences.language === language
-                        ? "bg-amber-500 text-white hover:bg-amber-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "border-input text-foreground hover:bg-secondary"
                     }`}
                     onClick={() => setPreferences({ ...preferences, language })}
@@ -853,15 +853,15 @@ export function SummaryPreferencesModal({
                 }}
                 className={`
                   flex items-center gap-2 w-full sm:w-auto justify-center 
-                  bg-amber-500/10 text-amber-500 border border-amber-500/20 
-                  hover:bg-amber-500/20 transition-all duration-200 
+                  bg-blue-500/10 text-blue-500 border border-blue-500/20 
+                  hover:bg-blue-500/20 transition-all duration-200 
                   shadow-sm hover:shadow
                   ${isGenerating ? "opacity-70 cursor-not-allowed" : ""}
                 `}
               >
                 {isGenerating ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-t-2 border-amber-500 border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                    <div className="w-5 h-5 border-2 border-t-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-1.5"></div>
                     <span>Generuji...</span>
                   </div>
                 ) : (
