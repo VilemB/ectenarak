@@ -88,7 +88,7 @@ export function ExportButton(props: ExportButtonProps) {
         title="Exportovat poznámku"
         {...buttonProps}
       >
-        <Download className="h-3.5 w-3.5" />
+        <Download className="h-3.5 w-3.5 mr-1.5" />
       </Button>
     );
   }
@@ -951,7 +951,7 @@ export function ExportButton(props: ExportButtonProps) {
         aria-label="Export options"
         {...("buttonProps" in props ? props.buttonProps : {})}
       >
-        <Download className="h-4 w-4" />
+        <Download className="h-4 w-4 mr-1.5" />
         <span className="hidden sm:inline">Export</span>
       </Button>
 

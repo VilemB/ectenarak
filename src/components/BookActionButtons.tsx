@@ -43,14 +43,14 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200 rounded-r-none border-r-0 px-2 sm:px-3"
+            className="h-8 text-orange-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-orange-300 transition-all duration-200 rounded-r-none border-r-0 px-2 sm:px-3"
             disabled={isGeneratingAuthorSummary || !canUseAuthorSummary}
             onClick={handleAuthorSummaryModal}
           >
             {isGeneratingAuthorSummary && (
-              <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-md"></div>
+              <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
             )}
-            <Sparkles className="h-3.5 w-3.5 sm:mr-1.5 text-primary" />
+            <Sparkles className="h-3.5 w-3.5 sm:mr-1.5 text-orange-500" />
             <span className="hidden sm:inline">O autorovi</span>
           </Button>
 
@@ -68,7 +68,7 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 text-red-600 border-red-200/50 dark:text-red-500 dark:border-red-800/30 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 rounded-l-none transition-all duration-200 px-2"
+            className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 rounded-l-none transition-all duration-200 px-2"
             onClick={handleDeleteAuthorSummary}
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -83,14 +83,14 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-950/50 transition-all duration-200 px-2 sm:px-3"
+            className="h-8 text-orange-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-orange-300 transition-all duration-200 px-2 sm:px-3"
             disabled={isGenerating || !canUseAiSummary}
             onClick={handleGenerateSummary}
           >
             {isGenerating && (
-              <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-md"></div>
+              <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
             )}
-            <Sparkles className="h-3.5 w-3.5 sm:mr-1.5 text-primary" />
+            <Sparkles className="h-3.5 w-3.5 sm:mr-1.5 text-orange-500" />
             <span className="hidden sm:inline">AI shrnutí</span>
           </Button>
 
@@ -115,7 +115,7 @@ export default function BookActionButtons({
               variant: "outline",
               size: "sm",
               className:
-                "h-8 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-950/50 transition-all duration-200 px-2 sm:px-3",
+                "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 transition-all duration-200 px-2 sm:px-3",
             }}
           />
 
@@ -130,7 +130,7 @@ export default function BookActionButtons({
       <Button
         variant="outline"
         size="sm"
-        className="h-8 text-red-600 dark:text-red-500 border-red-200/50 dark:border-red-800/30 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 px-2"
+        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 px-2"
         onClick={handleBookDelete}
       >
         <Trash2 className="h-3.5 w-3.5" />
