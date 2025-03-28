@@ -46,12 +46,12 @@ const StudyContent = ({ content }: { content: string }) => {
     <div className="study-summary">
       <div
         className="prose prose-amber prose-sm md:prose prose-invert 
-                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-blue-300 
+                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-orange-300 
                    prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-                   prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed
-                   prose-li:ml-4 prose-li:my-1
-                   prose-strong:text-blue-400
-                   prose-em:text-blue-300
+                   prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed prose-p:text-blue-100
+                   prose-li:ml-4 prose-li:my-1 prose-li:text-blue-100
+                   prose-strong:text-orange-300
+                   prose-em:text-orange-200
                    max-w-none"
       >
         <ReactMarkdown
@@ -151,7 +151,7 @@ const CopyButton = ({
     }}
     whileHover={{ scale: 1.01 }}
     whileTap={{ scale: 0.99 }}
-    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+    className="text-xs text-blue-200 hover:text-blue-100 flex items-center gap-1.5 transition-colors"
   >
     <Copy className="h-3.5 w-3.5" />
     <span className="hidden sm:inline">{text}</span>
@@ -187,10 +187,10 @@ const NotesList = ({
 
   if (filteredNotes.length === 0) {
     return (
-      <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-border/40">
+      <div className="text-center py-6 text-blue-200 bg-blue-950/40 rounded-lg border border-blue-900/40">
         <p>Žádné poznámky odpovídající vybranému filtru.</p>
         {activeNoteFilter !== "all" && (
-          <p className="text-sm mt-1">
+          <p className="text-sm mt-1 text-blue-300">
             Zkuste změnit filtr nebo přidat novou poznámku.
           </p>
         )}
@@ -282,7 +282,7 @@ const AISummaryContent = ({
           <ReactMarkdown>{note.content.split("\n\n")[0]}</ReactMarkdown>
           {note.content.split("\n\n").length > 1 && (
             <div
-              className="mt-2 text-amber-600 dark:text-amber-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
+              className="mt-2 text-orange-400 text-sm cursor-pointer hover:underline flex items-center gap-1.5 font-medium group"
               onClick={() => onView(note.id)}
               onKeyDown={(e) => onView(note.id, e)}
               tabIndex={0}
@@ -335,16 +335,16 @@ const NoteItem = ({
           {note.isAISummary ? (
             <Sparkles className="h-4 w-4 text-orange-500" />
           ) : (
-            <PenLine className="h-4 w-4 text-muted-foreground" />
+            <PenLine className="h-4 w-4 text-blue-400" />
           )}
           <span
             className={`text-xs ${
-              note.isAISummary ? "text-orange-400" : "text-muted-foreground"
+              note.isAISummary ? "text-orange-400" : "text-blue-300"
             }`}
           >
             {note.isAISummary ? "AI Shrnutí" : "Moje poznámka"}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-blue-300/90">
             {formatDate(note.createdAt)}
           </span>
         </div>
@@ -357,8 +357,7 @@ const NoteItem = ({
                 buttonProps={{
                   variant: "ghost",
                   size: "sm",
-                  className:
-                    "h-7 w-7 p-0 text-muted-foreground hover:text-foreground",
+                  className: "h-7 w-7 p-0 text-blue-300 hover:text-blue-200",
                 }}
               />
             </div>
@@ -367,7 +366,7 @@ const NoteItem = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 p-0 text-blue-300 hover:text-blue-200"
               onClick={() => onView(note.id)}
             >
               <Copy className="h-3.5 w-3.5" />
@@ -378,7 +377,7 @@ const NoteItem = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
               onClick={() => onDelete(note.id)}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -478,15 +477,15 @@ const BookHeader = ({
         {/* Title and Author section */}
         <div>
           <h3
-            className={`text-lg sm:text-xl font-medium text-foreground group-hover:text-foreground transition-colors line-clamp-2 ${
-              isExpanded ? "text-primary" : ""
+            className={`text-lg sm:text-xl font-medium text-blue-100 group-hover:text-blue-50 transition-colors line-clamp-2 ${
+              isExpanded ? "text-blue-50" : ""
             }`}
           >
             {book.title}
           </h3>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 group-hover:text-foreground transition-colors relative"
+              className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 text-blue-200 group-hover:text-blue-100 transition-colors relative"
               onClick={handleAuthorSummaryToggle}
             >
               {book.author}
@@ -520,14 +519,14 @@ const BookHeader = ({
         {/* Improved metadata and action buttons layout */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           {/* Book Metadata with improved wrapping */}
-          <div className="flex flex-wrap gap-2 sm:gap-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap gap-2 sm:gap-3 text-xs text-blue-300/90">
             <div className="flex items-center">
-              <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-400" />
               <span>{formatDate(book.createdAt)}</span>
             </div>
             {book.notes && book.notes.length > 0 && (
               <div className="flex items-center">
-                <PenLine className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                <PenLine className="h-3.5 w-3.5 mr-1.5 text-blue-400" />
                 <span>
                   {book.notes.length}{" "}
                   {book.notes.length === 1
@@ -1507,10 +1506,10 @@ export default function BookComponent({
       className={`book-component rounded-lg overflow-hidden relative transition-all ease
                  ${
                    isExpanded
-                     ? "shadow-lg bg-blue-950/40 border border-blue-900/30"
-                     : "shadow-md hover:shadow-lg bg-gradient-to-b from-blue-950/40 to-blue-950/30 border border-blue-900/20"
+                     ? "shadow-lg bg-blue-950 border border-blue-800/70"
+                     : "shadow-md hover:shadow-lg bg-gradient-to-b from-blue-950 to-blue-950/90 border border-blue-800/50"
                  }
-                 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-opacity-50`}
+                 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:ring-opacity-70`}
       style={{
         transitionDuration: "250ms",
       }}
@@ -1593,7 +1592,7 @@ export default function BookComponent({
                   {/* Author name and metadata with staggered animation */}
                   <div className="flex-1">
                     <motion.h2
-                      className="text-xl font-medium text-zinc-100"
+                      className="text-xl font-medium text-blue-100"
                       initial={{ opacity: 0, x: -5 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.15, duration: 0.3 }}
@@ -1642,7 +1641,7 @@ export default function BookComponent({
                             variant: "outline",
                             size: "sm",
                             className:
-                              "text-blue-400 border-blue-800/50 hover:bg-blue-950/50 transition-all text-xs py-1",
+                              "text-orange-400 border-blue-800/50 hover:bg-blue-950/50 transition-all text-xs py-1",
                           }}
                         />
                       </div>
@@ -1658,7 +1657,7 @@ export default function BookComponent({
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.3 }}
               >
-                <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200">
+                <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200 prose-p:text-blue-100">
                   <StudyContent content={book.authorSummary} />
                 </div>
               </motion.div>
@@ -1732,8 +1731,8 @@ export default function BookComponent({
         }}
       >
         {/* Notes Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-blue-900/30">
-          <h3 className="text-base sm:text-lg font-medium text-blue-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-blue-800/50">
+          <h3 className="text-base sm:text-lg font-medium text-blue-100">
             Poznámky a shrnutí
           </h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -1805,22 +1804,22 @@ export default function BookComponent({
                 <div className="relative mb-3">
                   <div className="w-8 h-8 border-2 border-blue-500/30 border-t-orange-500 rounded-full animate-spin"></div>
                 </div>
-                <p className="text-sm text-blue-400 font-medium">Načítání...</p>
+                <p className="text-sm text-blue-300 font-medium">Načítání...</p>
               </div>
             ) : notes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 px-4">
                 <div className="relative w-20 h-20 mb-4">
                   <div className="absolute inset-0 bg-blue-900/30 rounded-lg shadow-inner flex items-center justify-center border border-blue-800/50">
-                    <PenLine className="h-8 w-8 text-blue-700" />
+                    <PenLine className="h-8 w-8 text-blue-400" />
                   </div>
                   <div className="absolute inset-0 animate-pulse opacity-70">
                     <div className="w-full h-full bg-blue-800 rounded-lg blur-xl"></div>
                   </div>
                 </div>
-                <p className="text-center text-blue-200 font-medium">
+                <p className="text-center text-blue-100 font-medium">
                   Zatím nemáte žádné poznámky k této knize
                 </p>
-                <p className="text-center text-blue-400/80 text-sm mt-1 max-w-md">
+                <p className="text-center text-blue-300 text-sm mt-1 max-w-md">
                   Přidejte poznámku pomocí formuláře níže nebo vygenerujte
                   shrnutí pomocí AI asistenta
                 </p>
