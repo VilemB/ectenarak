@@ -1646,21 +1646,20 @@ export default function BookComponent({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setAuthorSummaryModal(true);
+                        // Only open the modal when not loading or generating
+                        if (!isGeneratingAuthorSummary && !featureLoading) {
+                          setAuthorSummaryModal(true);
+                        }
                       }}
-                      disabled={isGeneratingAuthorSummary}
+                      // Disable the button during loading or generating
+                      disabled={isGeneratingAuthorSummary || featureLoading}
                       className={`h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 relative overflow-hidden rounded-md ${
                         featureLoading || isGeneratingAuthorSummary
                           ? "opacity-80 cursor-wait"
                           : ""
                       }`}
                     >
-                      {featureLoading && (
-                        <div className="absolute inset-0 overflow-hidden rounded-md">
-                          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
-                        </div>
-                      )}
-                      {isGeneratingAuthorSummary && (
+                      {(featureLoading || isGeneratingAuthorSummary) && (
                         <div className="absolute inset-0 overflow-hidden rounded-md">
                           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
                         </div>
@@ -1794,26 +1793,23 @@ export default function BookComponent({
                 variant="outline"
                 size="sm"
                 className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md relative overflow-hidden ${
-                  featureLoading
+                  featureLoading || isGenerating
                     ? "text-orange-400 opacity-80 cursor-wait"
                     : !hasAuthorSummarySubscription
                     ? "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
-                    : isGenerating
-                    ? "text-orange-400 opacity-80 cursor-wait"
                     : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
                 }`}
-                disabled={isGenerating}
+                // Disable the button during loading or generating
+                disabled={isGenerating || featureLoading}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSummaryModal(true);
+                  // Only open the modal when not loading or generating
+                  if (!isGenerating && !featureLoading) {
+                    setSummaryModal(true);
+                  }
                 }}
               >
-                {featureLoading && (
-                  <div className="absolute inset-0 overflow-hidden rounded-md">
-                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
-                  </div>
-                )}
-                {isGenerating && (
+                {(featureLoading || isGenerating) && (
                   <div className="absolute inset-0 overflow-hidden rounded-md">
                     <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
                   </div>

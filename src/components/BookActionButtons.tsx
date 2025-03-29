@@ -63,27 +63,24 @@ export default function BookActionButtons({
             variant="outline"
             size="sm"
             className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md rounded-r-none border-r-0 px-2 sm:px-3 ${
-              featureLoading
+              featureLoading || isGeneratingAuthorSummary
                 ? "text-orange-400 opacity-80 cursor-wait"
                 : !hasAuthorSummarySubscription
                 ? "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
-                : isGeneratingAuthorSummary
-                ? "text-orange-400 opacity-80 cursor-wait"
                 : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
             }`}
-            disabled={isGeneratingAuthorSummary}
+            disabled={isGeneratingAuthorSummary || featureLoading}
             onClick={(e) => {
               e.preventDefault();
-              handleAuthorSummaryModal();
+              if (!isGeneratingAuthorSummary && !featureLoading) {
+                handleAuthorSummaryModal();
+              }
             }}
           >
-            {featureLoading && (
+            {(featureLoading || isGeneratingAuthorSummary) && (
               <div className="absolute inset-0 overflow-hidden rounded-md rounded-r-none">
                 <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md rounded-r-none"></div>
               </div>
-            )}
-            {isGeneratingAuthorSummary && (
-              <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md rounded-r-none"></div>
             )}
             <Sparkles
               className={`h-3.5 w-3.5 sm:mr-1.5 ${
@@ -126,28 +123,23 @@ export default function BookActionButtons({
             variant="outline"
             size="sm"
             className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md px-2 sm:px-3 ${
-              featureLoading
+              featureLoading || isGenerating
                 ? "text-orange-400 opacity-80 cursor-wait"
                 : !hasAiCustomizationSubscription
                 ? "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
-                : isGenerating
-                ? "text-orange-400 opacity-80 cursor-wait"
                 : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
             }`}
-            disabled={isGenerating}
+            disabled={isGenerating || featureLoading}
             onClick={() => {
-              if (handleGenerateSummary) {
+              if (!isGenerating && !featureLoading && handleGenerateSummary) {
                 handleGenerateSummary();
               }
             }}
           >
-            {featureLoading && (
+            {(featureLoading || isGenerating) && (
               <div className="absolute inset-0 overflow-hidden rounded-md">
                 <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
               </div>
-            )}
-            {isGenerating && (
-              <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
             )}
             <Sparkles
               className={`h-3.5 w-3.5 sm:mr-1.5 ${
