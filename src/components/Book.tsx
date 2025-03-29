@@ -425,6 +425,7 @@ const BookHeader = ({
   isGeneratingAuthorSummary,
   handleAuthorSummaryToggle,
   showPremiumFeatureLock,
+  hasAiCreditsValue,
 }: {
   book: Book;
   isExpanded: boolean;
@@ -436,6 +437,7 @@ const BookHeader = ({
   isGeneratingAuthorSummary: boolean;
   handleAuthorSummaryToggle: (e: React.MouseEvent) => void;
   showPremiumFeatureLock: boolean;
+  hasAiCreditsValue: boolean;
 }) => {
   return (
     <div
@@ -521,6 +523,7 @@ const BookHeader = ({
                       feature="aiAuthorSummary"
                       requiredTier="basic"
                       placement={{ top: "-8px", right: "-8px" }}
+                      hasAiCredits={hasAiCreditsValue}
                     />
                   </span>
                 )
@@ -1469,6 +1472,7 @@ export default function BookComponent({
         isGeneratingAuthorSummary={isGeneratingAuthorSummary}
         handleAuthorSummaryToggle={handleAuthorSummaryToggle}
         showPremiumFeatureLock={!canAccess("aiAuthorSummary")}
+        hasAiCreditsValue={hasAiCredits()}
       />
 
       {/* Author Info Panel */}
@@ -1587,6 +1591,7 @@ export default function BookComponent({
                             feature="aiAuthorSummary"
                             requiredTier="basic"
                             placement={{ top: "-4px", right: "-4px" }}
+                            hasAiCredits={hasAiCredits()}
                           />
                         )}
                       </div>
@@ -1751,6 +1756,7 @@ export default function BookComponent({
                   feature="aiAuthorSummary"
                   requiredTier="basic"
                   placement={{ top: "-4px", right: "-4px" }}
+                  hasAiCredits={hasAiCredits()}
                 />
               )}
             </div>

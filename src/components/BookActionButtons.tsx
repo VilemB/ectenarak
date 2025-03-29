@@ -69,6 +69,7 @@ export default function BookActionButtons({
             <PremiumFeatureLock
               feature="aiAuthorSummary"
               requiredTier={canAccess("aiAuthorSummary") ? undefined : "basic"}
+              hasAiCredits={hasAiCredits()}
             />
           )}
         </div>
@@ -119,6 +120,7 @@ export default function BookActionButtons({
             <PremiumFeatureLock
               feature="aiCustomization"
               requiredTier={canAccess("aiCustomization") ? undefined : "basic"}
+              hasAiCredits={hasAiCredits()}
             />
           )}
         </div>
@@ -142,7 +144,11 @@ export default function BookActionButtons({
 
           {/* Lock indicator for export feature */}
           {!canExportToPdf && (
-            <PremiumFeatureLock feature="exportToPdf" requiredTier="basic" />
+            <PremiumFeatureLock
+              feature="exportToPdf"
+              requiredTier="basic"
+              hasAiCredits={false}
+            />
           )}
         </div>
       )}
