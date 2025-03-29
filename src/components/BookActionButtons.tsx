@@ -71,22 +71,10 @@ export default function BookActionButtons({
                 ? "text-orange-400 opacity-80 cursor-wait"
                 : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
             }`}
-            disabled={isGeneratingAuthorSummary && featureLoading}
+            disabled={isGeneratingAuthorSummary}
             onClick={(e) => {
               e.preventDefault();
-              if (!hasAuthorSummarySubscription) {
-                // Show subscription modal if no access
-                window.dispatchEvent(
-                  new CustomEvent("show-subscription-modal")
-                );
-              } else if (!userHasAiCredits) {
-                // Show credit exhausted modal
-                window.dispatchEvent(
-                  new CustomEvent("show-credit-exhausted-modal")
-                );
-              } else {
-                handleAuthorSummaryModal();
-              }
+              handleAuthorSummaryModal();
             }}
           >
             {featureLoading && (
@@ -146,19 +134,9 @@ export default function BookActionButtons({
                 ? "text-orange-400 opacity-80 cursor-wait"
                 : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
             }`}
-            disabled={isGenerating && featureLoading}
+            disabled={isGenerating}
             onClick={() => {
-              if (!hasAiCustomizationSubscription) {
-                // Show subscription modal if no access
-                window.dispatchEvent(
-                  new CustomEvent("show-subscription-modal")
-                );
-              } else if (!userHasAiCredits) {
-                // Show credit exhausted modal
-                window.dispatchEvent(
-                  new CustomEvent("show-credit-exhausted-modal")
-                );
-              } else if (handleGenerateSummary) {
+              if (handleGenerateSummary) {
                 handleGenerateSummary();
               }
             }}

@@ -1615,7 +1615,10 @@ export default function BookComponent({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => handleCopyNote(book.authorSummary || "", e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyNote(book.authorSummary || "", e);
+                    }}
                     className="h-8 text-xs text-blue-300 hover:text-blue-200 hover:bg-blue-900/50"
                   >
                     <Copy className="h-3.5 w-3.5 mr-1.5" />
@@ -1625,7 +1628,10 @@ export default function BookComponent({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={handleDeleteAuthorSummary}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAuthorSummary();
+                    }}
                     className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/30"
                   >
                     <Trash2 className="h-3.5 w-3.5 mr-1.5" />
@@ -1640,18 +1646,9 @@ export default function BookComponent({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!hasAuthorSummarySubscription) {
-                          // Show the upgrade modal
-                          window.dispatchEvent(
-                            new CustomEvent("show-subscription-modal")
-                          );
-                        } else if (!userHasAiCredits) {
-                          setShowCreditExhaustedModal(true);
-                        } else {
-                          setAuthorSummaryModal(true);
-                        }
+                        setAuthorSummaryModal(true);
                       }}
-                      disabled={isGeneratingAuthorSummary && featureLoading}
+                      disabled={isGeneratingAuthorSummary}
                       className={`h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 relative overflow-hidden rounded-md ${
                         featureLoading || isGeneratingAuthorSummary
                           ? "opacity-80 cursor-wait"
@@ -1700,7 +1697,10 @@ export default function BookComponent({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleCloseAuthorInfo}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseAuthorInfo();
+                    }}
                     className="h-8 text-xs bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 border-blue-800/50 rounded-md"
                   >
                     <X className="h-3.5 w-3.5 mr-1.5" />
@@ -1746,7 +1746,10 @@ export default function BookComponent({
                     ? "bg-blue-800/40 text-blue-100 shadow-sm"
                     : "text-blue-300"
                 }`}
-                onClick={() => setActiveNoteFilter("all")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNoteFilter("all");
+                }}
               >
                 Vše
               </button>
@@ -1756,7 +1759,10 @@ export default function BookComponent({
                     ? "bg-blue-800/40 text-blue-100 shadow-sm"
                     : "text-blue-300"
                 }`}
-                onClick={() => setActiveNoteFilter("manual")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNoteFilter("manual");
+                }}
               >
                 Moje
               </button>
@@ -1766,7 +1772,10 @@ export default function BookComponent({
                     ? "bg-orange-800/40 text-orange-100 shadow-sm"
                     : "text-blue-300"
                 }`}
-                onClick={() => setActiveNoteFilter("ai")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNoteFilter("ai");
+                }}
               >
                 <span className="flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-orange-400" />
@@ -1793,18 +1802,10 @@ export default function BookComponent({
                     ? "text-orange-400 opacity-80 cursor-wait"
                     : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
                 }`}
-                disabled={isGenerating && featureLoading}
-                onClick={() => {
-                  if (!hasAuthorSummarySubscription) {
-                    // Show the upgrade modal
-                    window.dispatchEvent(
-                      new CustomEvent("show-subscription-modal")
-                    );
-                  } else if (!userHasAiCredits) {
-                    setShowCreditExhaustedModal(true);
-                  } else {
-                    setSummaryModal(true);
-                  }
+                disabled={isGenerating}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSummaryModal(true);
                 }}
               >
                 {featureLoading && (
