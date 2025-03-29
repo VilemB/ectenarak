@@ -83,7 +83,6 @@ export function AuthorSummaryPreferencesModal({
   isOpen,
   onClose,
   onGenerate,
-  isGenerating,
   title,
   description,
 }: AuthorSummaryPreferencesModalProps) {
@@ -706,39 +705,6 @@ export function AuthorSummaryPreferencesModal({
                   </motion.span>
                 )}
               </AnimatePresence>
-            </div>
-            <div className="flex items-center w-full sm:w-auto">
-              <Button
-                type="submit"
-                variant="outline"
-                size="sm"
-                disabled={isGenerating}
-                onClick={(e) => {
-                  console.log("Generate button clicked directly");
-                  if (!isGenerating) {
-                    handleSubmit(e);
-                  }
-                }}
-                className={`
-                  flex items-center gap-2 w-full sm:w-auto justify-center 
-                  bg-blue-500/10 text-blue-500 border border-blue-500/20 
-                  hover:bg-blue-500/20 transition-all duration-200 
-                  shadow-sm hover:shadow
-                  ${isGenerating ? "opacity-70 cursor-not-allowed" : ""}
-                `}
-              >
-                {isGenerating ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-t-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                    <span>Generuji...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    <span>Generovat info o autorovi</span>
-                  </div>
-                )}
-              </Button>
             </div>
           </div>
         </form>

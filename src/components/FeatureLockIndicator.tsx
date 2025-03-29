@@ -60,10 +60,14 @@ export default function PremiumFeatureLock({
     return null;
   }
 
+  // Determine the message to display
   const getFeatureMessage = () => {
-    if (isAiFeature) {
+    // For AI features where the user has subscription access but no credits
+    if (isAiFeature && !hasAiCredits) {
       return "Došly vám AI kredity. Pro získání kreditů si upgradujte předplatné.";
     }
+
+    // For locked features (subscription required)
     return (
       customMessage || (
         <>
@@ -108,7 +112,9 @@ export default function PremiumFeatureLock({
                 >
                   {requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)}
                 </div>
-                <div className="text-sm font-medium">Funkce</div>
+                <div className="text-sm font-medium">
+                  {isAiFeature && !hasAiCredits ? "AI Kredity" : "Funkce"}
+                </div>
               </div>
 
               {/* Content */}

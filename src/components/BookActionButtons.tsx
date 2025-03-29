@@ -26,14 +26,33 @@ export default function BookActionButtons({
   handleGenerateSummary?: () => void;
   isGenerating?: boolean;
 }) {
-  const { canAccess, hasAiCredits } = useFeatureAccess();
+  const { canAccess, hasAiCredits, isFeatureLoading } = useFeatureAccess();
 
-  // Check if the user has access to features
-  const canUseAuthorSummary = canAccess("aiAuthorSummary") && hasAiCredits();
-  const canUseAiSummary =
-    handleGenerateSummary && canAccess("aiCustomization") && hasAiCredits();
-  const canExportToPdf = canAccess("exportToPdf");
+  // Memoize subscription access checks for better performance
+  const hasAuthorSummarySubscription = React.useMemo(
+    () => canAccess("aiAuthorSummary"),
+    [canAccess]
+  );
+  const hasAiCustomizationSubscription = React.useMemo(
+    () => canAccess("aiCustomization"),
+    [canAccess]
+  );
+  const hasExportSubscription = React.useMemo(
+    () => canAccess("exportToPdf"),
+    [canAccess]
+  );
 
+  // Memoize AI credits check for better performance
+  const userHasAiCredits = React.useMemo(() => hasAiCredits(), [hasAiCredits]);
+
+  // Check if features are loading
+  const featureLoading = React.useMemo(
+    () => isFeatureLoading(),
+    [isFeatureLoading]
+  );
+
+  // Button should VISUALLY look disabled only if NO subscription access (show lock)
+  // If user has subscription but no credits, button looks enabled but won't work
   return (
     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 ml-auto">
       {/* Author Summary Button Group */}
@@ -43,20 +62,44 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-r-none border-r-0 px-2 sm:px-3 ${
-              isGeneratingAuthorSummary || !canUseAuthorSummary
-                ? "text-orange-400/50 opacity-60 cursor-not-allowed"
+            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md rounded-r-none border-r-0 px-2 sm:px-3 ${
+              featureLoading
+                ? "text-orange-400 opacity-80 cursor-wait"
+                : !hasAuthorSummarySubscription
+                ? "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
+                : isGeneratingAuthorSummary
+                ? "text-orange-400 opacity-80 cursor-wait"
                 : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
             }`}
-            disabled={isGeneratingAuthorSummary || !canUseAuthorSummary}
-            onClick={handleAuthorSummaryModal}
+            disabled={isGeneratingAuthorSummary && featureLoading}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!hasAuthorSummarySubscription) {
+                // Show subscription modal if no access
+                window.dispatchEvent(
+                  new CustomEvent("show-subscription-modal")
+                );
+              } else if (!userHasAiCredits) {
+                // Show credit exhausted modal
+                window.dispatchEvent(
+                  new CustomEvent("show-credit-exhausted-modal")
+                );
+              } else {
+                handleAuthorSummaryModal();
+              }
+            }}
           >
+            {featureLoading && (
+              <div className="absolute inset-0 overflow-hidden rounded-md rounded-r-none">
+                <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md rounded-r-none"></div>
+              </div>
+            )}
             {isGeneratingAuthorSummary && (
-              <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
+              <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md rounded-r-none"></div>
             )}
             <Sparkles
               className={`h-3.5 w-3.5 sm:mr-1.5 ${
-                isGeneratingAuthorSummary || !canUseAuthorSummary
+                !hasAuthorSummarySubscription
                   ? "text-orange-500/50"
                   : "text-orange-500"
               }`}
@@ -64,12 +107,12 @@ export default function BookActionButtons({
             <span className="hidden sm:inline">O autorovi</span>
           </Button>
 
-          {/* Lock indicator if feature is not available */}
-          {!canUseAuthorSummary && (
+          {/* Lock indicator ONLY if subscription is missing */}
+          {!hasAuthorSummarySubscription && !featureLoading && (
             <PremiumFeatureLock
               feature="aiAuthorSummary"
-              requiredTier={canAccess("aiAuthorSummary") ? undefined : "basic"}
-              hasAiCredits={hasAiCredits()}
+              requiredTier="basic"
+              hasAiCredits={userHasAiCredits}
             />
           )}
         </div>
@@ -79,7 +122,7 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 rounded-l-none transition-all duration-200 px-2"
+            className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 rounded-md rounded-l-none transition-all duration-200 px-2 cursor-pointer"
             onClick={handleDeleteAuthorSummary}
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -94,20 +137,43 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className={`h-8 border-blue-800/60 transition-all duration-200 px-2 sm:px-3 ${
-              isGenerating || !canUseAiSummary
-                ? "text-orange-400/50 opacity-60 cursor-not-allowed"
+            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md px-2 sm:px-3 ${
+              featureLoading
+                ? "text-orange-400 opacity-80 cursor-wait"
+                : !hasAiCustomizationSubscription
+                ? "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
+                : isGenerating
+                ? "text-orange-400 opacity-80 cursor-wait"
                 : "text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
             }`}
-            disabled={isGenerating || !canUseAiSummary}
-            onClick={handleGenerateSummary}
+            disabled={isGenerating && featureLoading}
+            onClick={() => {
+              if (!hasAiCustomizationSubscription) {
+                // Show subscription modal if no access
+                window.dispatchEvent(
+                  new CustomEvent("show-subscription-modal")
+                );
+              } else if (!userHasAiCredits) {
+                // Show credit exhausted modal
+                window.dispatchEvent(
+                  new CustomEvent("show-credit-exhausted-modal")
+                );
+              } else if (handleGenerateSummary) {
+                handleGenerateSummary();
+              }
+            }}
           >
+            {featureLoading && (
+              <div className="absolute inset-0 overflow-hidden rounded-md">
+                <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
+              </div>
+            )}
             {isGenerating && (
               <div className="absolute inset-0 bg-orange-500/10 animate-pulse rounded-md"></div>
             )}
             <Sparkles
               className={`h-3.5 w-3.5 sm:mr-1.5 ${
-                isGenerating || !canUseAiSummary
+                !hasAiCustomizationSubscription
                   ? "text-orange-500/50"
                   : "text-orange-500"
               }`}
@@ -115,12 +181,12 @@ export default function BookActionButtons({
             <span className="hidden sm:inline">AI shrnutí</span>
           </Button>
 
-          {/* Lock indicator if feature is not available */}
-          {!canUseAiSummary && (
+          {/* Lock indicator ONLY if subscription is missing */}
+          {!hasAiCustomizationSubscription && !featureLoading && (
             <PremiumFeatureLock
               feature="aiCustomization"
-              requiredTier={canAccess("aiCustomization") ? undefined : "basic"}
-              hasAiCredits={hasAiCredits()}
+              requiredTier="basic"
+              hasAiCredits={userHasAiCredits}
             />
           )}
         </div>
@@ -133,17 +199,46 @@ export default function BookActionButtons({
             book={book}
             notes={book.notes}
             buttonProps={{
-              disabled: !canExportToPdf,
+              disabled: false,
               variant: "outline",
               size: "sm",
-              className: !canExportToPdf
-                ? "h-8 text-blue-300/50 opacity-60 border-blue-800/60 cursor-not-allowed"
-                : "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 cursor-pointer",
+              onClick: (e) => {
+                // Check if e has stopPropagation method before calling it
+                if (e && typeof e.stopPropagation === "function") {
+                  e.stopPropagation();
+                }
+                if (!hasExportSubscription) {
+                  // Show subscription modal if no access
+                  window.dispatchEvent(
+                    new CustomEvent("show-subscription-modal")
+                  );
+                  // Prevent the export functionality using type assertion
+                  // Using a more specific type than 'any'
+                  type CustomEvent = React.MouseEvent & {
+                    preventExport?: () => void;
+                  };
+                  const customEvent = e as CustomEvent;
+                  if (customEvent.preventExport) {
+                    customEvent.preventExport();
+                  }
+                }
+              },
+              className: featureLoading
+                ? "h-8 text-blue-300 opacity-80 border-blue-800/60 cursor-wait relative overflow-hidden rounded-md"
+                : !hasExportSubscription
+                ? "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 cursor-pointer rounded-md"
+                : "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 cursor-pointer rounded-md",
             }}
           />
 
+          {featureLoading && (
+            <div className="absolute inset-0 overflow-hidden rounded-md z-10 pointer-events-none">
+              <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
+            </div>
+          )}
+
           {/* Lock indicator for export feature */}
-          {!canExportToPdf && (
+          {!hasExportSubscription && !featureLoading && (
             <PremiumFeatureLock
               feature="exportToPdf"
               requiredTier="basic"
@@ -157,7 +252,7 @@ export default function BookActionButtons({
       <Button
         variant="outline"
         size="sm"
-        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 px-2 cursor-pointer"
+        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 px-2 cursor-pointer rounded-md"
         onClick={handleBookDelete}
       >
         <Trash2 className="h-3.5 w-3.5" />

@@ -500,10 +500,10 @@ export default function SubscriptionManager() {
 
       <div className="flex justify-center">
         <button
-          className={`px-8 py-3 rounded-full font-medium ${
+          className={`px-8 py-3 rounded-full font-medium relative overflow-hidden ${
             selectedTier === user.subscription.tier &&
             isYearly === user.subscription.isYearly
-              ? "bg-gray-700 text-gray-300 cursor-not-allowed"
+              ? "bg-gray-700 text-gray-300"
               : "bg-[#3b82f6] text-white hover:bg-blue-600 transition-all"
           }`}
           onClick={handleSubscriptionChange}
@@ -514,6 +514,12 @@ export default function SubscriptionManager() {
               isYearly === user.subscription.isYearly)
           }
         >
+          {isProcessing && (
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            </div>
+          )}
+
           {isProcessing ? (
             <span className="flex items-center">
               <svg

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import React from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -200,7 +201,11 @@ const NotesList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      data-no-toggle="true"
+      onClick={(e) => e.stopPropagation()}
+    >
       {filteredNotes.map((note) => (
         <NoteItem
           key={note.id}
@@ -460,7 +465,11 @@ const BookHeader = ({
       role="button"
       aria-expanded={isExpanded}
       aria-controls={`book-content-${book.id}`}
-      title={isExpanded ? "Klikněte pro zavření" : "Klikněte pro rozbalení"}
+      title={
+        isExpanded
+          ? "Klikněte pro zavření (mimo tlačítka)"
+          : "Klikněte pro rozbalení (mimo tlačítka)"
+      }
     >
       {/* Book bookmark indicator */}
       <div className="absolute right-3 sm:right-4 top-0 w-2 h-10 pointer-events-none overflow-hidden">
@@ -576,7 +585,11 @@ const BookHeader = ({
           </div>
 
           {/* Import and use the standalone BookActionButtons component with improved positioning */}
-          <div className="flex justify-start sm:justify-end mt-1 sm:mt-0">
+          <div
+            className="flex justify-start sm:justify-end mt-1 sm:mt-0"
+            data-no-toggle="true"
+            onClick={(e) => e.stopPropagation()}
+          >
             <BookActionButtons
               book={book}
               handleAuthorSummaryModal={() => setAuthorSummaryModal(true)}
@@ -599,7 +612,18 @@ export default function BookComponent({
   const { refreshSubscription } = useSubscription();
   const { refreshSubscriptionData } = useSubscriptionContext();
   // Add useFeatureAccess hook
-  const { canAccess, hasAiCredits } = useFeatureAccess();
+  const { canAccess, hasAiCredits, isFeatureLoading } = useFeatureAccess();
+
+  // Memoize access checks for better performance
+  const hasAuthorSummarySubscription = React.useMemo(
+    () => canAccess("aiAuthorSummary"),
+    [canAccess]
+  );
+  const userHasAiCredits = React.useMemo(() => hasAiCredits(), [hasAiCredits]);
+  const featureLoading = React.useMemo(
+    () => isFeatureLoading(),
+    [isFeatureLoading]
+  );
 
   // Function to refresh all subscription data
   const refreshAllSubscriptionData = useCallback(async () => {
@@ -622,7 +646,7 @@ export default function BookComponent({
   }, [authContext]);
 
   // Validate the book object
-  const safeBook: Book = useMemo(() => {
+  const safeBook: Book = React.useMemo(() => {
     return {
       id: initialBook.id || `temp-${Date.now()}`,
       title: initialBook.title || "Untitled Book",
@@ -1432,6 +1456,25 @@ export default function BookComponent({
     };
   }, [isExpanded, activeNoteId, toggleExpanded, handleCloseSummary]);
 
+  // Add an event listener for the show-credit-exhausted-modal event
+  useEffect(() => {
+    const handleShowCreditExhaustedModal = () => {
+      setShowCreditExhaustedModal(true);
+    };
+
+    window.addEventListener(
+      "show-credit-exhausted-modal",
+      handleShowCreditExhaustedModal
+    );
+
+    return () => {
+      window.removeEventListener(
+        "show-credit-exhausted-modal",
+        handleShowCreditExhaustedModal
+      );
+    };
+  }, []);
+
   // Main rendering with the optimized structure
   return (
     <div
@@ -1471,8 +1514,8 @@ export default function BookComponent({
         handleDeleteAuthorSummary={handleDeleteAuthorSummary}
         isGeneratingAuthorSummary={isGeneratingAuthorSummary}
         handleAuthorSummaryToggle={handleAuthorSummaryToggle}
-        showPremiumFeatureLock={!canAccess("aiAuthorSummary")}
-        hasAiCreditsValue={hasAiCredits()}
+        showPremiumFeatureLock={!hasAuthorSummarySubscription}
+        hasAiCreditsValue={userHasAiCredits}
       />
 
       {/* Author Info Panel */}
@@ -1545,57 +1588,6 @@ export default function BookComponent({
                         AI generováno
                       </span>
                     </motion.div>
-
-                    {/* Action buttons in header area with staggered animation */}
-                    <motion.div
-                      className="flex items-start space-x-3 mt-3"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.25, duration: 0.3 }}
-                    >
-                      <div className="flex-shrink-0 relative">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!canAccess("aiAuthorSummary")) {
-                              // Show the upgrade modal
-                              e.preventDefault();
-                            } else {
-                              setAuthorSummaryModal(true);
-                            }
-                          }}
-                          variant="outline"
-                          size="sm"
-                          className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 ${
-                            !canAccess("aiAuthorSummary") ||
-                            isGeneratingAuthorSummary
-                              ? "text-orange-400/50 opacity-60 hover:bg-orange-950/30 hover:text-orange-400/50 cursor-not-allowed"
-                              : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
-                          }`}
-                          disabled={
-                            !canAccess("aiAuthorSummary") ||
-                            isGeneratingAuthorSummary
-                          }
-                        >
-                          <Sparkles
-                            className={`h-3 w-3 mr-1.5 ${
-                              !canAccess("aiAuthorSummary")
-                                ? "text-orange-400/50"
-                                : "text-orange-400"
-                            }`}
-                          />
-                          <span>Aktualizovat</span>
-                        </Button>
-                        {!canAccess("aiAuthorSummary") && (
-                          <PremiumFeatureLock
-                            feature="aiAuthorSummary"
-                            requiredTier="basic"
-                            placement={{ top: "-4px", right: "-4px" }}
-                            hasAiCredits={hasAiCredits()}
-                          />
-                        )}
-                      </div>
-                    </motion.div>
                   </div>
                 </div>
               </div>
@@ -1641,15 +1633,80 @@ export default function BookComponent({
                   </Button>
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCloseAuthorInfo}
-                  className="h-8 text-xs bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 border-blue-800/50"
-                >
-                  <X className="h-3.5 w-3.5 mr-1.5" />
-                  <span>Zavřít</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!hasAuthorSummarySubscription) {
+                          // Show the upgrade modal
+                          window.dispatchEvent(
+                            new CustomEvent("show-subscription-modal")
+                          );
+                        } else if (!userHasAiCredits) {
+                          setShowCreditExhaustedModal(true);
+                        } else {
+                          setAuthorSummaryModal(true);
+                        }
+                      }}
+                      disabled={isGeneratingAuthorSummary && featureLoading}
+                      className={`h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 relative overflow-hidden rounded-md ${
+                        featureLoading || isGeneratingAuthorSummary
+                          ? "opacity-80 cursor-wait"
+                          : ""
+                      }`}
+                    >
+                      {featureLoading && (
+                        <div className="absolute inset-0 overflow-hidden rounded-md">
+                          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
+                        </div>
+                      )}
+                      {isGeneratingAuthorSummary && (
+                        <div className="absolute inset-0 overflow-hidden rounded-md">
+                          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
+                        </div>
+                      )}
+                      {isGeneratingAuthorSummary ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                          <span>Aktualizuji...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles
+                            className={`h-3.5 w-3.5 mr-1.5 ${
+                              !hasAuthorSummarySubscription
+                                ? "text-orange-400/50"
+                                : "text-orange-400"
+                            }`}
+                          />
+                          <span>Aktualizovat</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Lock indicator for author feature */}
+                    {!hasAuthorSummarySubscription && !featureLoading && (
+                      <PremiumFeatureLock
+                        feature="aiAuthorSummary"
+                        requiredTier="basic"
+                        hasAiCredits={userHasAiCredits}
+                      />
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCloseAuthorInfo}
+                    className="h-8 text-xs bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 border-blue-800/50 rounded-md"
+                  >
+                    <X className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Zavřít</span>
+                  </Button>
+                </div>
               </motion.div>
             </div>
           </motion.div>
@@ -1678,7 +1735,11 @@ export default function BookComponent({
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             {/* Note Filter Buttons */}
-            <div className="flex items-center bg-blue-950/40 rounded-md p-0.5 border border-blue-900/30">
+            <div
+              className="flex items-center bg-blue-950/40 rounded-md p-0.5 border border-blue-900/30"
+              data-no-toggle="true"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   activeNoteFilter === "all"
@@ -1715,24 +1776,48 @@ export default function BookComponent({
             </div>
 
             {/* Generate Summary Button */}
-            <div className="relative">
+            <div
+              className="relative"
+              data-no-toggle="true"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Button
                 variant="outline"
                 size="sm"
-                className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 ${
-                  !canAccess("aiAuthorSummary") || isGenerating
-                    ? "text-orange-400/50 opacity-60 hover:bg-orange-950/30 hover:text-orange-400/50 cursor-not-allowed"
+                className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md relative overflow-hidden ${
+                  featureLoading
+                    ? "text-orange-400 opacity-80 cursor-wait"
+                    : !hasAuthorSummarySubscription
+                    ? "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
+                    : isGenerating
+                    ? "text-orange-400 opacity-80 cursor-wait"
                     : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
                 }`}
+                disabled={isGenerating && featureLoading}
                 onClick={() => {
-                  if (!canAccess("aiAuthorSummary")) {
+                  if (!hasAuthorSummarySubscription) {
                     // Show the upgrade modal
+                    window.dispatchEvent(
+                      new CustomEvent("show-subscription-modal")
+                    );
+                  } else if (!userHasAiCredits) {
+                    setShowCreditExhaustedModal(true);
                   } else {
                     setSummaryModal(true);
                   }
                 }}
-                disabled={!canAccess("aiAuthorSummary") || isGenerating}
               >
+                {featureLoading && (
+                  <div className="absolute inset-0 overflow-hidden rounded-md">
+                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
+                  </div>
+                )}
+                {isGenerating && (
+                  <div className="absolute inset-0 overflow-hidden rounded-md">
+                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
+                  </div>
+                )}
+
                 {isGenerating ? (
                   <>
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
@@ -1742,7 +1827,7 @@ export default function BookComponent({
                   <>
                     <Sparkles
                       className={`h-3.5 w-3.5 mr-1.5 ${
-                        !canAccess("aiAuthorSummary")
+                        !hasAuthorSummarySubscription
                           ? "text-orange-400/50"
                           : "text-orange-400"
                       }`}
@@ -1751,12 +1836,13 @@ export default function BookComponent({
                   </>
                 )}
               </Button>
-              {!canAccess("aiAuthorSummary") && (
+
+              {/* Lock indicator ONLY if subscription is missing */}
+              {!hasAuthorSummarySubscription && !featureLoading && (
                 <PremiumFeatureLock
                   feature="aiAuthorSummary"
                   requiredTier="basic"
-                  placement={{ top: "-4px", right: "-4px" }}
-                  hasAiCredits={hasAiCredits()}
+                  hasAiCredits={userHasAiCredits}
                 />
               )}
             </div>
@@ -1792,7 +1878,11 @@ export default function BookComponent({
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div
+                className="space-y-4"
+                data-no-toggle="true"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <NotesList
                   notes={notes}
                   activeNoteFilter={activeNoteFilter}
@@ -1807,7 +1897,11 @@ export default function BookComponent({
             )}
 
             {/* Add Note Form */}
-            <div className="pt-4 border-t border-blue-900/30 mt-6">
+            <div
+              className="pt-4 border-t border-blue-900/30 mt-6"
+              data-no-toggle="true"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="bg-blue-950/40 rounded-lg p-4 shadow-sm border border-blue-900/30">
                 <NoteEditor
                   ref={textareaRef}

@@ -49,6 +49,17 @@ function encodePdfCzechText(doc: jsPDF, text: string): string {
   return encodedText;
 }
 
+// Define a type for custom events that might not be full React.MouseEvents
+type ExportButtonEvent =
+  | React.MouseEvent<HTMLButtonElement, MouseEvent>
+  | MouseEvent
+  | { stopPropagation?: () => void };
+
+// Define a type for the modified event with preventExport method
+type ModifiedEvent = ExportButtonEvent & {
+  preventExport: () => void;
+};
+
 // Implementation
 export function ExportButton(props: ExportButtonProps) {
   // Define all state hooks at the top level
@@ -94,7 +105,52 @@ export function ExportButton(props: ExportButtonProps) {
   }
 
   // Book export implementation
-  const { book, notes } = props;
+  const { book, notes, buttonProps } = props;
+
+  // Update the button rendering to handle clicks properly regardless of disabled state
+  const buttonPropsWithHandlers = {
+    ...buttonProps,
+    onClick: (e: ExportButtonEvent) => {
+      // Safely handle event propagation
+      if (e && typeof e.stopPropagation === "function") {
+        e.stopPropagation();
+      }
+
+      // Check if an external onClick handler exists and call it
+      if (buttonProps?.onClick) {
+        try {
+          // Flag to track if we should proceed with default behavior
+          let shouldProceed = true;
+
+          // Create a modified event with a preventExport method
+          const modifiedEvent: ModifiedEvent = {
+            ...(e as object),
+            // Add a method to prevent the default export behavior
+            preventExport: () => {
+              // Set a flag to prevent default export
+              shouldProceed = false;
+            },
+          };
+
+          // Call the external handler with our modified event
+          buttonProps.onClick(
+            modifiedEvent as unknown as React.MouseEvent<HTMLButtonElement>
+          );
+
+          // If the handler called preventExport(), don't proceed
+          if (!shouldProceed) {
+            return;
+          }
+        } catch (error) {
+          console.error("Error in onClick handler:", error);
+        }
+      }
+
+      // Normal export behavior - open the modal
+      setIsExportModalOpen(true);
+    },
+    className: `${buttonProps?.className || ""} rounded-md`,
+  };
 
   // Check if the book has any notes (regular or AI summary)
   const hasNotes = notes.length > 0;
@@ -937,21 +993,8 @@ export function ExportButton(props: ExportButtonProps) {
 
   return (
     <div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className={`
-          text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 gap-1 px-2 rounded-md transition-all duration-200 ease-in-out
-          disabled:opacity-60 disabled:cursor-not-allowed
-        `}
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsExportModalOpen(true);
-        }}
-        aria-label="Export options"
-        {...("buttonProps" in props ? props.buttonProps : {})}
-      >
-        <Download className="h-4 w-4 mr-1.5" />
+      <Button variant="outline" size="sm" {...buttonPropsWithHandlers}>
+        <Download className="h-3.5 w-3.5 sm:mr-1.5" />
         <span className="hidden sm:inline">Export</span>
       </Button>
 

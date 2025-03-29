@@ -117,11 +117,19 @@ export function useFeatureAccess() {
     return 0;
   }, [isAuthenticated, user, subscription]);
 
+  /**
+   * Check if a specific feature's access status is still loading
+   */
+  const isFeatureLoading = useCallback((): boolean => {
+    return subscriptionLoading;
+  }, [subscriptionLoading]);
+
   return {
     canAccess,
     hasReachedBookLimit,
     hasAiCredits,
     isLoading: subscriptionLoading,
+    isFeatureLoading,
     getSubscriptionTier,
     getAiCreditsRemaining,
   };

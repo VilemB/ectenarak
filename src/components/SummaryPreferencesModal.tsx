@@ -855,10 +855,16 @@ export function SummaryPreferencesModal({
                   flex items-center gap-2 w-full sm:w-auto justify-center 
                   bg-blue-500/10 text-blue-500 border border-blue-500/20 
                   hover:bg-blue-500/20 transition-all duration-200 
-                  shadow-sm hover:shadow
-                  ${isGenerating ? "opacity-70 cursor-not-allowed" : ""}
+                  shadow-sm hover:shadow rounded-md relative overflow-hidden
+                  ${isGenerating ? "opacity-70 cursor-wait" : ""}
                 `}
               >
+                {isGenerating && (
+                  <div className="absolute inset-0 overflow-hidden rounded-md">
+                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-blue-300/20 to-transparent"></div>
+                  </div>
+                )}
+
                 {isGenerating ? (
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-t-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-1.5"></div>

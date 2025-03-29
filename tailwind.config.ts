@@ -59,11 +59,17 @@ const config: Config = {
       },
       animation: {
         fadeOut: "fadeOut 0.15s ease-out forwards",
+        shine: "shine 1.5s infinite",
       },
       keyframes: {
         fadeOut: {
           "0%": { opacity: "1" },
           "100%": { opacity: "0" },
+        },
+        shine: {
+          "0%": { transform: "translateX(-100%)" },
+          "50%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(100%)" },
         },
       },
     },
