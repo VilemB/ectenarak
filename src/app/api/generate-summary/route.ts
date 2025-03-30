@@ -488,10 +488,37 @@ export async function POST(request: Request) {
   console.log("=== GENERATE SUMMARY API ROUTE CALLED ===");
 
   try {
+    // Get the request body
+    const body = await request.json();
+    const {
+      bookTitle,
+      bookAuthor,
+      notes,
+      preferences = {
+        style: "academic",
+        length: "medium",
+        focus: "balanced",
+        language: "cs",
+        examFocus: false,
+        literaryContext: false,
+        studyGuide: false,
+      },
+      clientSideDeduction = false,
+    } = body;
+
+    // Validate inputs
+    if (!bookTitle || !bookAuthor) {
+      console.log("Missing required parameters");
+      return NextResponse.json(
+        { error: "Chybí povinné parametry" },
+        { status: 400 }
+      );
+    }
+
     // Connect to database
     await dbConnect();
 
-    // Check if user has remaining AI credits
+    // Check if the user is authenticated and has AI credits
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       console.log("Unauthorized: No user session found");
@@ -517,23 +544,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { bookTitle, bookAuthor, notes, preferences } = body;
-
     console.log("Request received:", {
       bookTitle,
       bookAuthor,
       notesLength: notes?.length || 0,
       preferences,
     });
-
-    if (!bookTitle || !bookAuthor || !preferences) {
-      console.log("Missing required parameters");
-      return NextResponse.json(
-        { error: "Chybí povinné parametry" },
-        { status: 400 }
-      );
-    }
 
     // Check cache first if no user notes are provided
     // We only cache summaries that don't depend on user notes
@@ -708,11 +724,21 @@ export async function POST(request: Request) {
       console.log("Summary cached with key:", cacheKey);
     }
 
-    // After successful generation, deduct one AI credit
+    // After successful generation, only deduct one AI credit if not already deducted on client side
     try {
-      const remainingCredits = await user.useAiCredit();
-      console.log(`AI credit used. Remaining credits: ${remainingCredits}`);
+      // Skip the credit deduction if already done on the client side
+      let remainingCredits = user.subscription?.aiCreditsRemaining;
 
+      if (!clientSideDeduction && user) {
+        remainingCredits = await user.useAiCredit();
+        console.log(`AI credit used. Remaining credits: ${remainingCredits}`);
+      } else {
+        console.log(
+          "Credit already deducted on client side, skipping server deduction"
+        );
+      }
+
+      // Return the summary and remaining credits
       return NextResponse.json({
         summary: processedSummary,
         fromCache: false,

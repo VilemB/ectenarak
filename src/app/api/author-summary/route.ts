@@ -20,6 +20,7 @@ import { checkSubscription } from "@/middleware/subscriptionMiddleware";
  * - author: string (required) - The name of the author
  * - preferences: AuthorSummaryPreferences (optional) - Customization preferences
  * - bookId: string (optional) - If provided, associates the summary with this book
+ * - clientSideDeduction: boolean (optional) - Indicates if credits have already been deducted on the client side
  */
 export async function POST(req: NextRequest) {
   console.log("=== CONSOLIDATED AUTHOR SUMMARY API ROUTE START ===");
@@ -39,12 +40,18 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const body = await req.json();
-    const { author, preferences = DEFAULT_AUTHOR_PREFERENCES, bookId } = body;
+    const {
+      author,
+      preferences = DEFAULT_AUTHOR_PREFERENCES,
+      bookId,
+      clientSideDeduction = false,
+    } = body;
 
     console.log("Request parameters:", {
       author,
       bookId,
       hasPreferences: !!preferences,
+      clientSideDeduction,
     });
 
     // Validate author name
@@ -55,11 +62,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get user from subscription check
+    const user = subscriptionCheck.user;
+
     // If bookId is provided, handle as book-specific summary
     if (bookId) {
-      // Use an AI credit
-      const user = subscriptionCheck.user;
-      await user?.useAiCredit();
+      // Use an AI credit only if not already deducted on client side
+      if (!clientSideDeduction && user) {
+        await user.useAiCredit();
+      }
 
       const result = await handleBookSpecificSummary(
         req,
@@ -72,9 +83,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Otherwise, handle as general author summary
-    // Use an AI credit
-    const user = subscriptionCheck.user;
-    await user?.useAiCredit();
+    // Use an AI credit only if not already deducted on client side
+    if (!clientSideDeduction && user) {
+      await user.useAiCredit();
+    }
 
     const result = await handleGeneralAuthorSummary(author, preferences);
 
