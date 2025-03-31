@@ -35,6 +35,7 @@ export interface AuthorSummaryPreferencesModalProps {
   isGenerating: boolean;
   title?: string;
   description?: string;
+  authorSummaryExists?: boolean;
 }
 
 const optionVariants = {
@@ -83,8 +84,10 @@ export function AuthorSummaryPreferencesModal({
   isOpen,
   onClose,
   onGenerate,
+  isGenerating,
   title,
   description,
+  authorSummaryExists = false,
 }: AuthorSummaryPreferencesModalProps) {
   const defaultPreferences: AuthorSummaryPreferences = {
     style: "academic",
@@ -706,6 +709,26 @@ export function AuthorSummaryPreferencesModal({
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Generate/Update button */}
+            <Button
+              type="submit"
+              disabled={isGenerating}
+              onClick={handleSubmit}
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Generuji...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {authorSummaryExists ? "Aktualizovat" : "Generovat"}
+                </>
+              )}
+            </Button>
           </div>
         </form>
       </div>

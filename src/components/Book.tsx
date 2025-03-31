@@ -2061,8 +2061,13 @@ export default function BookComponent({
         onClose={() => setAuthorSummaryModal(false)}
         onGenerate={handleGenerateAuthorSummary}
         isGenerating={isGeneratingAuthorSummary}
-        title="Generovat informace o autorovi"
+        title={
+          book.authorSummary
+            ? "Aktualizovat informace o autorovi"
+            : "Generovat informace o autorovi"
+        }
         description="Vyberte preferovaný styl a zaměření informací o autorovi."
+        authorSummaryExists={!!book.authorSummary}
       />
 
       <Modal
