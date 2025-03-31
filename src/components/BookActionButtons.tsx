@@ -8,6 +8,8 @@ import PremiumFeatureLock from "./FeatureLockIndicator";
 import { ExportButton } from "./ExportButton";
 import { useSubscriptionContext } from "@/contexts/SubscriptionContext";
 import LoadingAnimation from "./LoadingAnimation";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { toast } from "sonner";
 
 // Create a separate component for action buttons in the book header
 export default function BookActionButtons({
@@ -30,6 +32,11 @@ export default function BookActionButtons({
   // Use the global subscription context for validation
   const { featureValidation, canAccessFeature } = useSubscriptionContext();
   const isValidating = featureValidation.isValidating;
+
+  // Use the feature access hook to check for AI credits
+  const { hasAiCredits } = useFeatureAccess();
+  const userHasAiCredits = hasAiCredits();
+
   // Keep only the export subscription check that's actually used in JSX
   const hasExportSubscription = canAccessFeature("exportToPdf");
 
@@ -72,17 +79,42 @@ export default function BookActionButtons({
             e.preventExport();
           }
         }
+      } else if (
+        feature === "aiAuthorSummary" ||
+        feature === "aiCustomization"
+      ) {
+        // For AI features, check for AI credits first
+        if (userHasAiCredits) {
+          // If user has AI credits, execute the action
+          action();
+        } else {
+          // If no credits, show a toast message
+          toast.error(
+            `Nemáte dostatek AI kreditů. Získejte kredity upgradováním na ${
+              feature === "aiCustomization" ? "Premium" : "Basic"
+            } předplatné.`
+          );
+
+          // Then show subscription modal with credits flag
+          window.dispatchEvent(
+            new CustomEvent("show-subscription-modal", {
+              detail: {
+                feature,
+                needsCredits: true,
+                creditsOnly: !hasAccess, // If they don't have subscription access, only show credits
+              },
+            })
+          );
+        }
       } else {
-        // For AI features, just execute the action
-        // The modals will handle credit/subscription checks internally
+        // For other features, just execute the action
         action();
       }
     },
-    [canAccessFeature]
+    [canAccessFeature, userHasAiCredits]
   );
 
-  // Button should VISUALLY look disabled only if NO subscription access (show lock)
-  // If user has subscription but no credits, button looks enabled but won't work
+  // Button should always be enabled for AI features
   return (
     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 ml-auto">
       {/* Author Summary Button Group */}

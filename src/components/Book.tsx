@@ -1147,17 +1147,25 @@ export default function BookComponent({
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
   ) => {
-    // Check for feature access first
-    if (!canAccess("aiAuthorSummary")) {
-      // Do not allow generating if user doesn't have access
-      toast.error("Pro generování shrnutí je potřeba alespoň Basic předplatné");
-      setSummaryModal(false);
-      return;
-    }
-
     // Check for AI credits
     if (!hasAiCredits()) {
-      setShowCreditExhaustedModal(true);
+      // Show toast error message
+      toast.error(
+        "Nemáte dostatek AI kreditů. Získejte kredity upgradováním na Premium předplatné."
+      );
+
+      // Show the subscription modal
+      window.dispatchEvent(
+        new CustomEvent("show-subscription-modal", {
+          detail: {
+            feature: "aiCustomization",
+            needsCredits: true,
+            creditsOnly: !canAccess("aiCustomization"),
+          },
+        })
+      );
+
+      // Close the preferences modal
       setSummaryModal(false);
       return;
     }
@@ -1263,19 +1271,25 @@ export default function BookComponent({
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
-    // Check for feature access first
-    if (!canAccess("aiAuthorSummary")) {
-      // Do not allow generating if user doesn't have access
-      toast.error(
-        "Pro generování informací o autorovi je potřeba alespoň Basic předplatné"
-      );
-      setAuthorSummaryModal(false);
-      return;
-    }
-
-    // Check for AI credits
+    // First check if user has AI credits
     if (!hasAiCredits()) {
-      setShowCreditExhaustedModal(true);
+      // If no credits, show a toast error message
+      toast.error(
+        "Nemáte dostatek AI kreditů. Získejte kredity upgradováním na Basic předplatné."
+      );
+
+      // Show the subscription modal
+      window.dispatchEvent(
+        new CustomEvent("show-subscription-modal", {
+          detail: {
+            feature: "aiAuthorSummary",
+            needsCredits: true,
+            creditsOnly: !canAccess("aiAuthorSummary"),
+          },
+        })
+      );
+
+      // Close the preferences modal
       setAuthorSummaryModal(false);
       return;
     }
@@ -1283,7 +1297,7 @@ export default function BookComponent({
     setIsGeneratingAuthorSummary(true);
 
     try {
-      // Call useAiCredit first to deduct a credit
+      // Call useAiCredit to deduct a credit
       const creditResult = await useAiCreditRef.current();
 
       // If credit usage failed, show error and return
