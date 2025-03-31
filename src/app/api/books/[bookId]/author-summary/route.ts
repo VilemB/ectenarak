@@ -149,3 +149,97 @@ export async function POST(
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { bookId: string } }
+) {
+  console.log("=== DELETE AUTHOR SUMMARY API ROUTE START ===");
+  console.log(
+    `Received request to delete author summary for book ID: ${params.bookId}`
+  );
+
+  try {
+    // Get user session
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      console.log("Unauthorized: No user session found");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const bookId = params.bookId;
+    console.log("User ID:", userId);
+
+    // Validate bookId
+    if (!bookId || !ObjectId.isValid(bookId)) {
+      console.log("Invalid book ID:", bookId);
+      return NextResponse.json({ error: "Invalid book ID" }, { status: 400 });
+    }
+
+    // Connect to database
+    console.log("Connecting to database...");
+    await dbConnect();
+    console.log("Connected to database");
+
+    // If using mock connection, handle mock data
+    if (isMockConnection) {
+      console.log(
+        "API: Using mock data for deleting author summary, bookId:",
+        bookId
+      );
+
+      // Find the mock book with the matching ID
+      const mockBookIndex = mockData.books.findIndex(
+        (book) => book._id.toString() === bookId
+      );
+
+      if (mockBookIndex === -1) {
+        console.log("Book not found in mock data, bookId:", bookId);
+        return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      }
+
+      // Remove the author summary from the mock book
+      mockData.books[mockBookIndex].authorSummary = null;
+
+      console.log("Mock author summary deleted successfully");
+      console.log("=== DELETE AUTHOR SUMMARY API ROUTE SUCCESS (MOCK) ===");
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Verify the book belongs to the user
+    console.log("Finding book in database...");
+    const book = await Book.findOne({
+      _id: bookId,
+      userId: userId,
+    });
+
+    if (!book) {
+      console.log("Book not found or does not belong to the user");
+      return NextResponse.json(
+        { error: "Book not found or does not belong to the user" },
+        { status: 404 }
+      );
+    }
+    console.log("Book found:", book.title);
+
+    // Remove the author summary
+    console.log("Removing author summary...");
+    book.authorSummary = null;
+    await book.save();
+    console.log("Author summary removed successfully");
+
+    console.log("=== DELETE AUTHOR SUMMARY API ROUTE SUCCESS ===");
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting author summary:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to delete author summary";
+    console.error("Error message:", errorMessage);
+    console.log("=== DELETE AUTHOR SUMMARY API ROUTE ERROR ===");
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}

@@ -1389,21 +1389,33 @@ export default function BookComponent({
     setDeleteModal((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      const response = await fetch(`/api/books/${book.id}/authorSummary`, {
+      const response = await fetch(`/api/books/${book.id}/author-summary`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete author summary");
+        // Check if response is JSON before trying to parse it
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete author summary");
+        } else {
+          // If not JSON, use the status text
+          throw new Error(`Chyba: ${response.status} ${response.statusText}`);
+        }
       }
 
+      // Don't try to parse the response if we're not using the data
+      // await response.json(); // Remove this line
+
       // Update the book state
-      await response.json(); // Process response but no need to store the data
       setBook((prev) => ({
         ...prev,
         authorSummary: undefined,
       }));
+
+      // Reset the author info visibility
+      setIsAuthorInfoVisible(false);
 
       toast.success("Shrnutí autora bylo úspěšně smazáno");
     } catch (error: unknown) {
