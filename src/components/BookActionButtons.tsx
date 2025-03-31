@@ -8,8 +8,6 @@ import PremiumFeatureLock from "./FeatureLockIndicator";
 import { ExportButton } from "./ExportButton";
 import { useSubscriptionContext } from "@/contexts/SubscriptionContext";
 import LoadingAnimation from "./LoadingAnimation";
-import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { toast } from "sonner";
 
 // Create a separate component for action buttons in the book header
 export default function BookActionButtons({
@@ -32,10 +30,6 @@ export default function BookActionButtons({
   // Use the global subscription context for validation
   const { featureValidation, canAccessFeature } = useSubscriptionContext();
   const isValidating = featureValidation.isValidating;
-
-  // Use the feature access hook to check for AI credits
-  const { hasAiCredits } = useFeatureAccess();
-  const userHasAiCredits = hasAiCredits();
 
   // Keep only the export subscription check that's actually used in JSX
   const hasExportSubscription = canAccessFeature("exportToPdf");
@@ -83,35 +77,18 @@ export default function BookActionButtons({
         feature === "aiAuthorSummary" ||
         feature === "aiCustomization"
       ) {
-        // For AI features, check for AI credits first
-        if (userHasAiCredits) {
-          // If user has AI credits, execute the action
-          action();
-        } else {
-          // If no credits, show a toast message
-          toast.error(
-            `Nemáte dostatek AI kreditů. Získejte kredity upgradováním na ${
-              feature === "aiCustomization" ? "Premium" : "Basic"
-            } předplatné.`
-          );
+        // For AI features, execute the action directly
+        // The modal will check for AI credits internally
+        action();
 
-          // Then show subscription modal with credits flag
-          window.dispatchEvent(
-            new CustomEvent("show-subscription-modal", {
-              detail: {
-                feature,
-                needsCredits: true,
-                creditsOnly: !hasAccess, // If they don't have subscription access, only show credits
-              },
-            })
-          );
-        }
+        // We don't check credits here anymore - let the modal check
+        // This way we avoid the toast message with incorrect information
       } else {
         // For other features, just execute the action
         action();
       }
     },
-    [canAccessFeature, userHasAiCredits]
+    [canAccessFeature]
   );
 
   // Button should always be enabled for AI features

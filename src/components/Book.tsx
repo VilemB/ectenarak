@@ -1147,14 +1147,11 @@ export default function BookComponent({
   const handleGenerateSummary = async (
     preferencesToUse: SummaryPreferences
   ) => {
-    // Check for AI credits
-    if (!hasAiCredits()) {
-      // Show toast error message
-      toast.error(
-        "Nemáte dostatek AI kreditů. Získejte kredity upgradováním na Premium předplatné."
-      );
+    // Check if user has AI credits
+    const userHasCredits = hasAiCredits();
 
-      // Show the subscription modal
+    // If no credits, show the subscription modal but don't show toast message
+    if (!userHasCredits) {
       window.dispatchEvent(
         new CustomEvent("show-subscription-modal", {
           detail: {
@@ -1271,14 +1268,11 @@ export default function BookComponent({
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
-    // First check if user has AI credits
-    if (!hasAiCredits()) {
-      // If no credits, show a toast error message
-      toast.error(
-        "Nemáte dostatek AI kreditů. Získejte kredity upgradováním na Basic předplatné."
-      );
+    // Check if user has AI credits
+    const userHasCredits = hasAiCredits();
 
-      // Show the subscription modal
+    // If no credits, show the subscription modal but don't show toast message
+    if (!userHasCredits) {
       window.dispatchEvent(
         new CustomEvent("show-subscription-modal", {
           detail: {
