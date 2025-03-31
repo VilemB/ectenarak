@@ -60,6 +60,23 @@ export default function PremiumFeatureLock({
     return null;
   }
 
+  // Handler to show subscription modal when clicked
+  const handleLockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    // Dispatch the subscription modal event with appropriate parameters
+    window.dispatchEvent(
+      new CustomEvent("show-subscription-modal", {
+        detail: {
+          feature,
+          needsCredits: isAiFeature && !hasAiCredits,
+          creditsOnly: isAiFeature && !hasAiCredits,
+        },
+      })
+    );
+  };
+
   // Determine the message to display
   const getFeatureMessage = () => {
     // For AI features where the user has subscription access but no credits
@@ -92,6 +109,7 @@ export default function PremiumFeatureLock({
               style={{
                 boxShadow: `0 0 8px 2px ${tierColors[requiredTier].glow}`,
               }}
+              onClick={handleLockClick}
             >
               <Lock
                 size={10}

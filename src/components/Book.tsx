@@ -40,7 +40,6 @@ import { AiCreditsExhaustedPrompt } from "./FeatureGate";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import PremiumFeatureLock from "./FeatureLockIndicator";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -430,7 +429,6 @@ const BookHeader = ({
   isGeneratingAuthorSummary,
   handleAuthorSummaryToggle,
   showPremiumFeatureLock,
-  hasAiCreditsValue,
 }: {
   book: Book;
   isExpanded: boolean;
@@ -442,7 +440,6 @@ const BookHeader = ({
   isGeneratingAuthorSummary: boolean;
   handleAuthorSummaryToggle: (e: React.MouseEvent) => void;
   showPremiumFeatureLock: boolean;
-  hasAiCreditsValue: boolean;
 }) => {
   return (
     <div
@@ -528,12 +525,7 @@ const BookHeader = ({
               ) : (
                 showPremiumFeatureLock && (
                   <span className="relative ml-1">
-                    <PremiumFeatureLock
-                      feature="aiAuthorSummary"
-                      requiredTier="basic"
-                      placement={{ top: "-8px", right: "-8px" }}
-                      hasAiCredits={hasAiCreditsValue}
-                    />
+                    {/* Remove PremiumFeatureLock from BookHeader */}
                   </span>
                 )
               )}
@@ -612,29 +604,7 @@ export default function BookComponent({
   const { refreshSubscription } = useSubscription();
   const { refreshSubscriptionData } = useSubscriptionContext();
   // Add useFeatureAccess hook
-  const { canAccess, hasAiCredits, isFeatureLoading } = useFeatureAccess();
-
-  // Memoize access checks for better performance
-  const hasAuthorSummarySubscription = React.useMemo(
-    () => canAccess("aiAuthorSummary"),
-    [canAccess]
-  );
-  const userHasAiCredits = React.useMemo(() => hasAiCredits(), [hasAiCredits]);
-  const featureLoading = React.useMemo(
-    () => isFeatureLoading(),
-    [isFeatureLoading]
-  );
-
-  // Function to refresh all subscription data
-  const refreshAllSubscriptionData = useCallback(async () => {
-    try {
-      // Await both promises to ensure they complete
-      await refreshSubscription();
-      await refreshSubscriptionData();
-    } catch (error) {
-      console.error("Error refreshing subscription data:", error);
-    }
-  }, [refreshSubscription, refreshSubscriptionData]);
+  const { canAccess, hasAiCredits } = useFeatureAccess();
 
   // Get the auth context properly
   const authContext = useAuth();
@@ -661,6 +631,10 @@ export default function BookComponent({
     };
   }, [initialBook]);
 
+  // Refs
+  const bookRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   // State
   const [book, setBook] = useState<Book>(safeBook);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -678,11 +652,7 @@ export default function BookComponent({
     type: "book" | "note" | "authorSummary";
     noteId?: string;
     isLoading: boolean;
-  }>({
-    isOpen: false,
-    type: "book",
-    isLoading: false,
-  });
+  }>({ isOpen: false, type: "book", isLoading: false });
   const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
     null
   );
@@ -699,10 +669,6 @@ export default function BookComponent({
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
     useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
-
-  // Refs
-  const bookRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -766,18 +732,6 @@ export default function BookComponent({
     [showErrorMessage]
   );
 
-  // Update local book state when props change, with validation
-  useEffect(() => {
-    if (initialBook && Object.keys(initialBook).length > 0) {
-      setBook(initialBook);
-
-      // Pre-fetch notes when the component mounts
-      if (initialBook.id) {
-        fetchNotes(initialBook.id);
-      }
-    }
-  }, [initialBook, fetchNotes]);
-
   // Add a function to handle closing the author summary with scroll position preservation
   const handleCloseAuthorInfo = useCallback(() => {
     // Save the current scroll position before closing
@@ -820,8 +774,71 @@ export default function BookComponent({
         setAuthorSummaryModal(true);
       }
     },
-    [book.authorSummary, book.id, isAuthorInfoVisible, setAuthorSummaryModal]
+    [book.authorSummary, book.id, isAuthorInfoVisible]
   );
+
+  // Memoize access checks for better performance
+  const hasAuthorSummarySubscription = React.useMemo(
+    () => canAccess("aiAuthorSummary"),
+    [canAccess]
+  );
+  const userHasAiCredits = React.useMemo(() => hasAiCredits(), [hasAiCredits]);
+  // We removed the featureLoading useMemo since it's no longer needed
+
+  // Add missing check for AI Customization subscription
+  const hasAiCustomizationSubscription = React.useMemo(
+    () => canAccess("aiCustomization"),
+    [canAccess]
+  );
+
+  // Helper function for handling feature access
+  const handleFeatureAction = useCallback(
+    (
+      feature: "aiAuthorSummary" | "aiCustomization" | "exportToPdf",
+      hasSubscription: boolean,
+      action: () => void,
+      isButtonGenerating: boolean
+    ) => {
+      // Don't do anything if the button is in loading or generating state
+      if (isButtonGenerating) {
+        return;
+      }
+
+      if (feature === "exportToPdf") {
+        // For export feature, check subscription
+        if (hasSubscription) {
+          // Execute the action
+          action();
+        } else {
+          // Show subscription modal if user doesn't have subscription
+          window.dispatchEvent(
+            new CustomEvent("show-subscription-modal", {
+              detail: {
+                feature,
+                needsCredits: false,
+              },
+            })
+          );
+        }
+      } else {
+        // For AI features, just execute the action
+        // The modals will handle credit/subscription checks internally
+        action();
+      }
+    },
+    []
+  );
+
+  // Function to refresh all subscription data
+  const refreshAllSubscriptionData = useCallback(async () => {
+    try {
+      // Await both promises to ensure they complete
+      await refreshSubscription();
+      await refreshSubscriptionData();
+    } catch (error) {
+      console.error("Error refreshing subscription data:", error);
+    }
+  }, [refreshSubscription, refreshSubscriptionData]);
 
   // Add a helper function to scroll to newly added notes
   const scrollToNewlyAddedNote = useCallback((noteId: string) => {
@@ -1148,6 +1165,17 @@ export default function BookComponent({
     setIsGenerating(true);
 
     try {
+      // Call useAiCredit first to deduct a credit
+      const creditResult = await useAiCreditRef.current();
+
+      // If credit usage failed, show error and return
+      if (!creditResult) {
+        setShowCreditExhaustedModal(true);
+        setSummaryModal(false);
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch("/api/generate-summary", {
         method: "POST",
         headers: {
@@ -1158,6 +1186,7 @@ export default function BookComponent({
           bookAuthor: book.author,
           bookId: book.id,
           preferences: preferencesToUse,
+          clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
         }),
       });
 
@@ -1216,7 +1245,9 @@ export default function BookComponent({
 
       setSummaryModal(false);
       toast.success("Shrnutí bylo úspěšně vygenerováno!");
-      refreshAllSubscriptionData();
+
+      // Refresh subscription data to update UI with new credit count
+      await refreshAllSubscriptionData();
     } catch (error) {
       console.error("Error generating summary:", error);
       showErrorMessage(
@@ -1252,6 +1283,17 @@ export default function BookComponent({
     setIsGeneratingAuthorSummary(true);
 
     try {
+      // Call useAiCredit first to deduct a credit
+      const creditResult = await useAiCreditRef.current();
+
+      // If credit usage failed, show error and return
+      if (!creditResult) {
+        setShowCreditExhaustedModal(true);
+        setAuthorSummaryModal(false);
+        setIsGeneratingAuthorSummary(false);
+        return;
+      }
+
       const response = await fetch("/api/author-summary", {
         method: "POST",
         headers: {
@@ -1261,6 +1303,7 @@ export default function BookComponent({
           author: book.author,
           bookId: book.id,
           preferences: preferencesToUse,
+          clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
         }),
       });
 
@@ -1295,7 +1338,7 @@ export default function BookComponent({
       toast.success("Informace o autorovi byla úspěšně vygenerována!");
 
       // Refresh subscription data to update credit count
-      refreshAllSubscriptionData();
+      await refreshAllSubscriptionData();
     } catch (error) {
       console.error("Error generating author summary:", error);
       showErrorMessage(
@@ -1475,6 +1518,35 @@ export default function BookComponent({
     };
   }, []);
 
+  // Function to validate feature access for all features at once
+  // This prevents checking feature access for each button individually
+  const validateFeatureAccess = useCallback(
+    async (bookId: string) => {
+      if (!bookId) return;
+
+      // Pre-validate all features at once
+      const hasAuthorSummaryAccess = canAccess("aiAuthorSummary");
+      const hasAiCustomizationAccess = canAccess("aiCustomization");
+      const hasExportAccess = canAccess("exportToPdf");
+      const aiCreditsAvailable = hasAiCredits();
+
+      // No need to make API calls, just store results in memory
+      console.log(`Book ${bookId} feature access validated`, {
+        aiAuthorSummary: hasAuthorSummaryAccess && aiCreditsAvailable,
+        aiCustomization: hasAiCustomizationAccess && aiCreditsAvailable,
+        exportToPdf: hasExportAccess,
+      });
+    },
+    [canAccess, hasAiCredits]
+  );
+
+  // Validate feature access when the book changes
+  useEffect(() => {
+    if (book.id) {
+      validateFeatureAccess(book.id);
+    }
+  }, [book.id, validateFeatureAccess]);
+
   // Main rendering with the optimized structure
   return (
     <div
@@ -1515,7 +1587,6 @@ export default function BookComponent({
         isGeneratingAuthorSummary={isGeneratingAuthorSummary}
         handleAuthorSummaryToggle={handleAuthorSummaryToggle}
         showPremiumFeatureLock={!hasAuthorSummarySubscription}
-        hasAiCreditsValue={userHasAiCredits}
       />
 
       {/* Author Info Panel */}
@@ -1646,24 +1717,16 @@ export default function BookComponent({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Only open the modal when not loading or generating
-                        if (!isGeneratingAuthorSummary && !featureLoading) {
-                          setAuthorSummaryModal(true);
-                        }
+                        handleFeatureAction(
+                          "aiAuthorSummary",
+                          hasAuthorSummarySubscription,
+                          () => setAuthorSummaryModal(true),
+                          isGeneratingAuthorSummary
+                        );
                       }}
-                      // Disable the button during loading or generating
-                      disabled={isGeneratingAuthorSummary || featureLoading}
-                      className={`h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 relative overflow-hidden rounded-md ${
-                        featureLoading || isGeneratingAuthorSummary
-                          ? "opacity-80 cursor-wait"
-                          : ""
-                      }`}
+                      disabled={isGeneratingAuthorSummary}
+                      className="h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 rounded-md"
                     >
-                      {(featureLoading || isGeneratingAuthorSummary) && (
-                        <div className="absolute inset-0 overflow-hidden rounded-md">
-                          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
-                        </div>
-                      )}
                       {isGeneratingAuthorSummary ? (
                         <>
                           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
@@ -1671,26 +1734,18 @@ export default function BookComponent({
                         </>
                       ) : (
                         <>
-                          <Sparkles
-                            className={`h-3.5 w-3.5 mr-1.5 ${
-                              !hasAuthorSummarySubscription
-                                ? "text-orange-400/50"
-                                : "text-orange-400"
-                            }`}
-                          />
+                          <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
                           <span>Aktualizovat</span>
                         </>
                       )}
                     </Button>
 
-                    {/* Lock indicator for author feature */}
-                    {!hasAuthorSummarySubscription && !featureLoading && (
-                      <PremiumFeatureLock
-                        feature="aiAuthorSummary"
-                        requiredTier="basic"
-                        hasAiCredits={userHasAiCredits}
-                      />
-                    )}
+                    {/* Lock indicator for author feature - REMOVE */}
+                    {(!hasAuthorSummarySubscription ||
+                      (hasAuthorSummarySubscription && !userHasAiCredits)) &&
+                      !isGeneratingAuthorSummary && (
+                        <span>{/* Lock removed */}</span>
+                      )}
                   </div>
 
                   <Button
@@ -1792,29 +1847,18 @@ export default function BookComponent({
               <Button
                 variant="outline"
                 size="sm"
-                className={`bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md relative overflow-hidden ${
-                  featureLoading || isGenerating
-                    ? "text-orange-400 opacity-80 cursor-wait"
-                    : !hasAuthorSummarySubscription
-                    ? "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
-                    : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-400"
-                }`}
-                // Disable the button during loading or generating
-                disabled={isGenerating || featureLoading}
+                className="bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
+                disabled={isGenerating}
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Only open the modal when not loading or generating
-                  if (!isGenerating && !featureLoading) {
-                    setSummaryModal(true);
-                  }
+                  handleFeatureAction(
+                    "aiCustomization",
+                    hasAiCustomizationSubscription,
+                    () => setSummaryModal(true),
+                    isGenerating
+                  );
                 }}
               >
-                {(featureLoading || isGenerating) && (
-                  <div className="absolute inset-0 overflow-hidden rounded-md">
-                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
-                  </div>
-                )}
-
                 {isGenerating ? (
                   <>
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
@@ -1822,26 +1866,16 @@ export default function BookComponent({
                   </>
                 ) : (
                   <>
-                    <Sparkles
-                      className={`h-3.5 w-3.5 mr-1.5 ${
-                        !hasAuthorSummarySubscription
-                          ? "text-orange-400/50"
-                          : "text-orange-400"
-                      }`}
-                    />
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
                     <span>Generovat shrnutí</span>
                   </>
                 )}
               </Button>
 
-              {/* Lock indicator ONLY if subscription is missing */}
-              {!hasAuthorSummarySubscription && !featureLoading && (
-                <PremiumFeatureLock
-                  feature="aiAuthorSummary"
-                  requiredTier="basic"
-                  hasAiCredits={userHasAiCredits}
-                />
-              )}
+              {/* Lock indicator for AI Summary - REMOVE */}
+              {(!hasAiCustomizationSubscription || // <-- Corrected check
+                (hasAiCustomizationSubscription && !userHasAiCredits)) && // <-- Corrected check
+                !isGenerating && <span>{/* Lock removed */}</span>}
             </div>
           </div>
         </div>
