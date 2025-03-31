@@ -219,16 +219,14 @@ export function SummaryPreferencesModal({
           </div>
 
           {/* Preview section */}
-          <div className="bg-blue-50/30 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-lg p-4 mb-6">
-            <div className="flex items-center text-blue-700 dark:text-blue-400 mb-2">
+          <div className="bg-blue-950/20 border border-blue-800/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center text-blue-400 mb-2">
               <BookText className="h-4 w-4 mr-2 text-blue-500" />
               <h4 className="font-medium text-sm">Náhled nastavení</h4>
             </div>
-            <p className="text-sm text-blue-800/80 dark:text-blue-300/80">
-              {getPreviewText()}
-            </p>
+            <p className="text-sm text-blue-300/80">{getPreviewText()}</p>
             {showLongWarning && (
-              <div className="mt-2 text-xs flex items-start gap-1.5 text-blue-600 dark:text-blue-400">
+              <div className="mt-2 text-xs flex items-start gap-1.5 text-blue-400">
                 <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                 <p>
                   Dlouhé shrnutí může být obsáhlejší, ale generování trvá déle a
