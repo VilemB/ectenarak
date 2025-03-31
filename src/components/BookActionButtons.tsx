@@ -92,9 +92,14 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md rounded-r-none border-r-0 px-2 sm:px-3 text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer ${
-              isValidating ? "relative overflow-hidden" : ""
-            }`}
+            className={`h-8 border-blue-800/60 transition-all duration-200 
+              ${
+                book.authorSummary
+                  ? "rounded-md rounded-r-none border-r-0"
+                  : "rounded-md"
+              } 
+              px-2 sm:px-3 text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer 
+              ${isValidating ? "relative overflow-hidden" : ""}`}
             disabled={isGeneratingAuthorSummary || isValidating}
             onClick={(e) => {
               e.preventDefault();
