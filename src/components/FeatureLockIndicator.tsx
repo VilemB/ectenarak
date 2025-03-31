@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useSubscriptionContext } from "@/contexts/SubscriptionContext";
 
 /**
  * An improved lock indicator for premium features with better visibility
@@ -27,6 +28,10 @@ export default function PremiumFeatureLock({
   placement?: { top?: string; right?: string; bottom?: string; left?: string };
   hasAiCredits: boolean;
 }) {
+  // Get validation state from subscription context
+  const { featureValidation } = useSubscriptionContext();
+  const isValidating = featureValidation.isValidating;
+
   // Define feature names for display
   const featureNames: Record<SubscriptionFeature, string> = {
     aiAuthorSummary: "AI shrnutí autora",
@@ -57,6 +62,11 @@ export default function PremiumFeatureLock({
 
   // If it's an AI feature and user still has credits, don't show the lock
   if (isAiFeature && hasAiCredits) {
+    return null;
+  }
+
+  // Don't show the lock during validation to prevent flickering
+  if (isValidating) {
     return null;
   }
 

@@ -18,6 +18,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export { AuthContext };
 
 // Mock function to simulate API calls
 const mockApiCall = <T,>(data: T, delay = 500): Promise<T> => {

@@ -4,9 +4,10 @@ import React from "react";
 import { Book } from "@/types";
 import { Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import PremiumFeatureLock from "./FeatureLockIndicator";
 import { ExportButton } from "./ExportButton";
+import { useSubscriptionContext } from "@/contexts/SubscriptionContext";
+import LoadingAnimation from "./LoadingAnimation";
 
 // Create a separate component for action buttons in the book header
 export default function BookActionButtons({
@@ -26,27 +27,16 @@ export default function BookActionButtons({
   handleGenerateSummary?: () => void;
   isGenerating?: boolean;
 }) {
-  const { canAccess, hasAiCredits, isFeatureLoading } = useFeatureAccess();
+  // Use the global subscription context for validation
+  const { featureValidation, canAccessFeature } = useSubscriptionContext();
+  const isValidating = featureValidation.isValidating;
+  // Keep only the export subscription check that's actually used in JSX
+  const hasExportSubscription = canAccessFeature("exportToPdf");
 
-  // Memoize subscription access checks for better performance
-  const hasAuthorSummarySubscription = React.useMemo(
-    () => canAccess("aiAuthorSummary"),
-    [canAccess]
-  );
-  const hasAiCustomizationSubscription = React.useMemo(
-    () => canAccess("aiCustomization"),
-    [canAccess]
-  );
-  const hasExportSubscription = React.useMemo(
-    () => canAccess("exportToPdf"),
-    [canAccess]
-  );
-
-  // Helper function for handling feature access
+  // Helper function for handling feature action
   const handleFeatureAction = React.useCallback(
     (
       feature: "aiAuthorSummary" | "aiCustomization" | "exportToPdf",
-      hasSubscription: boolean,
       action: () => void,
       isButtonGenerating: boolean,
       e?: React.MouseEvent<HTMLButtonElement> & { preventExport?: () => void }
@@ -59,9 +49,12 @@ export default function BookActionButtons({
         return;
       }
 
+      // Check subscription access using the global context
+      const hasAccess = canAccessFeature(feature);
+
       if (feature === "exportToPdf") {
         // For export feature, check subscription
-        if (hasSubscription) {
+        if (hasAccess) {
           // Execute the action (which is empty for export, handled by ExportButton)
           action();
         } else {
@@ -85,30 +78,8 @@ export default function BookActionButtons({
         action();
       }
     },
-    []
+    [canAccessFeature]
   );
-
-  // Batch validate all features when component mounts - more efficient
-  const validateAllFeatures = React.useCallback(() => {
-    // Pre-validate all features at once and store results
-    const authorSummaryAccess = canAccess("aiAuthorSummary");
-    const aiCustomizationAccess = canAccess("aiCustomization");
-    const exportAccess = canAccess("exportToPdf");
-    const aiCreditsAvailable = hasAiCredits();
-
-    // No need to re-check these for each button
-    return {
-      authorSummary: authorSummaryAccess,
-      aiCustomization: aiCustomizationAccess,
-      export: exportAccess,
-      aiCredits: aiCreditsAvailable,
-    };
-  }, [canAccess, hasAiCredits]);
-
-  // Run validation when component mounts
-  React.useEffect(() => {
-    validateAllFeatures();
-  }, [validateAllFeatures]);
 
   // Button should VISUALLY look disabled only if NO subscription access (show lock)
   // If user has subscription but no credits, button looks enabled but won't work
@@ -121,15 +92,16 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 border-blue-800/60 transition-all duration-200 rounded-md rounded-r-none border-r-0 px-2 sm:px-3 text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
-            disabled={isGeneratingAuthorSummary}
+            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md rounded-r-none border-r-0 px-2 sm:px-3 text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer ${
+              isValidating ? "relative overflow-hidden" : ""
+            }`}
+            disabled={isGeneratingAuthorSummary || isValidating}
             onClick={(e) => {
               e.preventDefault();
               handleFeatureAction(
                 "aiAuthorSummary",
-                hasAuthorSummarySubscription,
                 handleAuthorSummaryModal,
-                isGeneratingAuthorSummary,
+                isGeneratingAuthorSummary || isValidating,
                 e
               );
             }}
@@ -141,6 +113,9 @@ export default function BookActionButtons({
             )}
             <span className="hidden sm:inline">O autorovi</span>
           </Button>
+
+          {/* Add loading animation when validating */}
+          {isValidating && <LoadingAnimation />}
         </div>
 
         {/* Delete author summary button - only show if we have an author summary */}
@@ -163,19 +138,20 @@ export default function BookActionButtons({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 border-blue-800/60 transition-all duration-200 rounded-md px-2 sm:px-3 text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer"
-            disabled={isGenerating}
+            className={`h-8 border-blue-800/60 transition-all duration-200 rounded-md px-2 sm:px-3 text-orange-400 hover:bg-blue-950/80 hover:text-orange-300 cursor-pointer ${
+              isValidating ? "relative overflow-hidden" : ""
+            }`}
+            disabled={isGenerating || isValidating}
             onClick={(e) => {
               e.preventDefault();
               handleFeatureAction(
                 "aiCustomization",
-                hasAiCustomizationSubscription,
                 () => {
                   if (handleGenerateSummary) {
                     handleGenerateSummary();
                   }
                 },
-                isGenerating || false,
+                isGenerating || isValidating,
                 e
               );
             }}
@@ -187,6 +163,9 @@ export default function BookActionButtons({
             )}
             <span className="hidden sm:inline">AI shrnutí</span>
           </Button>
+
+          {/* Add loading animation when validating */}
+          {isValidating && <LoadingAnimation />}
         </div>
       )}
 
@@ -197,7 +176,7 @@ export default function BookActionButtons({
             book={book}
             notes={book.notes}
             buttonProps={{
-              disabled: isFeatureLoading(),
+              disabled: isValidating,
               variant: "outline",
               size: "sm",
               onClick: (e) => {
@@ -219,13 +198,12 @@ export default function BookActionButtons({
 
                 handleFeatureAction(
                   "exportToPdf",
-                  hasExportSubscription,
                   () => {}, // ExportButton has its own functionality when clicked
-                  isFeatureLoading(),
+                  isValidating,
                   e
                 );
               },
-              className: isFeatureLoading()
+              className: isValidating
                 ? "h-8 text-blue-300 opacity-80 border-blue-800/60 cursor-wait relative overflow-hidden rounded-md"
                 : !hasExportSubscription
                 ? "h-8 text-blue-300 border-blue-800/60 hover:bg-blue-950/80 hover:text-blue-200 cursor-pointer rounded-md"
@@ -233,14 +211,11 @@ export default function BookActionButtons({
             }}
           />
 
-          {isFeatureLoading() && (
-            <div className="absolute inset-0 overflow-hidden rounded-md z-10 pointer-events-none">
-              <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-md"></div>
-            </div>
-          )}
+          {/* Replace the inline animation with the LoadingAnimation component */}
+          {isValidating && <LoadingAnimation />}
 
           {/* Lock indicator for export feature */}
-          {!hasExportSubscription && !isFeatureLoading() && (
+          {!hasExportSubscription && !isValidating && (
             <PremiumFeatureLock
               feature="exportToPdf"
               requiredTier="basic"
@@ -250,15 +225,15 @@ export default function BookActionButtons({
         </div>
       )}
 
-      {/* Delete book button - improved for small screens */}
+      {/* Delete Book Button */}
       <Button
         variant="outline"
         size="sm"
-        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 px-2 cursor-pointer rounded-md"
+        className="h-8 text-red-400 border-blue-800/60 hover:bg-blue-950/80 hover:text-red-300 rounded-md transition-all duration-200 px-2"
         onClick={handleBookDelete}
       >
         <Trash2 className="h-3.5 w-3.5" />
-        <span className="sr-only">Smazat</span>
+        <span className="sr-only">Smazat knihu</span>
       </Button>
     </div>
   );

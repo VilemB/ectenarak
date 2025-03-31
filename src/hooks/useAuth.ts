@@ -13,10 +13,6 @@ export function useAuth() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Log session status for debugging
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-
     // Update loading state based on session status
     if (status === "loading") {
       setLoading(true);
@@ -30,17 +26,10 @@ export function useAuth() {
 
   const user = session?.user;
 
-  // Add debugging
-  console.log("useAuth hook called");
-  console.log("Session status:", status);
-  console.log("Session data:", session);
-  console.log("User:", user);
-
   // Create a wrapper for signOut that can handle parameters or no parameters
   const handleSignOut = async (
     options?: Parameters<typeof nextAuthSignOut>[0]
   ) => {
-    console.log("SignOut called with options:", options);
     // Set the callbackUrl to the home page (landing page) instead of the login page
     return await nextAuthSignOut({
       ...options,
@@ -56,7 +45,6 @@ export function useAuth() {
     signIn,
     signOut: handleSignOut,
     isAuthenticated: !!user,
-    // Add session status for debugging
     sessionStatus: status,
   };
 }

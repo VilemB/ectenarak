@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Book, Note } from "@/types";
 import { Download, FileText, FileIcon, BookText } from "lucide-react";
 import jsPDF from "jspdf";
 import { Modal } from "@/components/ui/modal";
 import { ButtonProps } from "@/components/ui/button";
+import { useSubscriptionContext } from "@/contexts/SubscriptionContext";
+import LoadingAnimation from "./LoadingAnimation";
 
 // Book export props
 interface BookExportProps {
@@ -49,13 +51,13 @@ function encodePdfCzechText(doc: jsPDF, text: string): string {
   return encodedText;
 }
 
-// Define a type for custom events that might not be full React.MouseEvents
+// Create a type for custom events that might not be full React.MouseEvents
 type ExportButtonEvent =
   | React.MouseEvent<HTMLButtonElement, MouseEvent>
   | MouseEvent
   | { stopPropagation?: () => void };
 
-// Define a type for the modified event with preventExport method
+// Define the expected props for the ModifiedEvent
 type ModifiedEvent = ExportButtonEvent & {
   preventExport: () => void;
 };
@@ -69,6 +71,18 @@ export function ExportButton(props: ExportButtonProps) {
     "TXT" | "PDF" | "Maturita TXT" | "Maturita PDF" | null
   >(null);
   const [exportSuccess, setExportSuccess] = useState<boolean | null>(null);
+
+  // Get subscription validation state from context
+  const { featureValidation, canAccessFeature } = useSubscriptionContext();
+  const canExport = canAccessFeature("exportToPdf");
+  const isValidating = featureValidation.isValidating;
+
+  useEffect(() => {
+    if (!canExport && isExportModalOpen) {
+      // Close modal if user loses access while modal is open
+      setIsExportModalOpen(false);
+    }
+  }, [canExport, isExportModalOpen]);
 
   // Check if it's a single note export
   if (isSingleNoteProps(props)) {
@@ -110,10 +124,17 @@ export function ExportButton(props: ExportButtonProps) {
   // Update the button rendering to handle clicks properly regardless of disabled state
   const buttonPropsWithHandlers = {
     ...buttonProps,
+    // Add disabled state based on validation
+    disabled: buttonProps?.disabled || isValidating,
     onClick: (e: ExportButtonEvent) => {
       // Safely handle event propagation
       if (e && typeof e.stopPropagation === "function") {
         e.stopPropagation();
+      }
+
+      // If validation is still in progress, do nothing
+      if (isValidating) {
+        return;
       }
 
       // Check if an external onClick handler exists and call it
@@ -149,7 +170,9 @@ export function ExportButton(props: ExportButtonProps) {
       // Normal export behavior - open the modal
       setIsExportModalOpen(true);
     },
-    className: `${buttonProps?.className || ""} rounded-md`,
+    // Add a class based on validation state
+    className: `${buttonProps?.className || ""} rounded-md 
+                ${isValidating ? "opacity-70 relative overflow-hidden" : ""}`,
   };
 
   // Check if the book has any notes (regular or AI summary)
@@ -992,12 +1015,20 @@ export function ExportButton(props: ExportButtonProps) {
   };
 
   return (
-    <div>
+    <>
       <Button variant="outline" size="sm" {...buttonPropsWithHandlers}>
-        <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+        {isExporting ? (
+          <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin sm:mr-1.5"></div>
+        ) : (
+          <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+        )}
         <span className="hidden sm:inline">Export</span>
       </Button>
 
+      {/* Add loading animation during validation */}
+      {isValidating && <LoadingAnimation />}
+
+      {/* Export modal */}
       <Modal
         isOpen={isExportModalOpen}
         onClose={() => !isExporting && setIsExportModalOpen(false)}
@@ -1246,6 +1277,6 @@ export function ExportButton(props: ExportButtonProps) {
           </div>
         </div>
       </Modal>
-    </div>
+    </>
   );
 }
