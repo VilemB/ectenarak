@@ -183,35 +183,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const useAiCredit = async (): Promise<boolean> => {
     if (!user) throw new Error("User not authenticated");
-    if (user.subscription.aiCreditsRemaining <= 0) return false;
 
     try {
-      console.log("Decreasing AI credits...");
-      console.log("Current credits:", user.subscription.aiCreditsRemaining);
+      const response = await fetch("/api/subscription/use-credit", {
+        method: "PUT",
+      });
 
-      // In a real app, this would be an API call to use an AI credit
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Failed to use AI credit:", data.error);
+        return false;
+      }
+
+      const data = await response.json();
+
+      // Update the user state with new credit count
       const updatedUser = {
         ...user,
         subscription: {
           ...user.subscription,
-          aiCreditsRemaining: user.subscription.aiCreditsRemaining - 1,
+          aiCreditsRemaining: data.creditsRemaining,
         },
         updatedAt: new Date(),
       };
 
-      // Update the user state
       setUser(updatedUser);
-
-      // Save to localStorage (important for the change to persist)
-      console.log("Saving updated user to localStorage");
       localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      console.log("AI credits decreased successfully");
-      console.log("New credits:", updatedUser.subscription.aiCreditsRemaining);
 
       return true;
     } catch (error) {
-      console.error("Use AI credit error:", error);
+      console.error("Error using AI credit:", error);
       return false;
     }
   };

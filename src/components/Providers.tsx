@@ -7,6 +7,7 @@ import { SessionProvider } from "@/components/SessionProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { Toaster } from "sonner";
+import SubscriptionModal from "@/components/SubscriptionModal";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <SummaryPreferencesProvider>
               {children}
               <Toaster position="top-center" />
+              <SubscriptionModal />
             </SummaryPreferencesProvider>
           </SubscriptionProvider>
         </ThemeProvider>

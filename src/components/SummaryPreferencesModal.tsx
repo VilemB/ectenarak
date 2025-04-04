@@ -122,19 +122,20 @@ export function SummaryPreferencesModal({
     setShowLongWarning(preferences.length === "long");
   }, [preferences.length]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with preferences:", preferences);
 
     try {
-      onGenerate(preferences).catch((error) => {
-        console.error("Error in onGenerate promise:", error);
-      });
+      // Close the modal before generating to prevent stale state
+      onClose();
+      // Generate the summary
+      await onGenerate(preferences);
     } catch (error) {
-      console.error("Error calling onGenerate:", error);
+      console.error("Error generating summary:", error);
+      // Reopen the modal if there was an error
+      isOpen = true;
     }
-
-    console.log("onGenerate function called");
   };
 
   const saveAsDefault = () => {

@@ -111,22 +111,20 @@ export function AuthorSummaryPreferencesModal({
     setShowLongWarning(preferences.length === "long");
   }, [preferences.length]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with preferences:", preferences);
-    console.log("Is onGenerate defined?", typeof onGenerate === "function");
-    console.log("Starting author summary generation...");
+    console.log("Generating author summary with preferences:", preferences);
 
-    // Call the onGenerate function and catch any errors
     try {
-      onGenerate(preferences).catch((error) => {
-        console.error("Error in onGenerate promise:", error);
-      });
+      // Close the modal before generating to prevent stale state
+      onClose();
+      // Generate the summary
+      await onGenerate(preferences);
     } catch (error) {
-      console.error("Error calling onGenerate:", error);
+      console.error("Error generating author summary:", error);
+      // Reopen the modal if there was an error
+      isOpen = true;
     }
-
-    console.log("onGenerate function called");
   };
 
   const resetToDefaults = () => {
@@ -682,27 +680,25 @@ export function AuthorSummaryPreferencesModal({
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-4 pt-4 border-t border-border/50 mt-6">
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
+          {/* Form actions at bottom */}
+          <div className="mt-8 mb-2 flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-blue-800/30">
+            <div className="relative">
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
-                className="text-muted-foreground hover:text-muted-foreground/80"
+                variant="ghost"
                 onClick={resetToDefaults}
+                className="text-xs h-9 text-zinc-400"
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                <span className="hidden sm:inline">Obnovit výchozí</span>
-                <span className="sm:hidden">Obnovit</span>
+                <span>Obnovit výchozí</span>
               </Button>
               <AnimatePresence>
                 {showSavedMessage && (
                   <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="text-xs text-green-500"
+                    className="absolute left-0 -bottom-6 text-xs text-green-500"
                   >
                     Nastavení obnoveno
                   </motion.span>
@@ -714,7 +710,7 @@ export function AuthorSummaryPreferencesModal({
             <Button
               type="submit"
               disabled={isGenerating}
-              onClick={handleSubmit}
+              onClick={(e) => handleSubmit(e)}
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
             >
               {isGenerating ? (

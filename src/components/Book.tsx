@@ -15,8 +15,13 @@ import {
   User,
   Calendar,
   Copy,
+  Bookmark,
+  ChevronRight,
+  BookOpen,
+  Edit3,
+  MessageSquare,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
@@ -36,7 +41,7 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSubscriptionContext } from "@/app/page";
-import { AiCreditsExhaustedPrompt } from "./FeatureGate";
+import AiCreditsExhaustedPrompt from "./AiCreditsExhaustedPrompt";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -601,8 +606,8 @@ export default function BookComponent({
   onDelete,
 }: BookProps) {
   // Only import what we actually use from useSubscription
-  const { refreshSubscription } = useSubscription();
-  const { refreshSubscriptionData } = useSubscriptionContext();
+  // const { refreshSubscription } = useSubscription();
+  // const { refreshSubscriptionData } = useSubscriptionContext();
   // Add useFeatureAccess hook
   const { canAccess, hasAiCredits } = useFeatureAccess();
 
@@ -828,17 +833,6 @@ export default function BookComponent({
     },
     []
   );
-
-  // Function to refresh all subscription data
-  const refreshAllSubscriptionData = useCallback(async () => {
-    try {
-      // Await both promises to ensure they complete
-      await refreshSubscription();
-      await refreshSubscriptionData();
-    } catch (error) {
-      console.error("Error refreshing subscription data:", error);
-    }
-  }, [refreshSubscription, refreshSubscriptionData]);
 
   // Add a helper function to scroll to newly added notes
   const scrollToNewlyAddedNote = useCallback((noteId: string) => {
@@ -1144,42 +1138,36 @@ export default function BookComponent({
     }
   };
 
-  const handleGenerateSummary = async (
-    preferencesToUse: SummaryPreferences
-  ) => {
-    // Check if user has AI credits
-    const userHasCredits = hasAiCredits();
+  // Function to update book in local state and storage
+  const handleUpdateBook = (updatedBook: Book) => {
+    // Update the book in state
+    setBook(updatedBook);
 
-    // If no credits, show the subscription modal but don't show toast message
-    if (!userHasCredits) {
-      window.dispatchEvent(
-        new CustomEvent("show-subscription-modal", {
-          detail: {
-            feature: "aiCustomization",
-            needsCredits: true,
-            creditsOnly: !canAccess("aiCustomization"),
-          },
-        })
-      );
-
-      // Close the preferences modal
-      setSummaryModal(false);
-      return;
-    }
-
-    setIsGenerating(true);
-
+    // Save to localStorage if needed
     try {
-      // Call useAiCredit first to deduct a credit
-      const creditResult = await useAiCreditRef.current();
+      const books = JSON.parse(localStorage.getItem("books") || "[]");
+      const updatedBooks = books.map((b: Book) =>
+        b.id === updatedBook.id ? updatedBook : b
+      );
+      localStorage.setItem("books", JSON.stringify(updatedBooks));
+    } catch (error) {
+      console.error("Error saving book to localStorage:", error);
+    }
+  };
 
-      // If credit usage failed, show error and return
-      if (!creditResult) {
-        setShowCreditExhaustedModal(true);
-        setSummaryModal(false);
-        setIsGenerating(false);
-        return;
-      }
+  // Call actual API to generate the book summary
+  const callBookSummaryApi = async (
+    bookId: string,
+    notes: Note[],
+    preferences: SummaryPreferences
+  ) => {
+    try {
+      console.log("Making API request to /api/generate-summary with data:", {
+        bookId,
+        notesCount: notes.length,
+      });
+
+      // Remove the environment variable check that could be blocking the API call
 
       const response = await fetch("/api/generate-summary", {
         method: "POST",
@@ -1187,121 +1175,162 @@ export default function BookComponent({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          bookTitle: book.title,
-          bookAuthor: book.author,
-          bookId: book.id,
-          preferences: preferencesToUse,
+          bookId,
+          notes,
+          preferences,
           clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
         }),
       });
 
-      // Handle no credits response
-      if (response.status === 403) {
-        const errorData = await response.json();
-        if (errorData.creditsRequired) {
-          setShowCreditExhaustedModal(true);
-          setSummaryModal(false);
-          return;
-        }
-      }
-
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to generate summary");
+        // Handle no credits response
+        if (response.status === 403) {
+          const errorData = await response.json();
+          if (errorData.creditsRequired) {
+            setShowCreditExhaustedModal(true);
+            return null;
+          }
+        }
+
+        // Check for API key issues
+        if (response.status === 500) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("API error:", errorData);
+
+          // Check for OpenAI API key issue
+          if (errorData.error && errorData.error.includes("API key")) {
+            toast.error(
+              "Chyba API: Služba OpenAI není správně nakonfigurována. Zkontrolujte váš API klíč v souboru .env",
+              { duration: 6000 }
+            );
+            return null;
+          }
+        }
+
+        throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
-
-      // Create a note object with only properties defined in the Note type
-      const newNote: Note = {
-        id: `ai-summary-${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(2, 11)}`,
-        content: data.summary,
-        createdAt: new Date().toISOString(),
-        isAISummary: true,
-      };
-
-      // Handle notes array safely with proper type checking
-      setBook((prev) => ({
-        ...prev,
-        notes: Array.isArray(prev.notes) ? [...prev.notes, newNote] : [newNote],
-      }));
-
-      // Add the note to the database
-      try {
-        const noteResponse = await fetch(`/api/books/${book.id}/notes`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: data.summary,
-            isAISummary: true,
-          }),
-        });
-
-        if (!noteResponse.ok) {
-          console.error("Failed to save the generated summary to database");
-        }
-      } catch (noteError) {
-        console.error("Error saving summary to database:", noteError);
-      }
-
-      setSummaryModal(false);
-      toast.success("Shrnutí bylo úspěšně vygenerováno!");
-
-      // Refresh subscription data to update UI with new credit count
-      await refreshAllSubscriptionData();
+      return data;
     } catch (error) {
       console.error("Error generating summary:", error);
-      showErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Nepodařilo se vygenerovat shrnutí. Zkuste to prosím znovu."
-      );
-    } finally {
-      setIsGenerating(false);
+
+      // Check for network issues
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        toast.error(
+          "Síťová chyba: Nelze se připojit k API. Zkontrolujte své připojení k internetu."
+        );
+      } else {
+        toast.error("Nastala chyba při generování shrnutí. Zkuste to znovu.");
+      }
+
+      return null;
+    }
+  };
+
+  // Call actual API to generate the author summary
+  const callAuthorSummaryApi = async (
+    authorData: string,
+    bookId: string,
+    preferences: AuthorSummaryPreferences
+  ) => {
+    try {
+      console.log("Making API request to /api/author-summary with data:", {
+        author: authorData,
+        bookId: bookId,
+      });
+
+      // Remove the environment variable check that could be blocking the API call
+
+      const response = await fetch("/api/author-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          author: authorData,
+          bookId: bookId,
+          preferences: preferences,
+          clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
+        }),
+      });
+
+      if (!response.ok) {
+        // Handle no credits response
+        if (response.status === 403) {
+          const errorData = await response.json();
+          if (errorData.creditsRequired) {
+            setShowCreditExhaustedModal(true);
+            return null;
+          }
+        }
+
+        // Check for API key issues
+        if (response.status === 500) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("API error:", errorData);
+
+          // Check for OpenAI API key issue
+          if (errorData.error && errorData.error.includes("API key")) {
+            toast.error(
+              "Chyba API: Služba OpenAI není správně nakonfigurována. Zkontrolujte váš API klíč v souboru .env",
+              { duration: 6000 }
+            );
+            return null;
+          }
+        }
+
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error generating author summary:", error);
+
+      // Check for network issues
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        toast.error(
+          "Síťová chyba: Nelze se připojit k API. Zkontrolujte své připojení k internetu."
+        );
+      } else {
+        toast.error("Nastala chyba při generování shrnutí. Zkuste to znovu.");
+      }
+
+      return null;
     }
   };
 
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
-    // Check if user has AI credits
-    const userHasCredits = hasAiCredits();
-
-    // If no credits, show the subscription modal but don't show toast message
-    if (!userHasCredits) {
-      window.dispatchEvent(
-        new CustomEvent("show-subscription-modal", {
-          detail: {
-            feature: "aiAuthorSummary",
-            needsCredits: true,
-            creditsOnly: !canAccess("aiAuthorSummary"),
-          },
-        })
-      );
-
-      // Close the preferences modal
-      setAuthorSummaryModal(false);
-      return;
-    }
-
-    setIsGeneratingAuthorSummary(true);
-
     try {
-      // Call useAiCredit to deduct a credit
-      const creditResult = await useAiCreditRef.current();
+      setIsGeneratingAuthorSummary(true);
 
-      // If credit usage failed, show error and return
-      if (!creditResult) {
-        setShowCreditExhaustedModal(true);
-        setAuthorSummaryModal(false);
-        setIsGeneratingAuthorSummary(false);
+      // Check if user has AI credits
+      const { user } = authContext;
+      if (!user?.subscription) {
+        window.dispatchEvent(
+          new CustomEvent("show-subscription-modal", {
+            detail: {
+              feature: "aiAuthorSummary",
+              needsCredits: true,
+              creditsOnly: true,
+            },
+          })
+        );
         return;
       }
 
+      // Try to use a credit
+      const creditResult = await useAiCreditRef.current();
+      if (!creditResult) {
+        setShowCreditExhaustedModal(true);
+        setAuthorSummaryModal(false);
+        return;
+      }
+
+      // Call the API to generate the author summary
       const response = await fetch("/api/author-summary", {
         method: "POST",
         headers: {
@@ -1311,135 +1340,126 @@ export default function BookComponent({
           author: book.author,
           bookId: book.id,
           preferences: preferencesToUse,
-          clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
+          clientSideDeduction: true,
         }),
       });
 
-      // Handle no credits response
-      if (response.status === 403) {
-        const errorData = await response.json();
-        if (errorData.creditsRequired) {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Received non-JSON response from server");
+      }
+
+      if (!response.ok) {
+        if (response.status === 403) {
           setShowCreditExhaustedModal(true);
           setAuthorSummaryModal(false);
           return;
         }
-      }
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to generate author summary");
+        throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
+      if (!data || !data.summary) {
+        throw new Error("Invalid response data");
+      }
 
-      // Update the book with the author summary and authorId
-      setBook((prev) => ({
-        ...prev,
+      // Update book with the new author summary
+      const updatedBook = {
+        ...book,
         authorSummary: data.summary,
-        authorId: data.authorId || prev.authorId,
-      }));
+        updatedAt: new Date().toISOString(),
+      };
+      handleUpdateBook(updatedBook);
 
-      // Close the preferences modal
+      toast.success("Informace o autorovi byly úspěšně vygenerovány!");
       setAuthorSummaryModal(false);
-
-      // Show success message
-      toast.success("Informace o autorovi byla úspěšně vygenerována!");
-
-      // Refresh subscription data to update credit count
-      await refreshAllSubscriptionData();
+      setIsAuthorInfoVisible(true);
     } catch (error) {
-      console.error("Error generating author summary:", error);
-      showErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Nepodařilo se vygenerovat informace o autorovi. Zkuste to prosím znovu."
-      );
+      console.error("Error in handleGenerateAuthorSummary:", error);
+      toast.error("Nastala chyba při generování informací o autorovi");
     } finally {
       setIsGeneratingAuthorSummary(false);
     }
   };
 
-  /**
-   * Delete the author summary for the current book
-   */
-  const handleDeleteAuthorSummary = async () => {
-    // Open the confirmation dialog
-    setDeleteModal({ isOpen: true, type: "authorSummary", isLoading: false });
-  };
-
-  /**
-   * Handle the confirmation of author summary deletion
-   */
-  const handleConfirmDeleteAuthorSummary = async () => {
-    console.log("=== HANDLE CONFIRM DELETE AUTHOR SUMMARY CALLED ===");
-
-    if (!book.id) {
-      showErrorMessage("Nelze smazat informace o autorovi pro knihu bez ID");
-      setDeleteModal({
-        isOpen: false,
-        type: "authorSummary",
-        isLoading: false,
-      });
-      return;
-    }
-
-    if (!book.authorSummary) {
-      showErrorMessage("Kniha nemá informace o autorovi ke smazání");
-      setDeleteModal({
-        isOpen: false,
-        type: "authorSummary",
-        isLoading: false,
-      });
-      return;
-    }
-
-    // Set loading state
-    setDeleteModal((prev) => ({ ...prev, isLoading: true }));
-
+  const handleGenerateSummary = async (preferences: SummaryPreferences) => {
     try {
-      const response = await fetch(`/api/books/${book.id}/author-summary`, {
-        method: "DELETE",
-      });
+      setIsGenerating(true);
 
-      if (!response.ok) {
-        // Check if response is JSON before trying to parse it
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete author summary");
-        } else {
-          // If not JSON, use the status text
-          throw new Error(`Chyba: ${response.status} ${response.statusText}`);
-        }
+      // Check if user has AI credits
+      const { user } = authContext;
+      if (!user?.subscription) {
+        window.dispatchEvent(
+          new CustomEvent("show-subscription-modal", {
+            detail: {
+              feature: "aiCustomization",
+              needsCredits: true,
+              creditsOnly: true,
+            },
+          })
+        );
+        return;
       }
 
-      // Don't try to parse the response if we're not using the data
-      // await response.json(); // Remove this line
+      // Try to use a credit
+      const creditResult = await useAiCreditRef.current();
+      if (!creditResult) {
+        setShowCreditExhaustedModal(true);
+        setSummaryModal(false);
+        return;
+      }
 
-      // Update the book state
-      setBook((prev) => ({
-        ...prev,
-        authorSummary: undefined,
-      }));
-
-      // Reset the author info visibility
-      setIsAuthorInfoVisible(false);
-
-      toast.success("Shrnutí autora bylo úspěšně smazáno");
-    } catch (error: unknown) {
-      console.error("Error deleting author summary:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Nepodařilo se smazat shrnutí autora"
-      );
-    } finally {
-      // Reset the delete modal state
-      setDeleteModal({
-        isOpen: false,
-        type: "authorSummary",
-        isLoading: false,
+      // Call the API to generate the summary
+      const response = await fetch("/api/generate-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookId: book.id,
+          notes,
+          preferences,
+          clientSideDeduction: true,
+        }),
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Received non-JSON response from server");
+      }
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          setShowCreditExhaustedModal(true);
+          setSummaryModal(false);
+          return;
+        }
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data || !data.summary) {
+        throw new Error("Invalid response data");
+      }
+
+      // Add the summary note to the book
+      const newNote: Note = {
+        id: data.noteId || `ai-summary-${Date.now()}`,
+        content: data.summary,
+        createdAt: new Date().toISOString(),
+        isAISummary: true,
+      };
+
+      setNotes((prevNotes) => [...prevNotes, newNote]);
+      toast.success("Shrnutí knihy bylo úspěšně vygenerováno!");
+      setSummaryModal(false);
+      setActiveNoteFilter("ai");
+      scrollToNewlyAddedNote(newNote.id);
+    } catch (error) {
+      console.error("Error in handleGenerateSummary:", error);
+      toast.error("Nastala chyba při generování shrnutí knihy");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -1566,6 +1586,52 @@ export default function BookComponent({
       validateFeatureAccess(book.id);
     }
   }, [book.id, validateFeatureAccess]);
+
+  // Handle deleting the author summary
+  const handleDeleteAuthorSummary = () => {
+    // Open the delete confirmation modal
+    setDeleteModal({
+      isOpen: true,
+      type: "authorSummary",
+      isLoading: false,
+    });
+  };
+
+  // Handle confirming the deletion of the author summary
+  const handleConfirmDeleteAuthorSummary = async () => {
+    try {
+      // Set loading state in the modal
+      setDeleteModal((prev) => ({
+        ...prev,
+        isLoading: true,
+      }));
+
+      // Update the book state
+      setBook((prev) => ({
+        ...prev,
+        authorSummary: undefined,
+      }));
+
+      // Reset the author info visibility
+      setIsAuthorInfoVisible(false);
+
+      toast.success("Shrnutí autora bylo úspěšně smazáno");
+    } catch (error: unknown) {
+      console.error("Error deleting author summary:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se smazat shrnutí autora"
+      );
+    } finally {
+      // Reset the delete modal state
+      setDeleteModal({
+        isOpen: false,
+        type: "authorSummary",
+        isLoading: false,
+      });
+    }
+  };
 
   // Main rendering with the optimized structure
   return (
@@ -2090,12 +2156,16 @@ export default function BookComponent({
         authorSummaryExists={!!book.authorSummary}
       />
 
+      {/* AI Credits Exhausted Modal */}
       <Modal
         isOpen={showCreditExhaustedModal}
         onClose={() => setShowCreditExhaustedModal(false)}
         title="AI Kredity"
       >
-        <AiCreditsExhaustedPrompt />
+        <AiCreditsExhaustedPrompt
+          onClose={() => setShowCreditExhaustedModal(false)}
+          feature="aiSummary"
+        />
       </Modal>
     </div>
   );
