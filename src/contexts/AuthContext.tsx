@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, SubscriptionTier, UserSubscription } from "@/types/user";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AuthContextType {
   user: User | null;
@@ -35,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const queryClient = useQueryClient();
 
   // Check for existing session on mount
   useEffect(() => {
@@ -186,30 +188,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) throw new Error("User not authenticated");
 
     try {
+      // First try to use the credit
       const response = await fetch("/api/subscription/use-credit", {
         method: "PUT",
       });
 
+      // Get the response data
+      const creditData = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        console.error("Failed to use AI credit:", data.error);
+        console.error("Failed to use AI credit:", creditData.error);
         return false;
       }
 
-      const data = await response.json();
+      // Update the user state with the latest data
+      if (creditData.success) {
+        const updatedUser = {
+          ...user,
+          subscription: {
+            ...user.subscription,
+            aiCreditsRemaining: creditData.creditsRemaining,
+            aiCreditsTotal: creditData.creditsTotal,
+          },
+          updatedAt: new Date(),
+        };
 
-      // Update the user state with new credit count
-      const updatedUser = {
-        ...user,
-        subscription: {
-          ...user.subscription,
-          aiCreditsRemaining: data.creditsRemaining,
-        },
-        updatedAt: new Date(),
-      };
+        // Update state and localStorage
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+        // Invalidate the credits query to trigger a refetch
+        queryClient.invalidateQueries({ queryKey: ["credits"] });
+      }
 
       return true;
     } catch (error) {

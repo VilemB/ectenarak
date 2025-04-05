@@ -1,11 +1,22 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 interface AiCreditsDisplayProps {
   aiCreditsRemaining: number;
   aiCreditsTotal: number;
   showLowCreditsWarning?: boolean;
   className?: string;
+}
+
+async function fetchCredits() {
+  const response = await fetch("/api/subscription");
+  if (!response.ok) {
+    throw new Error("Failed to fetch credits");
+  }
+  const data = await response.json();
+  return data.subscription;
 }
 
 export default function AiCreditsDisplay({
@@ -15,50 +26,36 @@ export default function AiCreditsDisplay({
   className = "",
 }: AiCreditsDisplayProps) {
   const { user } = useAuth();
-  const [credits, setCredits] = React.useState({
-    remaining: initialCreditsRemaining,
-    total: initialCreditsTotal,
+
+  // Use React Query to manage the credits state
+  const { data: subscription, isLoading } = useQuery({
+    queryKey: ["credits"],
+    queryFn: fetchCredits,
+    initialData: user?.subscription || {
+      aiCreditsRemaining: initialCreditsRemaining,
+      aiCreditsTotal: initialCreditsTotal,
+    },
+    refetchOnWindowFocus: true,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
-  // Update credits when props change
-  useEffect(() => {
-    setCredits({
-      remaining: initialCreditsRemaining,
-      total: initialCreditsTotal,
-    });
-  }, [initialCreditsRemaining, initialCreditsTotal]);
-
-  // Listen for refresh-credits event
-  useEffect(() => {
-    const handleRefreshCredits = () => {
-      if (user?.subscription) {
-        setCredits({
-          remaining: user.subscription.aiCreditsRemaining,
-          total: user.subscription.aiCreditsTotal,
-        });
-      }
-    };
-
-    window.addEventListener("refresh-credits", handleRefreshCredits);
-    return () => {
-      window.removeEventListener("refresh-credits", handleRefreshCredits);
-    };
-  }, [user]);
-
   // Calculate if credits are low (25% or less remaining)
-  const isLowCredits = credits.remaining <= Math.ceil(credits.total * 0.25);
+  const isLowCredits =
+    subscription.aiCreditsRemaining <=
+    Math.ceil(subscription.aiCreditsTotal * 0.25);
   // Check if credits are completely depleted
-  const isZeroCredits = credits.remaining === 0;
+  const isZeroCredits = subscription.aiCreditsRemaining === 0;
 
   // Calculate percentage for progress bar
-  const percentRemaining = (credits.remaining / credits.total) * 100;
+  const percentRemaining =
+    (subscription.aiCreditsRemaining / subscription.aiCreditsTotal) * 100;
 
   return (
     <div className={`ai-credits-display ${className}`}>
       <div className="flex items-center">
         <div className="flex-1">
-          <div className="h-2.5 bg-[#0f1729] rounded-full overflow-hidden">
-            <div
+          <div className="h-2.5 bg-[#0f1729] rounded-full overflow-hidden relative">
+            <motion.div
               className={`h-full transition-all duration-700 ease-out ${
                 isZeroCredits
                   ? "bg-red-600/70"
@@ -66,31 +63,79 @@ export default function AiCreditsDisplay({
                   ? "bg-gradient-to-r from-amber-600/70 to-amber-500"
                   : "bg-gradient-to-r from-amber-600/70 to-amber-400"
               }`}
-              style={{
-                width: `${percentRemaining}%`,
-              }}
-            ></div>
+              initial={{ width: "0%" }}
+              animate={{ width: `${percentRemaining}%` }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            {isLoading && (
+              <motion.div
+                className="absolute inset-0 bg-white/10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.3, 0.1, 0.3] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            )}
           </div>
         </div>
         <div className="ml-4 flex items-center">
-          <span
-            className={`font-medium text-sm ${
-              isZeroCredits
-                ? "text-red-400"
-                : isLowCredits
-                ? "text-amber-400"
-                : "text-amber-500"
-            }`}
-          >
-            {credits.remaining}
-          </span>
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={subscription.aiCreditsRemaining}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+              className={`font-medium text-sm ${
+                isZeroCredits
+                  ? "text-red-400"
+                  : isLowCredits
+                  ? "text-amber-400"
+                  : "text-amber-500"
+              }`}
+            >
+              {subscription.aiCreditsRemaining}
+            </motion.span>
+          </AnimatePresence>
           <span className="text-gray-500 mx-1 text-sm">/</span>
-          <span className="text-gray-400 text-sm">{credits.total}</span>
+          <span className="text-gray-400 text-sm">
+            {subscription.aiCreditsTotal}
+          </span>
+          {isLoading && (
+            <motion.div
+              className="ml-2"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <svg
+                className="w-3.5 h-3.5 text-amber-500"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            </motion.div>
+          )}
         </div>
       </div>
 
       {showLowCreditsWarning && isLowCredits && (
-        <p className="text-xs text-amber-400/80 mt-2 flex items-center">
+        <motion.p
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs text-amber-400/80 mt-2 flex items-center"
+        >
           <span className="inline-block mr-1.5">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -108,7 +153,7 @@ export default function AiCreditsDisplay({
           {isZeroCredits
             ? "Vyčerpali jste všechny AI kredity. Kredit se využívá při generování AI obsahu."
             : "Docházejí vám kredity. Kredit se využívá při generování AI obsahu."}
-        </p>
+        </motion.p>
       )}
     </div>
   );

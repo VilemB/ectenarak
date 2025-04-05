@@ -1229,6 +1229,9 @@ export default function BookComponent({
 
         // Dispatch event to refresh credits display
         window.dispatchEvent(new CustomEvent("refresh-credits"));
+
+        // Wait for the UI to update
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       toast.success("Informace o autorovi byly úspěšně vygenerovány!");
@@ -1335,6 +1338,9 @@ export default function BookComponent({
 
         // Dispatch event to refresh credits display
         window.dispatchEvent(new CustomEvent("refresh-credits"));
+
+        // Wait for the UI to update
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       // Update local state with the new note
