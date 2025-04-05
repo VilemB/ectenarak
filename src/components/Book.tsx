@@ -1170,14 +1170,6 @@ export default function BookComponent({
         return;
       }
 
-      // Try to use a credit
-      const creditResult = await useAiCreditRef.current();
-      if (!creditResult) {
-        setShowCreditExhaustedModal(true);
-        setAuthorSummaryModal(false);
-        return;
-      }
-
       // Call the API to generate the author summary
       const response = await fetch("/api/author-summary", {
         method: "POST",
@@ -1188,14 +1180,18 @@ export default function BookComponent({
           author: book.author,
           bookId: book.id,
           preferences: preferencesToUse,
-          clientSideDeduction: true,
         }),
       });
 
+      // Check content type and handle non-JSON responses
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Received non-JSON response from server");
+        const text = await response.text();
+        console.error("Received non-JSON response:", text);
+        throw new Error("Server returned non-JSON response");
       }
+
+      const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -1203,10 +1199,9 @@ export default function BookComponent({
           setAuthorSummaryModal(false);
           return;
         }
-        throw new Error(`API error: ${response.status}`);
+        throw new Error(data.error || `API error: ${response.status}`);
       }
 
-      const data = await response.json();
       if (!data || !data.summary) {
         throw new Error("Invalid response data");
       }
@@ -1250,14 +1245,6 @@ export default function BookComponent({
         return;
       }
 
-      // Try to use a credit
-      const creditResult = await useAiCreditRef.current();
-      if (!creditResult) {
-        setShowCreditExhaustedModal(true);
-        setSummaryModal(false);
-        return;
-      }
-
       // Call the API to generate the summary
       const response = await fetch("/api/generate-summary", {
         method: "POST",
@@ -1268,14 +1255,18 @@ export default function BookComponent({
           bookId: book.id,
           notes,
           preferences,
-          clientSideDeduction: true,
         }),
       });
 
+      // Check content type and handle non-JSON responses
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Received non-JSON response from server");
+        const text = await response.text();
+        console.error("Received non-JSON response:", text);
+        throw new Error("Server returned non-JSON response");
       }
+
+      const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -1283,10 +1274,9 @@ export default function BookComponent({
           setSummaryModal(false);
           return;
         }
-        throw new Error(`API error: ${response.status}`);
+        throw new Error(data.error || `API error: ${response.status}`);
       }
 
-      const data = await response.json();
       if (!data || !data.summary) {
         throw new Error("Invalid response data");
       }
