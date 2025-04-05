@@ -8,27 +8,13 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { deleteUser } from "@/lib/api";
-import { motion } from "framer-motion";
-import {
-  LogOut,
-  Shield,
-  AlertTriangle,
-  Loader2,
-  User,
-  Mail,
-  Home,
-  ChevronLeft,
-  Settings as SettingsIcon,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut, Loader2, ChevronLeft } from "lucide-react";
 
 // User illustration component from NavBar
 const UserIllustration = ({
@@ -91,33 +77,32 @@ const UserIllustration = ({
 };
 
 export default function SettingsPage() {
-  const { user, loading, error, isAuthenticated, signOut } = useAuth();
+  const { user, loading, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
-  const [activeTab, setActiveTab] = useState("profile");
 
   // Redirect to home if not authenticated after loading completes
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      toast.error("Přihlaste se pro přístup k nastavení");
       router.push("/");
     }
   }, [loading, isAuthenticated, router]);
 
-  // Handle user deletion
   const handleDeleteAccount = async () => {
-    if (!user) return;
+    if (!deleteConfirmation) {
+      setDeleteConfirmation(true);
+      return;
+    }
 
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
       await deleteUser();
-      toast.success("Váš účet byl smazán");
-      // Sign out the user after successful account deletion
       await signOut();
       router.push("/");
+      toast.success("Účet byl úspěšně smazán");
     } catch (error) {
-      console.error("Error deleting account:", error);
+      console.error("Failed to delete account:", error);
       toast.error("Nepodařilo se smazat účet");
     } finally {
       setIsDeleting(false);
@@ -125,336 +110,127 @@ export default function SettingsPage() {
     }
   };
 
-  // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground">Načítání...</p>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Prevent rendering if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md px-4"
-        >
-          <Card className="border border-border/40 shadow-sm">
-            <CardHeader className="text-center space-y-2">
-              <div className="mx-auto">
-                <Shield className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              </div>
-              <CardTitle>Nastavení</CardTitle>
-              <CardDescription>
-                Pro přístup k nastavení účtu se prosím přihlaste
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="flex justify-center pt-2 pb-6">
-              <Button onClick={() => router.push("/")} className="px-6">
-                <Home className="h-4 w-4 mr-2" /> Zpět na hlavní stránku
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-      </div>
-    );
+  if (!user) {
+    return null;
   }
 
-  // Show error state
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md px-4"
-        >
-          <Card className="border border-border/40 shadow-sm">
-            <CardHeader className="text-center space-y-2">
-              <div className="mx-auto">
-                <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              </div>
-              <CardTitle>Chyba</CardTitle>
-              <CardDescription className="text-red-500">
-                {error.message}
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="flex justify-center pt-2 pb-6">
-              <Button onClick={() => router.push("/")} className="px-6">
-                <Home className="h-4 w-4 mr-2" /> Zpět na hlavní stránku
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Show content when user is available
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="container max-w-3xl mx-auto py-8 md:py-12 px-4"
-    >
-      {/* Header with Back Button */}
-      <div className="flex items-center gap-3 mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/")}
-          className="h-9 w-9 p-0 rounded-full hover:bg-muted/80 transition-colors"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">Nastavení účtu</h1>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            className="rounded-full"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Nastavení</h1>
+            <p className="text-muted-foreground">
+              Spravujte nastavení svého účtu
+            </p>
+          </div>
+        </div>
 
-      {/* User Profile Card */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <Card className="mb-8 overflow-hidden border border-border/50 shadow-md">
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/5 pt-8 pb-6 px-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="relative">
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-transparent blur-sm"></div>
+        <div className="grid gap-6">
+          {/* User Info Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informace o účtu</CardTitle>
+              <CardDescription>Základní informace o vašem účtu</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 mb-6">
                 <UserIllustration
-                  name={user?.name}
-                  email={user?.email}
+                  name={user.name}
+                  email={user.email}
                   size="large"
                 />
-              </div>
-              <div className="text-center sm:text-left space-y-1.5">
-                <h2 className="text-xl font-medium">
-                  {user?.name || "Uživatel"}
-                </h2>
-                <p className="text-muted-foreground text-sm">{user?.email}</p>
-                <div className="inline-block mt-2 text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 text-primary font-medium border border-primary/10">
-                  eČtenářák
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </motion.div>
-
-      {/* Tabs Navigation */}
-      <Tabs
-        defaultValue="profile"
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full mb-8"
-      >
-        <TabsList className="w-full grid grid-cols-2 mb-6 p-1 bg-muted/50 border border-border/40 rounded-lg">
-          <TabsTrigger value="profile" className="rounded-md">
-            <User className="h-4 w-4 mr-2" /> Profil
-          </TabsTrigger>
-          <TabsTrigger value="account" className="rounded-md">
-            <SettingsIcon className="h-4 w-4 mr-2" /> Akce účtu
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile" className="mt-0 space-y-4">
-          <Card className="border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <CardHeader className="pb-3 border-b border-border/10">
-              <CardTitle className="text-lg flex items-center">
-                <div className="rounded-full bg-primary/10 p-1.5 mr-3">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                Osobní údaje
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm flex items-center">
-                    <Mail className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />{" "}
-                    E-mailová adresa
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="email"
-                      value={user?.email || ""}
-                      disabled
-                      className="bg-muted/30 pr-10"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <Mail className="h-4 w-4 text-muted-foreground/50" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm flex items-center">
-                    <User className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />{" "}
-                    Zobrazované jméno
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="name"
-                      value={user?.name || ""}
-                      disabled
-                      className="bg-muted/30 pr-10"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <User className="h-4 w-4 text-muted-foreground/50" />
-                    </div>
-                  </div>
+                <div>
+                  <h3 className="font-medium">{user.name}</h3>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="account" className="mt-0 space-y-4">
-          <Card className="border border-red-100 dark:border-red-900/20 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-            <CardHeader className="pb-3 border-b border-red-100 dark:border-red-900/20">
-              <CardTitle className="text-lg flex items-center text-red-500 dark:text-red-400">
-                <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-1.5 mr-3">
-                  <LogOut className="h-5 w-5 text-red-500 dark:text-red-400" />
-                </div>
-                Smazání účtu
-              </CardTitle>
-              <CardDescription className="text-muted-foreground mt-2">
-                Tato akce trvale odstraní váš účet a všechna související data.
+          {/* Security Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Zabezpečení</CardTitle>
+              <CardDescription>
+                Spravujte zabezpečení svého účtu
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 pb-6">
-              {deleteConfirmation ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col"
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Odhlásit se</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Odhlásit se ze všech zařízení
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2"
                 >
-                  <div className="flex gap-4 items-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{
-                        delay: 0.1,
-                        type: "spring",
-                        stiffness: 200,
-                      }}
-                      className="rounded-full bg-red-100 dark:bg-red-900/30 p-1.5"
-                    >
-                      <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
-                    </motion.div>
-                    <p className="text-sm text-red-500 dark:text-red-400 font-medium">
-                      Všechna data budou nenávratně ztracena
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3 mt-5">
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="w-full"
-                    >
-                      <Button
-                        variant="ghost"
-                        onClick={() => setDeleteConfirmation(false)}
-                        className="w-full border border-border"
-                      >
-                        Zrušit
-                      </Button>
-                    </motion.div>
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="w-full"
-                    >
-                      <Button
-                        variant="destructive"
-                        onClick={handleDeleteAccount}
-                        disabled={isDeleting}
-                        className="w-full font-medium relative overflow-hidden group"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="relative z-10 flex items-center justify-center">
-                          {isDeleting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              <span>Mazání účtu...</span>
-                            </>
-                          ) : (
-                            <>
-                              <motion.div
-                                initial={{ scale: 1 }}
-                                animate={{ scale: [1, 1.15, 1] }}
-                                transition={{
-                                  repeat: Infinity,
-                                  repeatDelay: 2,
-                                  duration: 1,
-                                }}
-                                className="flex items-center justify-center"
-                              >
-                                <AlertTriangle className="h-4 w-4 mr-2" />
-                              </motion.div>
-                              <span>Ano, smazat účet</span>
-                            </>
-                          )}
-                        </div>
-                      </Button>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div className="flex justify-center">
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                  >
-                    <Button
-                      variant="destructive"
-                      onClick={() => setDeleteConfirmation(true)}
-                      className="px-6 relative group"
-                    >
-                      <div className="flex items-center">
-                        <motion.div
-                          animate={{ rotate: [0, 0, 12, 0] }}
-                          transition={{
-                            repeat: Infinity,
-                            repeatDelay: 4,
-                            duration: 0.8,
-                          }}
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                        </motion.div>
-                        <span>Smazat účet</span>
-                      </div>
-                      <motion.div
-                        className="absolute inset-0 bg-red-600/20 dark:bg-red-900/30 rounded-md"
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                      />
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              )}
+                  <LogOut className="h-4 w-4" />
+                  Odhlásit se
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </motion.div>
+
+          {/* Danger Zone Card */}
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">
+                Nebezpečná zóna
+              </CardTitle>
+              <CardDescription>Tyto akce nelze vrátit zpět</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>Smazat účet</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Trvale smaže váš účet a všechna data
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Mažu...
+                      </>
+                    ) : deleteConfirmation ? (
+                      "Potvrdit smazání"
+                    ) : (
+                      "Smazat účet"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
