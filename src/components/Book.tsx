@@ -6,22 +6,17 @@ import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  PenLine,
-  Sparkles,
-  ChevronDown,
-  Trash2,
-  X,
   AlertCircle,
-  User,
   Calendar,
   Copy,
-  Bookmark,
-  ChevronRight,
-  BookOpen,
-  Edit3,
-  MessageSquare,
+  X,
+  Trash2,
+  ChevronDown,
+  Sparkles,
+  PenLine,
+  User,
 } from "lucide-react";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
@@ -39,12 +34,10 @@ import {
 } from "@/components/AuthorSummaryPreferencesModal";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import { useSubscriptionContext } from "@/app/page";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import AiCreditsExhaustedPrompt from "./AiCreditsExhaustedPrompt";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
-import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -1155,152 +1148,7 @@ export default function BookComponent({
     }
   };
 
-  // Call actual API to generate the book summary
-  const callBookSummaryApi = async (
-    bookId: string,
-    notes: Note[],
-    preferences: SummaryPreferences
-  ) => {
-    try {
-      console.log("Making API request to /api/generate-summary with data:", {
-        bookId,
-        notesCount: notes.length,
-      });
-
-      // Remove the environment variable check that could be blocking the API call
-
-      const response = await fetch("/api/generate-summary", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bookId,
-          notes,
-          preferences,
-          clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
-        }),
-      });
-
-      if (!response.ok) {
-        // Handle no credits response
-        if (response.status === 403) {
-          const errorData = await response.json();
-          if (errorData.creditsRequired) {
-            setShowCreditExhaustedModal(true);
-            return null;
-          }
-        }
-
-        // Check for API key issues
-        if (response.status === 500) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error("API error:", errorData);
-
-          // Check for OpenAI API key issue
-          if (errorData.error && errorData.error.includes("API key")) {
-            toast.error(
-              "Chyba API: Služba OpenAI není správně nakonfigurována. Zkontrolujte váš API klíč v souboru .env",
-              { duration: 6000 }
-            );
-            return null;
-          }
-        }
-
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error generating summary:", error);
-
-      // Check for network issues
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        toast.error(
-          "Síťová chyba: Nelze se připojit k API. Zkontrolujte své připojení k internetu."
-        );
-      } else {
-        toast.error("Nastala chyba při generování shrnutí. Zkuste to znovu.");
-      }
-
-      return null;
-    }
-  };
-
-  // Call actual API to generate the author summary
-  const callAuthorSummaryApi = async (
-    authorData: string,
-    bookId: string,
-    preferences: AuthorSummaryPreferences
-  ) => {
-    try {
-      console.log("Making API request to /api/author-summary with data:", {
-        author: authorData,
-        bookId: bookId,
-      });
-
-      // Remove the environment variable check that could be blocking the API call
-
-      const response = await fetch("/api/author-summary", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          author: authorData,
-          bookId: bookId,
-          preferences: preferences,
-          clientSideDeduction: true, // Indicate that we've already deducted a credit client-side
-        }),
-      });
-
-      if (!response.ok) {
-        // Handle no credits response
-        if (response.status === 403) {
-          const errorData = await response.json();
-          if (errorData.creditsRequired) {
-            setShowCreditExhaustedModal(true);
-            return null;
-          }
-        }
-
-        // Check for API key issues
-        if (response.status === 500) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error("API error:", errorData);
-
-          // Check for OpenAI API key issue
-          if (errorData.error && errorData.error.includes("API key")) {
-            toast.error(
-              "Chyba API: Služba OpenAI není správně nakonfigurována. Zkontrolujte váš API klíč v souboru .env",
-              { duration: 6000 }
-            );
-            return null;
-          }
-        }
-
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error generating author summary:", error);
-
-      // Check for network issues
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        toast.error(
-          "Síťová chyba: Nelze se připojit k API. Zkontrolujte své připojení k internetu."
-        );
-      } else {
-        toast.error("Nastala chyba při generování shrnutí. Zkuste to znovu.");
-      }
-
-      return null;
-    }
-  };
-
+  // Handle generating the author summary
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
@@ -1382,6 +1230,7 @@ export default function BookComponent({
     }
   };
 
+  // Handle generating the summary
   const handleGenerateSummary = async (preferences: SummaryPreferences) => {
     try {
       setIsGenerating(true);
