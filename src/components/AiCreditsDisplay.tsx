@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AiCreditsDisplayProps {
   aiCreditsRemaining: number;
@@ -8,18 +9,49 @@ interface AiCreditsDisplayProps {
 }
 
 export default function AiCreditsDisplay({
-  aiCreditsRemaining,
-  aiCreditsTotal,
+  aiCreditsRemaining: initialCreditsRemaining,
+  aiCreditsTotal: initialCreditsTotal,
   showLowCreditsWarning = true,
   className = "",
 }: AiCreditsDisplayProps) {
+  const { user } = useAuth();
+  const [credits, setCredits] = React.useState({
+    remaining: initialCreditsRemaining,
+    total: initialCreditsTotal,
+  });
+
+  // Update credits when props change
+  useEffect(() => {
+    setCredits({
+      remaining: initialCreditsRemaining,
+      total: initialCreditsTotal,
+    });
+  }, [initialCreditsRemaining, initialCreditsTotal]);
+
+  // Listen for refresh-credits event
+  useEffect(() => {
+    const handleRefreshCredits = () => {
+      if (user?.subscription) {
+        setCredits({
+          remaining: user.subscription.aiCreditsRemaining,
+          total: user.subscription.aiCreditsTotal,
+        });
+      }
+    };
+
+    window.addEventListener("refresh-credits", handleRefreshCredits);
+    return () => {
+      window.removeEventListener("refresh-credits", handleRefreshCredits);
+    };
+  }, [user]);
+
   // Calculate if credits are low (25% or less remaining)
-  const isLowCredits = aiCreditsRemaining <= Math.ceil(aiCreditsTotal * 0.25);
+  const isLowCredits = credits.remaining <= Math.ceil(credits.total * 0.25);
   // Check if credits are completely depleted
-  const isZeroCredits = aiCreditsRemaining === 0;
+  const isZeroCredits = credits.remaining === 0;
 
   // Calculate percentage for progress bar
-  const percentRemaining = (aiCreditsRemaining / aiCreditsTotal) * 100;
+  const percentRemaining = (credits.remaining / credits.total) * 100;
 
   return (
     <div className={`ai-credits-display ${className}`}>
@@ -50,10 +82,10 @@ export default function AiCreditsDisplay({
                 : "text-amber-500"
             }`}
           >
-            {aiCreditsRemaining}
+            {credits.remaining}
           </span>
           <span className="text-gray-500 mx-1 text-sm">/</span>
-          <span className="text-gray-400 text-sm">{aiCreditsTotal}</span>
+          <span className="text-gray-400 text-sm">{credits.total}</span>
         </div>
       </div>
 

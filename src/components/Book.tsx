@@ -1214,17 +1214,21 @@ export default function BookComponent({
       };
       handleUpdateBook(updatedBook);
 
-      // Update user's credit count in the UI
+      // Update user's credit count in the UI and trigger a refresh event
       if (data.creditsRemaining !== undefined && setUser) {
         const updatedUser = {
           ...user,
           subscription: {
             ...user.subscription,
             aiCreditsRemaining: data.creditsRemaining,
+            aiCreditsTotal: data.creditsTotal,
           },
         };
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        // Dispatch event to refresh credits display
+        window.dispatchEvent(new CustomEvent("refresh-credits"));
       }
 
       toast.success("Informace o autorovi byly úspěšně vygenerovány!");
@@ -1295,7 +1299,7 @@ export default function BookComponent({
         throw new Error("Invalid response data");
       }
 
-      // Add the summary note to the book
+      // Create the new note
       const newNote: Note = {
         id: data.noteId || `ai-summary-${Date.now()}`,
         content: data.summary,
@@ -1303,19 +1307,37 @@ export default function BookComponent({
         isAISummary: true,
       };
 
-      // Update user's credit count in the UI
+      // Save the note to the database
+      const saveResponse = await fetch(`/api/books/${book.id}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newNote),
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error("Failed to save summary note to database");
+      }
+
+      // Update user's credit count in the UI and trigger a refresh event
       if (data.creditsRemaining !== undefined && setUser) {
         const updatedUser = {
           ...user,
           subscription: {
             ...user.subscription,
             aiCreditsRemaining: data.creditsRemaining,
+            aiCreditsTotal: data.creditsTotal,
           },
         };
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        // Dispatch event to refresh credits display
+        window.dispatchEvent(new CustomEvent("refresh-credits"));
       }
 
+      // Update local state with the new note
       setNotes((prevNotes) => [...prevNotes, newNote]);
       toast.success("Shrnutí knihy bylo úspěšně vygenerováno!");
       setSummaryModal(false);
