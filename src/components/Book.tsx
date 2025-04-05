@@ -1156,7 +1156,7 @@ export default function BookComponent({
       setIsGeneratingAuthorSummary(true);
 
       // Check if user has AI credits
-      const { user } = authContext;
+      const { user, setUser } = authContext;
       if (!user?.subscription) {
         window.dispatchEvent(
           new CustomEvent("show-subscription-modal", {
@@ -1214,6 +1214,19 @@ export default function BookComponent({
       };
       handleUpdateBook(updatedBook);
 
+      // Update user's credit count in the UI
+      if (data.creditsRemaining !== undefined && setUser) {
+        const updatedUser = {
+          ...user,
+          subscription: {
+            ...user.subscription,
+            aiCreditsRemaining: data.creditsRemaining,
+          },
+        };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+
       toast.success("Informace o autorovi byly úspěšně vygenerovány!");
       setAuthorSummaryModal(false);
       setIsAuthorInfoVisible(true);
@@ -1231,7 +1244,7 @@ export default function BookComponent({
       setIsGenerating(true);
 
       // Check if user has AI credits
-      const { user } = authContext;
+      const { user, setUser } = authContext;
       if (!user?.subscription) {
         window.dispatchEvent(
           new CustomEvent("show-subscription-modal", {
@@ -1252,8 +1265,9 @@ export default function BookComponent({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          bookId: book.id,
-          notes,
+          bookTitle: book.title,
+          bookAuthor: book.author,
+          notes: notes.map((note) => note.content).join("\n\n"),
           preferences,
         }),
       });
@@ -1288,6 +1302,19 @@ export default function BookComponent({
         createdAt: new Date().toISOString(),
         isAISummary: true,
       };
+
+      // Update user's credit count in the UI
+      if (data.creditsRemaining !== undefined && setUser) {
+        const updatedUser = {
+          ...user,
+          subscription: {
+            ...user.subscription,
+            aiCreditsRemaining: data.creditsRemaining,
+          },
+        };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
 
       setNotes((prevNotes) => [...prevNotes, newNote]);
       toast.success("Shrnutí knihy bylo úspěšně vygenerováno!");

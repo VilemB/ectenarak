@@ -743,6 +743,7 @@ export async function POST(request: Request) {
         summary: processedSummary,
         fromCache: false,
         creditsRemaining: remainingCredits,
+        creditsTotal: user.subscription?.aiCreditsTotal,
       });
     } catch (creditError) {
       console.error("Error deducting AI credit:", creditError);

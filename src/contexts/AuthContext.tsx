@@ -5,6 +5,7 @@ import { User, SubscriptionTier, UserSubscription } from "@/types/user";
 
 interface AuthContextType {
   user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string) => Promise<void>;
@@ -221,6 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         isLoading,
         isAuthenticated: !!user,
         login,

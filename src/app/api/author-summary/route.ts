@@ -90,7 +90,11 @@ export async function POST(req: NextRequest) {
 
     const result = await handleGeneralAuthorSummary(author, preferences);
 
-    return result;
+    return NextResponse.json({
+      summary: result,
+      creditsRemaining: user.subscription?.aiCreditsRemaining,
+      creditsTotal: user.subscription?.aiCreditsTotal,
+    });
   } catch (error) {
     console.error("Error in author summary API:", error);
     return NextResponse.json(
