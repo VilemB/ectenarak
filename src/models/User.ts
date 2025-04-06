@@ -36,20 +36,6 @@ const UserSchema = new mongoose.Schema({
       type: String,
       default: "cs",
     },
-    emailNotifications: {
-      type: Boolean,
-      default: true,
-    },
-    privacySettings: {
-      shareReadingActivity: {
-        type: Boolean,
-        default: false,
-      },
-      shareLibrary: {
-        type: Boolean,
-        default: false,
-      },
-    },
   },
   // User profile information
   profile: {
@@ -368,11 +354,6 @@ interface IUser {
   preferences?: {
     theme?: "light" | "dark" | "system";
     language?: string;
-    emailNotifications?: boolean;
-    privacySettings?: {
-      shareReadingActivity?: boolean;
-      shareLibrary?: boolean;
-    };
   };
   profile?: {
     bio?: string;

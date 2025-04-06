@@ -40,23 +40,6 @@ export interface User {
   preferences?: {
     theme?: "light" | "dark" | "system";
     language?: string;
-    emailNotifications?: boolean;
-    privacySettings?: {
-      shareReadingActivity?: boolean;
-      shareLibrary?: boolean;
-    };
-  };
-  profile?: {
-    bio?: string;
-    location?: string;
-    website?: string;
-    favoriteGenres?: string[];
-  };
-  stats?: {
-    booksRead: number;
-    pagesRead: number;
-    notesCreated: number;
-    lastActiveAt: string;
   };
   createdAt?: string;
   updatedAt?: string;
