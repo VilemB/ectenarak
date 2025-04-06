@@ -14,8 +14,11 @@ import {
   Award,
   Bookmark,
   Info,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { SubscriptionFeature } from "@/types/user";
 
 export interface AuthorSummaryPreferences {
   style: "academic" | "casual" | "creative";
@@ -105,6 +108,12 @@ export function AuthorSummaryPreferencesModal({
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
   const [showLongWarning, setShowLongWarning] = useState(false);
+  const { canAccess } = useFeatureAccess();
+
+  // Check if user has access to AI customization
+  const hasAiCustomization = canAccess(
+    "aiCustomization" as SubscriptionFeature
+  );
 
   // Show warning when "long" length is selected
   useEffect(() => {
@@ -128,6 +137,7 @@ export function AuthorSummaryPreferencesModal({
   };
 
   const resetToDefaults = () => {
+    if (!hasAiCustomization) return;
     setPreferences(defaultPreferences);
     setShowSavedMessage(true);
     setTimeout(() => setShowSavedMessage(false), 2000);
@@ -221,7 +231,27 @@ export function AuthorSummaryPreferencesModal({
             )}
           </AnimatePresence>
 
-          <div className="space-y-5">
+          {/* Subscription notice for users without AI customization */}
+          {!hasAiCustomization && (
+            <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <div className="flex items-center gap-2 text-yellow-500">
+                <Lock className="h-4 w-4" />
+                <p className="text-sm font-medium">
+                  Přizpůsobení AI shrnutí vyžaduje předplatné
+                </p>
+              </div>
+              <p className="text-xs text-yellow-500/80 mt-2">
+                Pro přístup k pokročilým možnostem přizpůsobení AI shrnutí si
+                pořiďte předplatné.
+              </p>
+            </div>
+          )}
+
+          <div
+            className={`space-y-6 ${
+              !hasAiCustomization ? "opacity-50 pointer-events-none" : ""
+            }`}
+          >
             {/* Style selection */}
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
@@ -680,51 +710,77 @@ export function AuthorSummaryPreferencesModal({
             </div>
           </div>
 
-          {/* Form actions at bottom */}
-          <div className="mt-8 mb-2 flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-blue-800/30">
-            <div className="relative">
+          {/* Add the action buttons at the bottom of the form */}
+          <div className="mt-6 pt-4 border-t border-gray-700/30 flex flex-col sm:flex-row justify-between gap-3">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 onClick={resetToDefaults}
-                className="text-xs h-9 text-zinc-400"
+                className="text-muted-foreground hover:text-foreground"
+                disabled={!hasAiCustomization}
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                 <span>Obnovit výchozí</span>
               </Button>
+
               <AnimatePresence>
                 {showSavedMessage && (
                   <motion.span
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
-                    className="absolute left-0 -bottom-6 text-xs text-green-500"
+                    className="text-xs text-green-500"
                   >
-                    Nastavení obnoveno
+                    Nastavení uloženo
                   </motion.span>
                 )}
               </AnimatePresence>
             </div>
+            <div className="flex items-center w-full sm:w-auto">
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={isGenerating}
+                onClick={(e) => {
+                  console.log("Generate button clicked directly");
+                  if (!isGenerating) {
+                    handleSubmit(e);
+                  }
+                }}
+                className={`
+                  flex items-center gap-2 w-full sm:w-auto justify-center 
+                  bg-blue-500/10 text-blue-500 border border-blue-500/20 
+                  hover:bg-blue-500/20 transition-all duration-200 
+                  shadow-sm hover:shadow rounded-md relative overflow-hidden
+                  ${isGenerating ? "opacity-70 cursor-wait" : ""}
+                `}
+              >
+                {isGenerating && (
+                  <div className="absolute inset-0 overflow-hidden rounded-md">
+                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-blue-300/20 to-transparent"></div>
+                  </div>
+                )}
 
-            {/* Generate/Update button */}
-            <Button
-              type="submit"
-              disabled={isGenerating}
-              onClick={(e) => handleSubmit(e)}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Generuji...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {authorSummaryExists ? "Aktualizovat" : "Generovat"}
-                </>
-              )}
-            </Button>
+                {isGenerating ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-t-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                    <span>Generuji...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    <span>
+                      {authorSummaryExists
+                        ? "Aktualizovat"
+                        : "Generovat shrnutí"}
+                    </span>
+                  </div>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </div>
