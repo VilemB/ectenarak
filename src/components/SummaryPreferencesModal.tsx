@@ -68,31 +68,38 @@ const tooltipVariants = {
 const optionDescriptions = {
   style: {
     academic:
-      "Formální styl s důrazem na analýzu a strukturu. Vhodné pro školní práce.",
-    casual: "Přátelský, konverzační styl. Snadno čitelný a přístupný.",
-    creative: "Barvitý a expresivní styl s důrazem na zajímavé formulace.",
+      "Odborný styl s literárněvědnou terminologií a analytickým přístupem. Vhodné pro školní práce a rozbory. Využívá GPT-4o pro nejpřesnější analýzu.",
+    casual:
+      "Srozumitelný jazyk s praktickými příklady a přímým oslovením. Ideální pro osobní poznámky a běžné čtení. Využívá GPT-4o mini pro efektivitu.",
+    creative:
+      "Expresivní styl s metaforami a zajímavými postřehy. Poutavé čtení s originálním pohledem. Využívá GPT-4o pro kreativní zpracování.",
   },
   length: {
     short:
-      "Stručné shrnutí (cca 150-200 slov). Nejefektivnější využití tokenů, vhodné pro krátké poznámky.",
+      "Stručné shrnutí (150-200 slov). Nejefektivnější využití AI kreditů, vhodné pro rychlé poznámky. Využívá GPT-4o mini.",
     medium:
-      "Středně dlouhé shrnutí (cca 300-400 slov). Vyvážený poměr mezi detaily a využitím tokenů.",
-    long: "Podrobné shrnutí (cca 500-700 slov). Nejvíce detailů, ale vyžaduje více tokenů a může být zkráceno při velkém množství poznámek.",
+      "Vyvážené shrnutí (300-400 slov). Optimální poměr mezi detaily a využitím AI kreditů. Doporučená volba.",
+    long: "Podrobné shrnutí (500-700 slov). Kompletní analýza, ale vyžaduje více AI kreditů. Využívá GPT-4o pro nejlepší kvalitu.",
   },
   focus: {
-    plot: "Zaměření na hlavní dějovou linii a události.",
-    characters: "Zaměření na postavy, jejich vývoj a vztahy.",
-    themes: "Zaměření na hlavní témata, motivy a poselství díla.",
-    balanced: "Vyvážené pokrytí děje, postav i témat.",
+    plot: "70% děj a struktura, 20% styl vyprávění, 10% kontext. Důraz na narativní prvky a kompozici.",
+    characters:
+      "70% postavy a jejich vývoj, 20% vztahy, 10% symbolika. Důraz na psychologii a motivace.",
+    themes:
+      "70% témata a motivy, 20% symbolika, 10% společenský kontext. Důraz na myšlenkovou rovinu.",
+    balanced:
+      "Rovnoměrné rozdělení: 33% děj, 33% postavy, 33% témata. Komplexní pohled na dílo.",
   },
   language: {
-    cs: "Shrnutí bude vygenerováno v češtině.",
-    en: "Shrnutí bude vygenerováno v angličtině.",
+    cs: "Shrnutí bude v českém jazyce s odpovídající literární terminologií.",
+    en: "Shrnutí bude v anglickém jazyce s odpovídající literární terminologií.",
   },
   examFocus:
-    "Zaměření na aspekty důležité pro maturitní zkoušku z českého jazyka a literatury.",
+    "Přidá prvky důležité pro maturitu: argumentaci, kontext, literární teorii a typické otázky.",
   literaryContext:
-    "Přidá informace o literárním kontextu, období a zařazení díla.",
+    "Rozšíří o literárně-historický kontext, zařazení díla a dobové souvislosti.",
+  studyGuide:
+    "Vytvoří strukturovaný studijní materiál s analýzou, interpretací a poznámkami k učení.",
 };
 
 export function SummaryPreferencesModal({

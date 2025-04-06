@@ -67,18 +67,42 @@ function generatePrompt(
   const styleMap = {
     academic: {
       label: "akademický",
-      instruction:
-        "Používej odbornou terminologii, analyzuj dílo kriticky, cituj literární teorie kde je to vhodné.",
+      instruction: `Používej:
+- Odbornou literárněvědnou terminologii
+- Citace z odborných zdrojů a kritických prací
+- Formální, objektivní jazyk
+- Analytický a kritický přístup
+- Přesné datace a bibliografické údaje
+Vyhýbej se:
+- Subjektivním hodnocením
+- Neformálnímu jazyku
+- Anekdotám bez kontextu`,
     },
     casual: {
       label: "neformální",
-      instruction:
-        "Piš přístupným jazykem, vyhni se složitým termínům, používej přirozený tón jako při konverzaci.",
+      instruction: `Používej:
+- Srozumitelný, každodenní jazyk
+- Přátelský, konverzační tón
+- Praktické příklady a přirovnání
+- Osobní perspektivu
+- Zajímavé detaily a souvislosti
+Vyhýbej se:
+- Odborné terminologii
+- Složitým souvětím
+- Suchým faktům bez kontextu`,
     },
     creative: {
       label: "kreativní",
-      instruction:
-        "Používej barvitý jazyk, metafory a přirovnání, buď originální v interpretaci.",
+      instruction: `Používej:
+- Barvitý, expresivní jazyk
+- Metafory a přirovnání
+- Dramatické prvky a napětí
+- Osobní příběhy a anekdoty
+- Neotřelé úhly pohledu
+Vyhýbej se:
+- Suchému akademickému stylu
+- Strohému výčtu faktů
+- Přílišné formálnosti`,
     },
   };
 
@@ -86,22 +110,50 @@ function generatePrompt(
   const focusMap = {
     plot: {
       label: "děj",
-      instruction:
-        "Věnuj 70% obsahu popisu děje, zápletky a struktury vyprávění.",
+      instruction: `Rozložení obsahu:
+- 70% děj a struktura vyprávění
+- 20% literární prostředky a styl
+- 10% kontext a interpretace
+Zaměř se na:
+- Klíčové dějové momenty
+- Strukturu vyprávění
+- Narativní techniky
+- Časoprostor díla`,
     },
     characters: {
       label: "postavy",
-      instruction:
-        "Věnuj 70% obsahu analýze postav, jejich motivací, vývoje a vzájemných vztahů.",
+      instruction: `Rozložení obsahu:
+- 70% charakteristika a vývoj postav
+- 20% vztahy mezi postavami
+- 10% symbolika postav
+Zaměř se na:
+- Hlavní a vedlejší postavy
+- Psychologický vývoj
+- Motivace a konflikty
+- Vzájemné vztahy`,
     },
     themes: {
       label: "témata",
-      instruction:
-        "Věnuj 70% obsahu rozboru hlavních témat, symboliky a motivů díla.",
+      instruction: `Rozložení obsahu:
+- 70% témata a motivy
+- 20% symbolika a významy
+- 10% společenský kontext
+Zaměř se na:
+- Hlavní témata díla
+- Symbolickou rovinu
+- Filozofické přesahy
+- Společenskou relevanci`,
     },
     balanced: {
       label: "vyvážený obsah",
-      instruction: "Pokryj rovnoměrně děj, postavy i témata díla.",
+      instruction: `Rozložení obsahu:
+- 33% děj a struktura
+- 33% postavy a jejich vývoj
+- 33% témata a významy
+Zaměř se na:
+- Propojení všech rovin díla
+- Vzájemné souvislosti
+- Celkové vyznění díla`,
     },
   };
 
@@ -402,8 +454,8 @@ function selectOptimalModel(
         : preferences.length === "medium"
         ? Math.min(2500, SAFE_TOKENS_LIMIT)
         : Math.min(1500, SAFE_TOKENS_LIMIT);
-  } else if (complexityScore >= 3) {
-    // Medium complexity - use GPT-4o-mini for good balance
+  } else {
+    // Use GPT-4o-mini for all other cases
     model = "gpt-4o-mini";
     maxTokens =
       preferences.length === "long"
@@ -411,30 +463,13 @@ function selectOptimalModel(
         : preferences.length === "medium"
         ? Math.min(2000, SAFE_TOKENS_LIMIT)
         : Math.min(1200, SAFE_TOKENS_LIMIT);
-  } else {
-    // Low complexity - use GPT-3.5 Turbo for efficiency
-    model = "gpt-3.5-turbo";
-    maxTokens =
-      preferences.length === "long"
-        ? Math.min(2500, SAFE_TOKENS_LIMIT)
-        : preferences.length === "medium"
-        ? Math.min(1800, SAFE_TOKENS_LIMIT)
-        : Math.min(1000, SAFE_TOKENS_LIMIT);
   }
 
-  // Apply a cost-based adjustment based on model and notes length
-  // More expensive models get stricter token limits when notes are short
+  // Apply a cost-based adjustment based on notes length
   const hasSignificantNotes = notesLength > 1000;
-  const costAdjustedLimit =
-    model === "gpt-4o"
-      ? hasSignificantNotes
-        ? Math.min(maxTokens, 3500)
-        : Math.min(maxTokens, 3000)
-      : model === "gpt-4o-mini"
-      ? hasSignificantNotes
-        ? Math.min(maxTokens, 3800)
-        : Math.min(maxTokens, 3200)
-      : maxTokens;
+  const costAdjustedLimit = hasSignificantNotes
+    ? maxTokens
+    : Math.min(maxTokens, model === "gpt-4o" ? 3000 : 2500);
 
   console.log(
     `Selected model: ${model} (complexity score: ${complexityScore}, tokens: ${costAdjustedLimit})`

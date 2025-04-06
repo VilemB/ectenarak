@@ -57,30 +57,41 @@ const optionVariants = {
 // Tooltip descriptions
 const tooltipDescriptions = {
   style: {
-    academic: "Formální, odborný styl s literárněvědnou terminologií.",
-    casual: "Přístupný, konverzační styl pro běžné čtenáře.",
-    creative: "Živý, poutavý styl s důrazem na zajímavosti a příběhy.",
+    academic:
+      "Odborný styl s literárněvědnou terminologií, citacemi a analytickým přístupem. Vhodné pro akademické účely.",
+    casual:
+      "Srozumitelný jazyk s praktickými příklady a přímým oslovením. Ideální pro běžné čtenáře.",
+    creative:
+      "Expresivní styl s metaforami, příběhy a neotřelým pohledem. Poutavé čtení.",
   },
   length: {
-    short: "Stručné shrnutí základních informací (cca 150 slov).",
-    medium: "Vyvážené shrnutí s klíčovými detaily (cca 300 slov).",
-    long: "Podrobné shrnutí s rozšířenými informacemi (cca 500 slov).",
+    short:
+      "Stručné shrnutí (150-200 slov) s nejdůležitějšími informacemi. Optimální využití AI kreditů.",
+    medium:
+      "Vyvážené shrnutí (300-400 slov) s klíčovými detaily. Doporučená volba.",
+    long: "Podrobné shrnutí (500-700 slov) se všemi aspekty. Vyžaduje více AI kreditů.",
   },
   focus: {
-    life: "Zaměření na životní příběh, osobní život a klíčové momenty.",
-    works: "Zaměření na literární díla, styl psaní a témata.",
-    impact: "Zaměření na vliv autora na literaturu a společnost.",
-    balanced: "Vyvážené pokrytí života, děl i významu autora.",
+    life: "70% životní příběh, 20% vliv na dílo, 10% kontext. Důraz na osobní vývoj.",
+    works:
+      "70% analýza děl, 20% vývoj stylu, 10% kontext. Důraz na literární tvorbu.",
+    impact:
+      "70% význam a vliv, 20% současná relevance, 10% kontext. Důraz na odkaz.",
+    balanced:
+      "Rovnoměrné rozdělení: 33% život, 33% dílo, 33% význam. Komplexní pohled.",
   },
   language: {
-    cs: "Shrnutí bude v českém jazyce.",
-    en: "Shrnutí bude v anglickém jazyce.",
+    cs: "Shrnutí bude v českém jazyce s odpovídající terminologií.",
+    en: "Shrnutí bude v anglickém jazyce s odpovídající terminologií.",
   },
   includeTimeline:
-    "Přidá chronologický přehled klíčových událostí v životě autora.",
-  includeAwards: "Zahrne významná ocenění a uznání, která autor získal.",
+    "Přidá chronologický přehled života a díla s klíčovými milníky a daty.",
+  includeAwards:
+    "Zahrne významná ocenění, uznání a jejich kontext v autorově kariéře.",
   includeInfluences:
-    "Přidá informace o literárních vlivech a autorech, kteří jej inspirovali.",
+    "Přidá rozbor literárních vlivů, inspirací a autorova místa v literární tradici.",
+  studyGuide:
+    "Vytvoří strukturovaný studijní materiál s klíčovými body, analýzou a kontextem.",
 };
 
 export function AuthorSummaryPreferencesModal({
