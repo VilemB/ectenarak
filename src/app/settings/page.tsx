@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
@@ -14,12 +14,27 @@ export default function SettingsPage() {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // Redirect to home if not authenticated after loading completes
-  if (!loading && !isAuthenticated) {
-    router.push("/");
-    return null;
-  }
+  // Handle authentication redirect
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/");
+    }
+  }, [loading, isAuthenticated, router]);
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      toast.success("Byli jste úspěšně odhlášeni");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      toast.error("Nepodařilo se odhlásit");
+      setIsSigningOut(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!deleteConfirmation) {
@@ -31,7 +46,6 @@ export default function SettingsPage() {
     try {
       await deleteUser();
       await signOut();
-      router.push("/");
       toast.success("Účet byl úspěšně smazán");
     } catch (error) {
       console.error("Failed to delete account:", error);
@@ -42,7 +56,8 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading) {
+  // Show loading state
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -114,11 +129,21 @@ export default function SettingsPage() {
               >
                 <Button
                   variant="outline"
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
                   className="w-full flex items-center gap-2 h-12 bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.08] hover:border-white/[0.08] transition-colors"
                 >
-                  <LogOut className="h-4 w-4 text-white/70" />
-                  <span className="text-white/90">Odhlásit se</span>
+                  {isSigningOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Odhlašuji...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="h-4 w-4 text-white/70" />
+                      <span className="text-white/90">Odhlásit se</span>
+                    </>
+                  )}
                 </Button>
               </motion.div>
 
@@ -131,7 +156,7 @@ export default function SettingsPage() {
                 <Button
                   variant="destructive"
                   onClick={handleDeleteAccount}
-                  disabled={isDeleting}
+                  disabled={isDeleting || isSigningOut}
                   className="w-full flex items-center gap-2 h-12 bg-red-500/10 hover:bg-red-500/20 border-red-500/20 hover:border-red-500/30 transition-colors"
                 >
                   {isDeleting ? (
