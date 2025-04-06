@@ -60,11 +60,19 @@ export default function SettingsPage() {
   }
 
   // Show loading state
-  if (loading) {
+  if (loading || isSigningOut) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4"
+      >
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+        <p className="text-muted-foreground animate-pulse">
+          {isSigningOut ? "Odhlašování..." : "Načítání..."}
+        </p>
+      </motion.div>
     );
   }
 
@@ -72,8 +80,10 @@ export default function SettingsPage() {
     if (isSigningOut) return;
     setIsSigningOut(true);
     try {
+      // Small delay to ensure the loading state is visible
+      await new Promise((resolve) => setTimeout(resolve, 300));
       await signOut();
-      toast.success("Byli jste úspěšně odhlášeni");
+      // No need for toast here since we're showing a loading state
     } catch (error) {
       console.error("Failed to sign out:", error);
       toast.error("Nepodařilo se odhlásit");
@@ -90,13 +100,16 @@ export default function SettingsPage() {
     setIsDeleting(true);
     try {
       await deleteUser();
+      setIsSigningOut(true); // Show the sign out loading state
+      await new Promise((resolve) => setTimeout(resolve, 300));
       await signOut();
-      toast.success("Účet byl úspěšně smazán");
+      // No need for toast here since we're showing a loading state
     } catch (error) {
       console.error("Failed to delete account:", error);
       toast.error("Nepodařilo se smazat účet");
-    } finally {
       setIsDeleting(false);
+      setIsSigningOut(false);
+    } finally {
       setDeleteConfirmation(false);
     }
   };
@@ -169,17 +182,8 @@ export default function SettingsPage() {
                   disabled={isSigningOut}
                   className="w-full flex items-center gap-2 h-12 bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.08] hover:border-white/[0.08] transition-colors"
                 >
-                  {isSigningOut ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Odhlašuji...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogOut className="h-4 w-4 text-white/70" />
-                      <span className="text-white/90">Odhlásit se</span>
-                    </>
-                  )}
+                  <LogOut className="h-4 w-4 text-white/70" />
+                  <span className="text-white/90">Odhlásit se</span>
                 </Button>
               </motion.div>
 
