@@ -21,22 +21,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false, // Not required for OAuth users
   },
-  image: {
-    type: String,
-    required: false,
-  },
-  // User preferences
-  preferences: {
-    theme: {
-      type: String,
-      enum: ["light", "dark", "system"],
-      default: "system",
-    },
-    language: {
-      type: String,
-      default: "cs",
-    },
-  },
   // Authentication information
   auth: {
     provider: {
@@ -107,26 +91,6 @@ const UserSchema = new mongoose.Schema({
         return new Date(now.setMonth(now.getMonth() + 1));
       },
     },
-    paymentHistory: [
-      {
-        amount: Number,
-        currency: {
-          type: String,
-          default: "CZK",
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
-        paymentMethod: String,
-        transactionId: String,
-        status: {
-          type: String,
-          enum: ["pending", "completed", "failed", "refunded"],
-          default: "completed",
-        },
-      },
-    ],
   },
 });
 
@@ -169,12 +133,12 @@ UserSchema.methods.hasAccess = function (feature: string) {
       extendedAiSummary: false,
     },
     basic: {
-      maxBooks: 50,
+      maxBooks: 100,
       aiCreditsPerMonth: 50,
       exportToPdf: true,
       advancedNoteFormat: true,
       aiAuthorSummary: true,
-      aiCustomization: true,
+      aiCustomization: false,
       detailedAuthorInfo: true,
       extendedAiSummary: false,
     },
@@ -287,11 +251,6 @@ interface IUser {
   email: string;
   name: string;
   password?: string;
-  image?: string;
-  preferences?: {
-    theme?: "light" | "dark" | "system";
-    language?: string;
-  };
   auth?: {
     provider: "local" | "google" | "facebook" | "apple";
     providerId?: string;
@@ -308,14 +267,6 @@ interface IUser {
     aiCreditsRemaining: number;
     lastRenewalDate: Date;
     nextRenewalDate: Date;
-    paymentHistory?: Array<{
-      amount: number;
-      currency: string;
-      date: Date;
-      paymentMethod?: string;
-      transactionId?: string;
-      status: "pending" | "completed" | "failed" | "refunded";
-    }>;
   };
   createdAt: Date;
   updatedAt: Date;

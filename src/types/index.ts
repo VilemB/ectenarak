@@ -36,10 +36,16 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  image?: string;
-  preferences?: {
-    theme?: "light" | "dark" | "system";
-    language?: string;
+  subscription?: {
+    tier: "free" | "basic" | "premium";
+    startDate: Date;
+    endDate?: Date;
+    isYearly: boolean;
+    autoRenew: boolean;
+    aiCreditsTotal: number;
+    aiCreditsRemaining: number;
+    lastRenewalDate: Date;
+    nextRenewalDate: Date;
   };
   createdAt?: string;
   updatedAt?: string;

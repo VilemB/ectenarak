@@ -34,6 +34,24 @@ export async function POST(request: Request) {
       name,
       email,
       password: hashedPassword,
+      auth: {
+        provider: "local",
+      },
+      subscription: {
+        tier: "free",
+        startDate: new Date(),
+        isYearly: false,
+        aiCreditsTotal: 3,
+        aiCreditsRemaining: 3,
+        autoRenew: true,
+        lastRenewalDate: new Date(),
+        nextRenewalDate: new Date(
+          new Date().setMonth(new Date().getMonth() + 1)
+        ),
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLoginAt: new Date(),
     });
 
     await user.save();

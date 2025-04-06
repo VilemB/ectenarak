@@ -76,11 +76,25 @@ export const authOptions: NextAuthOptions = {
             dbUser = new User({
               email: user.email,
               name: user.name,
-              image: user.image,
               auth: {
                 provider: "google",
                 providerId: user.id,
               },
+              subscription: {
+                tier: "free",
+                startDate: new Date(),
+                isYearly: false,
+                aiCreditsTotal: 3,
+                aiCreditsRemaining: 3,
+                autoRenew: true,
+                lastRenewalDate: new Date(),
+                nextRenewalDate: new Date(
+                  new Date().setMonth(new Date().getMonth() + 1)
+                ),
+              },
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              lastLoginAt: new Date(),
             });
             await dbUser.save();
           }

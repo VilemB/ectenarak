@@ -92,8 +92,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       summary: result,
-      creditsRemaining: user.subscription?.aiCreditsRemaining,
-      creditsTotal: user.subscription?.aiCreditsTotal,
+      creditsRemaining: user?.subscription?.aiCreditsRemaining,
+      creditsTotal: user?.subscription?.aiCreditsTotal,
     });
   } catch (error) {
     console.error("Error in author summary API:", error);

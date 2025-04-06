@@ -17,9 +17,6 @@ We've enhanced the MongoDB implementation to improve data relationships, add mor
 
 ### User Model
 
-- Added user preferences (theme, language, notifications)
-- Added user profile information (bio, location, favorite genres)
-- Added reading statistics (books read, pages read, notes created)
 - Added authentication information (provider, provider ID)
 - Added virtual reference to books
 - Added methods to update statistics

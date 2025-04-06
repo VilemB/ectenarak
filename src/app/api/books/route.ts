@@ -237,14 +237,14 @@ export async function GET(request: Request) {
       if (mongoose.Types.ObjectId.isValid(userId)) {
         const userObjectId = new mongoose.Types.ObjectId(userId);
         await User.findByIdAndUpdate(userObjectId, {
-          "stats.lastActiveAt": new Date(),
+          lastLoginAt: new Date(),
         });
       } else {
         // If not a valid ObjectId, try to find the user by email or other means
         await User.findOneAndUpdate(
           { email: userId },
           {
-            "stats.lastActiveAt": new Date(),
+            lastLoginAt: new Date(),
           }
         );
       }
