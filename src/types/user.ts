@@ -18,6 +18,8 @@ export interface UserSubscription {
   aiCreditsRemaining: number;
   aiCreditsTotal: number;
   autoRenew: boolean;
+  lastRenewalDate: Date;
+  nextRenewalDate: Date;
 }
 
 export interface User {

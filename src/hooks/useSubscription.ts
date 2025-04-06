@@ -62,6 +62,10 @@ export function useSubscription() {
           aiCreditsRemaining: 3,
           aiCreditsTotal: 3,
           autoRenew: false,
+          lastRenewalDate: new Date(),
+          nextRenewalDate: new Date(
+            new Date().setMonth(new Date().getMonth() + 1)
+          ),
         });
       } else {
         setSubscription(null);

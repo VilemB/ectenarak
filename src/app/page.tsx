@@ -952,16 +952,19 @@ export default function Home() {
                       <h3 className="text-sm font-medium text-white">
                         AI kredity
                       </h3>
-                      {hasSubscription(user) && (
-                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-800/30">
-                          Obnova:{" "}
-                          {new Date(user.subscription.startDate).getDate()}.{" "}
-                          {new Date(user.subscription.startDate).toLocaleString(
-                            "cs-CZ",
-                            { month: "short" }
-                          )}
-                        </span>
-                      )}
+                      {hasSubscription(user) &&
+                        user.subscription.tier !== "free" && (
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-800/30">
+                            Obnova:{" "}
+                            {new Date(
+                              user.subscription.nextRenewalDate
+                            ).getDate()}
+                            .{" "}
+                            {new Date(
+                              user.subscription.nextRenewalDate
+                            ).toLocaleString("cs-CZ", { month: "short" })}
+                          </span>
+                        )}
                     </div>
                     <div className="flex items-center mt-1.5">
                       {isLoadingSubscription ? (

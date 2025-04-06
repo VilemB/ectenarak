@@ -5,6 +5,8 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { SubscriptionTier } from "@/types/user";
 import mongoose from "mongoose";
+import { connectToDatabase } from "@/lib/db";
+import { ObjectId } from "mongodb";
 
 /**
  * GET /api/subscription
@@ -12,65 +14,70 @@ import mongoose from "mongoose";
  */
 export async function GET(): Promise<NextResponse> {
   try {
-    // Get the current session
+    console.log("🔄 GET /api/subscription - Getting current subscription data");
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) {
+      console.error("❌ No authenticated user found");
+      return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
 
-    // Connect to the database
-    await dbConnect();
+    console.log(`👤 User ID: ${session.user.id}`);
 
-    // Find the user - try different lookup methods to handle both MongoDB IDs and OAuth IDs
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection("users");
+
+    // Check if ID is a valid MongoDB ObjectId
     let user;
-
-    // First, check if the ID is a valid MongoDB ObjectId
-    const isValidObjectId = mongoose.Types.ObjectId.isValid(session.user.id);
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(session.user.id);
 
     if (isValidObjectId) {
-      // Try finding the user by MongoDB _id
-      user = await User.findById(session.user.id);
+      // Find by MongoDB _id
+      user = await usersCollection.findOne({
+        _id: new ObjectId(session.user.id),
+      });
     }
 
-    // If user wasn't found and it's not a valid ObjectId, or if we need a fallback
+    // If not found or not a valid ObjectId, try finding by OAuth ID
     if (!user) {
-      // Try finding by OAuth provider ID
-      user = await User.findOne({
-        $or: [
-          { "auth.providerId": session.user.id },
-          { email: session.user.email },
-        ],
+      user = await usersCollection.findOne({
+        providerId: session.user.id,
+      });
+    }
+
+    // Last resort - try email
+    if (!user && session.user.email) {
+      user = await usersCollection.findOne({
+        email: session.user.email,
       });
     }
 
     if (!user) {
-      return NextResponse.json(
-        {
-          error: "User not found",
-          subscription: null,
-        },
-        { status: 404 }
-      );
+      console.error("❌ User not found in database");
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Return the subscription details
+    console.log(
+      "📊 Found user subscription data:",
+      JSON.stringify(
+        {
+          hasSubscription: !!user.subscription,
+          aiCreditsRemaining: user.subscription?.aiCreditsRemaining,
+          aiCreditsTotal: user.subscription?.aiCreditsTotal,
+          nextRenewalDate: user.subscription?.nextRenewalDate,
+        },
+        null,
+        2
+      )
+    );
+
     return NextResponse.json({
-      subscription: user.subscription || {
-        tier: "free",
-        startDate: new Date(),
-        isYearly: false,
-        aiCreditsRemaining:
-          user.aiCreditsRemaining !== undefined ? user.aiCreditsRemaining : 3,
-        aiCreditsTotal:
-          user.aiCreditsTotal !== undefined ? user.aiCreditsTotal : 3,
-        autoRenew: false,
-      },
+      subscription: user.subscription || null,
     });
-  } catch (error) {
-    console.error("Error fetching subscription:", error);
+  } catch (error: any) {
+    console.error("❌ Error in subscription API:", error);
     return NextResponse.json(
-      { error: "Failed to fetch subscription" },
+      { error: error.message || "An unexpected error occurred" },
       { status: 500 }
     );
   }

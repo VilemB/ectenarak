@@ -163,9 +163,13 @@ export default function SubscriptionPage() {
                     </span>
                     <span className="text-xs text-gray-400">
                       Obnovení:{" "}
-                      {new Date(
-                        new Date().setMonth(new Date().getMonth() + 1)
-                      ).toLocaleDateString("cs-CZ")}
+                      {subscription?.nextRenewalDate
+                        ? new Date(
+                            subscription.nextRenewalDate
+                          ).toLocaleDateString("cs-CZ")
+                        : new Date(
+                            new Date().setMonth(new Date().getMonth() + 1)
+                          ).toLocaleDateString("cs-CZ")}
                     </span>
                   </div>
 
