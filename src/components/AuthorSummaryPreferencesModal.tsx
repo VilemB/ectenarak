@@ -94,7 +94,7 @@ export function AuthorSummaryPreferencesModal({
 }: AuthorSummaryPreferencesModalProps) {
   const defaultPreferences: AuthorSummaryPreferences = {
     style: "academic",
-    length: "medium",
+    length: "short",
     focus: "balanced",
     language: "cs",
     includeTimeline: false,

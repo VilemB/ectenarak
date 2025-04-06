@@ -158,7 +158,7 @@ export function SummaryPreferencesModal({
     if (!hasAiCustomization) return;
     const defaults: SummaryPreferences = {
       style: "academic",
-      length: "medium",
+      length: "short",
       focus: "balanced",
       language: "cs",
       examFocus: false,

@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSubscriptionContext } from "@/app/page";
 
 interface AiCreditsDisplayProps {
   aiCreditsRemaining: number;
@@ -26,29 +27,62 @@ export default function AiCreditsDisplay({
   className = "",
 }: AiCreditsDisplayProps) {
   const { user } = useAuth();
+  const { subscriptionData } = useSubscriptionContext();
+  const queryClient = useQueryClient();
 
   // Use React Query to manage the credits state
   const { data: subscription, isLoading } = useQuery({
     queryKey: ["credits"],
     queryFn: fetchCredits,
-    initialData: user?.subscription || {
-      aiCreditsRemaining: initialCreditsRemaining,
-      aiCreditsTotal: initialCreditsTotal,
-    },
+    initialData: subscriptionData ||
+      user?.subscription || {
+        aiCreditsRemaining: initialCreditsRemaining,
+        aiCreditsTotal: initialCreditsTotal,
+      },
     refetchOnWindowFocus: true,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 0, // Always consider data stale to enable immediate updates
+    gcTime: 0, // Don't cache the data (gcTime is the new name for cacheTime)
   });
+
+  // Update query data when subscription context changes
+  useEffect(() => {
+    if (subscriptionData) {
+      queryClient.setQueryData(["credits"], subscriptionData);
+    }
+  }, [subscriptionData, queryClient]);
+
+  // Use the most up-to-date values from context if available
+  const currentCredits = {
+    aiCreditsRemaining:
+      subscriptionData?.aiCreditsRemaining ?? subscription.aiCreditsRemaining,
+    aiCreditsTotal:
+      subscriptionData?.aiCreditsTotal ?? subscription.aiCreditsTotal,
+  };
+
+  // Force immediate UI update when credits change
+  useEffect(() => {
+    const prevCredits = subscription?.aiCreditsRemaining;
+    const newCredits = currentCredits.aiCreditsRemaining;
+
+    if (prevCredits !== newCredits) {
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
+    }
+  }, [
+    currentCredits.aiCreditsRemaining,
+    subscription?.aiCreditsRemaining,
+    queryClient,
+  ]);
 
   // Calculate if credits are low (25% or less remaining)
   const isLowCredits =
-    subscription.aiCreditsRemaining <=
-    Math.ceil(subscription.aiCreditsTotal * 0.25);
+    currentCredits.aiCreditsRemaining <=
+    Math.ceil(currentCredits.aiCreditsTotal * 0.25);
   // Check if credits are completely depleted
-  const isZeroCredits = subscription.aiCreditsRemaining === 0;
+  const isZeroCredits = currentCredits.aiCreditsRemaining === 0;
 
   // Calculate percentage for progress bar
   const percentRemaining =
-    (subscription.aiCreditsRemaining / subscription.aiCreditsTotal) * 100;
+    (currentCredits.aiCreditsRemaining / currentCredits.aiCreditsTotal) * 100;
 
   return (
     <div className={`ai-credits-display ${className}`}>
@@ -80,7 +114,7 @@ export default function AiCreditsDisplay({
         <div className="ml-4 flex items-center">
           <AnimatePresence mode="wait">
             <motion.span
-              key={subscription.aiCreditsRemaining}
+              key={currentCredits.aiCreditsRemaining}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
@@ -93,12 +127,12 @@ export default function AiCreditsDisplay({
                   : "text-amber-500"
               }`}
             >
-              {subscription.aiCreditsRemaining}
+              {currentCredits.aiCreditsRemaining}
             </motion.span>
           </AnimatePresence>
           <span className="text-gray-500 mx-1 text-sm">/</span>
           <span className="text-gray-400 text-sm">
-            {subscription.aiCreditsTotal}
+            {currentCredits.aiCreditsTotal}
           </span>
           {isLoading && (
             <motion.div
