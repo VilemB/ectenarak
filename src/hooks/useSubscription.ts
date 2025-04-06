@@ -36,6 +36,12 @@ export function useSubscription() {
       const response = await fetch("/api/subscription");
 
       if (!response.ok) {
+        if (response.status === 404) {
+          // User not found (likely deleted)
+          setSubscription(null);
+          setLoading(false);
+          return;
+        }
         throw new Error(`Failed to fetch subscription: ${response.statusText}`);
       }
 
@@ -47,15 +53,19 @@ export function useSubscription() {
         err instanceof Error ? err : new Error("Failed to fetch subscription")
       );
 
-      // Use fallback for free tier
-      setSubscription({
-        tier: "free",
-        startDate: new Date(),
-        isYearly: false,
-        aiCreditsRemaining: 3,
-        aiCreditsTotal: 3,
-        autoRenew: false,
-      });
+      // Use fallback for free tier only if the error is not a 404
+      if (!(err instanceof Error && err.message.includes("404"))) {
+        setSubscription({
+          tier: "free",
+          startDate: new Date(),
+          isYearly: false,
+          aiCreditsRemaining: 3,
+          aiCreditsTotal: 3,
+          autoRenew: false,
+        });
+      } else {
+        setSubscription(null);
+      }
     } finally {
       setLoading(false);
     }

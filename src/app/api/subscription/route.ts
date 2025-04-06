@@ -45,7 +45,13 @@ export async function GET(): Promise<NextResponse> {
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: "User not found",
+          subscription: null,
+        },
+        { status: 404 }
+      );
     }
 
     // Return the subscription details
