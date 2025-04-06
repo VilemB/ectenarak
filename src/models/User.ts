@@ -37,41 +37,6 @@ const UserSchema = new mongoose.Schema({
       default: "cs",
     },
   },
-  // User profile information
-  profile: {
-    bio: {
-      type: String,
-    },
-    location: {
-      type: String,
-    },
-    website: {
-      type: String,
-    },
-    favoriteGenres: {
-      type: [String],
-      default: [],
-    },
-  },
-  // Reading statistics
-  stats: {
-    booksRead: {
-      type: Number,
-      default: 0,
-    },
-    pagesRead: {
-      type: Number,
-      default: 0,
-    },
-    notesCreated: {
-      type: Number,
-      default: 0,
-    },
-    lastActiveAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
   // Authentication information
   auth: {
     provider: {
@@ -168,7 +133,6 @@ const UserSchema = new mongoose.Schema({
 // Create indexes for common queries
 UserSchema.index({ email: 1 });
 UserSchema.index({ "auth.provider": 1, "auth.providerId": 1 });
-UserSchema.index({ "profile.favoriteGenres": 1 });
 
 // Update the updatedAt field on save
 UserSchema.pre("save", function (next) {
@@ -184,33 +148,6 @@ UserSchema.virtual("books", {
   foreignField: "userId",
   justOne: false,
 });
-
-// Method to update user statistics
-UserSchema.methods.updateStats = async function () {
-  // Get all books for this user
-  const books = await mongoose.model("Book").find({ userId: this._id });
-
-  // Calculate statistics
-  const booksRead = books.filter((book) => book.status === "completed").length;
-  const pagesRead = books.reduce((total, book) => {
-    if (book.status === "completed" && book.totalPages) {
-      return total + book.totalPages;
-    }
-    return total + (book.currentPage || 0);
-  }, 0);
-
-  const notesCreated = books.reduce((total, book) => {
-    return total + (book.notes ? book.notes.length : 0);
-  }, 0);
-
-  // Update stats
-  this.stats.booksRead = booksRead;
-  this.stats.pagesRead = pagesRead;
-  this.stats.notesCreated = notesCreated;
-  this.stats.lastActiveAt = new Date();
-
-  await this.save();
-};
 
 // Method to update last login time
 UserSchema.methods.updateLastLogin = async function () {
@@ -355,18 +292,6 @@ interface IUser {
     theme?: "light" | "dark" | "system";
     language?: string;
   };
-  profile?: {
-    bio?: string;
-    location?: string;
-    website?: string;
-    favoriteGenres?: string[];
-  };
-  stats?: {
-    booksRead: number;
-    pagesRead: number;
-    notesCreated: number;
-    lastActiveAt: Date;
-  };
   auth?: {
     provider: "local" | "google" | "facebook" | "apple";
     providerId?: string;
@@ -395,7 +320,6 @@ interface IUser {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date;
-  updateStats(): Promise<void>;
   updateLastLogin(): Promise<void>;
   hasAccess(feature: string): boolean;
   hasReachedBookLimit(): Promise<boolean>;
