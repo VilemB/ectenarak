@@ -85,6 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           aiCreditsRemaining: 3,
           aiCreditsTotal: 3,
           autoRenew: false,
+          lastRenewalDate: new Date(),
+          nextRenewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -131,6 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           aiCreditsRemaining: 3,
           aiCreditsTotal: 3,
           autoRenew: false,
+          lastRenewalDate: new Date(),
+          nextRenewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -165,6 +169,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         aiCreditsRemaining: aiCredits,
         aiCreditsTotal: aiCredits,
         autoRenew: tier !== "free",
+        lastRenewalDate: new Date(),
+        nextRenewalDate: new Date(
+          Date.now() + (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000
+        ),
       };
 
       const updatedUser = {
