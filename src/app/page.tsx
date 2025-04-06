@@ -174,7 +174,7 @@ export default function Home() {
 
   // Fetch subscription data when user changes - properly memoized with useCallback
   // This avoids creating a new function on every render
-  useMemo(() => {
+  useEffect(() => {
     if (user) {
       refreshSubscriptionData();
     }
