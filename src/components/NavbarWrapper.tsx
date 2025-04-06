@@ -4,10 +4,28 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import { Modal } from "@/components/ui/modal";
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function NavbarWrapper() {
   const { user, signOut } = useAuth();
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Handle sign out with loading state
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await signOut();
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      toast.error("Nepodařilo se odhlásit");
+      setIsSigningOut(false);
+    }
+  };
 
   // Only render the navbar if the user is logged in
   if (!user) {
@@ -16,9 +34,20 @@ export default function NavbarWrapper() {
 
   return (
     <>
+      {isSigningOut && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground animate-pulse">Odhlašování...</p>
+        </motion.div>
+      )}
       <Navbar
         user={user || null}
-        signOut={signOut}
+        signOut={handleSignOut}
         setShowKeyboardShortcuts={setShowKeyboardShortcuts}
       />
 
