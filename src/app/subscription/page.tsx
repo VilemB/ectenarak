@@ -28,18 +28,6 @@ export default function SubscriptionPage() {
 
   const currentTier = getSubscriptionTier();
 
-  // Show login form if not authenticated
-  if (!isLoading && !isAuthenticated) {
-    return (
-      <div className="max-w-md mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Pro správu předplatného se prosím přihlaste
-        </h2>
-        <LoginForm />
-      </div>
-    );
-  }
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -60,6 +48,38 @@ export default function SubscriptionPage() {
       transition: { duration: 0.6, ease: "easeOut" },
     },
   };
+
+  // Show login form if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <div className="text-white min-h-screen flex flex-col">
+        {/* Subtle background pattern */}
+        <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
+
+        {/* Background gradient overlay */}
+        <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10 flex-grow">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-center max-w-3xl mx-auto"
+          >
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
+              Správa předplatného
+            </h1>
+            <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-6">
+              Pro správu předplatného se prosím přihlaste
+            </p>
+            <div className="max-w-md mx-auto">
+              <LoginForm />
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   const handleChangeTier = async (tier: "free" | "basic" | "premium") => {
     try {

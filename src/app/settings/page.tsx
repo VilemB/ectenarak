@@ -20,11 +20,41 @@ export default function SettingsPage() {
   // Show login form if not authenticated
   if (!loading && !isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Pro správu nastavení se prosím přihlaste
-        </h2>
-        <LoginForm />
+      <div className="min-h-[calc(100vh-4rem)] relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-background/5 to-background/20 pointer-events-none" />
+        <div className="relative max-w-2xl mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center gap-4 mb-12"
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              className="rounded-full hover:bg-white/5"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-br from-white to-white/70 bg-clip-text text-transparent">
+                Nastavení
+              </h1>
+              <p className="text-muted-foreground/80 mt-1">
+                Pro správu nastavení se prosím přihlaste
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <LoginForm />
+          </motion.div>
+        </div>
       </div>
     );
   }
