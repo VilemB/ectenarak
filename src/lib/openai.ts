@@ -14,17 +14,27 @@ export const DEFAULT_AUTHOR_PREFERENCES: AuthorSummaryPreferences = {
   studyGuide: false,
 };
 
-// Simple in-memory cache for author summaries
-interface AuthorCacheEntry {
-  summary: string;
-  timestamp: number;
-  preferences: AuthorSummaryPreferences;
+// Cache implementation
+const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours
+const authorSummaryCache = new Map<
+  string,
+  { summary: string; timestamp: number }
+>();
+
+async function getCachedSummary(cacheKey: string): Promise<string | null> {
+  const cached = authorSummaryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_EXPIRATION) {
+    return cached.summary;
+  }
+  return null;
 }
 
-const authorSummaryCache: Record<string, AuthorCacheEntry> = {};
-
-// Cache expiration time (7 days in milliseconds)
-const AUTHOR_CACHE_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
+async function cacheSummary(cacheKey: string, summary: string): Promise<void> {
+  authorSummaryCache.set(cacheKey, {
+    summary,
+    timestamp: Date.now(),
+  });
+}
 
 /**
  * Generate a cache key for author summaries
@@ -119,71 +129,36 @@ export const estimateTokenCount = (text: string): number => {
  * @param preferences User preferences for the summary
  * @returns Object with selected model and max tokens
  */
-function selectOptimalAuthorModel(preferences: AuthorSummaryPreferences): {
-  model: string;
-  maxTokens: number;
-} {
-  // Base complexity score starts at 0
+function selectOptimalAuthorModel(
+  preferences: AuthorSummaryPreferences
+): string {
+  // Base complexity score calculation
   let complexityScore = 0;
 
-  // Add complexity based on preferences
-  if (preferences.studyGuide) complexityScore += 3;
+  // Style-based complexity
+  complexityScore +=
+    preferences.style === "academic"
+      ? 2
+      : preferences.style === "creative"
+      ? 1
+      : 0;
+
+  // Length-based complexity
+  complexityScore +=
+    preferences.length === "long" ? 2 : preferences.length === "medium" ? 1 : 0;
+
+  // Additional features complexity
+  if (preferences.studyGuide) complexityScore += 2;
   if (preferences.includeTimeline) complexityScore += 1;
   if (preferences.includeAwards) complexityScore += 1;
-  if (preferences.includeInfluences) complexityScore += 2;
-  if (preferences.style === "academic") complexityScore += 1;
-  if (preferences.length === "long") complexityScore += 2;
+  if (preferences.includeInfluences) complexityScore += 1;
 
-  // Select model based on complexity
-  let model: string;
-  let maxTokens: number;
-
-  // Define absolute maximum token limits to prevent excessive consumption
-  const MAX_TOKENS_LIMIT = 4000; // Hard limit for any request
-  const SAFE_TOKENS_LIMIT = 3000; // Default safe limit for most cases
-
-  if (complexityScore >= 5) {
-    // High complexity - use GPT-4o for best quality
-    model = "gpt-4o";
-    maxTokens =
-      preferences.length === "long"
-        ? Math.min(3500, MAX_TOKENS_LIMIT)
-        : preferences.length === "medium"
-        ? Math.min(2500, SAFE_TOKENS_LIMIT)
-        : Math.min(1500, SAFE_TOKENS_LIMIT);
-  } else if (complexityScore >= 3) {
-    // Medium complexity - use GPT-4o-mini for good balance
-    model = "gpt-4o-mini";
-    maxTokens =
-      preferences.length === "long"
-        ? Math.min(3000, SAFE_TOKENS_LIMIT)
-        : preferences.length === "medium"
-        ? Math.min(2000, SAFE_TOKENS_LIMIT)
-        : Math.min(1200, SAFE_TOKENS_LIMIT);
+  // Select model based on complexity and subscription tier
+  if (complexityScore >= 6) {
+    return "gpt-4o"; // Use full GPT-4o for very complex requests
   } else {
-    // Low complexity - use GPT-3.5 Turbo for efficiency
-    model = "gpt-3.5-turbo";
-    maxTokens =
-      preferences.length === "long"
-        ? Math.min(2500, SAFE_TOKENS_LIMIT)
-        : preferences.length === "medium"
-        ? Math.min(1800, SAFE_TOKENS_LIMIT)
-        : Math.min(1000, SAFE_TOKENS_LIMIT);
+    return "gpt-4o-mini"; // Use cost-optimized mini model for moderate complexity
   }
-
-  // Apply a cost-based adjustment based on model
-  // More expensive models get stricter token limits
-  const costAdjustedLimit =
-    model === "gpt-4o"
-      ? Math.min(maxTokens, 3500)
-      : model === "gpt-4o-mini"
-      ? Math.min(maxTokens, 3800)
-      : maxTokens;
-
-  console.log(
-    `Selected author model: ${model} (complexity score: ${complexityScore}, tokens: ${costAdjustedLimit})`
-  );
-  return { model, maxTokens: costAdjustedLimit };
 }
 
 /**
@@ -258,154 +233,65 @@ function fixIncompleteAuthorSummary(
  */
 export async function generateAuthorSummary(
   author: string,
-  preferences: AuthorSummaryPreferences = DEFAULT_AUTHOR_PREFERENCES
+  preferences: AuthorSummaryPreferences = DEFAULT_AUTHOR_PREFERENCES,
+  cacheKey?: string
 ): Promise<string> {
+  // Check cache first if key provided
+  if (cacheKey) {
+    const cached = await getCachedSummary(cacheKey);
+    if (cached) return cached;
+  }
+
+  const model = selectOptimalAuthorModel(preferences);
+  const prompt = buildAuthorSummaryPrompt(author, preferences);
+
+  const systemMessage =
+    preferences.language === "cs"
+      ? `Jsi ${
+          preferences.style === "academic"
+            ? "literární vědec a akademik"
+            : preferences.style === "casual"
+            ? "zkušený literární publicista"
+            : "kreativní spisovatel a vypravěč"
+        } specializující se na informace o autorech.`
+      : `You are ${
+          preferences.style === "academic"
+            ? "a literary scholar and academic"
+            : preferences.style === "casual"
+            ? "an experienced literary journalist"
+            : "a creative writer and storyteller"
+        } specializing in author information.`;
+
   try {
-    // Check cache first
-    const cacheKey = generateAuthorCacheKey(author, preferences);
-    const cachedEntry = authorSummaryCache[cacheKey];
-
-    // Check if we have a valid cache entry
-    if (
-      cachedEntry &&
-      Date.now() - cachedEntry.timestamp < AUTHOR_CACHE_EXPIRATION
-    ) {
-      console.log("Author cache hit! Returning cached summary for:", author);
-      return cachedEntry.summary;
-    }
-
-    console.log("Author cache miss or expired entry for:", author);
-
-    // Get OpenAI client
     const openai = getOpenAIClient();
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: prompt },
+      ],
+      temperature: preferences.style === "creative" ? 0.8 : 0.3,
+      max_tokens:
+        preferences.length === "long"
+          ? 2000
+          : preferences.length === "medium"
+          ? 1200
+          : 800,
+      presence_penalty: preferences.style === "creative" ? 0.6 : 0.2,
+      frequency_penalty: preferences.style === "creative" ? 0.6 : 0.3,
+    });
 
-    // Try up to 3 times with different settings if needed
-    let attempts = 0;
-    const maxAttempts = 3;
-    let currentPreferences = { ...preferences };
+    const summary = completion.choices[0]?.message?.content || "";
 
-    while (attempts < maxAttempts) {
-      attempts++;
-      console.log(`Attempt ${attempts} of ${maxAttempts} for author summary`);
-
-      // Adjust strategy based on attempt number
-      if (attempts === 2) {
-        // On second attempt, simplify but keep length
-        console.log("Simplifying features for retry attempt");
-        currentPreferences = {
-          ...currentPreferences,
-          // Remove additional sections but keep length
-          includeTimeline: false,
-          includeInfluences: false,
-          includeAwards: false,
-        };
-      } else if (attempts === 3) {
-        // On third attempt, reduce length and further simplify
-        console.log(
-          "Reducing length and further simplifying for final attempt"
-        );
-        currentPreferences = {
-          ...currentPreferences,
-          length: "short",
-          style: "casual", // Simpler style
-          studyGuide: false, // Remove study guide formatting
-        };
-      }
-
-      // Construct the prompt based on preferences
-      const prompt = buildAuthorSummaryPrompt(author, currentPreferences);
-
-      // Calculate prompt tokens to ensure we have enough completion tokens
-      const estimatedPromptTokens = estimateTokenCount(prompt) + 200; // Add buffer for system message
-
-      // Select optimal model based on complexity
-      const { model, maxTokens } = selectOptimalAuthorModel(currentPreferences);
-
-      // On retry attempts, increase token limit to ensure completion
-      const attemptAdjustedMaxTokens =
-        attempts > 1
-          ? Math.min(maxTokens + (attempts - 1) * 500, 4000) // Increase by 500 tokens per retry, up to 4000
-          : maxTokens;
-
-      // Ensure we don't exceed context window
-      const contextWindow =
-        model === "gpt-4o" ? 8192 : model === "gpt-4o-mini" ? 8192 : 4096;
-      const adjustedMaxTokens = Math.min(
-        attemptAdjustedMaxTokens,
-        // Ensure we don't exceed context window
-        contextWindow - estimatedPromptTokens - 100 // 100 token safety buffer
-      );
-
-      // System message based on language
-      const systemMessage =
-        preferences.language === "cs"
-          ? "Jsi literární expert specializující se na informace o autorech."
-          : "You are a literary expert specializing in author information.";
-
-      // Call OpenAI API
-      console.log(
-        `Generating author summary for ${author} using ${model} model with ${adjustedMaxTokens} tokens`
-      );
-      const response = await openai.chat.completions.create({
-        model,
-        messages: [
-          {
-            role: "system",
-            content: systemMessage,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: preferences.style === "creative" ? 0.8 : 0.6,
-        max_tokens: adjustedMaxTokens,
-        frequency_penalty: 0.1, // Slight penalty to avoid repetition
-        presence_penalty: 0.1, // Slight penalty to encourage covering new topics
-      });
-
-      const rawSummary = response.choices[0]?.message?.content || "";
-
-      // Check if the summary is complete
-      if (isSummaryComplete(rawSummary) || attempts >= maxAttempts) {
-        // Either the summary is complete or we've reached max attempts
-        // Check if the summary is complete and fix it if needed
-        const summary =
-          attempts >= maxAttempts
-            ? fixIncompleteAuthorSummary(
-                rawSummary,
-                author,
-                preferences.language
-              )
-            : rawSummary;
-
-        // Cache the summary
-        authorSummaryCache[cacheKey] = {
-          summary,
-          timestamp: Date.now(),
-          preferences,
-        };
-        console.log("Author summary cached with key:", cacheKey);
-
-        return summary;
-      }
-
-      console.log(
-        "Summary appears incomplete, retrying with adjusted settings..."
-      );
+    // Cache the result if key provided
+    if (cacheKey) {
+      await cacheSummary(cacheKey, summary);
     }
 
-    // This should never be reached due to the return in the loop
-    throw new Error(
-      "Failed to generate complete author summary after multiple attempts"
-    );
+    return summary;
   } catch (error) {
     console.error("Error generating author summary:", error);
-    throw new Error(
-      `Failed to generate author summary: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
-    );
+    throw new Error("Failed to generate author summary");
   }
 }
 
@@ -421,170 +307,208 @@ function buildAuthorSummaryPrompt(
 ): string {
   const language = preferences.language === "cs" ? "českém" : "anglickém";
 
-  // Define style characteristics with specific instructions
+  // Enhanced style characteristics with more specific instructions
   const styleMap = {
     academic: {
       label: "formální, odborný",
-      instruction:
-        "Používej literárněvědnou terminologii, cituj odborné zdroje, analyzuj kriticky.",
+      instruction: `Používej:
+- Odbornou literárněvědnou terminologii
+- Citace z odborných zdrojů a kritických prací
+- Formální, objektivní jazyk
+- Analytický a kritický přístup
+- Přesné datace a bibliografické údaje
+- Odkazy na literární teorie a koncepty
+Vyhýbej se:
+- Subjektivním hodnocením
+- Neformálnímu jazyku
+- Anekdotám a osobním příběhům`,
     },
     casual: {
       label: "přístupný, konverzační",
-      instruction:
-        "Vyhýbej se odborným termínům, používej srozumitelný jazyk a přátelský tón.",
+      instruction: `Používej:
+- Srozumitelný, každodenní jazyk
+- Přátelský, konverzační tón
+- Praktické příklady a přirovnání
+- Osobní perspektivu a přímé oslovení
+- Zajímavé detaily ze života autora
+- Propojení s dnešní dobou
+Vyhýbej se:
+- Odborné terminologii
+- Složitým souvětím
+- Suchým faktům bez kontextu`,
     },
     creative: {
       label: "živý, poutavý",
-      instruction:
-        "Používej barvitý jazyk, zajímavé příběhy a anekdoty, buď originální.",
+      instruction: `Používej:
+- Barvitý, expresivní jazyk
+- Metafory a přirovnání
+- Dramatické prvky a napětí
+- Osobní příběhy a anekdoty
+- Emocionální prvky
+- Neotřelé úhly pohledu
+Vyhýbej se:
+- Suchému akademickému stylu
+- Strohému výčtu faktů
+- Přílišné formálnosti`,
     },
   };
 
-  // Define focus areas with specific instructions
+  // Enhanced focus areas with specific content ratios
   const focusMap = {
     life: {
       label: "život autora",
-      instruction:
-        "Věnuj 70% obsahu životnímu příběhu, vzdělání a událostem, které formovaly tvorbu.",
+      instruction: `Rozložení obsahu:
+- 70% životní příběh a osobní vývoj
+- 20% vliv života na dílo
+- 10% literární kontext
+Zaměř se na:
+- Klíčové životní události
+- Vzdělání a formativní zkušenosti
+- Osobní vztahy a vlivy
+- Společenský a historický kontext`,
     },
     works: {
       label: "díla autora",
-      instruction:
-        "Věnuj 70% obsahu literárním dílům, stylu psaní, tématům a vývoji tvorby.",
+      instruction: `Rozložení obsahu:
+- 70% analýza děl a tvůrčího procesu
+- 20% vývoj autorského stylu
+- 10% biografický kontext
+Zaměř se na:
+- Hlavní díla a jejich témata
+- Vývoj autorského stylu
+- Inovace v tvorbě
+- Literární techniky`,
     },
     impact: {
       label: "vliv a odkaz",
-      instruction:
-        "Věnuj 70% obsahu vlivu na literaturu, společnost a významu pro současné čtenáře.",
+      instruction: `Rozložení obsahu:
+- 70% vliv na literaturu a společnost
+- 20% současná relevance
+- 10% historický kontext
+Zaměř se na:
+- Literární odkaz
+- Společenský dopad
+- Vliv na další autory
+- Aktuální význam`,
     },
     balanced: {
       label: "vyvážený obsah",
-      instruction: "Pokryj rovnoměrně život, díla i význam autora.",
+      instruction: `Rozložení obsahu:
+- 33% život a osobnost
+- 33% literární dílo
+- 33% význam a vliv
+Zaměř se na:
+- Propojení života a díla
+- Kontext doby
+- Odkaz pro současnost`,
     },
   };
 
-  // Word count targets
+  // Word count targets with token optimization
   const lengthMap = {
-    short: "150-200 slov",
-    medium: "300-400 slov",
-    long: "500-700 slov",
+    short: {
+      words: "150-200 slov",
+      structure: "3-4 stručné odstavce",
+    },
+    medium: {
+      words: "300-400 slov",
+      structure: "5-6 rozvinutých odstavců",
+    },
+    long: {
+      words: "500-700 slov",
+      structure: "7-8 detailních odstavců",
+    },
   };
 
-  // Build a more directive but still concise base prompt
-  let prompt = `Informace o autorovi "${author}" v ${language} jazyce.`;
+  // Build system message based on style
+  const systemMessage =
+    preferences.language === "cs"
+      ? `Jsi ${
+          preferences.style === "academic"
+            ? "literární vědec a akademik"
+            : preferences.style === "casual"
+            ? "zkušený literární publicista"
+            : "kreativní spisovatel a vypravěč"
+        } specializující se na informace o autorech. ${
+          styleMap[preferences.style].instruction
+        }`
+      : `You are ${
+          preferences.style === "academic"
+            ? "a literary scholar and academic"
+            : preferences.style === "casual"
+            ? "an experienced literary journalist"
+            : "a creative writer and storyteller"
+        } specializing in author information. ${
+          styleMap[preferences.style].instruction
+        }`;
 
-  // Add study guide focus if enabled
-  if (preferences.studyGuide) {
-    prompt += ` Optimalizuj pro studijní účely a přípravu na zkoušky.`;
-  }
+  // Build the main prompt
+  let prompt = `Vytvoř ${
+    styleMap[preferences.style].label
+  } text o autorovi "${author}" v ${language} jazyce.
 
-  // Add style instruction
-  prompt += ` Styl: ${styleMap[preferences.style].label}. ${
-    styleMap[preferences.style].instruction
-  }`;
+${focusMap[preferences.focus].instruction}
 
-  // Add focus instruction
-  prompt += ` Zaměření: ${focusMap[preferences.focus].label}. ${
-    focusMap[preferences.focus].instruction
-  }`;
+Délka: ${lengthMap[preferences.length].words} (${
+    lengthMap[preferences.length].structure
+  }).`;
 
-  // Add length
-  prompt += ` Délka: ${lengthMap[preferences.length]}.`;
-
-  // Add structured format for study guide
+  // Add study guide structure if enabled
   if (preferences.studyGuide) {
     prompt += `
 
-Strukturuj informace podle následujícího formátu:
+Strukturuj text pro studijní účely:
 
 # ${author}
 
 ## Základní informace
-- **Celé jméno:** [celé jméno autora]
-- **Datum narození a úmrtí:** [data]
-- **Národnost:** [národnost]
-- **Literární období/směr:** [období/směr]
-- **Žánry:** [hlavní žánry]
+[stručný přehled klíčových faktů]
 
 ## Život a vzdělání
-- **Dětství a mládí:** [stručné informace o raném životě]
-- **Vzdělání:** [vzdělání autora]
-- **Klíčové životní události:** [důležité momenty, které ovlivnily tvorbu]
-- **Osobní život:** [relevantní informace o osobním životě]
+[podle zvoleného zaměření]
 
 ## Literární tvorba
-- **Hlavní díla:** [seznam nejvýznamnějších děl s roky vydání]
-- **Vývoj tvorby:** [jak se vyvíjela autorova tvorba v průběhu času]
-- **Typické znaky tvorby:** [charakteristické rysy autorovy tvorby]
-- **Témata a motivy:** [opakující se témata a motivy v dílech]
-
-## Literární styl a techniky
-- **Styl psaní:** [charakteristika stylu]
-- **Jazykové prostředky:** [typické jazykové prostředky]
-- **Narativní techniky:** [způsoby vyprávění]
-- **Inovace:** [případné inovace, které autor přinesl]
-
-## Literární a historický kontext
-- **Literární směr:** [podrobnější informace o literárním směru]
-- **Historický kontext:** [dobový kontext autorovy tvorby]
-- **Společenské vlivy:** [jak společnost ovlivnila autora]
-- **Srovnání s jinými autory:** [srovnání s podobnými autory]
+[podle zvoleného zaměření]
 
 ## Význam a odkaz
-- **Vliv na literaturu:** [jak autor ovlivnil literaturu]
-- **Společenský dopad:** [jaký měl autor dopad na společnost]
-- **Současná relevance:** [proč je autor důležitý i dnes]
-- **Kritické hodnocení:** [jak je autor hodnocen kritiky]
+[podle zvoleného zaměření]
 
 ## Studijní poznámky
-- **Klíčové body pro zkoušky:** [co si zapamatovat pro zkoušky]
-- **Typické otázky:** [jaké otázky se často objevují u zkoušek]
-- **Doporučené souvislosti:** [s jakými jinými autory lze srovnávat]
-- **Tipy pro analýzu děl:** [jak přistupovat k analýze autorových děl]`;
-  } else {
-    prompt += `
-
-Strukturuj informace do logických sekcí s nadpisy a podnadpisy.`;
+[klíčové body pro studium]`;
   }
 
   // Add additional sections based on preferences
   if (preferences.includeTimeline) {
     prompt += `
 
-${preferences.studyGuide ? "## Časová osa" : "Přidej sekci s časovou osou"}
-- [chronologický přehled klíčových událostí v životě a tvorbě autora]`;
+## Časová osa
+[chronologický přehled uspořádaný podle zvoleného stylu]`;
   }
 
   if (preferences.includeAwards) {
     prompt += `
 
-${
-  preferences.studyGuide
-    ? "## Ocenění a uznání"
-    : "Přidej sekci s oceněními a uznáními"
-}
-- [seznam významných ocenění a uznání s roky]`;
+## Ocenění
+[seznam ocenění prezentovaný podle zvoleného stylu]`;
   }
 
   if (preferences.includeInfluences) {
     prompt += `
 
-${
-  preferences.studyGuide
-    ? "## Literární vlivy a inspirace"
-    : "Přidej sekci o literárních vlivech a inspiracích"
-}
-- **Vlivy na autora:** [kdo autora ovlivnil]
-- **Autorův vliv na jiné:** [koho autor ovlivnil]
-- **Literární tradice:** [do jaké literární tradice autor patří]`;
+## Literární vlivy
+[literární kontext podle zvoleného stylu]`;
   }
 
-  // Add formatting instructions in a more compact way
+  // Add formatting instructions
   prompt += `
 
-Formátuj text pomocí Markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl, odrážky pro seznamy.
+Formátování:
+- Používej markdown pro strukturování
+- **Tučně** pro klíčové pojmy
+- *Kurzívu* pro názvy děl
+- Odrážky pro přehledné seznamy
 
-DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní. Pokud se blížíš k limitu tokenů, raději zkrať obsah v každé sekci, ale zachovej všechny sekce a zajisti, že shrnutí má jasný závěr. Nikdy neukončuj text uprostřed věty nebo myšlenky.`;
+DŮLEŽITÉ: Text musí být kompletní a konzistentní se zvoleným stylem od začátku do konce. Při limitech tokenů zachovej všechny sekce, ale zkrať jejich obsah proporcionálně.`;
 
   return prompt.trim();
 }
