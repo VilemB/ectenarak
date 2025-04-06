@@ -9,6 +9,7 @@ import {
 } from "@/types/user";
 import { useRouter } from "next/navigation";
 import AiCreditsDisplay from "./AiCreditsDisplay";
+import LoginForm from "./LoginForm";
 
 export default function SubscriptionManager() {
   const { user, updateSubscription, isLoading, isAuthenticated } = useAuth();
@@ -22,37 +23,31 @@ export default function SubscriptionManager() {
     isAuthenticated,
   });
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      console.log(
-        "SubscriptionManager - User not authenticated, redirecting to login"
-      );
-      router.push("/login?redirect=/subscription");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
-  // Only set state if user exists
-  const [isYearly, setIsYearly] = useState<boolean>(
-    user?.subscription?.isYearly || false
-  );
-  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(
-    user?.subscription?.tier || "free"
-  );
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-
-  if (!isAuthenticated || !user) {
+  // Show login form if not authenticated
+  if (!isLoading && !isAuthenticated) {
     return (
-      <div className="p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">
-          Přihlaste se pro správu předplatného
+      <div className="max-w-md mx-auto p-6">
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Pro správu předplatného se prosím přihlaste
         </h2>
-        <p className="text-gray-500">
-          Pro zobrazení a správu vašeho předplatného se musíte přihlásit.
-        </p>
+        <LoginForm />
       </div>
     );
   }
+
+  // Ensure user exists
+  if (!user) {
+    return null;
+  }
+
+  // Only set state if user exists
+  const [isYearly, setIsYearly] = useState<boolean>(
+    user.subscription?.isYearly || false
+  );
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(
+    user.subscription?.tier || "free"
+  );
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const handleSubscriptionChange = async () => {
     if (
@@ -175,7 +170,7 @@ export default function SubscriptionManager() {
           >
             Ročně
             <span className="ml-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
-              -20%
+              Ušetříte 20%
             </span>
           </button>
         </div>

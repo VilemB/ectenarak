@@ -66,12 +66,12 @@ export const SUBSCRIPTION_LIMITS = {
 // Define pricing for each subscription tier
 export const SUBSCRIPTION_PRICING = {
   basic: {
-    monthly: 99,
-    yearly: 990, // 10 months price for yearly subscription (2 months free)
+    monthly: 49,
+    yearly: 468, // 39 Kč per month when paid yearly
   },
   premium: {
-    monthly: 199,
-    yearly: 1990, // 10 months price for yearly subscription (2 months free)
+    monthly: 79,
+    yearly: 756, // 63 Kč per month when paid yearly
   },
 };
 

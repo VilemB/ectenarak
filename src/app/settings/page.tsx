@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { deleteUser } from "@/lib/api";
 import { LogOut, Loader2, ChevronLeft, Trash2 } from "lucide-react";
+import LoginForm from "@/components/LoginForm";
 
 export default function SettingsPage() {
   const { user, loading, isAuthenticated, signOut } = useAuth();
@@ -16,12 +17,26 @@ export default function SettingsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // Handle authentication redirect
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push("/");
-    }
-  }, [loading, isAuthenticated, router]);
+  // Show login form if not authenticated
+  if (!loading && !isAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto p-6">
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Pro správu nastavení se prosím přihlaste
+        </h2>
+        <LoginForm />
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -55,15 +70,6 @@ export default function SettingsPage() {
       setDeleteConfirmation(false);
     }
   };
-
-  // Show loading state
-  if (loading || !isAuthenticated) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative">

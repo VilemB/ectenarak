@@ -33,12 +33,10 @@ export async function middleware(request: NextRequest) {
   // If not authenticated and trying to access a protected route
   if (!token) {
     console.log(
-      `Redirecting from ${request.nextUrl.pathname} to login (not authenticated)`
+      `User not authenticated for protected route: ${request.nextUrl.pathname}`
     );
-    // Redirect to the login page with the original path as redirect parameter
-    const url = new URL("/login", request.url);
-    url.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+    // Return next response to show the login form in place
+    return NextResponse.next();
   }
 
   // User is authenticated, allow access to protected route
