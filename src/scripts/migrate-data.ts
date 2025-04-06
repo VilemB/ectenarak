@@ -42,31 +42,19 @@ async function migrateUsers() {
   console.log(`Found ${users.length} users to migrate`);
 
   for (const user of users) {
+    // Remove profile and stats fields
+    if (user.profile) {
+      user.profile = undefined;
+    }
+    if (user.stats) {
+      user.stats = undefined;
+    }
+
     // Add new fields with default values if they don't exist
     if (!user.preferences) {
       user.preferences = {
         theme: "system",
         language: "cs",
-        emailNotifications: true,
-        privacySettings: {
-          shareReadingActivity: false,
-          shareLibrary: false,
-        },
-      };
-    }
-
-    if (!user.profile) {
-      user.profile = {
-        favoriteGenres: [],
-      };
-    }
-
-    if (!user.stats) {
-      user.stats = {
-        booksRead: 0,
-        pagesRead: 0,
-        notesCreated: 0,
-        lastActiveAt: new Date(),
       };
     }
 
@@ -247,23 +235,6 @@ async function migrateBooks() {
   console.log("Book migration completed");
 }
 
-// Update user statistics
-async function updateUserStats() {
-  console.log("Updating user statistics...");
-  const users = await User.find({});
-
-  for (const user of users) {
-    try {
-      await user.updateStats();
-      console.log(`Updated stats for user: ${user.email}`);
-    } catch (error) {
-      console.error(`Error updating stats for user ${user.email}:`, error);
-    }
-  }
-
-  console.log("User statistics update completed");
-}
-
 // Main migration function
 async function runMigration() {
   try {
@@ -273,7 +244,6 @@ async function runMigration() {
     await migrateUsers();
     await migrateAuthors();
     await migrateBooks();
-    await updateUserStats();
 
     console.log("Migration completed successfully");
     process.exit(0);
