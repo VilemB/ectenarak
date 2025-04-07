@@ -12,6 +12,7 @@ import {
   RotateCcw,
   BookOpen,
   Lock,
+  Languages,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSummaryPreferences } from "@/contexts/SummaryPreferencesContext";
@@ -117,8 +118,18 @@ export function SummaryPreferencesModal({
   } = useSummaryPreferences();
   const { canAccess } = useFeatureAccess();
 
+  const defaultPreferences: SummaryPreferences = {
+    style: "academic",
+    length: "short",
+    focus: "balanced",
+    language: "cs",
+    examFocus: false,
+    literaryContext: false,
+    studyGuide: false,
+  };
+
   const [preferences, setPreferences] =
-    useState<SummaryPreferences>(globalPreferences);
+    useState<SummaryPreferences>(defaultPreferences);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
   const [showLongWarning, setShowLongWarning] = useState(false);
@@ -130,8 +141,9 @@ export function SummaryPreferencesModal({
 
   // Update local preferences when global preferences change
   useEffect(() => {
-    setPreferences(globalPreferences);
-  }, [globalPreferences]);
+    // Initialize with defaultPreferences instead of globalPreferences
+    setPreferences(defaultPreferences);
+  }, []);
 
   // Show warning when "long" length is selected
   useEffect(() => {
@@ -255,6 +267,80 @@ export function SummaryPreferencesModal({
             )}
           </div>
 
+          {/* Language selection - always enabled */}
+          <div className="bg-background p-4 rounded-lg border border-border shadow-sm mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Languages className="h-4 w-4 text-blue-500" />
+                <label className="text-sm font-medium text-foreground">
+                  Jazyk
+                </label>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 rounded-full"
+                onClick={() =>
+                  setActiveTooltip(
+                    activeTooltip === "language" ? null : "language"
+                  )
+                }
+              >
+                <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="sr-only">Informace o jazyce</span>
+              </Button>
+            </div>
+
+            <AnimatePresence>
+              {activeTooltip === "language" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                >
+                  <p>
+                    <strong>Čeština:</strong> {optionDescriptions.language.cs}
+                  </p>
+                  <p>
+                    <strong>Angličtina:</strong>{" "}
+                    {optionDescriptions.language.en}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid grid-cols-2 gap-3">
+              {(["cs", "en"] as const).map((language) => (
+                <motion.div
+                  key={language}
+                  variants={optionVariants}
+                  animate={
+                    preferences.language === language
+                      ? "selected"
+                      : "notSelected"
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant={
+                      preferences.language === language ? "default" : "outline"
+                    }
+                    className={`w-full ${
+                      preferences.language === language
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "border-input text-foreground hover:bg-secondary"
+                    }`}
+                    onClick={() => setPreferences({ ...preferences, language })}
+                  >
+                    {language === "cs" ? "Čeština" : "Angličtina"}
+                  </Button>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
           {/* Subscription notice for users without AI customization */}
           {!hasAiCustomization && (
             <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
@@ -271,7 +357,7 @@ export function SummaryPreferencesModal({
             </div>
           )}
 
-          {/* Rest of the form with disabled state for non-subscribers */}
+          {/* Rest of the options - disabled for non-subscribers */}
           <div
             className={`space-y-6 ${
               !hasAiCustomization ? "opacity-50 pointer-events-none" : ""
@@ -781,84 +867,6 @@ export function SummaryPreferencesModal({
                     </Button>
                   </motion.div>
                 </div>
-              </div>
-            </div>
-
-            {/* Language selection */}
-            <div className="bg-background p-4 rounded-lg border border-border shadow-sm mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 text-blue-500" />
-                  <label className="text-sm font-medium text-foreground">
-                    Jazyk
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={() =>
-                    setActiveTooltip(
-                      activeTooltip === "language" ? null : "language"
-                    )
-                  }
-                >
-                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="sr-only">Informace o jazyce</span>
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {activeTooltip === "language" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
-                  >
-                    <p>
-                      <strong>Čeština:</strong> {optionDescriptions.language.cs}
-                    </p>
-                    <p>
-                      <strong>Angličtina:</strong>{" "}
-                      {optionDescriptions.language.en}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="grid grid-cols-2 gap-3">
-                {(["cs", "en"] as const).map((language) => (
-                  <motion.div
-                    key={language}
-                    variants={optionVariants}
-                    animate={
-                      preferences.language === language
-                        ? "selected"
-                        : "notSelected"
-                    }
-                  >
-                    <Button
-                      type="button"
-                      variant={
-                        preferences.language === language
-                          ? "default"
-                          : "outline"
-                      }
-                      className={`w-full ${
-                        preferences.language === language
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "border-input text-foreground hover:bg-secondary"
-                      }`}
-                      onClick={() =>
-                        setPreferences({ ...preferences, language })
-                      }
-                    >
-                      {language === "cs" ? "Čeština" : "Angličtina"}
-                    </Button>
-                  </motion.div>
-                ))}
               </div>
             </div>
           </div>

@@ -258,257 +258,8 @@ export function AuthorSummaryPreferencesModal({
             </div>
           )}
 
-          <div
-            className={`space-y-6 ${
-              !hasAiCustomization ? "opacity-50 pointer-events-none" : ""
-            }`}
-          >
-            {/* Style selection */}
-            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-blue-500" />
-                  <label className="text-sm font-medium text-foreground">
-                    Styl
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={() =>
-                    setActiveTooltip(activeTooltip === "style" ? null : "style")
-                  }
-                >
-                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="sr-only">Informace o stylu</span>
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {activeTooltip === "style" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
-                  >
-                    <p>
-                      <strong>Akademický:</strong>{" "}
-                      {tooltipDescriptions.style.academic}
-                    </p>
-                    <p>
-                      <strong>Neformální:</strong>{" "}
-                      {tooltipDescriptions.style.casual}
-                    </p>
-                    <p>
-                      <strong>Kreativní:</strong>{" "}
-                      {tooltipDescriptions.style.creative}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="grid grid-cols-3 gap-3">
-                {(["academic", "casual", "creative"] as const).map((style) => (
-                  <motion.div
-                    key={style}
-                    variants={optionVariants}
-                    animate={
-                      preferences.style === style ? "selected" : "notSelected"
-                    }
-                  >
-                    <Button
-                      type="button"
-                      variant={
-                        preferences.style === style ? "default" : "outline"
-                      }
-                      className={`w-full ${
-                        preferences.style === style
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "border-input text-foreground hover:bg-secondary"
-                      }`}
-                      onClick={() => setPreferences({ ...preferences, style })}
-                    >
-                      {style === "academic"
-                        ? "Akademický"
-                        : style === "casual"
-                        ? "Neformální"
-                        : "Kreativní"}
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Length selection */}
-            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <AlignJustify className="h-4 w-4 text-blue-500" />
-                  <label className="text-sm font-medium text-foreground">
-                    Délka
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={() =>
-                    setActiveTooltip(
-                      activeTooltip === "length" ? null : "length"
-                    )
-                  }
-                >
-                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="sr-only">Informace o délce</span>
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {activeTooltip === "length" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
-                  >
-                    <p>
-                      <strong>Krátké:</strong>{" "}
-                      {tooltipDescriptions.length.short}
-                    </p>
-                    <p>
-                      <strong>Střední:</strong>{" "}
-                      {tooltipDescriptions.length.medium}
-                    </p>
-                    <p>
-                      <strong>Dlouhé:</strong> {tooltipDescriptions.length.long}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="grid grid-cols-3 gap-3">
-                {(["short", "medium", "long"] as const).map((length) => (
-                  <motion.div
-                    key={length}
-                    variants={optionVariants}
-                    animate={
-                      preferences.length === length ? "selected" : "notSelected"
-                    }
-                  >
-                    <Button
-                      type="button"
-                      variant={
-                        preferences.length === length ? "default" : "outline"
-                      }
-                      className={`w-full ${
-                        preferences.length === length
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "border-input text-foreground hover:bg-secondary"
-                      }`}
-                      onClick={() => setPreferences({ ...preferences, length })}
-                    >
-                      {length === "short"
-                        ? "Krátké"
-                        : length === "medium"
-                        ? "Střední"
-                        : "Dlouhé"}
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Focus selection */}
-            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-blue-500" />
-                  <label className="text-sm font-medium text-foreground">
-                    Zaměření
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={() =>
-                    setActiveTooltip(activeTooltip === "focus" ? null : "focus")
-                  }
-                >
-                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="sr-only">Informace o zaměření</span>
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {activeTooltip === "focus" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
-                  >
-                    <p>
-                      <strong>Život:</strong> {tooltipDescriptions.focus.life}
-                    </p>
-                    <p>
-                      <strong>Díla:</strong> {tooltipDescriptions.focus.works}
-                    </p>
-                    <p>
-                      <strong>Vliv:</strong> {tooltipDescriptions.focus.impact}
-                    </p>
-                    <p>
-                      <strong>Vyvážené:</strong>{" "}
-                      {tooltipDescriptions.focus.balanced}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {(["life", "works", "impact", "balanced"] as const).map(
-                  (focus) => (
-                    <motion.div
-                      key={focus}
-                      variants={optionVariants}
-                      animate={
-                        preferences.focus === focus ? "selected" : "notSelected"
-                      }
-                    >
-                      <Button
-                        type="button"
-                        variant={
-                          preferences.focus === focus ? "default" : "outline"
-                        }
-                        className={`w-full ${
-                          preferences.focus === focus
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                            : "border-input text-foreground hover:bg-secondary"
-                        }`}
-                        onClick={() =>
-                          setPreferences({ ...preferences, focus })
-                        }
-                      >
-                        {focus === "life"
-                          ? "Život"
-                          : focus === "works"
-                          ? "Díla"
-                          : focus === "impact"
-                          ? "Vliv"
-                          : "Vyvážené"}
-                      </Button>
-                    </motion.div>
-                  )
-                )}
-              </div>
-            </div>
-
-            {/* Language selection */}
+          <div className="space-y-6">
+            {/* Language selection - always enabled */}
             <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -587,136 +338,413 @@ export function AuthorSummaryPreferencesModal({
               </div>
             </div>
 
-            {/* Additional options */}
-            <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Bookmark className="h-4 w-4 text-blue-500" />
-                  <label className="text-sm font-medium text-foreground">
-                    Další možnosti
-                  </label>
+            {/* Rest of the options - disabled for non-subscribers */}
+            <div
+              className={`space-y-6 ${
+                !hasAiCustomization ? "opacity-50 pointer-events-none" : ""
+              }`}
+            >
+              {/* Style selection */}
+              <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-blue-500" />
+                    <label className="text-sm font-medium text-foreground">
+                      Styl
+                    </label>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 rounded-full"
+                    onClick={() =>
+                      setActiveTooltip(
+                        activeTooltip === "style" ? null : "style"
+                      )
+                    }
+                  >
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="sr-only">Informace o stylu</span>
+                  </Button>
+                </div>
+
+                <AnimatePresence>
+                  {activeTooltip === "style" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                    >
+                      <p>
+                        <strong>Akademický:</strong>{" "}
+                        {tooltipDescriptions.style.academic}
+                      </p>
+                      <p>
+                        <strong>Neformální:</strong>{" "}
+                        {tooltipDescriptions.style.casual}
+                      </p>
+                      <p>
+                        <strong>Kreativní:</strong>{" "}
+                        {tooltipDescriptions.style.creative}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {(["academic", "casual", "creative"] as const).map(
+                    (style) => (
+                      <motion.div
+                        key={style}
+                        variants={optionVariants}
+                        animate={
+                          preferences.style === style
+                            ? "selected"
+                            : "notSelected"
+                        }
+                      >
+                        <Button
+                          type="button"
+                          variant={
+                            preferences.style === style ? "default" : "outline"
+                          }
+                          className={`w-full ${
+                            preferences.style === style
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "border-input text-foreground hover:bg-secondary"
+                          }`}
+                          onClick={() =>
+                            setPreferences({ ...preferences, style })
+                          }
+                        >
+                          {style === "academic"
+                            ? "Akademický"
+                            : style === "casual"
+                            ? "Neformální"
+                            : "Kreativní"}
+                        </Button>
+                      </motion.div>
+                    )
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <motion.button
-                  type="button"
-                  variants={optionVariants}
-                  animate={
-                    preferences.includeTimeline ? "selected" : "notSelected"
-                  }
-                  className={`
-                    relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
-                    ${
-                      preferences.includeTimeline
-                        ? "border-blue-500/30 bg-blue-500/10"
-                        : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
+              {/* Length selection */}
+              <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <AlignJustify className="h-4 w-4 text-blue-500" />
+                    <label className="text-sm font-medium text-foreground">
+                      Délka
+                    </label>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 rounded-full"
+                    onClick={() =>
+                      setActiveTooltip(
+                        activeTooltip === "length" ? null : "length"
+                      )
                     }
-                  `}
-                  onClick={() =>
-                    setPreferences({
-                      ...preferences,
-                      includeTimeline: !preferences.includeTimeline,
-                    })
-                  }
-                >
-                  <div className="flex items-center">
-                    <History className="h-4 w-4 mr-2 text-blue-500" />
-                    <div className="text-sm font-medium">Časová osa</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Přidá chronologický přehled života a díla autora.
-                  </div>
-                </motion.button>
+                  >
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="sr-only">Informace o délce</span>
+                  </Button>
+                </div>
 
-                <motion.button
-                  type="button"
-                  variants={optionVariants}
-                  animate={
-                    preferences.includeAwards ? "selected" : "notSelected"
-                  }
-                  className={`
-                    relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
-                    ${
-                      preferences.includeAwards
-                        ? "border-blue-500/30 bg-blue-500/10"
-                        : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
-                    }
-                  `}
-                  onClick={() =>
-                    setPreferences({
-                      ...preferences,
-                      includeAwards: !preferences.includeAwards,
-                    })
-                  }
-                >
-                  <div className="flex items-center">
-                    <Award className="h-4 w-4 mr-2 text-blue-500" />
-                    <div className="text-sm font-medium">Ocenění</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Zahrne informace o literárních cenách a uznáních.
-                  </div>
-                </motion.button>
+                <AnimatePresence>
+                  {activeTooltip === "length" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                    >
+                      <p>
+                        <strong>Krátké:</strong>{" "}
+                        {tooltipDescriptions.length.short}
+                      </p>
+                      <p>
+                        <strong>Střední:</strong>{" "}
+                        {tooltipDescriptions.length.medium}
+                      </p>
+                      <p>
+                        <strong>Dlouhé:</strong>{" "}
+                        {tooltipDescriptions.length.long}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                <motion.button
-                  type="button"
-                  variants={optionVariants}
-                  animate={
-                    preferences.includeInfluences ? "selected" : "notSelected"
-                  }
-                  className={`
-                    relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
-                    ${
-                      preferences.includeInfluences
-                        ? "border-blue-500/30 bg-blue-500/10"
-                        : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
-                    }
-                  `}
-                  onClick={() =>
-                    setPreferences({
-                      ...preferences,
-                      includeInfluences: !preferences.includeInfluences,
-                    })
-                  }
-                >
-                  <div className="flex items-center">
-                    <Bookmark className="h-4 w-4 mr-2 text-blue-500" />
-                    <div className="text-sm font-medium">Vlivy a inspirace</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Přidá informace o literárních vlivech a inspiracích autora.
-                  </div>
-                </motion.button>
+                <div className="grid grid-cols-3 gap-3">
+                  {(["short", "medium", "long"] as const).map((length) => (
+                    <motion.div
+                      key={length}
+                      variants={optionVariants}
+                      animate={
+                        preferences.length === length
+                          ? "selected"
+                          : "notSelected"
+                      }
+                    >
+                      <Button
+                        type="button"
+                        variant={
+                          preferences.length === length ? "default" : "outline"
+                        }
+                        className={`w-full ${
+                          preferences.length === length
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "border-input text-foreground hover:bg-secondary"
+                        }`}
+                        onClick={() =>
+                          setPreferences({ ...preferences, length })
+                        }
+                      >
+                        {length === "short"
+                          ? "Krátké"
+                          : length === "medium"
+                          ? "Střední"
+                          : "Dlouhé"}
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
 
-                <motion.button
-                  type="button"
-                  variants={optionVariants}
-                  animate={preferences.studyGuide ? "selected" : "notSelected"}
-                  className={`
-                    relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
-                    ${
-                      preferences.studyGuide
-                        ? "border-blue-500/30 bg-blue-500/10"
-                        : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
+              {/* Focus selection */}
+              <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-500" />
+                    <label className="text-sm font-medium text-foreground">
+                      Zaměření
+                    </label>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 rounded-full"
+                    onClick={() =>
+                      setActiveTooltip(
+                        activeTooltip === "focus" ? null : "focus"
+                      )
                     }
-                  `}
-                  onClick={() =>
-                    setPreferences({
-                      ...preferences,
-                      studyGuide: !preferences.studyGuide,
-                    })
-                  }
-                >
-                  <div className="flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2 text-blue-500" />
-                    <div className="text-sm font-medium">Studijní průvodce</div>
+                  >
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="sr-only">Informace o zaměření</span>
+                  </Button>
+                </div>
+
+                <AnimatePresence>
+                  {activeTooltip === "focus" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="mb-3 text-xs bg-secondary p-2 rounded-md text-muted-foreground"
+                    >
+                      <p>
+                        <strong>Život:</strong> {tooltipDescriptions.focus.life}
+                      </p>
+                      <p>
+                        <strong>Díla:</strong> {tooltipDescriptions.focus.works}
+                      </p>
+                      <p>
+                        <strong>Vliv:</strong>{" "}
+                        {tooltipDescriptions.focus.impact}
+                      </p>
+                      <p>
+                        <strong>Vyvážené:</strong>{" "}
+                        {tooltipDescriptions.focus.balanced}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {(["life", "works", "impact", "balanced"] as const).map(
+                    (focus) => (
+                      <motion.div
+                        key={focus}
+                        variants={optionVariants}
+                        animate={
+                          preferences.focus === focus
+                            ? "selected"
+                            : "notSelected"
+                        }
+                      >
+                        <Button
+                          type="button"
+                          variant={
+                            preferences.focus === focus ? "default" : "outline"
+                          }
+                          className={`w-full ${
+                            preferences.focus === focus
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "border-input text-foreground hover:bg-secondary"
+                          }`}
+                          onClick={() =>
+                            setPreferences({ ...preferences, focus })
+                          }
+                        >
+                          {focus === "life"
+                            ? "Život"
+                            : focus === "works"
+                            ? "Díla"
+                            : focus === "impact"
+                            ? "Vliv"
+                            : "Vyvážené"}
+                        </Button>
+                      </motion.div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Additional options */}
+              <div className="bg-background p-4 rounded-lg border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Bookmark className="h-4 w-4 text-blue-500" />
+                    <label className="text-sm font-medium text-foreground">
+                      Další možnosti
+                    </label>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Vytvoří komplexní studijní materiál s klíčovými body pro
-                    zkoušky a tipy pro analýzu.
-                  </div>
-                </motion.button>
+                </div>
+
+                <div className="space-y-2">
+                  <motion.button
+                    type="button"
+                    variants={optionVariants}
+                    animate={
+                      preferences.includeTimeline ? "selected" : "notSelected"
+                    }
+                    className={`
+                      relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                      ${
+                        preferences.includeTimeline
+                          ? "border-blue-500/30 bg-blue-500/10"
+                          : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
+                      }
+                    `}
+                    onClick={() =>
+                      setPreferences({
+                        ...preferences,
+                        includeTimeline: !preferences.includeTimeline,
+                      })
+                    }
+                  >
+                    <div className="flex items-center">
+                      <History className="h-4 w-4 mr-2 text-blue-500" />
+                      <div className="text-sm font-medium">Časová osa</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Přidá chronologický přehled života a díla autora.
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    variants={optionVariants}
+                    animate={
+                      preferences.includeAwards ? "selected" : "notSelected"
+                    }
+                    className={`
+                      relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                      ${
+                        preferences.includeAwards
+                          ? "border-blue-500/30 bg-blue-500/10"
+                          : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
+                      }
+                    `}
+                    onClick={() =>
+                      setPreferences({
+                        ...preferences,
+                        includeAwards: !preferences.includeAwards,
+                      })
+                    }
+                  >
+                    <div className="flex items-center">
+                      <Award className="h-4 w-4 mr-2 text-blue-500" />
+                      <div className="text-sm font-medium">Ocenění</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Zahrne informace o literárních cenách a uznáních.
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    variants={optionVariants}
+                    animate={
+                      preferences.includeInfluences ? "selected" : "notSelected"
+                    }
+                    className={`
+                      relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                      ${
+                        preferences.includeInfluences
+                          ? "border-blue-500/30 bg-blue-500/10"
+                          : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
+                      }
+                    `}
+                    onClick={() =>
+                      setPreferences({
+                        ...preferences,
+                        includeInfluences: !preferences.includeInfluences,
+                      })
+                    }
+                  >
+                    <div className="flex items-center">
+                      <Bookmark className="h-4 w-4 mr-2 text-blue-500" />
+                      <div className="text-sm font-medium">
+                        Vlivy a inspirace
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Přidá informace o literárních vlivech a inspiracích
+                      autora.
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    variants={optionVariants}
+                    animate={
+                      preferences.studyGuide ? "selected" : "notSelected"
+                    }
+                    className={`
+                      relative p-3 rounded-lg border cursor-pointer transition-all w-full text-left
+                      ${
+                        preferences.studyGuide
+                          ? "border-blue-500/30 bg-blue-500/10"
+                          : "border-border/60 bg-background hover:border-blue-500/30 hover:bg-blue-500/5"
+                      }
+                    `}
+                    onClick={() =>
+                      setPreferences({
+                        ...preferences,
+                        studyGuide: !preferences.studyGuide,
+                      })
+                    }
+                  >
+                    <div className="flex items-center">
+                      <Sparkles className="h-4 w-4 mr-2 text-blue-500" />
+                      <div className="text-sm font-medium">
+                        Studijní průvodce
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Vytvoří komplexní studijní materiál s klíčovými body pro
+                      zkoušky a tipy pro analýzu.
+                    </div>
+                  </motion.button>
+                </div>
               </div>
             </div>
           </div>
