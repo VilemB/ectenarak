@@ -232,9 +232,21 @@ export default function SubscriptionPage() {
                       className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
                     >
                       Ročně{" "}
-                      <span className="ml-1 text-xs font-normal text-emerald-400">
-                        Ušetříte 20%
-                      </span>
+                      <motion.span
+                        className="inline-flex items-center ml-1"
+                        initial={{ scale: 1 }}
+                        whileHover={{ scale: 1.1 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 10,
+                        }}
+                      >
+                        <span className="text-xs font-medium bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
+                          -20%
+                        </span>
+                        <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
+                      </motion.span>
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -249,7 +261,7 @@ export default function SubscriptionPage() {
                 subtitle="Pro začátek"
                 description="Základní funkce pro správu zápisků"
                 price="0 Kč"
-                pricePeriod="navždy"
+                pricePeriod=""
                 icon={<BookText className="h-6 w-6 text-muted-foreground" />}
                 badge={{
                   text: "Zdarma",
@@ -268,7 +280,7 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                   {
-                    name: "Manuální poznámky ke knihám",
+                    name: "Manuální poznámky",
                     included: true,
                   },
                   {
@@ -277,7 +289,8 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                   {
-                    name: "Jednoduchý formát poznámek",
+                    name: "Základní funkce",
+                    description: "pro začátek",
                     included: true,
                   },
                 ]}
@@ -313,16 +326,11 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                   {
-                    name: "AI shrnutí autorů",
-                    description: "a jejich děl",
-                    included: true,
-                  },
-                  {
                     name: "Export poznámek do PDF",
                     included: true,
                   },
                   {
-                    name: "Pokročilý formát poznámek",
+                    name: "Všechny funkce ze Základního plánu",
                     included: true,
                   },
                 ]}
@@ -359,21 +367,16 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                   {
-                    name: "Pokročilé AI přizpůsobení",
-                    description: "poznámek",
-                    included: true,
-                  },
-                  {
-                    name: "Detailní informace o autorech",
-                    included: true,
-                  },
-                  {
-                    name: "Rozšířené AI shrnutí",
-                    description: "knih",
+                    name: "Přizpůsobění AI shrnutí",
+                    description: "Zaměření, detailnost, styl",
                     included: true,
                   },
                   {
                     name: "Prioritní podpora",
+                    included: true,
+                  },
+                  {
+                    name: "Všechny funkce z Basic plánu",
                     included: true,
                   },
                 ]}

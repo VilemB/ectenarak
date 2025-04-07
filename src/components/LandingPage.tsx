@@ -16,6 +16,7 @@ import Link from "next/link";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LandingNavbar from "@/components/LandingNavbar";
 import LoginForm from "@/components/LoginForm";
+import { SUBSCRIPTION_LIMITS } from "@/types/user";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -358,7 +359,18 @@ export default function LandingPage() {
                       : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
                   }`}
                 >
-                  Ročně <span className="text-xs opacity-90 ml-1">(-20%)</span>
+                  Ročně{" "}
+                  <motion.span
+                    className="inline-flex items-center ml-1"
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  >
+                    <span className="text-xs font-medium bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
+                      -20%
+                    </span>
+                    <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
+                  </motion.span>
                 </button>
               </div>
 
@@ -366,10 +378,12 @@ export default function LandingPage() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center text-sm text-primary font-medium"
+                  className="flex items-center text-sm text-emerald-400 font-medium"
                 >
-                  <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                  Ušetříte 20% s ročním předplatným
+                  <Sparkles className="h-4 w-4 mr-2 text-emerald-400" />
+                  <span className="bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
+                    Ušetříte 20% s ročním předplatným
+                  </span>
                 </motion.div>
               )}
             </motion.div>
@@ -384,7 +398,7 @@ export default function LandingPage() {
                 subtitle="Pro začátek"
                 description="Základní funkce pro správu zápisků"
                 price="0 Kč"
-                pricePeriod="navždy"
+                pricePeriod=""
                 icon={<BookText className="h-6 w-6 text-muted-foreground" />}
                 badge={{
                   text: "Zdarma",
@@ -400,20 +414,21 @@ export default function LandingPage() {
                 animationDelay={0.1}
                 features={[
                   {
-                    name: "Až 20 knih v knihovně",
+                    name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
                     included: true,
                   },
                   {
-                    name: "Manuální poznámky ke knihám",
+                    name: "Manuální poznámky",
                     included: true,
                   },
                   {
-                    name: "3 AI kredity",
+                    name: `${SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI kredity`,
                     description: "měsíčně",
                     included: true,
                   },
                   {
-                    name: "Jednoduchý formát poznámek",
+                    name: "Základní funkce",
+                    description: "pro začátek",
                     included: true,
                   },
                 ]}
@@ -450,16 +465,11 @@ export default function LandingPage() {
                     included: true,
                   },
                   {
-                    name: "AI shrnutí autorů",
-                    description: "a jejich děl",
-                    included: true,
-                  },
-                  {
                     name: "Export poznámek do PDF",
                     included: true,
                   },
                   {
-                    name: "Pokročilý formát poznámek",
+                    name: "Všechny funkce ze Základního plánu",
                     included: true,
                   },
                 ]}
@@ -488,27 +498,25 @@ export default function LandingPage() {
                 animationDelay={0.3}
                 features={[
                   {
-                    name: "Neomezený počet knih",
+                    name: "Neomezený počet knih v knihovně",
                     included: true,
                   },
                   {
-                    name: "100 AI kreditů měsíčně",
+                    name: "100 AI kreditů",
+                    description: "měsíčně",
                     included: true,
                   },
                   {
-                    name: "Pokročilá AI shrnutí s delším rozsahem",
+                    name: "Přizpůsobění AI shrnutí",
+                    description: "Zaměření, detailnost, styl",
                     included: true,
                   },
                   {
-                    name: "Detailní informace o autorech",
+                    name: "Prioritní podpora",
                     included: true,
                   },
                   {
-                    name: "Přizpůsobení AI shrnutí",
-                    included: true,
-                  },
-                  {
-                    name: "Export poznámek do PDF",
+                    name: "Všechny funkce z Basic plánu",
                     included: true,
                   },
                 ]}
