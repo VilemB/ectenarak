@@ -60,11 +60,11 @@ export default function SubscriptionCard({
       viewport={{ once: true }}
       transition={{ duration: 0.4, delay: animationDelay }}
       whileHover={{ y: -5 }}
-      className={`bg-[#1a2436] ${
+      className={`glass-card glass-card-hover ${
         isPremium
           ? `border-2 border-[${accentColor}]`
           : "border border-[#2a3548]"
-      } rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative flex flex-col h-full ${
+      } overflow-hidden relative flex flex-col h-full ${
         isPremium ? "md:scale-[1.03] md:-translate-y-1 z-10" : ""
       }`}
     >

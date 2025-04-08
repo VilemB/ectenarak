@@ -187,7 +187,7 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
                   {/* Feature 1 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -211,7 +211,7 @@ export default function LandingPage() {
 
                   {/* Feature 2 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -234,7 +234,7 @@ export default function LandingPage() {
 
                   {/* Feature 3 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -528,7 +528,7 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
                   {/* FAQ Item 1 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -551,7 +551,7 @@ export default function LandingPage() {
 
                   {/* FAQ Item 2 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -577,7 +577,7 @@ export default function LandingPage() {
 
                   {/* FAQ Item 3 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -599,7 +599,7 @@ export default function LandingPage() {
 
                   {/* FAQ Item 4 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -621,7 +621,7 @@ export default function LandingPage() {
 
                   {/* FAQ Item 5 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -648,7 +648,7 @@ export default function LandingPage() {
 
                   {/* FAQ Item 6 */}
                   <motion.div
-                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    className="glass-card glass-card-hover group relative overflow-hidden"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
