@@ -47,7 +47,6 @@ export default function LandingPage() {
     <div className="relative">
       {/* Add the scroll animations */}
       <ThreeBackground />
-      <ScrollProgress />
 
       <ScrollAnimation>
         <div className="w-full relative overflow-hidden min-h-screen flex flex-col">
