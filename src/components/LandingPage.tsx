@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LandingNavbar from "@/components/LandingNavbar";
 import LoginForm from "@/components/LoginForm";
@@ -21,7 +22,14 @@ import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import "@/styles/animations.css";
 import TextReveal from "@/components/TextReveal";
 import ScrollIndicator from "@/components/ScrollIndicator";
-import ThreeBackground from "@/components/ThreeBackground";
+
+// Dynamically import ThreeBackground component with ssr: false to prevent server-side rendering
+const ThreeBackground = dynamic(() => import("@/components/ThreeBackground"), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 w-full h-full z-[-1] bg-background" />
+  ),
+});
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
