@@ -34,7 +34,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 15;
+    camera.position.z = 20;
     cameraRef.current = camera;
 
     // Renderer setup
@@ -57,7 +57,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     controlsRef.current = controls;
 
     // Create organic particle system
-    const particleCount = 2000;
+    const particleCount = 2500;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const sizes = new Float32Array(particleCount);
@@ -71,7 +71,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
     for (let i = 0; i < particleCount; i++) {
       // Create organic distribution using noise-like function
-      const radius = Math.random() * 5;
+      const radius = Math.random() * 8;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
 
@@ -184,7 +184,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
 
       // More subtle zoom effect
-      cameraRef.current.position.z = 15 - scrollProgress * 3;
+      cameraRef.current.position.z = 20 - scrollProgress * 4;
 
       // Add subtle floating motion
       const time = Date.now() * 0.001;
