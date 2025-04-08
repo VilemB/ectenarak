@@ -21,6 +21,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
   const scrollProgressRef = useRef(0);
   const [isMounted, setIsMounted] = useState(false);
   const [isWebGLSupported, setIsWebGLSupported] = useState(true);
+  const gradientOverlayRef = useRef<HTMLDivElement>(null);
 
   // Wait for component to mount before accessing browser APIs
   useEffect(() => {
@@ -66,14 +67,14 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           0.1,
           1000
         );
-        camera.position.z = 15;
+        camera.position.z = 15; // Zoom in closer from 20 to 15
         cameraRef.current = camera;
 
         // Renderer setup
         const renderer = new THREE.WebGLRenderer({
           antialias: true,
           alpha: true,
-          powerPreference: "high-performance",
+          powerPreference: "high-performance", // Change from low-power to high-performance for better visuals
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -91,29 +92,35 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         controlsRef.current = controls;
 
         // Create organic particle system
-        const particleCount = 3500;
+        const particleCount = 3500; // Increase from 2500 to 3500 for more particles
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const sizes = new Float32Array(particleCount);
 
-        // Color palette - make colors more vibrant by not scaling them down as much
+        // Color palette - make colors more vibrant but somewhat more transparent
         const colorPalette = [
-          new THREE.Color(0x3b82f6).multiplyScalar(0.9), // Medium blue - brighter
-          new THREE.Color(0x8b5cf6).multiplyScalar(0.9), // Medium purple - brighter
-          new THREE.Color(0x6366f1).multiplyScalar(0.9), // Medium indigo - brighter
-          new THREE.Color(0x4f46e5).multiplyScalar(0.9), // Darker indigo - add for variety
+          new THREE.Color(0x3b82f6).multiplyScalar(0.85), // Slightly less bright for better readability
+          new THREE.Color(0x8b5cf6).multiplyScalar(0.85),
+          new THREE.Color(0x6366f1).multiplyScalar(0.85),
+          new THREE.Color(0x4f46e5).multiplyScalar(0.85),
         ];
 
         for (let i = 0; i < particleCount; i++) {
-          // Create organic distribution using noise-like function
+          // Create distribution that pushes particles more to the sides/edges for better readability
           // Use a gaussian-like distribution for denser core
           let radius;
           const gaussianFactor = Math.random();
-          if (gaussianFactor < 0.7) {
-            // 70% of particles in central area
-            radius = Math.random() * 5; // Tighter inner cluster
+
+          // Modify particle distribution - push more particles to the edges
+          if (gaussianFactor < 0.4) {
+            // 40% of particles in edge areas
+            radius = 7 + Math.random() * 6; // More particles near the edges
+          } else if (gaussianFactor < 0.65) {
+            // 25% in middle area
+            radius = 4 + Math.random() * 3; // Mid-distance particles
           } else {
-            radius = 5 + Math.random() * 5; // Outer particles
+            // 35% in center but more spread
+            radius = Math.random() * 4 * (0.5 + Math.random()); // More varied center distribution
           }
 
           const theta = Math.random() * Math.PI * 2;
@@ -140,8 +147,8 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           colors[i * 3 + 1] = color.g;
           colors[i * 3 + 2] = color.b;
 
-          // Vary particle sizes
-          sizes[i] = Math.random() * 0.18 + 0.08;
+          // Vary particle sizes - slightly smaller for better readability
+          sizes[i] = Math.random() * 0.16 + 0.06;
         }
 
         const geometry = new THREE.BufferGeometry();
@@ -165,14 +172,15 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           }
         `;
 
+        // Adjusted fragment shader for better text readability (lower opacity)
         const fragmentShader = `
           varying vec3 vColor;
           void main() {
             vec2 uv = gl_PointCoord;
             float dist = length(uv - vec2(0.5));
             if (dist > 0.5) discard;
-            float alpha = smoothstep(0.5, 0.2, dist); // 0.25 to 0.2 for stronger center glow
-            gl_FragColor = vec4(vColor, alpha * 0.6); // 0.45 to 0.6 for higher opacity
+            float alpha = smoothstep(0.5, 0.2, dist);
+            gl_FragColor = vec4(vColor, alpha * 0.45); // Reduced from 0.6 to 0.45 for readability
           }
         `;
 
@@ -208,10 +216,23 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         const handleScroll = () => {
           const scrollHeight =
             document.documentElement.scrollHeight - window.innerHeight;
-          scrollProgressRef.current = window.scrollY / scrollHeight;
+          const newScrollProgress = window.scrollY / scrollHeight;
+          scrollProgressRef.current = newScrollProgress;
+
+          // Update gradient overlay opacity based on scroll
+          if (gradientOverlayRef.current) {
+            // Make it darker as user scrolls down to improve text readability
+            const baseOpacity = 0.25; // Start with some opacity
+            const maxAdditionalOpacity = 0.2; // Add up to this much as they scroll
+            const newOpacity =
+              baseOpacity + newScrollProgress * maxAdditionalOpacity;
+            gradientOverlayRef.current.style.opacity = newOpacity.toString();
+          }
         };
 
         window.addEventListener("scroll", handleScroll);
+        // Initialize scroll handler once
+        handleScroll();
 
         // Animation loop
         const animate = () => {
@@ -232,7 +253,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
 
           // More subtle zoom effect
-          cameraRef.current.position.z = 15 - scrollProgress * 6;
+          cameraRef.current.position.z = 15 - scrollProgress * 6; // Adjust from 20-4 to 15-6 for stronger zoom
 
           // Add subtle floating motion with more dynamic movement
           const time = Date.now() * 0.001;
@@ -308,10 +329,18 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={`fixed inset-0 w-full h-full pointer-events-none z-[-1] ${className}`}
-    />
+    <>
+      <div
+        ref={containerRef}
+        className={`fixed inset-0 w-full h-full pointer-events-none z-[-1] ${className}`}
+      />
+      {/* Add a gradient overlay div to improve text readability */}
+      <div
+        ref={gradientOverlayRef}
+        className="fixed inset-0 w-full h-full pointer-events-none z-[-1] bg-gradient-to-b from-background/30 via-background/10 to-background/40 backdrop-blur-[1px]"
+        style={{ opacity: 0.25 }}
+      />
+    </>
   );
 };
 

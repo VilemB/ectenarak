@@ -35,6 +35,31 @@ export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [yearlyBilling, setYearlyBilling] = useState(false);
 
+  // Add custom styles for text readability
+  useEffect(() => {
+    // Add text shadow styles to improve readability over the animated background
+    const style = document.createElement("style");
+    style.textContent = `
+      .text-shadow-sm {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      }
+      .text-content h1, .text-content h2, .text-content h3, 
+      .text-content p, .text-content span, .text-content button {
+        position: relative;
+        z-index: 5;
+      }
+      .glass-card {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -71,7 +96,7 @@ export default function LandingPage() {
           {/* Landing page navbar */}
           <LandingNavbar scrollY={scrollY} scrollToSection={scrollToSection} />
 
-          <main className="flex-grow">
+          <main className="flex-grow text-content">
             <section className="py-12 md:py-24 lg:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div className="text-center lg:text-left flex flex-col gap-6">
@@ -79,7 +104,7 @@ export default function LandingPage() {
                   <div>
                     <TextReveal
                       type="words"
-                      className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+                      className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-shadow-sm"
                     >
                       Vytvářejte své{" "}
                       <span className="text-primary relative inline-block gradient-text">
