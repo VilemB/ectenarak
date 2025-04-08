@@ -27,18 +27,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans min-h-screen flex flex-col bg-background antialiased overflow-x-hidden`}
       >
+        {/* Three.js animated background */}
         <ThreeBackground className="bg-background" />
 
-        {/* Background elements with improved responsive positioning */}
-        <div className="fixed inset-0 bg-grid-pattern opacity-10 pointer-events-none z-[-1]"></div>
-
-        {/* Full-height gradient overlay */}
-        <div className="fixed inset-0 bg-gradient-to-b from-background/95 via-background/30 to-background/95 pointer-events-none z-[-1]"></div>
-
-        {/* Glow effects with adjusted positioning */}
-        <div className="bg-glow bg-glow-primary w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] fixed top-[10%] -left-[50px] sm:-left-[100px] opacity-30 z-[-1]"></div>
-        <div className="bg-glow bg-glow-accent w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] fixed bottom-[5%] -right-[75px] sm:-right-[150px] opacity-20 bg-glow-pulse z-[-1]"></div>
-        <div className="bg-glow bg-glow-primary w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] fixed top-[40%] right-[10%] sm:right-[20%] opacity-10 z-[-1]"></div>
+        {/* Subtle gradient overlay for better text readability */}
+        <div className="fixed inset-0 bg-gradient-to-b from-background/80 via-background/20 to-background/80 pointer-events-none z-[-1]"></div>
 
         <Providers>
           <div className="flex flex-col min-h-screen relative z-10">
