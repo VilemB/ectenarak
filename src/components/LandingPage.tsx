@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -9,6 +9,7 @@ import {
   Sparkles,
   PenLine,
   ChevronDown,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -17,24 +18,20 @@ import SubscriptionCard from "@/components/SubscriptionCard";
 import LandingNavbar from "@/components/LandingNavbar";
 import LoginForm from "@/components/LoginForm";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
+import "@/styles/animations.css";
+import ThreeBackground from "@/components/ThreeBackground";
+import ScrollAnimation from "@/components/ScrollAnimation";
+import TextReveal from "@/components/TextReveal";
+import ScrollIndicator from "@/components/ScrollIndicator";
+import ScrollProgress from "@/components/ScrollProgress";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [yearlyBilling, setYearlyBilling] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      // Account for fixed header height when scrolling
       const headerOffset = 70;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.scrollY - headerOffset;
@@ -47,728 +44,696 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="w-full relative overflow-hidden min-h-screen flex flex-col">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 z-[-1] overflow-hidden">
-        <div className="absolute top-20 left-10 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[100px] opacity-30 animate-pulse"></div>
-        <div
-          className="absolute bottom-40 right-20 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-accent/10 rounded-full blur-[120px] opacity-20 animate-pulse"
-          style={{ animationDelay: "2s" }}
-        ></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[800px] h-[400px] sm:h-[800px] bg-primary/5 rounded-full blur-[150px] opacity-20 animate-pulse"
-          style={{ animationDelay: "4s" }}
-        ></div>
-      </div>
+    <div className="relative">
+      {/* Add the scroll animations */}
+      <ThreeBackground />
+      <ScrollProgress />
 
-      {/* Background gradient overlay for consistent styling */}
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
+      <ScrollAnimation>
+        <div className="w-full relative overflow-hidden min-h-screen flex flex-col">
+          {/* Keep animated background elements but remove their animation classes */}
+          <div className="absolute inset-0 overflow-hidden z-[-1]">
+            <div
+              className="absolute top-10 left-10 w-64 h-64 rounded-full bg-primary/10"
+              style={{ filter: "blur(100px)" }}
+            ></div>
+            <div
+              className="absolute bottom-10 right-10 w-64 h-64 rounded-full bg-purple-500/10"
+              style={{ filter: "blur(100px)" }}
+            ></div>
+            <div
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-blue-500/10"
+              style={{ filter: "blur(120px)" }}
+            ></div>
+          </div>
 
-      {/* Landing page navbar - now using the LandingNavbar component */}
-      <LandingNavbar scrollY={scrollY} scrollToSection={scrollToSection} />
+          {/* Background gradient overlay for consistent styling */}
+          <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
 
-      {/* Hero Section - added padding-top to account for fixed navbar */}
-      <section className="relative overflow-hidden min-h-[90vh] flex items-center pt-16">
-        <div className="container max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-16 md:py-24 lg:py-32 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-16">
-            {/* Hero Content */}
-            <div className="flex-1 space-y-6 sm:space-y-8 text-center lg:text-left">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                  Vytvářejte své{" "}
-                  <span className="text-primary relative inline-block">
-                    čtenářské zápisky
-                    <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/50 rounded-full"></span>
-                  </span>{" "}
-                  jednoduše
-                </h1>
-                <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
-                  Zapisujte si poznámky k povinné četbě, generujte shrnutí knih
-                  a autorů, a exportujte své zápisky do PDF.
-                </p>
-              </motion.div>
+          {/* Landing page navbar - now using the LandingNavbar component */}
+          <LandingNavbar scrollY={scrollY} scrollToSection={scrollToSection} />
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-              >
-                <Button
-                  size="lg"
-                  className="transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95"
-                  onClick={() => scrollToSection("signup-section")}
-                >
-                  Začít zdarma
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="transition-all duration-300 hover:shadow-md hover:bg-primary/10 active:scale-95"
-                  onClick={() => scrollToSection("features-section")}
-                >
-                  Prozkoumat funkce
-                </Button>
-              </motion.div>
+          <main className="flex-grow">
+            <section className="py-12 md:py-24 lg:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="text-center lg:text-left flex flex-col gap-6">
+                  {/* Replace LandingAnimations with direct content since we now have 3D animations */}
+                  <div>
+                    <TextReveal
+                      type="words"
+                      className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+                    >
+                      Vytvářejte své{" "}
+                      <span className="text-primary relative inline-block gradient-text">
+                        čtenářské zápisky
+                        <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/50 rounded-full"></span>
+                      </span>{" "}
+                      jednoduše
+                    </TextReveal>
+                  </div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="pt-4"
-              >
-                <motion.div
-                  className="flex justify-center lg:justify-start items-center text-sm text-muted-foreground cursor-pointer"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  onClick={() => scrollToSection("features-section")}
-                >
-                  <span>Posuňte dolů pro více informací</span>
-                  <motion.div
-                    className="ml-2"
-                    animate={{ y: [0, 8, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  >
-                    <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-            </div>
+                  <div>
+                    <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
+                      Zapisujte si poznámky k povinné četbě, generujte shrnutí
+                      knih a autorů, a exportujte své zápisky do PDF.
+                    </p>
+                  </div>
 
-            {/* Hero Image - Hide on very small screens, show on small and up */}
-            <motion.div
-              className="flex-1 relative mt-8 lg:mt-0 max-w-[90%] sm:max-w-[80%] md:max-w-none mx-auto"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.7 }}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <Button
+                      size="lg"
+                      className="transition-all duration-300 hover:shadow-md hover:scale-105 active:scale-95 hover-glow"
+                      onClick={() => {
+                        const element =
+                          document.getElementById("signup-section");
+                        if (element) {
+                          element.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }}
+                    >
+                      Začít zdarma
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="transition-all duration-300 hover:shadow-md hover:bg-primary/10 active:scale-95 hover-glow"
+                      onClick={() => {
+                        const element =
+                          document.getElementById("features-section");
+                        if (element) {
+                          element.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }}
+                    >
+                      Prozkoumat funkce
+                    </Button>
+                  </div>
+
+                  <div className="pt-4">
+                    <ScrollIndicator
+                      targetId="features-section"
+                      className="mx-auto lg:mx-0 mt-4"
+                    />
+                  </div>
+                </div>
+
+                {/* Image placeholder */}
+                <div className="relative w-full h-[400px] rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-card/60 to-card border border-border hover:shadow-xl transition-all duration-500 group flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <ImageIcon className="h-16 w-16 mb-4 text-muted-foreground/50 mx-auto" />
+                    <p className="text-muted-foreground text-lg">
+                      Obrázek bude přidán později
+                    </p>
+                    <p className="text-muted-foreground/70 text-sm mt-2">
+                      Vlastní ilustrace čtenářských zápisků
+                    </p>
+                  </div>
+                  {/* Gradient overlay for aesthetic */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-60 pointer-events-none"></div>
+                </div>
+              </div>
+            </section>
+
+            {/* Features Section */}
+            <section
+              id="features-section"
+              className="py-12 sm:py-16 md:py-24 lg:py-32 relative"
             >
-              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-2xl border border-border/50">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 z-10"></div>
+              <div className="container max-w-7xl mx-auto px-6 sm:px-8">
+                <div className="text-center mb-10 sm:mb-16">
+                  <motion.h2
+                    className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Funkce navržené pro{" "}
+                    <span className="text-foreground">studenty</span>
+                  </motion.h2>
+                  <motion.p
+                    className="mt-4 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    Vše, co potřebujete pro efektivní organizaci povinné četby a
+                    přípravu do školy
+                  </motion.p>
+                </div>
 
-                {/* Placeholder for app screenshot - fixed z-index */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm z-20">
-                  <p className="text-muted-foreground text-center px-4 text-sm sm:text-base">
-                    Zde bude screenshot aplikace
-                    <br />
-                    <span className="text-xs sm:text-sm">
-                      (Nahraďte vlastním obrázkem)
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+                  {/* Feature 1 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="bg-primary/10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <BookText className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Poznámky ke knihám
+                      </h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">
+                        Uchovávejte všechny své poznámky k povinné četbě na
+                        jednom místě a mějte je vždy po ruce pro přípravu do
+                        školy.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Feature 2 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="bg-primary/10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Generování shrnutí
+                      </h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">
+                        Získejte AI generovaná shrnutí knih a informace o
+                        autorech pro rychlejší a efektivnější přípravu na testy.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Feature 3 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="bg-primary/10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <PenLine className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Export do PDF
+                      </h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">
+                        Exportujte své poznámky do PDF formátu pro snadné
+                        sdílení nebo tisk při přípravě na hodiny literatury.
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section
+              id="pricing-section"
+              className="py-16 md:py-24 relative overflow-hidden"
+            >
+              <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+                <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">
+                  <motion.h2
+                    className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    Vyberte si plán, který vám vyhovuje
+                  </motion.h2>
+                  <motion.p
+                    className="text-muted-foreground text-lg md:text-xl mb-8"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    Získejte přístup k pokročilým funkcím, které vám pomohou s
+                    přípravou do školy.
+                  </motion.p>
+
+                  {/* Simple Pricing Toggle */}
+                  <motion.div
+                    className="flex flex-col items-center justify-center mb-10"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    <div className="flex items-center space-x-3 bg-[#1a2436] p-1.5 rounded-full border border-[#2a3548] shadow-sm mb-3">
+                      <button
+                        onClick={() => setYearlyBilling(false)}
+                        className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                          !yearlyBilling
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
+                        }`}
+                      >
+                        Měsíčně
+                      </button>
+                      <button
+                        onClick={() => setYearlyBilling(true)}
+                        className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                          yearlyBilling
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
+                        }`}
+                      >
+                        Ročně{" "}
+                        <motion.span
+                          className="inline-flex items-center ml-1 yearly-discount"
+                          initial={{ scale: 1 }}
+                          whileHover={{ scale: 1.1 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 10,
+                          }}
+                        >
+                          <span className="text-xs font-medium bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
+                            -20%
+                          </span>
+                          <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
+                        </motion.span>
+                      </button>
+                    </div>
+
+                    {yearlyBilling && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center text-sm text-emerald-400 font-medium"
+                      >
+                        <Sparkles className="h-4 w-4 mr-2 text-emerald-400" />
+                        <span className="bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
+                          Ušetříte 20% s ročním předplatným
+                        </span>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Pricing Cards Container with flex wrapper */}
+                <div className="flex justify-center w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl w-full px-0 sm:px-4">
+                    {/* Free Plan */}
+                    <SubscriptionCard
+                      title="Základní"
+                      subtitle="Pro začátek"
+                      description="Základní funkce pro správu zápisků"
+                      price="0 Kč"
+                      pricePeriod=""
+                      icon={
+                        <BookText className="h-6 w-6 text-muted-foreground" />
+                      }
+                      badge={{
+                        text: "Zdarma",
+                        color: "bg-[#2a3548] text-muted-foreground",
+                      }}
+                      isCurrentPlan={false}
+                      isLoading={false}
+                      isSelected={false}
+                      accentColor="#6b7280"
+                      mutedColor="#6b7280"
+                      buttonText="Začít zdarma"
+                      onSelect={() => scrollToSection("signup-section")}
+                      animationDelay={0.1}
+                      features={[
+                        {
+                          name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
+                          included: true,
+                        },
+                        {
+                          name: "Manuální poznámky",
+                          included: true,
+                        },
+                        {
+                          name: `${SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI kredity`,
+                          description: "měsíčně",
+                          included: true,
+                        },
+                        {
+                          name: "Základní funkce",
+                          description: "pro začátek",
+                          included: true,
+                        },
+                      ]}
+                    />
+
+                    {/* Basic Plan */}
+                    <SubscriptionCard
+                      title="Basic"
+                      subtitle="Pro aktivní čtenáře"
+                      description="Rozšířené funkce pro efektivnější práci"
+                      price={yearlyBilling ? "39" : "49"}
+                      pricePeriod="/ měsíc"
+                      icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
+                      badge={{
+                        text: "Populární",
+                        color: "bg-[#2a3548] text-[#3b82f6]",
+                      }}
+                      isCurrentPlan={false}
+                      isLoading={false}
+                      isSelected={false}
+                      accentColor="#3b82f6"
+                      mutedColor="#3b82f6"
+                      buttonText="Vyzkoušet Basic"
+                      onSelect={() => scrollToSection("signup-section")}
+                      animationDelay={0.2}
+                      features={[
+                        {
+                          name: "Až 100 knih v knihovně",
+                          included: true,
+                        },
+                        {
+                          name: "50 AI kreditů",
+                          description: "měsíčně",
+                          included: true,
+                        },
+                        {
+                          name: "Export poznámek do PDF",
+                          included: true,
+                        },
+                        {
+                          name: "Všechny funkce ze Základního plánu",
+                          included: true,
+                        },
+                      ]}
+                    />
+
+                    {/* Premium Plan */}
+                    <SubscriptionCard
+                      title="Premium"
+                      subtitle="Pro vášnivé čtenáře"
+                      description="Plný přístup ke všem funkcím bez omezení"
+                      price={yearlyBilling ? "63" : "79"}
+                      pricePeriod="/ měsíc"
+                      icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
+                      badge={{
+                        text: "Doporučeno",
+                        color: "bg-[#3b82f6] text-white",
+                      }}
+                      isCurrentPlan={false}
+                      isLoading={false}
+                      isSelected={false}
+                      accentColor="#3b82f6"
+                      mutedColor="#3b82f6"
+                      buttonText="Získat Premium"
+                      onSelect={() => scrollToSection("signup-section")}
+                      isPremium={true}
+                      animationDelay={0.3}
+                      features={[
+                        {
+                          name: "Neomezený počet knih v knihovně",
+                          included: true,
+                        },
+                        {
+                          name: "100 AI kreditů",
+                          description: "měsíčně",
+                          included: true,
+                        },
+                        {
+                          name: "Přizpůsobění AI shrnutí",
+                          description: "Zaměření, detailnost, styl",
+                          included: true,
+                        },
+                        {
+                          name: "Prioritní podpora",
+                          included: true,
+                        },
+                        {
+                          name: "Všechny funkce z Basic plánu",
+                          included: true,
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <motion.div
+                  className="mt-10 sm:mt-16 text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+                    Všechny plány zahrnují základní funkce pro správu
+                    čtenářských zápisků. Předplatné můžete zrušit kdykoliv.
+                    {yearlyBilling &&
+                      " Při ročním předplatném ušetříte 20% oproti měsíční platbě."}
+                  </p>
+                </motion.div>
+              </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section className="py-16 sm:py-20 md:py-24 lg:py-28 relative">
+              <div className="container max-w-7xl mx-auto px-6 sm:px-8">
+                <div className="text-center mb-12 sm:mb-16">
+                  <motion.h2
+                    className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Často kladené{" "}
+                    <span className="text-foreground">otázky</span>
+                  </motion.h2>
+                  <motion.p
+                    className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    Odpovědi na nejčastější dotazy o našich službách
+                  </motion.p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
+                  {/* FAQ Item 1 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Jak funguje bezplatná verze?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Bezplatná verze umožňuje přidat až 20 knih do vaší
+                        knihovny, vytvářet manuální poznámky ke knihám a využít
+                        3 AI kredity měsíčně pro generování shrnutí. Je ideální
+                        pro studenty, kteří potřebují spravovat menší množství
+                        čtenářských zápisků a občas využít AI asistenci.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* FAQ Item 2 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Jaký je rozdíl mezi Basic a Premium plánem?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Basic plán (49 Kč/měsíc) nabízí až 100 knih, 50 AI
+                        kreditů měsíčně, základní AI shrnutí autorů a jejich děl
+                        a export poznámek do PDF. Premium plán (79 Kč/měsíc)
+                        poskytuje neomezený počet knih, 100 AI kreditů měsíčně,
+                        pokročilá AI shrnutí s delším rozsahem a analýzou
+                        postav, rozšířené informace o autorech včetně
+                        literárního kontextu a možnost přizpůsobení AI shrnutí
+                        podle vašich potřeb.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* FAQ Item 3 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Mohu zrušit předplatné kdykoliv?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Ano, předplatné můžete zrušit kdykoliv a budete mít
+                        přístup k placeným funkcím do konce aktuálního
+                        zúčtovacího období. Po jeho skončení se váš účet
+                        automaticky převede na bezplatnou verzi.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* FAQ Item 4 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Jaké jsou výhody ročního předplatného?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Při ročním předplatném ušetříte 20% oproti měsíční
+                        platbě. Basic plán vás vyjde na 39 Kč měsíčně (místo 49
+                        Kč) a Premium plán na 63 Kč měsíčně (místo 79 Kč). Roční
+                        předplatné se platí jednorázově na celý rok dopředu.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* FAQ Item 5 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Jak fungují AI generovaná shrnutí a AI kredity?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        AI shrnutí využívají pokročilé jazykové modely k
+                        vytvoření strukturovaného shrnutí díla nebo informací o
+                        autorovi. Každé vygenerování shrnutí spotřebuje jeden AI
+                        kredit. Bezplatná verze nabízí 3 kredity měsíčně, Basic
+                        plán 50 kreditů měsíčně a Premium plán 100 kreditů
+                        měsíčně. Premium plán navíc poskytuje pokročilá AI
+                        shrnutí s delším rozsahem a analýzou postav, rozšířené
+                        informace o autorech a možnost přizpůsobit styl a
+                        zaměření shrnutí podle vašich potřeb.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* FAQ Item 6 */}
+                  <motion.div
+                    className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.6 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                        Plánujete přidat další funkce?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Ano, neustále pracujeme na vylepšení aplikace. V blízké
+                        budoucnosti plánujeme přidat sdílení poznámek se
+                        spolužáky, pokročilejší AI analýzy a další funkce pro
+                        usnadnění studia. Uživatelé Premium plánu získají k
+                        těmto funkcím přístup jako první.
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  className="mt-12 sm:mt-16 text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                >
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    Máte další otázky?{" "}
+                    <span className="text-primary font-medium cursor-pointer hover:underline transition-all duration-300">
+                      Kontaktujte nás
                     </span>
                   </p>
-                </div>
-
-                {/* Decorative elements */}
-                <div className="absolute top-4 left-4 right-4 bottom-4 border border-primary/20 rounded-lg z-10"></div>
-                <div className="absolute top-8 left-8 right-8 bottom-8 border border-accent/20 rounded-lg z-10"></div>
-
-                {/* Animated glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-accent/5 animate-pulse z-5"></div>
-              </div>
-
-              {/* Floating badges - hidden on smallest screens */}
-              <motion.div
-                className="absolute -top-4 sm:-top-6 -right-4 sm:-right-6 bg-card shadow-lg rounded-lg p-2 sm:p-3 border border-border/50 z-30 hidden sm:flex"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
-                  <span className="text-xs sm:text-sm font-medium">
-                    Chytré poznámky
-                  </span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-card shadow-lg rounded-lg p-2 sm:p-3 border border-border/50 z-30 hidden sm:flex"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-2">
-                  <BookText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
-                  <span className="text-xs sm:text-sm font-medium">
-                    Přehled četby
-                  </span>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section
-        id="features-section"
-        className="py-12 sm:py-16 md:py-24 lg:py-32 relative"
-      >
-        <div className="container max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-10 sm:mb-16">
-            <motion.h2
-              className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              Funkce navržené pro{" "}
-              <span className="text-foreground">studenty</span>
-            </motion.h2>
-            <motion.p
-              className="mt-4 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Vše, co potřebujete pro efektivní organizaci povinné četby a
-              přípravu do školy
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
-            {/* Feature 1 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <div className="bg-primary/10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <BookText className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Poznámky ke knihám
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  Uchovávejte všechny své poznámky k povinné četbě na jednom
-                  místě a mějte je vždy po ruce pro přípravu do školy.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Feature 2 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <div className="bg-primary/10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Generování shrnutí
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  Získejte AI generovaná shrnutí knih a informace o autorech pro
-                  rychlejší a efektivnější přípravu na testy.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Feature 3 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <div className="bg-primary/10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <PenLine className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Export do PDF
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  Exportujte své poznámky do PDF formátu pro snadné sdílení nebo
-                  tisk při přípravě na hodiny literatury.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section
-        id="pricing-section"
-        className="py-16 md:py-24 relative overflow-hidden"
-      >
-        <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-          <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">
-            <motion.h2
-              className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Vyberte si plán, který vám vyhovuje
-            </motion.h2>
-            <motion.p
-              className="text-muted-foreground text-lg md:text-xl mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Získejte přístup k pokročilým funkcím, které vám pomohou s
-              přípravou do školy.
-            </motion.p>
-
-            {/* Simple Pricing Toggle */}
-            <motion.div
-              className="flex flex-col items-center justify-center mb-10"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="flex items-center space-x-3 bg-[#1a2436] p-1.5 rounded-full border border-[#2a3548] shadow-sm mb-3">
-                <button
-                  onClick={() => setYearlyBilling(false)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                    !yearlyBilling
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
-                  }`}
-                >
-                  Měsíčně
-                </button>
-                <button
-                  onClick={() => setYearlyBilling(true)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                    yearlyBilling
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-[#2a3548]/50"
-                  }`}
-                >
-                  Ročně{" "}
-                  <motion.span
-                    className="inline-flex items-center ml-1"
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  >
-                    <span className="text-xs font-medium bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
-                      -20%
-                    </span>
-                    <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
-                  </motion.span>
-                </button>
-              </div>
-
-              {yearlyBilling && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center text-sm text-emerald-400 font-medium"
-                >
-                  <Sparkles className="h-4 w-4 mr-2 text-emerald-400" />
-                  <span className="bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
-                    Ušetříte 20% s ročním předplatným
-                  </span>
                 </motion.div>
-              )}
-            </motion.div>
-          </div>
+              </div>
+            </section>
 
-          {/* Pricing Cards Container with flex wrapper */}
-          <div className="flex justify-center w-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl w-full px-0 sm:px-4">
-              {/* Free Plan */}
-              <SubscriptionCard
-                title="Základní"
-                subtitle="Pro začátek"
-                description="Základní funkce pro správu zápisků"
-                price="0 Kč"
-                pricePeriod=""
-                icon={<BookText className="h-6 w-6 text-muted-foreground" />}
-                badge={{
-                  text: "Zdarma",
-                  color: "bg-[#2a3548] text-muted-foreground",
-                }}
-                isCurrentPlan={false}
-                isLoading={false}
-                isSelected={false}
-                accentColor="#6b7280"
-                mutedColor="#6b7280"
-                buttonText="Začít zdarma"
-                onSelect={() => scrollToSection("signup-section")}
-                animationDelay={0.1}
-                features={[
-                  {
-                    name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
-                    included: true,
-                  },
-                  {
-                    name: "Manuální poznámky",
-                    included: true,
-                  },
-                  {
-                    name: `${SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI kredity`,
-                    description: "měsíčně",
-                    included: true,
-                  },
-                  {
-                    name: "Základní funkce",
-                    description: "pro začátek",
-                    included: true,
-                  },
-                ]}
-              />
+            {/* Signup Section */}
+            <section
+              id="signup-section"
+              className="py-16 sm:py-20 md:py-28 lg:py-32 relative"
+            >
+              <div className="container max-w-7xl mx-auto px-6 sm:px-8">
+                <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-16 items-center">
+                  <div className="flex-1 space-y-5 sm:space-y-6 text-center lg:text-left">
+                    <motion.h2
+                      className="text-2xl sm:text-3xl md:text-4xl font-bold"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      Připojte se k{" "}
+                      <span className="text-primary">čtenářské komunitě</span>
+                    </motion.h2>
+                    <motion.p
+                      className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                    >
+                      Vytvořte si účet zdarma a začněte organizovat svou
+                      povinnou četbu již dnes.
+                    </motion.p>
+                  </div>
 
-              {/* Basic Plan */}
-              <SubscriptionCard
-                title="Basic"
-                subtitle="Pro aktivní čtenáře"
-                description="Rozšířené funkce pro efektivnější práci"
-                price={yearlyBilling ? "39" : "49"}
-                pricePeriod="/ měsíc"
-                icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
-                badge={{
-                  text: "Populární",
-                  color: "bg-[#2a3548] text-[#3b82f6]",
-                }}
-                isCurrentPlan={false}
-                isLoading={false}
-                isSelected={false}
-                accentColor="#3b82f6"
-                mutedColor="#3b82f6"
-                buttonText="Vyzkoušet Basic"
-                onSelect={() => scrollToSection("signup-section")}
-                animationDelay={0.2}
-                features={[
-                  {
-                    name: "Až 100 knih v knihovně",
-                    included: true,
-                  },
-                  {
-                    name: "50 AI kreditů",
-                    description: "měsíčně",
-                    included: true,
-                  },
-                  {
-                    name: "Export poznámek do PDF",
-                    included: true,
-                  },
-                  {
-                    name: "Všechny funkce ze Základního plánu",
-                    included: true,
-                  },
-                ]}
-              />
-
-              {/* Premium Plan */}
-              <SubscriptionCard
-                title="Premium"
-                subtitle="Pro vášnivé čtenáře"
-                description="Plný přístup ke všem funkcím bez omezení"
-                price={yearlyBilling ? "63" : "79"}
-                pricePeriod="/ měsíc"
-                icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
-                badge={{
-                  text: "Doporučeno",
-                  color: "bg-[#3b82f6] text-white",
-                }}
-                isCurrentPlan={false}
-                isLoading={false}
-                isSelected={false}
-                accentColor="#3b82f6"
-                mutedColor="#3b82f6"
-                buttonText="Získat Premium"
-                onSelect={() => scrollToSection("signup-section")}
-                isPremium={true}
-                animationDelay={0.3}
-                features={[
-                  {
-                    name: "Neomezený počet knih v knihovně",
-                    included: true,
-                  },
-                  {
-                    name: "100 AI kreditů",
-                    description: "měsíčně",
-                    included: true,
-                  },
-                  {
-                    name: "Přizpůsobění AI shrnutí",
-                    description: "Zaměření, detailnost, styl",
-                    included: true,
-                  },
-                  {
-                    name: "Prioritní podpora",
-                    included: true,
-                  },
-                  {
-                    name: "Všechny funkce z Basic plánu",
-                    included: true,
-                  },
-                ]}
-              />
-            </div>
-          </div>
-
-          <motion.div
-            className="mt-10 sm:mt-16 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-              Všechny plány zahrnují základní funkce pro správu čtenářských
-              zápisků. Předplatné můžete zrušit kdykoliv.
-              {yearlyBilling &&
-                " Při ročním předplatném ušetříte 20% oproti měsíční platbě."}
-            </p>
-          </motion.div>
+                  <div className="flex-1 w-full mt-8 lg:mt-0">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                      className="w-full"
+                    >
+                      <LoginForm />
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </main>
         </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 sm:py-20 md:py-24 lg:py-28 relative">
-        <div className="container max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <motion.h2
-              className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              Často kladené <span className="text-foreground">otázky</span>
-            </motion.h2>
-            <motion.p
-              className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Odpovědi na nejčastější dotazy o našich službách
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
-            {/* FAQ Item 1 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Jak funguje bezplatná verze?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Bezplatná verze umožňuje přidat až 20 knih do vaší knihovny,
-                  vytvářet manuální poznámky ke knihám a využít 3 AI kredity
-                  měsíčně pro generování shrnutí. Je ideální pro studenty, kteří
-                  potřebují spravovat menší množství čtenářských zápisků a občas
-                  využít AI asistenci.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* FAQ Item 2 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Jaký je rozdíl mezi Basic a Premium plánem?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Basic plán (49 Kč/měsíc) nabízí až 100 knih, 50 AI kreditů
-                  měsíčně, základní AI shrnutí autorů a jejich děl a export
-                  poznámek do PDF. Premium plán (79 Kč/měsíc) poskytuje
-                  neomezený počet knih, 100 AI kreditů měsíčně, pokročilá AI
-                  shrnutí s delším rozsahem a analýzou postav, rozšířené
-                  informace o autorech včetně literárního kontextu a možnost
-                  přizpůsobení AI shrnutí podle vašich potřeb.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* FAQ Item 3 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Mohu zrušit předplatné kdykoliv?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Ano, předplatné můžete zrušit kdykoliv a budete mít přístup k
-                  placeným funkcím do konce aktuálního zúčtovacího období. Po
-                  jeho skončení se váš účet automaticky převede na bezplatnou
-                  verzi.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* FAQ Item 4 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Jaké jsou výhody ročního předplatného?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Při ročním předplatném ušetříte 20% oproti měsíční platbě.
-                  Basic plán vás vyjde na 39 Kč měsíčně (místo 49 Kč) a Premium
-                  plán na 63 Kč měsíčně (místo 79 Kč). Roční předplatné se platí
-                  jednorázově na celý rok dopředu.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* FAQ Item 5 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Jak fungují AI generovaná shrnutí a AI kredity?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  AI shrnutí využívají pokročilé jazykové modely k vytvoření
-                  strukturovaného shrnutí díla nebo informací o autorovi. Každé
-                  vygenerování shrnutí spotřebuje jeden AI kredit. Bezplatná
-                  verze nabízí 3 kredity měsíčně, Basic plán 50 kreditů měsíčně
-                  a Premium plán 100 kreditů měsíčně. Premium plán navíc
-                  poskytuje pokročilá AI shrnutí s delším rozsahem a analýzou
-                  postav, rozšířené informace o autorech a možnost přizpůsobit
-                  styl a zaměření shrnutí podle vašich potřeb.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* FAQ Item 6 */}
-            <motion.div
-              className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/30 group relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                  Plánujete přidat další funkce?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Ano, neustále pracujeme na vylepšení aplikace. V blízké
-                  budoucnosti plánujeme přidat sdílení poznámek se spolužáky,
-                  pokročilejší AI analýzy a další funkce pro usnadnění studia.
-                  Uživatelé Premium plánu získají k těmto funkcím přístup jako
-                  první.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-
-          <motion.div
-            className="mt-12 sm:mt-16 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Máte další otázky?{" "}
-              <span className="text-primary font-medium cursor-pointer hover:underline transition-all duration-300">
-                Kontaktujte nás
-              </span>
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Signup Section */}
-      <section
-        id="signup-section"
-        className="py-16 sm:py-20 md:py-28 lg:py-32 relative"
-      >
-        <div className="container max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-16 items-center">
-            <div className="flex-1 space-y-5 sm:space-y-6 text-center lg:text-left">
-              <motion.h2
-                className="text-2xl sm:text-3xl md:text-4xl font-bold"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                Připojte se k{" "}
-                <span className="text-primary">čtenářské komunitě</span>
-              </motion.h2>
-              <motion.p
-                className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                Vytvořte si účet zdarma a začněte organizovat svou povinnou
-                četbu již dnes.
-              </motion.p>
-            </div>
-
-            <div className="flex-1 w-full mt-8 lg:mt-0">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-full"
-              >
-                <LoginForm />
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </section>
+      </ScrollAnimation>
     </div>
   );
 }
