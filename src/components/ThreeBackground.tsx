@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls.js";
 
 interface ThreeBackgroundProps {
   className?: string;
@@ -15,7 +15,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const animationRef = useRef<number | null>(null);
   const scrollProgressRef = useRef(0);
@@ -34,7 +34,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 8;
+    camera.position.z = 12;
     cameraRef.current = camera;
 
     // Renderer setup
@@ -49,7 +49,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     rendererRef.current = renderer;
 
     // Controls setup
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControlsImpl(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.enableZoom = false;
@@ -57,7 +57,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     controlsRef.current = controls;
 
     // Create organic particle system
-    const particleCount = 1500;
+    const particleCount = 2000;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const sizes = new Float32Array(particleCount);
@@ -71,7 +71,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
     for (let i = 0; i < particleCount; i++) {
       // Create organic distribution using noise-like function
-      const radius = Math.random() * 4;
+      const radius = Math.random() * 5;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
 
@@ -97,7 +97,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       colors[i * 3 + 2] = color.b;
 
       // Vary particle sizes
-      sizes[i] = Math.random() * 0.03 + 0.01;
+      sizes[i] = Math.random() * 0.04 + 0.02;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -105,14 +105,37 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
 
-    const material = new THREE.PointsMaterial({
-      size: 0.03,
-      vertexColors: true,
+    // Custom shader for circular particles
+    const vertexShader = `
+      attribute float size;
+      attribute vec3 color;
+      varying vec3 vColor;
+      void main() {
+        vColor = color;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = size * (300.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `;
+
+    const fragmentShader = `
+      varying vec3 vColor;
+      void main() {
+        vec2 uv = gl_PointCoord;
+        float dist = length(uv - vec2(0.5));
+        if (dist > 0.5) discard;
+        float alpha = smoothstep(0.5, 0.4, dist);
+        gl_FragColor = vec4(vColor, alpha * 0.4);
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      uniforms: {},
+      vertexShader,
+      fragmentShader,
       transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending,
-      sizeAttenuation: true,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
 
     const particles = new THREE.Points(geometry, material);
@@ -160,12 +183,12 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       particlesRef.current.rotation.y = scrollProgress * Math.PI;
       particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.5;
 
-      // Subtle zoom effect
-      cameraRef.current.position.z = 8 - scrollProgress * 2;
+      // More pronounced zoom effect
+      cameraRef.current.position.z = 12 - scrollProgress * 6;
 
       // Add subtle floating motion
       const time = Date.now() * 0.001;
-      particlesRef.current.position.y = Math.sin(time * 0.2) * 0.1;
+      particlesRef.current.position.y = Math.sin(time * 0.1) * 0.2;
 
       // Update controls
       controlsRef.current.update();
