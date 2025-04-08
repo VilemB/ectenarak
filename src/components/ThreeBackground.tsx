@@ -34,7 +34,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 12;
+    camera.position.z = 15;
     cameraRef.current = camera;
 
     // Renderer setup
@@ -64,9 +64,9 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
     // Color palette
     const colorPalette = [
-      new THREE.Color(0x3b82f6), // Primary blue
-      new THREE.Color(0x8b5cf6), // Purple
-      new THREE.Color(0x6366f1), // Indigo
+      new THREE.Color(0x3b82f6).multiplyScalar(0.8), // Medium blue
+      new THREE.Color(0x8b5cf6).multiplyScalar(0.8), // Medium purple
+      new THREE.Color(0x6366f1).multiplyScalar(0.8), // Medium indigo
     ];
 
     for (let i = 0; i < particleCount; i++) {
@@ -97,7 +97,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       colors[i * 3 + 2] = color.b;
 
       // Vary particle sizes
-      sizes[i] = Math.random() * 0.04 + 0.02;
+      sizes[i] = Math.random() * 0.12 + 0.06;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -113,7 +113,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       void main() {
         vColor = color;
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size * (300.0 / -mvPosition.z);
+        gl_PointSize = size * (500.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
       }
     `;
@@ -124,8 +124,8 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         vec2 uv = gl_PointCoord;
         float dist = length(uv - vec2(0.5));
         if (dist > 0.5) discard;
-        float alpha = smoothstep(0.5, 0.4, dist);
-        gl_FragColor = vec4(vColor, alpha * 0.4);
+        float alpha = smoothstep(0.5, 0.25, dist);
+        gl_FragColor = vec4(vColor, alpha * 0.45);
       }
     `;
 
@@ -179,12 +179,12 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
       const scrollProgress = scrollProgressRef.current;
 
-      // Smooth rotation based on scroll
-      particlesRef.current.rotation.y = scrollProgress * Math.PI;
-      particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.5;
+      // More subtle rotation based on scroll
+      particlesRef.current.rotation.y = scrollProgress * Math.PI * 0.5;
+      particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
 
-      // More pronounced zoom effect
-      cameraRef.current.position.z = 12 - scrollProgress * 6;
+      // More subtle zoom effect
+      cameraRef.current.position.z = 15 - scrollProgress * 3;
 
       // Add subtle floating motion
       const time = Date.now() * 0.001;
