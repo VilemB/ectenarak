@@ -34,14 +34,14 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 10;
+    camera.position.z = 15;
     cameraRef.current = camera;
 
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
-      powerPreference: "low-power",
+      powerPreference: "high-performance",
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -54,9 +54,10 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     controls.dampingFactor = 0.05;
     controls.enableZoom = false;
     controls.enablePan = false;
+    controls.autoRotate = false;
     controlsRef.current = controls;
 
-    // Create organic particle system
+    // Create particle system
     const particleCount = 2500;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -70,25 +71,21 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     ];
 
     for (let i = 0; i < particleCount; i++) {
-      // Create organic distribution using noise-like function
       const radius = Math.random() * 12;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
 
-      // Add some noise to create organic distribution
       const noise = Math.sin(theta * 3) * Math.cos(phi * 2) * 0.5;
       const finalRadius = radius * (1 + noise);
 
-      // Flatten the distribution a bit and bring particles closer
       const x = finalRadius * Math.sin(phi) * Math.cos(theta);
       const y = finalRadius * Math.sin(phi) * Math.sin(theta) * 0.7;
-      const z = finalRadius * Math.cos(phi) * 0.3 - 2; // Bring particles closer
+      const z = finalRadius * Math.cos(phi) * 0.3 - 2;
 
       positions[i * 3] = x;
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = z;
 
-      // Color with smooth transitions
       const colorIndex = Math.floor(Math.random() * colorPalette.length);
       const nextColorIndex = (colorIndex + 1) % colorPalette.length;
       const mixRatio = Math.random();
@@ -101,7 +98,6 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
 
-      // Vary particle sizes
       sizes[i] = Math.random() * 0.12 + 0.06;
     }
 
@@ -110,34 +106,29 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
 
-    // Custom shader for circular particles
-    const vertexShader = `
-      attribute float size;
-      attribute vec3 color;
-      varying vec3 vColor;
-      void main() {
-        vColor = color;
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size * (500.0 / -mvPosition.z);
-        gl_Position = projectionMatrix * mvPosition;
-      }
-    `;
-
-    const fragmentShader = `
-      varying vec3 vColor;
-      void main() {
-        vec2 uv = gl_PointCoord;
-        float dist = length(uv - vec2(0.5));
-        if (dist > 0.5) discard;
-        float alpha = smoothstep(0.5, 0.25, dist);
-        gl_FragColor = vec4(vColor, alpha * 0.45);
-      }
-    `;
-
     const material = new THREE.ShaderMaterial({
       uniforms: {},
-      vertexShader,
-      fragmentShader,
+      vertexShader: `
+        attribute float size;
+        attribute vec3 color;
+        varying vec3 vColor;
+        void main() {
+          vColor = color;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = size * (500.0 / -mvPosition.z);
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor;
+        void main() {
+          vec2 uv = gl_PointCoord;
+          float dist = length(uv - vec2(0.5));
+          if (dist > 0.5) discard;
+          float alpha = smoothstep(0.5, 0.25, dist);
+          gl_FragColor = vec4(vColor, alpha * 0.45);
+        }
+      `,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -154,7 +145,6 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     // Handle window resize
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
-
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(window.innerWidth, window.innerHeight);
@@ -162,16 +152,20 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
     window.addEventListener("resize", handleResize);
 
-    // Handle scroll
+    // Handle scroll with more pronounced effect
     const handleScroll = () => {
-      const scrollHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-      scrollProgressRef.current = window.scrollY / scrollHeight;
+      requestAnimationFrame(() => {
+        const scrollHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const scrollProgress = Math.min(window.scrollY / scrollHeight, 1);
+        scrollProgressRef.current = scrollProgress;
+      });
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial call
 
-    // Animation loop
+    // Animation loop with enhanced effects
     const animate = () => {
       if (
         !sceneRef.current ||
@@ -184,18 +178,18 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
       const scrollProgress = scrollProgressRef.current;
 
-      // Smoother rotation that maintains orientation
-      const targetRotationY = scrollProgress * Math.PI * 0.8;
-      const targetRotationX = scrollProgress * Math.PI * 0.2;
+      // Enhanced rotation based on scroll
+      const targetRotationY = scrollProgress * Math.PI * 2; // Full rotation
+      const targetRotationX = scrollProgress * Math.PI * 0.5; // Quarter rotation
 
-      // Smooth interpolation for rotation
+      // Faster rotation response
       particlesRef.current.rotation.y +=
         (targetRotationY - particlesRef.current.rotation.y) * 0.1;
       particlesRef.current.rotation.x +=
         (targetRotationX - particlesRef.current.rotation.x) * 0.1;
 
-      // Smooth camera zoom
-      const targetZ = 10 - scrollProgress * 3;
+      // Enhanced zoom effect
+      const targetZ = 15 - scrollProgress * 8; // More pronounced zoom
       cameraRef.current.position.z +=
         (targetZ - cameraRef.current.position.z) * 0.1;
 
@@ -240,7 +234,8 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-full h-full pointer-events-none z-[-1] ${className}`}
+      className={`fixed inset-0 w-full h-full ${className}`}
+      style={{ pointerEvents: "none" }}
     />
   );
 };
