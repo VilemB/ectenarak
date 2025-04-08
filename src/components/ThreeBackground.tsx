@@ -34,7 +34,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       0.1,
       1000
     );
-    camera.position.z = 20;
+    camera.position.z = 10;
     cameraRef.current = camera;
 
     // Renderer setup
@@ -71,17 +71,22 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
     for (let i = 0; i < particleCount; i++) {
       // Create organic distribution using noise-like function
-      const radius = Math.random() * 8;
+      const radius = Math.random() * 12;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
 
       // Add some noise to create organic distribution
-      const noise = Math.sin(theta * 3) * Math.cos(phi * 2) * 0.3;
+      const noise = Math.sin(theta * 3) * Math.cos(phi * 2) * 0.5;
       const finalRadius = radius * (1 + noise);
 
-      positions[i * 3] = finalRadius * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = finalRadius * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = finalRadius * Math.cos(phi);
+      // Flatten the distribution a bit and bring particles closer
+      const x = finalRadius * Math.sin(phi) * Math.cos(theta);
+      const y = finalRadius * Math.sin(phi) * Math.sin(theta) * 0.7;
+      const z = finalRadius * Math.cos(phi) * 0.3 - 2; // Bring particles closer
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
 
       // Color with smooth transitions
       const colorIndex = Math.floor(Math.random() * colorPalette.length);
@@ -179,16 +184,24 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
       const scrollProgress = scrollProgressRef.current;
 
-      // More subtle rotation based on scroll
-      particlesRef.current.rotation.y = scrollProgress * Math.PI * 0.5;
-      particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
+      // Smoother rotation that maintains orientation
+      const targetRotationY = scrollProgress * Math.PI * 0.8;
+      const targetRotationX = scrollProgress * Math.PI * 0.2;
 
-      // More subtle zoom effect
-      cameraRef.current.position.z = 20 - scrollProgress * 4;
+      // Smooth interpolation for rotation
+      particlesRef.current.rotation.y +=
+        (targetRotationY - particlesRef.current.rotation.y) * 0.1;
+      particlesRef.current.rotation.x +=
+        (targetRotationX - particlesRef.current.rotation.x) * 0.1;
 
-      // Add subtle floating motion
+      // Smooth camera zoom
+      const targetZ = 10 - scrollProgress * 3;
+      cameraRef.current.position.z +=
+        (targetZ - cameraRef.current.position.z) * 0.1;
+
+      // Gentle floating motion
       const time = Date.now() * 0.001;
-      particlesRef.current.position.y = Math.sin(time * 0.1) * 0.2;
+      particlesRef.current.position.y = Math.sin(time * 0.2) * 0.15;
 
       // Update controls
       controlsRef.current.update();
