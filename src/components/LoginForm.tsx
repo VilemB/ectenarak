@@ -192,11 +192,11 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto relative pb-16 md:pb-24">
-      {/* Enhanced decorative elements */}
-      <div className="absolute -top-20 -left-20 w-60 h-60 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-gradient-to-tl from-indigo-500/20 to-blue-500/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-lg max-h-lg bg-gradient-to-b from-transparent to-blue-950/30 rounded-3xl blur-3xl -z-20 opacity-50" />
+    <div className="w-full max-w-md mx-auto relative py-16 md:py-24">
+      {/* Enhanced decorative elements with larger sizes and adjusted positioning */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-gradient-to-tl from-indigo-500/20 to-blue-500/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] max-w-2xl max-h-2xl bg-gradient-to-b from-transparent to-blue-950/30 rounded-3xl blur-3xl -z-20 opacity-50" />
 
       <div className="mb-10 text-center">
         <h2 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
