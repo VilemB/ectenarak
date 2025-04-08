@@ -66,14 +66,14 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           0.1,
           1000
         );
-        camera.position.z = 20;
+        camera.position.z = 15;
         cameraRef.current = camera;
 
         // Renderer setup
         const renderer = new THREE.WebGLRenderer({
           antialias: true,
           alpha: true,
-          powerPreference: "low-power",
+          powerPreference: "high-performance",
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -91,26 +91,36 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         controlsRef.current = controls;
 
         // Create organic particle system
-        const particleCount = 2500;
+        const particleCount = 3500;
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const sizes = new Float32Array(particleCount);
 
-        // Color palette
+        // Color palette - make colors more vibrant by not scaling them down as much
         const colorPalette = [
-          new THREE.Color(0x3b82f6).multiplyScalar(0.8), // Medium blue
-          new THREE.Color(0x8b5cf6).multiplyScalar(0.8), // Medium purple
-          new THREE.Color(0x6366f1).multiplyScalar(0.8), // Medium indigo
+          new THREE.Color(0x3b82f6).multiplyScalar(0.9), // Medium blue - brighter
+          new THREE.Color(0x8b5cf6).multiplyScalar(0.9), // Medium purple - brighter
+          new THREE.Color(0x6366f1).multiplyScalar(0.9), // Medium indigo - brighter
+          new THREE.Color(0x4f46e5).multiplyScalar(0.9), // Darker indigo - add for variety
         ];
 
         for (let i = 0; i < particleCount; i++) {
           // Create organic distribution using noise-like function
-          const radius = Math.random() * 8;
+          // Use a gaussian-like distribution for denser core
+          let radius;
+          const gaussianFactor = Math.random();
+          if (gaussianFactor < 0.7) {
+            // 70% of particles in central area
+            radius = Math.random() * 5; // Tighter inner cluster
+          } else {
+            radius = 5 + Math.random() * 5; // Outer particles
+          }
+
           const theta = Math.random() * Math.PI * 2;
           const phi = Math.acos(2 * Math.random() - 1);
 
-          // Add some noise to create organic distribution
-          const noise = Math.sin(theta * 3) * Math.cos(phi * 2) * 0.3;
+          // Add some noise to create organic distribution - increased noise factor for more interesting shapes
+          const noise = Math.sin(theta * 4) * Math.cos(phi * 3) * 0.4;
           const finalRadius = radius * (1 + noise);
 
           positions[i * 3] = finalRadius * Math.sin(phi) * Math.cos(theta);
@@ -131,7 +141,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           colors[i * 3 + 2] = color.b;
 
           // Vary particle sizes
-          sizes[i] = Math.random() * 0.12 + 0.06;
+          sizes[i] = Math.random() * 0.18 + 0.08;
         }
 
         const geometry = new THREE.BufferGeometry();
@@ -142,7 +152,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
         geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
 
-        // Custom shader for circular particles
+        // Custom shader for circular particles - improved brightness and bloom effect
         const vertexShader = `
           attribute float size;
           attribute vec3 color;
@@ -150,7 +160,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           void main() {
             vColor = color;
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = size * (500.0 / -mvPosition.z);
+            gl_PointSize = size * (600.0 / -mvPosition.z); // 500 to 600 for larger points
             gl_Position = projectionMatrix * mvPosition;
           }
         `;
@@ -161,8 +171,8 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
             vec2 uv = gl_PointCoord;
             float dist = length(uv - vec2(0.5));
             if (dist > 0.5) discard;
-            float alpha = smoothstep(0.5, 0.25, dist);
-            gl_FragColor = vec4(vColor, alpha * 0.45);
+            float alpha = smoothstep(0.5, 0.2, dist); // 0.25 to 0.2 for stronger center glow
+            gl_FragColor = vec4(vColor, alpha * 0.6); // 0.45 to 0.6 for higher opacity
           }
         `;
 
@@ -222,17 +232,31 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
 
           // More subtle zoom effect
-          cameraRef.current.position.z = 20 - scrollProgress * 4;
+          cameraRef.current.position.z = 15 - scrollProgress * 6;
 
-          // Add subtle floating motion
+          // Add subtle floating motion with more dynamic movement
           const time = Date.now() * 0.001;
-          particlesRef.current.position.y = Math.sin(time * 0.1) * 0.2;
+          particlesRef.current.position.y = Math.sin(time * 0.1) * 0.3; // 0.2 to 0.3
+          particlesRef.current.position.x = Math.sin(time * 0.05) * 0.2; // Add horizontal motion
 
-          // Update controls
-          controlsRef.current.update();
+          // Add subtle rotation to the entire scene for more dynamic feel
+          particlesRef.current.rotation.z = Math.sin(time * 0.03) * 0.03;
 
-          // Render scene
-          rendererRef.current.render(sceneRef.current, cameraRef.current);
+          // Update controls - only if browser is not throttling for better performance
+          const now = performance.now();
+          const isVisible = document.visibilityState === "visible";
+
+          // Full quality when focused, reduced when tab is in background
+          if (isVisible) {
+            controlsRef.current.update();
+            // Render scene at full quality
+            rendererRef.current.render(sceneRef.current, cameraRef.current);
+          } else {
+            // Skip control updates and render at lower rate when not visible
+            if (now % 3 === 0) {
+              rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+          }
 
           animationRef.current = requestAnimationFrame(animate);
         };
