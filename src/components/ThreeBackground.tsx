@@ -28,40 +28,43 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
   // Wait for component to mount before accessing browser APIs
   useEffect(() => {
-    setIsMounted(true);
+    // Only run this on the client side, never during SSR
+    if (typeof window === "undefined") return;
 
     // Check for WebGL support and detect device capabilities
-    if (typeof window !== "undefined") {
-      try {
-        // Check WebGL support
-        const canvas = document.createElement("canvas");
-        const gl =
-          canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-        setIsWebGLSupported(!!gl);
+    try {
+      // Check WebGL support
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      setIsWebGLSupported(!!gl);
 
-        // Detect mobile device
-        const isMobileDevice =
-          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-            navigator.userAgent
-          );
-        setIsMobile(isMobileDevice);
+      // Detect mobile device
+      const isMobileDevice =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+      setIsMobile(isMobileDevice);
 
-        // Try to detect low power devices (older phones, lower-end devices)
-        const isLowEnd =
-          isMobileDevice &&
-          // Low memory indicator if available
-          (((navigator as any).deviceMemory !== undefined &&
-            (navigator as any).deviceMemory < 4) ||
-            // Low core count if available
-            ((navigator as any).hardwareConcurrency !== undefined &&
-              (navigator as any).hardwareConcurrency < 4) ||
-            // Fallback: check screen resolution (less reliable)
-            window.screen.width * window.devicePixelRatio < 1080);
-        setIsLowPowerDevice(isLowEnd);
-      } catch (e) {
-        console.error("WebGL not supported", e);
-        setIsWebGLSupported(false);
-      }
+      // Try to detect low power devices (older phones, lower-end devices)
+      const isLowEnd =
+        isMobileDevice &&
+        // Low memory indicator if available
+        (((navigator as any).deviceMemory !== undefined &&
+          (navigator as any).deviceMemory < 4) ||
+          // Low core count if available
+          ((navigator as any).hardwareConcurrency !== undefined &&
+            (navigator as any).hardwareConcurrency < 4) ||
+          // Fallback: check screen resolution (less reliable)
+          window.screen.width * window.devicePixelRatio < 1080);
+      setIsLowPowerDevice(isLowEnd);
+
+      // Set the component as mounted only after checking capabilities
+      setIsMounted(true);
+    } catch (e) {
+      console.error("WebGL not supported", e);
+      setIsWebGLSupported(false);
+      setIsMounted(true);
     }
 
     return () => {
