@@ -1,8 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { User, SubscriptionTier, UserSubscription } from "@/types/user";
 import { useQueryClient } from "@tanstack/react-query";
+import { signOut } from "next-auth/react";
 
 interface AuthContextType {
   user: User | null;
@@ -103,20 +110,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const logout = async () => {
-    setIsLoading(true);
+  const logout = useCallback(async () => {
     try {
-      // In a real app, this would be an API call to invalidate the session
-      await mockApiCall(null);
       setUser(null);
       localStorage.removeItem("user");
+      // Use callbackUrl to prevent automatic refresh
+      await signOut({ redirect: false });
     } catch (error) {
-      console.error("Logout error:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      console.error("Error during logout:", error);
     }
-  };
+  }, []);
 
   const signup = async (email: string, _password: string, name?: string) => {
     setIsLoading(true);

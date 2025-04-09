@@ -7,9 +7,11 @@ import { Modal } from "@/components/ui/modal";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function NavbarWrapper() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -18,8 +20,10 @@ export default function NavbarWrapper() {
     if (isSigningOut) return;
     setIsSigningOut(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
       await signOut();
+      // After successful sign-out, redirect to the landing page
+      router.push("/");
+      router.refresh();
     } catch (error) {
       console.error("Failed to sign out:", error);
       toast.error("Nepodařilo se odhlásit");
@@ -39,7 +43,8 @@ export default function NavbarWrapper() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4"
+          className="fixed inset-0 bg-background/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-4"
+          style={{ pointerEvents: "all" }}
         >
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground animate-pulse">Odhlašování...</p>
