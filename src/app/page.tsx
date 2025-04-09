@@ -855,7 +855,7 @@ export default function Home() {
   // If loading, show loading spinner
   if (loading || isLoadingBooks) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center -mt-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-lg">Načítání...</p>
@@ -869,7 +869,7 @@ export default function Home() {
       {!user && !loading ? (
         <LandingPage />
       ) : (
-        <main className="container max-w-5xl mx-auto px-2 sm:px-4 py-3 md:py-5">
+        <main className="container max-w-5xl mx-auto px-2 sm:px-4 pt-2 pb-16 sm:pt-4 sm:pb-20 md:pt-6 md:pb-24">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">
@@ -936,12 +936,7 @@ export default function Home() {
 
           {/* AI Credits Display */}
           {user && !showAddForm && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mb-4 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-3 border border-gray-700/40 shadow-md"
-            >
+            <motion.div className="mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-3 border border-gray-700/40 shadow-md">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center">
                   <div className="bg-amber-500/15 p-2 rounded-full mr-3 flex-shrink-0">
@@ -1114,7 +1109,7 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-8 my-2"
+                  className="text-center py-8 sm:py-12 md:py-16 my-2 sm:my-4"
                 >
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
                     <Library className="h-7 w-7 text-primary" />
@@ -1139,7 +1134,7 @@ export default function Home() {
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
-                  className="grid grid-cols-1 gap-3"
+                  className="grid grid-cols-1 gap-4 md:gap-5"
                 >
                   {(searchQuery ? filteredBooks : books).map((book) => {
                     // Debug each book before rendering
