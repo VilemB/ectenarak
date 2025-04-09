@@ -165,7 +165,7 @@ export default function LandingNavbar({
           />
         </div>
 
-        <div className="container max-w-full sm:max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center py-3 md:py-4">
             {/* Logo */}
             <div className="flex items-center">
@@ -181,7 +181,7 @@ export default function LandingNavbar({
                   <Logo
                     showText
                     variant="compact"
-                    size="sm"
+                    size="md"
                     className="group-hover:drop-shadow-md"
                   />
                 </div>
