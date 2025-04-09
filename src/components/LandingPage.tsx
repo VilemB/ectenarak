@@ -10,6 +10,7 @@ import {
   PenLine,
   ChevronDown,
   ImageIcon,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -688,11 +689,11 @@ export default function LandingPage() {
             {/* Signup Section */}
             <section
               id="signup-section"
-              className="py-16 sm:py-20 md:py-28 lg:py-32 relative"
+              className="py-16 sm:py-20 md:py-28 lg:py-32 relative overflow-hidden"
             >
               <div className="container max-w-7xl mx-auto px-6 sm:px-8">
-                <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-16 items-center">
-                  <div className="flex-1 space-y-5 sm:space-y-6 text-center lg:text-left">
+                <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-16 items-center justify-center">
+                  <div className="flex-1 max-w-lg space-y-5 sm:space-y-6 text-center lg:text-left">
                     <motion.h2
                       className="text-2xl sm:text-3xl md:text-4xl font-bold"
                       initial={{ opacity: 0, y: 20 }}
@@ -700,22 +701,21 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5 }}
                     >
-                      Připojte se k{" "}
-                      <span className="text-primary">čtenářské komunitě</span>
+                      Připojte se k čtenářské komunitě
                     </motion.h2>
                     <motion.p
-                      className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0"
+                      className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: 0.1 }}
                     >
-                      Vytvořte si účet zdarma a začněte organizovat svou
-                      povinnou četbu již dnes.
+                      Vytvořte si účet a začněte organizovat svou povinnou četbu
+                      již dnes.
                     </motion.p>
                   </div>
 
-                  <div className="flex-1 w-full mt-8 lg:mt-0">
+                  <div className="flex-1 w-full max-w-sm">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}

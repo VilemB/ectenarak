@@ -192,17 +192,12 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto relative py-16 md:py-24">
-      {/* Enhanced decorative elements with larger sizes and adjusted positioning */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-gradient-to-tl from-indigo-500/20 to-blue-500/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] max-w-2xl max-h-2xl bg-gradient-to-b from-transparent to-blue-950/30 rounded-3xl blur-3xl -z-20 opacity-50" />
-
-      <div className="mb-10 text-center">
-        <h2 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+    <div className="w-full max-w-sm mx-auto">
+      <div className="mb-8 text-center">
+        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
           eČtenářák
         </h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-blue-300/70">
           Přihlaste se nebo si vytvořte účet
         </p>
       </div>
@@ -211,24 +206,24 @@ export default function LoginForm() {
         defaultValue="login"
         value={activeTab}
         onValueChange={handleTabChange}
-        className="w-full"
+        className="w-full relative z-10"
       >
-        <TabsList className="grid w-full grid-cols-2 mb-10 rounded-full p-1 bg-muted/30 backdrop-blur-sm border border-white/5">
+        <TabsList className="w-full grid grid-cols-2 mb-8 bg-transparent relative z-20">
           <TabsTrigger
             value="login"
-            className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+            className="bg-transparent text-sm data-[state=active]:bg-transparent data-[state=active]:text-blue-400 data-[state=active]:border-b data-[state=active]:border-blue-400 rounded-none transition-colors"
           >
             Přihlášení
           </TabsTrigger>
           <TabsTrigger
             value="signup"
-            className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+            className="bg-transparent text-sm data-[state=active]:bg-transparent data-[state=active]:text-blue-400 data-[state=active]:border-b data-[state=active]:border-blue-400 rounded-none transition-colors"
           >
             Registrace
           </TabsTrigger>
         </TabsList>
 
-        <div className="relative min-h-[420px]">
+        <div className="relative">
           <AnimatePresence mode="wait" initial={false}>
             {activeTab === "login" && (
               <motion.div
@@ -237,65 +232,44 @@ export default function LoginForm() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute inset-0"
               >
-                <motion.div
-                  variants={itemVariants}
-                  className="space-y-2 text-center mb-8"
-                >
-                  <h3 className="text-2xl font-semibold">Vítejte zpět</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Přihlaste se ke svému účtu
-                  </p>
-                </motion.div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <motion.div variants={itemVariants} className="space-y-3">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <motion.div variants={itemVariants}>
+                    <div className="relative z-10">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/50 z-20" />
                       <Input
                         id="email"
                         name="email"
                         type="email"
-                        placeholder="vas@email.cz"
+                        placeholder="Email"
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                        className="w-full pl-10 h-11 bg-blue-950/30 border-blue-400/10 rounded-lg focus:border-blue-400/30 focus:ring-0 placeholder:text-blue-300/30"
                       />
                     </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password" className="text-sm font-medium">
-                        Heslo
-                      </Label>
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto text-xs text-blue-400 hover:text-blue-300"
-                        type="button"
-                      >
-                        Zapomenuté heslo?
-                      </Button>
-                    </div>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <motion.div variants={itemVariants}>
+                    <div className="relative z-10">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/50 z-20" />
                       <Input
                         id="password"
                         name="password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Heslo"
                         value={formData.password}
                         onChange={handleInputChange}
                         required
-                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                        className="w-full pl-10 pr-28 h-11 bg-blue-950/30 border-blue-400/10 rounded-lg focus:border-blue-400/30 focus:ring-0 placeholder:text-blue-300/30"
                       />
+                      <Button
+                        variant="link"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0 h-auto text-xs text-blue-400 hover:text-blue-300 hover:underline z-20"
+                        type="button"
+                      >
+                        Zapomenuté heslo?
+                      </Button>
                     </div>
                   </motion.div>
 
@@ -307,7 +281,7 @@ export default function LoginForm() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="bg-red-500/10 text-red-400 text-sm p-4 rounded-xl flex items-start gap-2 border border-red-500/20"
+                        className="text-red-400 text-sm flex items-start gap-2"
                       >
                         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>{error}</span>
@@ -318,7 +292,7 @@ export default function LoginForm() {
                   <motion.div variants={itemVariants}>
                     <Button
                       type="submit"
-                      className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
+                      className="w-full h-11 bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition-colors"
                       disabled={isSigningIn}
                     >
                       {isSigningIn ? (
@@ -329,49 +303,47 @@ export default function LoginForm() {
                       Přihlásit se
                     </Button>
                   </motion.div>
-                </form>
 
-                <motion.div variants={itemVariants} className="mt-8">
-                  <div className="relative flex items-center justify-center">
+                  <div className="relative flex items-center justify-center my-6 z-10">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-white/10"></div>
+                      <div className="w-full border-t border-blue-400/10"></div>
                     </div>
-                    <div className="relative bg-background px-4 text-xs text-muted-foreground">
+                    <div className="relative px-4 text-xs text-blue-300 bg-background z-20">
                       nebo pokračujte s
                     </div>
                   </div>
-                </motion.div>
 
-                <motion.div variants={itemVariants} className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-md hover:bg-white/5 border-white/10 backdrop-blur-sm"
-                    onClick={handleGoogleSignIn}
-                    disabled={isGoogleSigningIn}
-                  >
-                    {isGoogleSigningIn ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <svg
-                        className="h-5 w-5 mr-2"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="fab"
-                        data-icon="google"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 488 512"
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                        ></path>
-                      </svg>
-                    )}
-                    Pokračovat s Google
-                  </Button>
-                </motion.div>
+                  <motion.div variants={itemVariants}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-11 bg-blue-950/30 border-blue-400/10 text-blue-300 hover:bg-blue-900/30 hover:border-blue-400/20 rounded-lg transition-colors"
+                      onClick={handleGoogleSignIn}
+                      disabled={isGoogleSigningIn}
+                    >
+                      {isGoogleSigningIn ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <svg
+                          className="h-4 w-4 mr-2"
+                          aria-hidden="true"
+                          focusable="false"
+                          data-prefix="fab"
+                          data-icon="google"
+                          role="img"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 488 512"
+                        >
+                          <path
+                            fill="currentColor"
+                            d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                          ></path>
+                        </svg>
+                      )}
+                      Pokračovat s Google
+                    </Button>
+                  </motion.div>
+                </form>
               </motion.div>
             )}
 
@@ -382,84 +354,55 @@ export default function LoginForm() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute inset-0"
               >
-                <motion.div
-                  variants={itemVariants}
-                  className="space-y-2 text-center mb-8"
-                >
-                  <h3 className="text-2xl font-semibold">Vytvořit účet</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Zaregistrujte se a začněte používat aplikaci
-                  </p>
-                </motion.div>
-
-                <form onSubmit={handleSignUp} className="space-y-6">
-                  <motion.div variants={itemVariants} className="space-y-3">
-                    <Label htmlFor="name" className="text-sm font-medium">
-                      Jméno
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <form onSubmit={handleSignUp} className="space-y-5">
+                  <motion.div variants={itemVariants}>
+                    <div className="relative z-10">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/50 z-20" />
                       <Input
                         id="name"
                         name="name"
                         type="text"
-                        placeholder="Vaše jméno"
+                        placeholder="Jméno"
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                        className="w-full pl-10 h-11 bg-blue-950/30 border-blue-400/10 rounded-lg focus:border-blue-400/30 focus:ring-0 placeholder:text-blue-300/30"
                       />
                     </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="space-y-3">
-                    <Label
-                      htmlFor="signup-email"
-                      className="text-sm font-medium"
-                    >
-                      Email
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <motion.div variants={itemVariants}>
+                    <div className="relative z-10">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/50 z-20" />
                       <Input
                         id="signup-email"
                         name="email"
                         type="email"
-                        placeholder="vas@email.cz"
+                        placeholder="Email"
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                        className="w-full pl-10 h-11 bg-blue-950/30 border-blue-400/10 rounded-lg focus:border-blue-400/30 focus:ring-0 placeholder:text-blue-300/30"
                       />
                     </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="space-y-3">
-                    <Label
-                      htmlFor="signup-password"
-                      className="text-sm font-medium"
-                    >
-                      Heslo
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 -z-10"></div>
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <motion.div variants={itemVariants}>
+                    <div className="relative z-10">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/50 z-20" />
                       <Input
                         id="signup-password"
                         name="password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Heslo"
                         value={formData.password}
                         onChange={handleInputChange}
                         required
-                        className="pl-10 h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-transparent border border-white/10 text-foreground"
+                        className="w-full pl-10 h-11 bg-blue-950/30 border-blue-400/10 rounded-lg focus:border-blue-400/30 focus:ring-0 placeholder:text-blue-300/30"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-blue-300 mt-2">
                       Heslo musí mít alespoň 6 znaků
                     </p>
                   </motion.div>
@@ -472,7 +415,7 @@ export default function LoginForm() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="bg-red-500/10 text-red-400 text-sm p-4 rounded-xl flex items-start gap-2 border border-red-500/20"
+                        className="text-red-400 text-sm flex items-start gap-2"
                       >
                         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>{error}</span>
@@ -486,7 +429,7 @@ export default function LoginForm() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="bg-green-500/10 text-green-400 text-sm p-4 rounded-xl flex items-start gap-2 border border-green-500/20"
+                        className="text-emerald-400 text-sm flex items-start gap-2"
                       >
                         <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>{success}</span>
@@ -497,7 +440,7 @@ export default function LoginForm() {
                   <motion.div variants={itemVariants}>
                     <Button
                       type="submit"
-                      className="w-full h-12 rounded-xl transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
+                      className="w-full h-11 bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition-colors"
                       disabled={isSigningUp}
                     >
                       {isSigningUp ? (
@@ -507,22 +450,18 @@ export default function LoginForm() {
                       )}
                       Vytvořit účet
                     </Button>
+                    <p className="text-xs text-blue-300 mt-3 text-center">
+                      Registrací souhlasíte s{" "}
+                      <Link
+                        href="/terms"
+                        className="text-blue-400 hover:text-blue-300 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        podmínkami použití
+                      </Link>
+                    </p>
                   </motion.div>
                 </form>
-
-                <motion.div variants={itemVariants} className="mt-8">
-                  <div className="text-center text-xs text-muted-foreground">
-                    Registrací souhlasíte s{" "}
-                    <Link
-                      href="/terms"
-                      className="text-primary hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      podmínkami použití
-                    </Link>{" "}
-                    eČtenářáku
-                  </div>
-                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
