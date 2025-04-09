@@ -148,7 +148,7 @@ export function Modal({
                   damping: 30,
                   stiffness: 350,
                 }}
-                className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl border border-gray-700/50 w-full max-w-lg max-h-[90vh] overflow-hidden relative z-10 modal-content"
+                className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl border border-gray-700/50 w-full max-w-lg max-h-[90vh] relative z-10 modal-content mx-2 sm:mx-0"
                 onClick={(e) => {
                   e.preventDefault(); // Prevent default behavior
                   e.stopPropagation(); // Prevent clicks from reaching the backdrop
@@ -165,9 +165,9 @@ export function Modal({
                 }}
               >
                 {title && (
-                  <div className="flex items-center justify-between p-5 border-b border-gray-700/50">
+                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-700/50">
                     <h3
-                      className="text-xl font-semibold text-white"
+                      className="text-lg sm:text-xl font-semibold text-white"
                       id="modal-title"
                     >
                       {title}
@@ -176,19 +176,19 @@ export function Modal({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-full hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
+                        className="h-7 w-7 sm:h-8 sm:w-8 rounded-full hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
                         onClick={onClose}
                         aria-label="Close modal"
                       >
-                        <X className="h-5 w-5" />
+                        <X className="h-4 w-4 sm:h-5 sm:w-5" />
                         <span className="sr-only">Zavřít</span>
                       </Button>
                     )}
                   </div>
                 )}
-                <div className="overflow-auto max-h-[calc(90vh-5rem)]">
+                <div className="custom-scrollbar overflow-y-auto max-h-[calc(90vh-5rem)]">
                   {description && (
-                    <div className="px-5 pt-4">
+                    <div className="px-4 sm:px-5 pt-4">
                       <p className="text-sm text-gray-300">{description}</p>
                     </div>
                   )}

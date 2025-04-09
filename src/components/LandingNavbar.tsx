@@ -165,7 +165,7 @@ export default function LandingNavbar({
           />
         </div>
 
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="container max-w-full sm:max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
           <div className="flex justify-between items-center py-3 md:py-4">
             {/* Logo */}
             <div className="flex items-center">
@@ -181,7 +181,7 @@ export default function LandingNavbar({
                   <Logo
                     showText
                     variant="compact"
-                    size="md"
+                    size="sm"
                     className="group-hover:drop-shadow-md"
                   />
                 </div>
@@ -241,13 +241,13 @@ export default function LandingNavbar({
               duration: 0.4,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm overflow-hidden fixed top-[56px] left-0 right-0 z-40"
+            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm overflow-hidden fixed top-[56px] left-0 right-0 z-40 overflow-x-hidden"
           >
             {/* Full width amber decoration at top of mobile menu */}
             <div className="h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500/80 to-amber-500/40 w-full"></div>
 
             <motion.div
-              className="container max-w-7xl mx-auto px-4 py-4 space-y-3"
+              className="container max-w-full sm:max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3"
               initial={{ opacity: 0, y: -10 }}
               animate={{
                 opacity: 1,
@@ -277,14 +277,14 @@ export default function LandingNavbar({
                     >
                       {Icon && (
                         <Icon
-                          className={`h-5 w-5 mr-3 ${
+                          className={`h-5 w-5 mr-2 sm:mr-3 ${
                             index === navItems.length - 1
                               ? "text-amber-500"
                               : ""
                           }`}
                         />
                       )}
-                      <span className="text-base group-hover:translate-x-0.5 transition-transform">
+                      <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
                         {item.label}
                       </span>
                     </Button>

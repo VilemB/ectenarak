@@ -129,6 +129,7 @@ export default function Navbar({
   const router = useRouter();
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menus when route changes
   useEffect(() => {
@@ -185,12 +186,12 @@ export default function Navbar({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="sticky top-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
+      className="fixed top-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
     >
       {/* Amber accent line at bottom of navbar */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500/80 to-amber-500/40 w-full"></div>
 
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="container max-w-full sm:max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
         <div className="flex justify-between items-center py-3 md:py-4">
           {/* Logo and brand */}
           <div className="flex items-center">
@@ -202,7 +203,7 @@ export default function Navbar({
                 <Logo
                   showText
                   variant="compact"
-                  size="md"
+                  size="sm"
                   className="group-hover:drop-shadow-md"
                 />
               </div>
@@ -336,10 +337,12 @@ export default function Navbar({
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {/* Mobile menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
+            ref={mobileMenuRef}
             initial={{ opacity: 0, height: 0 }}
             animate={{
               opacity: 1,
@@ -350,16 +353,16 @@ export default function Navbar({
               height: 0,
             }}
             transition={{
-              duration: 0.4,
+              duration: 0.3,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm overflow-hidden"
+            className="md:hidden border-t border-border/40 bg-card/95 backdrop-blur-sm fixed top-[56px] left-0 right-0 z-40 overflow-x-hidden"
           >
             {/* Full width amber decoration at top of mobile menu */}
             <div className="h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500/80 to-amber-500/40 w-full"></div>
 
             <motion.div
-              className="container max-w-7xl mx-auto px-4 py-4 space-y-3"
+              className="container max-w-full sm:max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-3"
               initial={{ opacity: 0, y: -10 }}
               animate={{
                 opacity: 1,
@@ -386,8 +389,8 @@ export default function Navbar({
                     navigateToHome();
                   }}
                 >
-                  <Home className="h-5 w-5 mr-3" />
-                  <span className="text-base">Domů</span>
+                  <Home className="h-5 w-5 mr-2 sm:mr-3" />
+                  <span className="text-sm sm:text-base">Domů</span>
                 </Button>
               </motion.div>
 
@@ -406,8 +409,8 @@ export default function Navbar({
                       setMobileMenuOpen(false);
                     }}
                   >
-                    <Wallet className="h-5 w-5 mr-3" />
-                    <span className="text-base">Předplatné</span>
+                    <Wallet className="h-5 w-5 mr-2 sm:mr-3" />
+                    <span className="text-sm sm:text-base">Předplatné</span>
                   </Button>
                 </Link>
               </motion.div>
@@ -422,7 +425,7 @@ export default function Navbar({
                     className="pt-3 mt-2 border-t border-border/40"
                   >
                     <div className="flex items-center space-x-3 px-2 py-2">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center">
                         <UserIllustration name={user.name} email={user.email} />
                       </div>
                       <div className="flex-1">
@@ -453,8 +456,8 @@ export default function Navbar({
                         navigateToSettings();
                       }}
                     >
-                      <Settings className="h-5 w-5 mr-3" />
-                      <span className="text-base">Nastavení</span>
+                      <Settings className="h-5 w-5 mr-2 sm:mr-3" />
+                      <span className="text-sm sm:text-base">Nastavení</span>
                     </Button>
                   </motion.div>
 
@@ -471,8 +474,10 @@ export default function Navbar({
                         className="w-full justify-start text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 rounded-md py-5"
                         onClick={() => signOut()}
                       >
-                        <LogOut className="h-5 w-5 mr-3" />
-                        <span className="text-base">Odhlásit se</span>
+                        <LogOut className="h-5 w-5 mr-2 sm:mr-3" />
+                        <span className="text-sm sm:text-base">
+                          Odhlásit se
+                        </span>
                       </Button>
                     </motion.div>
                   )}

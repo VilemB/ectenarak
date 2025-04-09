@@ -27,7 +27,16 @@ import ScrollIndicator from "@/components/ScrollIndicator";
 const ThreeBackground = dynamic(() => import("@/components/ThreeBackground"), {
   ssr: false,
   loading: () => (
-    <div className="fixed inset-0 w-full h-full z-[-1] bg-background" />
+    <div
+      className="fixed inset-0 w-full h-full z-[-1] bg-background"
+      style={{
+        maxWidth: "100%",
+        width: "100%",
+        boxSizing: "border-box",
+        left: 0,
+        right: 0,
+      }}
+    />
   ),
 });
 
@@ -84,15 +93,28 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full">
+    <div className="w-full min-h-screen" style={{ overflow: "hidden" }}>
       {/* Background with proper z-indexing */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
+      <div
+        className="fixed inset-0 z-0 overflow-hidden"
+        style={{
+          maxWidth: "100%",
+          width: "100%",
+          boxSizing: "border-box",
+          left: 0,
+          right: 0,
+          overflow: "hidden",
+        }}
+      >
         <ThreeBackground />
       </div>
 
       {/* Content with higher z-index */}
-      <div className="relative z-10">
-        <div className="w-full relative overflow-visible min-h-screen flex flex-col">
+      <div
+        className="relative z-10 w-full"
+        style={{ maxWidth: "100%", overflow: "hidden" }}
+      >
+        <div className="w-full relative min-h-screen flex flex-col">
           {/* Landing page navbar */}
           <LandingNavbar scrollY={scrollY} scrollToSection={scrollToSection} />
 

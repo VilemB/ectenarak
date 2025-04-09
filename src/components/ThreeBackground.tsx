@@ -22,23 +22,51 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const [isWebGLSupported, setIsWebGLSupported] = useState(true);
   const gradientOverlayRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isLowPowerDevice, setIsLowPowerDevice] = useState(false);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Wait for component to mount before accessing browser APIs
   useEffect(() => {
     setIsMounted(true);
 
-    // Check for WebGL support
+    // Check for WebGL support and detect device capabilities
     if (typeof window !== "undefined") {
       try {
+        // Check WebGL support
         const canvas = document.createElement("canvas");
         const gl =
           canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
         setIsWebGLSupported(!!gl);
+
+        // Detect mobile device
+        const isMobileDevice =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          );
+        setIsMobile(isMobileDevice);
+
+        // Try to detect low power devices (older phones, lower-end devices)
+        const isLowEnd =
+          isMobileDevice &&
+          // Low memory indicator if available
+          (((navigator as any).deviceMemory !== undefined &&
+            (navigator as any).deviceMemory < 4) ||
+            // Low core count if available
+            ((navigator as any).hardwareConcurrency !== undefined &&
+              (navigator as any).hardwareConcurrency < 4) ||
+            // Fallback: check screen resolution (less reliable)
+            window.screen.width * window.devicePixelRatio < 1080);
+        setIsLowPowerDevice(isLowEnd);
       } catch (e) {
         console.error("WebGL not supported", e);
         setIsWebGLSupported(false);
       }
     }
+
+    return () => {
+      if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -70,29 +98,71 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         camera.position.z = 15; // Zoom in closer from 20 to 15
         cameraRef.current = camera;
 
-        // Renderer setup
+        // Renderer setup with adaptive performance
         const renderer = new THREE.WebGLRenderer({
-          antialias: true,
+          antialias: !isLowPowerDevice, // Disable antialiasing on low power devices
           alpha: true,
-          powerPreference: "high-performance", // Change from low-power to high-performance for better visuals
+          powerPreference: isLowPowerDevice ? "low-power" : "high-performance",
         });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Function to update renderer size - defined before it's used
+        const updateRendererSize = () => {
+          // Make sure to use clientWidth instead of innerWidth to account for scrollbars
+          // and ensure we don't create horizontal overflow
+          const width = containerRef.current?.clientWidth || window.innerWidth;
+          const height =
+            containerRef.current?.clientHeight || window.innerHeight;
+
+          renderer.setSize(width, height, true); // Use exact pixel size
+
+          // Ensure aspect ratio is updated properly
+          if (cameraRef.current) {
+            cameraRef.current.aspect = width / height;
+            cameraRef.current.updateProjectionMatrix();
+          }
+        };
+
+        // Initial size setup
+        updateRendererSize();
+
+        // Adjust pixel ratio based on device capability
+        const pixelRatio = isLowPowerDevice
+          ? 1
+          : Math.min(window.devicePixelRatio, 2);
+        renderer.setPixelRatio(pixelRatio);
+
         if (containerRef.current) {
+          containerRef.current.innerHTML = "";
           containerRef.current.appendChild(renderer.domElement);
+
+          // Style the canvas to ensure it fits within the container properly
+          const canvas = renderer.domElement;
+          canvas.style.position = "absolute";
+          canvas.style.top = "0";
+          canvas.style.left = "0";
+          canvas.style.width = "100%";
+          canvas.style.height = "100%";
+          canvas.style.maxWidth = "100vw"; // Prevent horizontal overflow
+          canvas.style.overflow = "hidden";
+          canvas.style.pointerEvents = "none";
         }
         rendererRef.current = renderer;
 
         // Controls setup
         const controls = new OrbitControlsImpl(camera, renderer.domElement);
-        controls.enableDamping = true;
+        controls.enableDamping = !isLowPowerDevice; // Disable damping on low power devices
         controls.dampingFactor = 0.05;
         controls.enableZoom = false;
         controls.enablePan = false;
         controlsRef.current = controls;
 
-        // Create organic particle system
-        const particleCount = 3500; // Increase from 2500 to 3500 for more particles
+        // Create organic particle system - adjust count based on device capability
+        const particleCount = isMobile
+          ? isLowPowerDevice
+            ? 1200
+            : 2000 // Fewer particles on mobile
+          : 3500; // Full count on desktop
+
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const sizes = new Float32Array(particleCount);
@@ -147,8 +217,9 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           colors[i * 3 + 1] = color.g;
           colors[i * 3 + 2] = color.b;
 
-          // Vary particle sizes - slightly smaller for better readability
-          sizes[i] = Math.random() * 0.16 + 0.06;
+          // Vary particle sizes - adjust based on device
+          const sizeFactor = isMobile ? 0.9 : 1.0; // Slightly smaller on mobile
+          sizes[i] = (Math.random() * 0.16 + 0.06) * sizeFactor;
         }
 
         const geometry = new THREE.BufferGeometry();
@@ -180,7 +251,9 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
             float dist = length(uv - vec2(0.5));
             if (dist > 0.5) discard;
             float alpha = smoothstep(0.5, 0.2, dist);
-            gl_FragColor = vec4(vColor, alpha * 0.45); // Reduced from 0.6 to 0.45 for readability
+            gl_FragColor = vec4(vColor, alpha * ${
+              isMobile ? "0.4" : "0.45"
+            }); // Slightly lower opacity on mobile
           }
         `;
 
@@ -201,28 +274,23 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
         scene.add(ambientLight);
 
-        // Handle window resize
-        const handleResize = () => {
-          if (!cameraRef.current || !rendererRef.current) return;
-
-          cameraRef.current.aspect = window.innerWidth / window.innerHeight;
-          cameraRef.current.updateProjectionMatrix();
-          rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-        };
-
-        window.addEventListener("resize", handleResize);
-
         // Handle scroll
         const handleScroll = () => {
           const scrollHeight =
             document.documentElement.scrollHeight - window.innerHeight;
-          const newScrollProgress = window.scrollY / scrollHeight;
+
+          // Avoid division by zero and handle edge cases
+          const newScrollProgress =
+            scrollHeight > 0
+              ? Math.max(0, Math.min(1, window.scrollY / scrollHeight))
+              : 0;
+
           scrollProgressRef.current = newScrollProgress;
 
           // Update gradient overlay opacity based on scroll
           if (gradientOverlayRef.current) {
             // Make it darker as user scrolls down to improve text readability
-            const baseOpacity = 0.25; // Start with some opacity
+            const baseOpacity = isMobile ? 0.3 : 0.25; // Slightly darker overlay on mobile
             const maxAdditionalOpacity = 0.2; // Add up to this much as they scroll
             const newOpacity =
               baseOpacity + newScrollProgress * maxAdditionalOpacity;
@@ -234,8 +302,50 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         // Initialize scroll handler once
         handleScroll();
 
-        // Animation loop
-        const animate = () => {
+        // Handle window resize with improved overflow prevention
+        const handleResize = () => {
+          if (!rendererRef.current) return;
+
+          // Use debounce to prevent resize calculations during active resizing
+          if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+
+          resizeTimeoutRef.current = setTimeout(() => {
+            if (!rendererRef.current) return;
+
+            // Update renderer size using our sizing function
+            updateRendererSize();
+          }, 200);
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        // Handle orientation change more effectively on mobile
+        const handleOrientationChange = () => {
+          // Force a layout calculation after orientation change
+          if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+
+          // Use two timeouts for better reliability during orientation change
+          resizeTimeoutRef.current = setTimeout(() => {
+            if (!rendererRef.current) return;
+
+            // First timeout to handle initial orientation change
+            updateRendererSize();
+
+            // Second timeout to ensure layout is complete
+            setTimeout(() => {
+              updateRendererSize();
+            }, 300);
+          }, 100);
+        };
+
+        window.addEventListener("orientationchange", handleOrientationChange);
+
+        // Set up animation loop with performance optimizations
+        let lastTime = 0;
+        const fpsLimit = isLowPowerDevice ? 30 : 60; // Limit framerate on low power devices
+        const interval = 1000 / fpsLimit;
+
+        const animate = (currentTime = 0) => {
           if (
             !mounted ||
             !sceneRef.current ||
@@ -246,36 +356,49 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           )
             return;
 
-          const scrollProgress = scrollProgressRef.current;
+          // Limit FPS on low-power devices
+          const delta = currentTime - lastTime;
+          const shouldRender = delta > interval || !isLowPowerDevice;
 
-          // More subtle rotation based on scroll
-          particlesRef.current.rotation.y = scrollProgress * Math.PI * 0.5;
-          particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
+          if (shouldRender) {
+            lastTime = currentTime - (delta % interval);
 
-          // More subtle zoom effect
-          cameraRef.current.position.z = 15 - scrollProgress * 6; // Adjust from 20-4 to 15-6 for stronger zoom
+            const scrollProgress = scrollProgressRef.current;
 
-          // Add subtle floating motion with more dynamic movement
-          const time = Date.now() * 0.001;
-          particlesRef.current.position.y = Math.sin(time * 0.1) * 0.3; // 0.2 to 0.3
-          particlesRef.current.position.x = Math.sin(time * 0.05) * 0.2; // Add horizontal motion
+            // More subtle rotation based on scroll
+            particlesRef.current.rotation.y = scrollProgress * Math.PI * 0.5;
+            particlesRef.current.rotation.x = scrollProgress * Math.PI * 0.25;
 
-          // Add subtle rotation to the entire scene for more dynamic feel
-          particlesRef.current.rotation.z = Math.sin(time * 0.03) * 0.03;
+            // More subtle zoom effect
+            cameraRef.current.position.z = 15 - scrollProgress * 6; // Adjust from 20-4 to 15-6 for stronger zoom
 
-          // Update controls - only if browser is not throttling for better performance
-          const now = performance.now();
-          const isVisible = document.visibilityState === "visible";
+            // Add subtle floating motion with more dynamic movement
+            // Use less intense animation on mobile for better performance
+            const time = Date.now() * 0.001;
+            const intensityFactor = isLowPowerDevice ? 0.5 : 1.0;
 
-          // Full quality when focused, reduced when tab is in background
-          if (isVisible) {
-            controlsRef.current.update();
-            // Render scene at full quality
-            rendererRef.current.render(sceneRef.current, cameraRef.current);
-          } else {
-            // Skip control updates and render at lower rate when not visible
-            if (now % 3 === 0) {
+            particlesRef.current.position.y =
+              Math.sin(time * 0.1) * 0.3 * intensityFactor;
+            particlesRef.current.position.x =
+              Math.sin(time * 0.05) * 0.2 * intensityFactor;
+
+            // Add subtle rotation to the entire scene for more dynamic feel
+            particlesRef.current.rotation.z =
+              Math.sin(time * 0.03) * 0.03 * intensityFactor;
+
+            // Update controls - only if browser is not throttling for better performance
+            const isVisible = document.visibilityState === "visible";
+
+            // Full quality when focused, reduced when tab is in background
+            if (isVisible) {
+              controlsRef.current.update();
+              // Render scene at full quality
               rendererRef.current.render(sceneRef.current, cameraRef.current);
+            } else {
+              // Skip control updates and render at lower rate when not visible
+              if (currentTime % 3 === 0) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+              }
             }
           }
 
@@ -283,22 +406,39 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         };
 
         animate();
+
+        // Clean up event listeners and resources on unmount
+        return () => {
+          window.removeEventListener("resize", handleResize);
+          window.removeEventListener(
+            "orientationchange",
+            handleOrientationChange
+          );
+          window.removeEventListener("scroll", handleScroll);
+        };
       } catch (error) {
         console.error("Error initializing Three.js scene:", error);
         setIsWebGLSupported(false);
       }
     };
 
-    initThreeJS();
+    // Initialize Three.js
+    const cleanupThreeJS = initThreeJS().catch((err) => {
+      console.error("Error in ThreeJS initialization:", err);
+    });
 
     // Cleanup
     return () => {
-      mounted = false;
-      window.removeEventListener("resize", () => {});
-      window.removeEventListener("scroll", () => {});
+      mounted = false; // Set mounted flag to false to stop animation
+
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+
       if (containerRef.current && rendererRef.current) {
         try {
           containerRef.current.removeChild(rendererRef.current.domElement);
@@ -306,25 +446,47 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
           console.error("Error removing renderer:", e);
         }
       }
+
       if (particlesRef.current) {
         particlesRef.current.geometry.dispose();
         (particlesRef.current.material as THREE.Material).dispose();
       }
+
       if (controlsRef.current) {
         controlsRef.current.dispose();
       }
+
       if (rendererRef.current) {
         rendererRef.current.dispose();
       }
     };
-  }, [isMounted, isWebGLSupported]); // Add isWebGLSupported as a dependency
+  }, [isMounted, isWebGLSupported, isMobile, isLowPowerDevice]);
 
   // Render nothing more than a container if WebGL isn't supported
   if (!isWebGLSupported && isMounted) {
     return (
-      <div
-        className={`fixed inset-0 w-full h-full bg-gradient-to-b from-background/60 to-background/90 ${className}`}
-      />
+      <>
+        <div
+          className={`fixed inset-0 w-full h-full bg-gradient-to-b from-background/60 to-background/90 ${className}`}
+          style={{
+            width: "100%",
+            maxWidth: "100%",
+            left: 0,
+            right: 0,
+            boxSizing: "border-box",
+          }}
+        />
+        <div
+          className="fixed inset-0 pointer-events-none z-[-1] bg-gradient-to-b from-background/30 via-background/10 to-background/40 backdrop-blur-[1px]"
+          style={{
+            width: "100%",
+            maxWidth: "100%",
+            left: 0,
+            right: 0,
+            boxSizing: "border-box",
+          }}
+        />
+      </>
     );
   }
 
@@ -332,13 +494,37 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     <>
       <div
         ref={containerRef}
-        className={`fixed inset-0 w-full h-full pointer-events-none z-[-1] ${className}`}
+        className={`fixed inset-0 pointer-events-none z-[-1] ${className}`}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: "100%",
+          height: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          overflow: "hidden",
+        }}
       />
       {/* Add a gradient overlay div to improve text readability */}
       <div
         ref={gradientOverlayRef}
-        className="fixed inset-0 w-full h-full pointer-events-none z-[-1] bg-gradient-to-b from-background/30 via-background/10 to-background/40 backdrop-blur-[1px]"
-        style={{ opacity: 0.25 }}
+        className="fixed inset-0 pointer-events-none z-[-1] bg-gradient-to-b from-background/30 via-background/10 to-background/40 backdrop-blur-[1px]"
+        style={{
+          opacity: isMobile ? 0.3 : 0.25,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: "100%",
+          height: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          overflow: "hidden",
+        }}
       />
     </>
   );
