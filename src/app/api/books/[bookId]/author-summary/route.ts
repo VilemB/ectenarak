@@ -7,14 +7,15 @@ import Book from "@/models/Book";
 import { generateAuthorSummary } from "@/lib/openai";
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: { bookId: string } }
+  request: NextRequest,
+  context: { params: { bookId: string } }
 ) {
+  const { bookId } = context.params;
   console.log("=== AUTHOR SUMMARY API ROUTE START ===");
-  console.log(`Received request for book ID: ${params.bookId}`);
+  console.log(`Received request for book ID: ${bookId}`);
 
   try {
-    console.log("Author summary API route called with bookId:", params.bookId);
+    console.log("Author summary API route called with bookId:", bookId);
 
     // Check if OpenAI API key is configured
     const apiKey = process.env.OPENAI_API_KEY;
@@ -34,7 +35,6 @@ export async function POST(
     }
 
     const userId = session.user.id;
-    const bookId = params.bookId;
     console.log("User ID:", userId);
 
     // Validate bookId
@@ -44,7 +44,7 @@ export async function POST(
     }
 
     // Parse request body
-    const body = await req.json();
+    const body = await request.json();
     const { author, preferences } = body;
     console.log("Author:", author);
     console.log("Preferences:", preferences);
@@ -151,12 +151,13 @@ export async function POST(
 }
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { bookId: string } }
+  request: NextRequest,
+  context: { params: { bookId: string } }
 ) {
+  const { bookId } = context.params;
   console.log("=== DELETE AUTHOR SUMMARY API ROUTE START ===");
   console.log(
-    `Received request to delete author summary for book ID: ${params.bookId}`
+    `Received request to delete author summary for book ID: ${bookId}`
   );
 
   try {
@@ -168,7 +169,6 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const bookId = params.bookId;
     console.log("User ID:", userId);
 
     // Validate bookId
