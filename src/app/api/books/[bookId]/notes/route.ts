@@ -26,6 +26,14 @@ interface IMockBook {
   [key: string]: unknown; // For other properties
 }
 
+interface RouteParams {
+  bookId: string;
+}
+
+interface RouteContext {
+  params: Promise<RouteParams>;
+}
+
 // Helper function to check if the book belongs to the user
 function checkBookOwnership(
   book: {
@@ -49,10 +57,7 @@ function checkBookOwnership(
   );
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { bookId: string } }
-) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     // Get the session to verify the user
     const session = await getServerSession(authOptions);
@@ -65,7 +70,7 @@ export async function GET(
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = await params;
+    const { bookId } = await context.params;
 
     if (!bookId) {
       return NextResponse.json(
@@ -120,10 +125,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { bookId: string } }
-) {
+export async function POST(request: Request, context: RouteContext) {
   try {
     // Get the session to verify the user
     const session = await getServerSession(authOptions);
@@ -136,7 +138,7 @@ export async function POST(
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = await params;
+    const { bookId } = await context.params;
     const { content, isAISummary = false } = await request.json();
 
     if (!bookId || !content) {

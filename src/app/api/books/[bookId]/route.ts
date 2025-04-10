@@ -5,15 +5,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { bookId: string } }
-) {
+interface RouteParams {
+  bookId: string;
+}
+
+interface RouteContext {
+  params: Promise<RouteParams>;
+}
+
+export async function GET(request: Request, context: RouteContext) {
   try {
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = await params;
+    const { bookId } = await context.params;
 
     if (!bookId) {
       return NextResponse.json(
@@ -77,10 +82,7 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { bookId: string } }
-) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     // Get the session to verify the user
     const session = await getServerSession(authOptions);
@@ -93,7 +95,7 @@ export async function DELETE(
     // Connect to the database
     await dbConnect();
 
-    const { bookId } = await params;
+    const { bookId } = await context.params;
 
     if (!bookId) {
       return NextResponse.json(
@@ -170,10 +172,7 @@ export async function DELETE(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { bookId: string } }
-) {
+export async function PATCH(request: Request, context: RouteContext) {
   try {
     // Get the session to verify the user
     const session = await getServerSession(authOptions);
@@ -187,7 +186,7 @@ export async function PATCH(
     await dbConnect();
 
     // Properly handle the bookId parameter
-    const { bookId } = await params;
+    const { bookId } = await context.params;
 
     if (!bookId || bookId === "undefined") {
       return NextResponse.json(
