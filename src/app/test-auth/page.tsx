@@ -23,6 +23,14 @@ export default function TestAuthPage() {
     `);
   }, [user, loading, sessionStatus]);
 
+  // Navigate to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      // Uncomment this to redirect unauthenticated users
+      // router.push('/login');
+    }
+  }, [loading, user, router]);
+
   return (
     <div className="container max-w-4xl py-8 px-4 md:px-6">
       <h1 className="text-3xl font-bold mb-8">Test Authentication</h1>

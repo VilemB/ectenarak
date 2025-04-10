@@ -17,9 +17,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 export default function LoginForm() {
   const router = useRouter();

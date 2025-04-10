@@ -7,13 +7,16 @@ import {
   SUBSCRIPTION_LIMITS,
   SUBSCRIPTION_PRICING,
 } from "@/types/user";
-import { useRouter } from "next/navigation";
 import AiCreditsDisplay from "./AiCreditsDisplay";
 import LoginForm from "./LoginForm";
 
 export default function SubscriptionManager() {
   const { user, updateSubscription, isLoading, isAuthenticated } = useAuth();
-  const router = useRouter();
+
+  // Initialize state variables at the top level, outside any conditionals
+  const [isYearly, setIsYearly] = useState<boolean>(false);
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>("free");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   // Debug logging
   console.log("SubscriptionManager - Auth state:", {
@@ -22,6 +25,14 @@ export default function SubscriptionManager() {
     isLoading,
     isAuthenticated,
   });
+
+  // Update state when user data is available
+  useEffect(() => {
+    if (user && user.subscription) {
+      setIsYearly(user.subscription.isYearly || false);
+      setSelectedTier(user.subscription.tier || "free");
+    }
+  }, [user]);
 
   // Show login form if not authenticated
   if (!isLoading && !isAuthenticated) {
@@ -39,15 +50,6 @@ export default function SubscriptionManager() {
   if (!user) {
     return null;
   }
-
-  // Only set state if user exists
-  const [isYearly, setIsYearly] = useState<boolean>(
-    user.subscription?.isYearly || false
-  );
-  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(
-    user.subscription?.tier || "free"
-  );
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const handleSubscriptionChange = async () => {
     if (
