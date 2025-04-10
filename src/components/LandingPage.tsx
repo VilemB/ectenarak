@@ -23,6 +23,11 @@ import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import "@/styles/animations.css";
 import TextReveal from "@/components/TextReveal";
 import ScrollIndicator from "@/components/ScrollIndicator";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 // Dynamically import ThreeBackground component with ssr: false to prevent server-side rendering
 const ThreeBackground = dynamic(() => import("@/components/ThreeBackground"), {
