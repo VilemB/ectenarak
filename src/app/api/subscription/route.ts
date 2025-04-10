@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { SubscriptionTier } from "@/types/user";
-import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { ObjectId } from "mongodb";
 
@@ -74,12 +73,11 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({
       subscription: user.subscription || null,
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error("❌ Error in subscription API:", error);
-    return NextResponse.json(
-      { error: error.message || "An unexpected error occurred" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

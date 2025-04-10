@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, BookText, BookOpen } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -15,7 +14,6 @@ import LoginForm from "@/components/LoginForm";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
-  const router = useRouter();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );

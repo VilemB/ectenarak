@@ -445,9 +445,11 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
 
-      // Save ref to a variable to avoid React hooks warning
+      // Save refs to variables to avoid React hooks warning
       const container = containerRef.current;
       const renderer = rendererRef.current;
+      const particles = particlesRef.current;
+      const controls = controlsRef.current;
 
       if (container && renderer) {
         try {
@@ -457,17 +459,17 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         }
       }
 
-      if (particlesRef.current) {
-        particlesRef.current.geometry.dispose();
-        (particlesRef.current.material as THREE.Material).dispose();
+      if (particles) {
+        particles.geometry.dispose();
+        (particles.material as THREE.Material).dispose();
       }
 
-      if (controlsRef.current) {
-        controlsRef.current.dispose();
+      if (controls) {
+        controls.dispose();
       }
 
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
+      if (renderer) {
+        renderer.dispose();
       }
     };
   }, [isMounted, isWebGLSupported, isMobile, isLowPowerDevice]);

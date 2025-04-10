@@ -14,25 +14,11 @@ interface Shape {
 }
 
 const AbstractAnimation2D: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [shapes, setShapes] = useState<Shape[]>([]);
   const requestRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  // Helper function to create an elegant color
-  const getGradientColor = (
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    radius: number
-  ) => {
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-    gradient.addColorStop(0, "rgba(59, 130, 246, 0.6)"); // Primary blue
-    gradient.addColorStop(0.5, "rgba(147, 51, 234, 0.3)"); // Purple
-    gradient.addColorStop(1, "rgba(59, 130, 246, 0)"); // Transparent blue
-    return gradient;
-  };
 
   // Draw flowing lines
   const drawFlowingLines = (
@@ -169,51 +155,6 @@ const AbstractAnimation2D: React.FC = () => {
 
     // Draw mouse highlight
     drawMouseHighlight(ctx, mouseRef.current.x, mouseRef.current.y);
-  };
-
-  // Animation loop
-  const animate = (timestamp: number) => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) return;
-
-    // Update time
-    timeRef.current = timestamp * 0.001; // Convert to seconds
-
-    // Draw frame
-    draw(ctx, canvas.width, canvas.height, timeRef.current);
-
-    // Request next frame
-    requestRef.current = requestAnimationFrame(animate);
-  };
-
-  // Handle mouse movement
-  const handleMouseMove = (event: MouseEvent) => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-
-    // Get mouse position relative to canvas
-    mouseRef.current = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
-  };
-
-  // Handle resize
-  const handleResize = () => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const { width, height } = canvas.getBoundingClientRect();
-
-    // Set canvas size to match display size
-    canvas.width = width;
-    canvas.height = height;
   };
 
   const getRandomColor = () => {
