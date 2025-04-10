@@ -6,11 +6,16 @@ import { authOptions } from "@/lib/auth";
 import Book from "@/models/Book";
 import { generateAuthorSummary } from "@/lib/openai";
 
-export async function POST(
-  request: NextRequest,
-  context: { params: { bookId: string } }
-) {
-  const { bookId } = context.params;
+interface RouteParams {
+  bookId: string;
+}
+
+interface RouteContext {
+  params: Promise<RouteParams>;
+}
+
+export async function POST(request: NextRequest, context: RouteContext) {
+  const { bookId } = await context.params;
   console.log("=== AUTHOR SUMMARY API ROUTE START ===");
   console.log(`Received request for book ID: ${bookId}`);
 
@@ -150,11 +155,8 @@ export async function POST(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: { bookId: string } }
-) {
-  const { bookId } = context.params;
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  const { bookId } = await context.params;
   console.log("=== DELETE AUTHOR SUMMARY API ROUTE START ===");
   console.log(
     `Received request to delete author summary for book ID: ${bookId}`
