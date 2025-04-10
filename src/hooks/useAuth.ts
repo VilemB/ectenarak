@@ -34,6 +34,10 @@ export function useAuth() {
           aiCreditsRemaining: 3,
           aiCreditsTotal: 3,
           autoRenew: false,
+          lastRenewalDate: new Date(),
+          nextRenewalDate: new Date(
+            new Date().setMonth(new Date().getMonth() + 1)
+          ),
         },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -69,6 +73,10 @@ export function useAuth() {
             aiCreditsRemaining: 3,
             aiCreditsTotal: 3,
             autoRenew: false,
+            lastRenewalDate: new Date(),
+            nextRenewalDate: new Date(
+              new Date().setMonth(new Date().getMonth() + 1)
+            ),
           },
           createdAt: new Date(),
           updatedAt: new Date(),
