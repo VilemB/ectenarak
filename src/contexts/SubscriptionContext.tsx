@@ -14,6 +14,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 interface SubscriptionData {
   tier: "free" | "basic" | "premium";
   aiCreditsRemaining: number;
+  aiCreditsTotal: number;
   periodEnd?: string;
   // Other optional properties without using any
   periodStart?: string;

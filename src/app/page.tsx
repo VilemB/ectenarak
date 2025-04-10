@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  useCallback,
-  useMemo,
-} from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Book } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -36,6 +29,10 @@ import LandingPage from "@/components/LandingPage";
 import Link from "next/link";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 import { AiCreditsExhaustedPrompt } from "@/components/FeatureGate";
+import {
+  SubscriptionProvider,
+  useSubscriptionContext,
+} from "@/contexts/SubscriptionContext";
 
 // Define interface for user with subscription
 interface UserWithSubscription {
@@ -104,25 +101,7 @@ const itemVariants = {
   },
 };
 
-// Create a context for subscription refreshing
-export const SubscriptionContext = createContext<{
-  refreshSubscriptionData: () => Promise<void>;
-  isLoadingSubscription: boolean;
-  subscriptionData: {
-    aiCreditsRemaining?: number;
-    aiCreditsTotal?: number;
-    startDate?: Date;
-  } | null;
-}>({
-  refreshSubscriptionData: async () => {},
-  isLoadingSubscription: false,
-  subscriptionData: null,
-});
-
-// Create a hook to use the subscription context
-export const useSubscriptionContext = () => useContext(SubscriptionContext);
-
-export default function Home() {
+function HomeContent() {
   const { user, loading } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [newBookTitle, setNewBookTitle] = useState("");
@@ -142,53 +121,26 @@ export default function Home() {
   const [authorFocus, setAuthorFocus] = useState(false);
   const [titleTouched, setTitleTouched] = useState(false);
   const [authorTouched, setAuthorTouched] = useState(false);
-  const [subscriptionData, setSubscriptionData] = useState<{
-    aiCreditsRemaining?: number;
-    aiCreditsTotal?: number;
-    startDate?: Date;
-  } | null>(null);
-  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
     useState(false);
 
+  const {
+    subscription,
+    loading: isLoadingSubscription,
+    refreshSubscriptionData,
+  } = useSubscriptionContext();
+
   // Function to fetch subscription data from the API
-  const refreshSubscriptionData = useCallback(async () => {
-    if (!user) return;
+  const handleRefreshSubscription = useCallback(async () => {
+    await refreshSubscriptionData();
+  }, [refreshSubscriptionData]);
 
-    setIsLoadingSubscription(true);
-    try {
-      const response = await fetch("/api/subscription");
-      if (!response.ok) {
-        throw new Error("Failed to fetch subscription data");
-      }
-
-      const data = await response.json();
-      console.log("Subscription data from API:", data);
-      setSubscriptionData(data.subscription || null);
-    } catch (error) {
-      console.error("Error fetching subscription data:", error);
-    } finally {
-      setIsLoadingSubscription(false);
-    }
-  }, [user]);
-
-  // Fetch subscription data when user changes - properly memoized with useCallback
-  // This avoids creating a new function on every render
+  // Fetch subscription data when user changes
   useEffect(() => {
     if (user) {
-      refreshSubscriptionData();
+      handleRefreshSubscription();
     }
-  }, [user, refreshSubscriptionData]);
-
-  // Make the subscription context provider with memoized value
-  const subscriptionContextValue = useMemo(
-    () => ({
-      refreshSubscriptionData,
-      isLoadingSubscription,
-      subscriptionData,
-    }),
-    [refreshSubscriptionData, isLoadingSubscription, subscriptionData]
-  );
+  }, [user, handleRefreshSubscription]);
 
   // Fetch books from the database when the component mounts or user changes
   useEffect(() => {
@@ -865,456 +817,296 @@ export default function Home() {
   }
 
   return (
-    <SubscriptionContext.Provider value={subscriptionContextValue}>
-      {!user && !loading ? (
-        <LandingPage />
-      ) : (
-        <main className="container max-w-5xl mx-auto px-2 sm:px-4 pt-2 pb-16 sm:pt-4 sm:pb-20 md:pt-6 md:pb-24">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                eČtenářák
-              </h1>
-              <p className="text-muted-foreground">
-                Tvůj osobní elektronický čtenářský deník
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <div className="relative flex-1 sm:flex-none sm:w-64">
-                <Search className="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground search-icon" />
-                <input
-                  type="text"
-                  placeholder="Hledat knihy..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-border/50 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent transition-all duration-200 shadow-sm bg-secondary/50 hover:bg-secondary/70"
-                />
-              </div>
-              <Button
-                onClick={() => setShowAddForm(true)}
-                className="flex-none shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Přidat knihu
-              </Button>
-            </div>
+    <main className="container max-w-5xl mx-auto px-2 sm:px-4 pt-2 pb-16 sm:pt-4 sm:pb-20 md:pt-6 md:pb-24">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+            eČtenářák
+          </h1>
+          <p className="text-muted-foreground">
+            Tvůj osobní elektronický čtenářský deník
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="relative flex-1 sm:flex-none sm:w-64">
+            <Search className="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground search-icon" />
+            <input
+              type="text"
+              placeholder="Hledat knihy..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-border/50 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent transition-all duration-200 shadow-sm bg-secondary/50 hover:bg-secondary/70"
+            />
           </div>
+          <Button
+            onClick={() => setShowAddForm(true)}
+            className="flex-none shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Přidat knihu
+          </Button>
+        </div>
+      </div>
 
-          {searchQuery && filteredBooks.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mb-4 text-xs text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
-            >
-              <Search className="h-3 w-3 mr-2 text-primary" />
-              Nalezeno{" "}
-              <span className="font-medium text-primary mx-1">
-                {filteredBooks.length}
-              </span>
-              {filteredBooks.length === 1
-                ? "výsledek"
-                : filteredBooks.length >= 2 && filteredBooks.length <= 4
-                ? "výsledky"
-                : "výsledků"}
-              pro &quot;
-              <span className="text-white font-medium border-b border-primary/50 pb-0.5 mx-1">
-                {searchQuery}
-              </span>
-              &quot;
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto h-6 px-2 text-xs hover:bg-primary/10 hover:text-primary"
-                onClick={() => setSearchQuery("")}
-              >
-                <X className="h-3 w-3 mr-1" />
-                Zrušit
-              </Button>
-            </motion.div>
-          )}
+      {searchQuery && filteredBooks.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="mb-4 text-xs text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
+        >
+          <Search className="h-3 w-3 mr-2 text-primary" />
+          Nalezeno{" "}
+          <span className="font-medium text-primary mx-1">
+            {filteredBooks.length}
+          </span>
+          {filteredBooks.length === 1
+            ? "výsledek"
+            : filteredBooks.length >= 2 && filteredBooks.length <= 4
+            ? "výsledky"
+            : "výsledků"}
+          pro &quot;
+          <span className="text-white font-medium border-b border-primary/50 pb-0.5 mx-1">
+            {searchQuery}
+          </span>
+          &quot;
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto h-6 px-2 text-xs hover:bg-primary/10 hover:text-primary"
+            onClick={() => setSearchQuery("")}
+          >
+            <X className="h-3 w-3 mr-1" />
+            Zrušit
+          </Button>
+        </motion.div>
+      )}
 
-          {/* AI Credits Display */}
-          {user && !showAddForm && (
-            <motion.div className="mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-3 border border-gray-700/40 shadow-md">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* AI Credits Display */}
+      {user && !showAddForm && (
+        <motion.div className="mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-3 border border-gray-700/40 shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center">
+              <div className="bg-amber-500/15 p-2 rounded-full mr-3 flex-shrink-0">
+                <Coins className="h-4 w-4 text-amber-500" />
+              </div>
+              <div className="flex-1">
                 <div className="flex items-center">
-                  <div className="bg-amber-500/15 p-2 rounded-full mr-3 flex-shrink-0">
-                    <Coins className="h-4 w-4 text-amber-500" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <h3 className="text-sm font-medium text-white">
-                        AI kredity
-                      </h3>
-                      {hasSubscription(user) &&
-                        user.subscription.tier !== "free" && (
-                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-800/30">
-                            Obnova:{" "}
-                            {new Date(
-                              user.subscription.nextRenewalDate
-                            ).getDate()}
-                            .{" "}
-                            {new Date(
-                              user.subscription.nextRenewalDate
-                            ).toLocaleString("cs-CZ", { month: "short" })}
-                          </span>
-                        )}
-                    </div>
-                    <div className="flex items-center mt-1.5">
-                      {isLoadingSubscription ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-amber-500 mr-2"></div>
-                          <span className="text-xs text-gray-400">
-                            Načítání kreditů...
-                          </span>
-                        </div>
-                      ) : (
-                        <AiCreditsDisplay
-                          aiCreditsRemaining={
-                            subscriptionData?.aiCreditsRemaining !== undefined
-                              ? subscriptionData.aiCreditsRemaining
-                              : hasSubscription(user)
-                              ? user.subscription.aiCreditsRemaining
-                              : 0
-                          }
-                          aiCreditsTotal={
-                            subscriptionData?.aiCreditsTotal !== undefined
-                              ? subscriptionData.aiCreditsTotal
-                              : hasSubscription(user)
-                              ? user.subscription.aiCreditsTotal
-                              : 3
-                          }
-                          showLowCreditsWarning={false}
-                          className="w-48 sm:w-64"
-                        />
-                      )}
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-medium text-white">AI kredity</h3>
+                  {hasSubscription(user) &&
+                    user.subscription.tier !== "free" && (
+                      <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-800/30">
+                        Obnova:{" "}
+                        {new Date(user.subscription.nextRenewalDate).getDate()}.{" "}
+                        {new Date(
+                          user.subscription.nextRenewalDate
+                        ).toLocaleString("cs-CZ", { month: "short" })}
+                      </span>
+                    )}
                 </div>
-
-                <div className="ml-9 sm:ml-0 mt-0.5 sm:mt-0 flex items-center">
-                  {(
-                    subscriptionData &&
-                    subscriptionData.aiCreditsRemaining !== undefined
-                      ? subscriptionData.aiCreditsRemaining ===
-                        subscriptionData.aiCreditsTotal
-                      : hasSubscription(user)
-                      ? user.subscription.aiCreditsRemaining ===
-                        user.subscription.aiCreditsTotal
-                      : false
-                  ) ? (
-                    <div className="flex items-center text-xs bg-green-900/30 text-green-400 py-1 px-2.5 rounded-full border border-green-800/30">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="w-3.5 h-3.5 mr-1"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span>Plný počet kreditů</span>
-                    </div>
-                  ) : (subscriptionData &&
-                      subscriptionData.aiCreditsRemaining !== undefined &&
-                      subscriptionData.aiCreditsRemaining <=
-                        Math.ceil(
-                          (subscriptionData.aiCreditsTotal || 3) * 0.25
-                        )) ||
-                    (hasSubscription(user) &&
-                      user.subscription.aiCreditsRemaining <=
-                        Math.ceil(user.subscription.aiCreditsTotal * 0.25)) ? (
-                    <Link href="/subscription" className="group">
-                      <div className="flex items-center text-xs bg-amber-900/30 text-amber-400 py-1 px-2.5 rounded-full border border-amber-800/30 cursor-pointer group-hover:bg-amber-900/40 transition-colors">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          className="w-3.5 h-3.5 mr-1"
-                        >
-                          <path d="M10.75 6.75a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" />
-                        </svg>
-                        <span>Získat více kreditů</span>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="flex items-center text-xs bg-blue-900/30 text-blue-400 py-1 px-2.5 rounded-full border border-blue-800/30">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="w-3.5 h-3.5 mr-1"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M1 4a1 1 0 011-1h16a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V4zm12 4a3 3 0 11-6 0 3 3 0 016 0zM4 9a1 1 0 100-2 1 1 0 000 2zm13-1a1 1 0 11-2 0 1 1 0 012 0zM1.75 14.5a.75.75 0 000 1.5c4.417 0 8.693.603 12.749 1.73 1.111.309 2.251-.512 2.251-1.696v-.784a.75.75 0 00-1.5 0v.784a.272.272 0 01-.35.25A49.043 49.043 0 001.75 14.5z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="whitespace-nowrap">
-                        Dostatek kreditů
+                <div className="flex items-center mt-1.5">
+                  {isLoadingSubscription ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-amber-500 mr-2"></div>
+                      <span className="text-xs text-gray-400">
+                        Načítání kreditů...
                       </span>
                     </div>
+                  ) : (
+                    <AiCreditsDisplay
+                      aiCreditsRemaining={
+                        subscription?.aiCreditsRemaining !== undefined
+                          ? subscription.aiCreditsRemaining
+                          : hasSubscription(user)
+                          ? user.subscription.aiCreditsRemaining
+                          : 0
+                      }
+                      aiCreditsTotal={
+                        subscription?.aiCreditsTotal !== undefined
+                          ? subscription.aiCreditsTotal
+                          : hasSubscription(user)
+                          ? user.subscription.aiCreditsTotal
+                          : 3
+                      }
+                      showLowCreditsWarning={false}
+                      className="w-48 sm:w-64"
+                    />
                   )}
                 </div>
               </div>
+            </div>
 
-              {((subscriptionData &&
-                subscriptionData.aiCreditsRemaining !== undefined &&
-                subscriptionData.aiCreditsRemaining <=
-                  Math.ceil((subscriptionData.aiCreditsTotal || 3) * 0.25)) ||
+            <div className="ml-9 sm:ml-0 mt-0.5 sm:mt-0 flex items-center">
+              {(
+                subscription && subscription.aiCreditsRemaining !== undefined
+                  ? subscription.aiCreditsRemaining ===
+                    subscription.aiCreditsTotal
+                  : hasSubscription(user)
+                  ? user.subscription.aiCreditsRemaining ===
+                    user.subscription.aiCreditsTotal
+                  : false
+              ) ? (
+                <div className="flex items-center text-xs bg-green-900/30 text-green-400 py-1 px-2.5 rounded-full border border-green-800/30">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3.5 h-3.5 mr-1"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Plný počet kreditů</span>
+                </div>
+              ) : (subscription &&
+                  subscription.aiCreditsRemaining !== undefined &&
+                  subscription.aiCreditsRemaining <=
+                    Math.ceil((subscription.aiCreditsTotal || 3) * 0.25)) ||
                 (hasSubscription(user) &&
                   user.subscription.aiCreditsRemaining <=
-                    Math.ceil(user.subscription.aiCreditsTotal * 0.25))) && (
-                <p className="text-xs text-amber-400/80 mt-2 pl-11 flex items-center">
-                  <span className="inline-block mr-1.5">
+                    Math.ceil(user.subscription.aiCreditsTotal * 0.25)) ? (
+                <Link href="/subscription" className="group">
+                  <div className="flex items-center text-xs bg-amber-900/30 text-amber-400 py-1 px-2.5 rounded-full border border-amber-800/30 cursor-pointer group-hover:bg-amber-900/40 transition-colors">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
                       fill="currentColor"
-                      className={`w-3.5 h-3.5 ${
-                        subscriptionData?.aiCreditsRemaining === 0 ||
-                        (hasSubscription(user) &&
-                          user.subscription.aiCreditsRemaining === 0)
-                          ? "text-red-400"
-                          : ""
-                      }`}
+                      className="w-3.5 h-3.5 mr-1"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-                        clipRule="evenodd"
-                      />
+                      <path d="M10.75 6.75a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" />
                     </svg>
-                  </span>
-                  {subscriptionData?.aiCreditsRemaining === 0 ||
-                  (hasSubscription(user) &&
-                    user.subscription.aiCreditsRemaining === 0)
-                    ? "Vyčerpali jste všechny AI kredity. Kredit se využívá při generování AI obsahu."
-                    : "Docházejí vám kredity. Kredit se využívá při generování AI obsahu."}
-                </p>
-              )}
-            </motion.div>
-          )}
-
-          {renderAddBookForm()}
-
-          {isLoaded && (
-            <>
-              {books.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-8 sm:py-12 md:py-16 my-2 sm:my-4"
-                >
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
-                    <Library className="h-7 w-7 text-primary" />
+                    <span>Získat více kreditů</span>
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground mb-1.5">
-                    Zatím nemáš žádné knihy
-                  </h2>
-                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                    Začni přidáním své první knihy do čtenářského deníku.
-                  </p>
-                  <Button
-                    onClick={() => setShowAddForm(true)}
-                    className="shadow-md hover:shadow-lg transition-all duration-200"
-                    size="default"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Přidat první knihu
-                  </Button>
-                </motion.div>
+                </Link>
               ) : (
-                <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="grid grid-cols-1 gap-4 md:gap-5"
-                >
-                  {(searchQuery ? filteredBooks : books).map((book) => {
-                    // Debug each book before rendering
-                    console.log("Rendering book:", book);
-
-                    // Check if book is valid
-                    if (!book || Object.keys(book).length === 0) {
-                      console.error("Warning: Empty book object in list");
-                      return null;
-                    }
-
-                    return (
-                      <BookComponent
-                        key={
-                          book.id ||
-                          `book-${Math.random().toString(36).substring(2, 11)}`
-                        }
-                        book={book}
-                        onDelete={handleDeleteBook}
-                      />
-                    );
-                  })}
-                </motion.div>
+                <div className="flex items-center text-xs bg-blue-900/30 text-blue-400 py-1 px-2.5 rounded-full border border-blue-800/30">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3.5 h-3.5 mr-1"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M1 4a1 1 0 011-1h16a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V4zm12 4a3 3 0 11-6 0 3 3 0 016 0zM4 9a1 1 0 100-2 1 1 0 000 2zm13-1a1 1 0 11-2 0 1 1 0 012 0zM1.75 14.5a.75.75 0 000 1.5c4.417 0 8.693.603 12.749 1.73 1.111.309 2.251-.512 2.251-1.696v-.784a.75.75 0 00-1.5 0v.784a.272.272 0 01-.35.25A49.043 49.043 0 001.75 14.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="whitespace-nowrap">Dostatek kreditů</span>
+                </div>
               )}
-            </>
+            </div>
+          </div>
+
+          {((subscription &&
+            subscription.aiCreditsRemaining !== undefined &&
+            subscription.aiCreditsRemaining <=
+              Math.ceil((subscription.aiCreditsTotal || 3) * 0.25)) ||
+            (hasSubscription(user) &&
+              user.subscription.aiCreditsRemaining <=
+                Math.ceil(user.subscription.aiCreditsTotal * 0.25))) && (
+            <p className="text-xs text-amber-400/80 mt-2 pl-11 flex items-center">
+              <span className="inline-block mr-1.5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className={`w-3.5 h-3.5 ${
+                    subscription?.aiCreditsRemaining === 0 ||
+                    (hasSubscription(user) &&
+                      user.subscription.aiCreditsRemaining === 0)
+                      ? "text-red-400"
+                      : ""
+                  }`}
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </span>
+              {subscription?.aiCreditsRemaining === 0 ||
+              (hasSubscription(user) &&
+                user.subscription.aiCreditsRemaining === 0)
+                ? "Vyčerpali jste všechny AI kredity. Kredit se využívá při generování AI obsahu."
+                : "Docházejí vám kredity. Kredit se využívá při generování AI obsahu."}
+            </p>
           )}
-        </main>
+        </motion.div>
       )}
 
-      {/* Welcome Modal */}
-      <Modal
-        isOpen={showWelcome}
-        onClose={() => setShowWelcome(false)}
-        title="Vítej v eČtenářáku!"
-        showCloseButton={true}
-      >
-        <div className="p-6 max-w-full overflow-x-hidden">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-primary/15 p-5 rounded-full">
-              <BookOpen className="h-12 w-12 text-primary" />
-            </div>
-          </div>
+      {renderAddBookForm()}
 
-          <h3 className="text-xl font-medium text-center text-white mb-2">
-            Tvůj osobní čtenářský deník
-          </h3>
-
-          <p className="text-sm text-gray-300 text-center mb-8">
-            Vítej v aplikaci, která ti pomůže sledovat knihy, které čteš, a
-            zaznamenávat si k nim poznámky.
-          </p>
-
-          <div className="space-y-4 mt-6">
-            {[
-              {
-                id: "feature-add-books",
-                icon: <PlusCircle className="h-5 w-5 text-primary" />,
-                title: "Přidej své knihy",
-                description:
-                  "Začni přidáním knih, které čteš nebo jsi přečetl(a).",
-              },
-              {
-                id: "feature-add-notes",
-                icon: <PenLine className="h-5 w-5 text-primary" />,
-                title: "Zaznamenávej poznámky",
-                description:
-                  "Ke každé knize si můžeš přidat libovolné množství poznámek.",
-              },
-              {
-                id: "feature-ai-summary",
-                icon: <Sparkles className="h-5 w-5 text-primary" />,
-                title: "Generuj AI shrnutí",
-                description:
-                  "Nech si vygenerovat shrnutí tvých poznámek pomocí umělé inteligence.",
-              },
-            ].map((feature) => (
-              <div
-                className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-800/30 transition-colors"
-                key={
-                  feature.id ||
-                  `feature-${Math.random().toString(36).substring(2, 11)}`
-                }
-              >
-                <div className="bg-primary/15 p-2.5 rounded-full">
-                  {feature.icon}
-                </div>
-                <div>
-                  <h4 className="text-base font-medium text-white mb-1">
-                    {feature.title}
-                  </h4>
-                  <p className="text-sm text-gray-300">{feature.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-6 border-t border-gray-700/50 flex justify-center mt-8">
-            <Button
-              onClick={() => setShowWelcome(false)}
-              className="px-6 py-2.5 shadow-md hover:shadow-lg transition-all duration-200"
-              size="lg"
+      {isLoaded && (
+        <>
+          {books.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-8 sm:py-12 md:py-16 my-2 sm:my-4"
             >
-              Začít používat aplikaci
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Keyboard Shortcuts Modal */}
-      <Modal
-        isOpen={showKeyboardShortcuts}
-        onClose={() => setShowKeyboardShortcuts(false)}
-        title="Klávesové zkratky"
-        showCloseButton={true}
-      >
-        <div className="p-6 max-w-full overflow-x-hidden">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              {[
-                {
-                  id: "shortcut-search",
-                  label: "Vyhledávání",
-                  shortcut: "Ctrl + /",
-                },
-                {
-                  id: "shortcut-add-book",
-                  label: "Přidat novou knihu",
-                  shortcut: "Ctrl + B",
-                },
-                {
-                  id: "shortcut-close-form",
-                  label: "Zavřít formulář",
-                  shortcut: "Esc",
-                },
-              ].map((shortcut) => (
-                <div
-                  key={
-                    shortcut.id ||
-                    `shortcut-${Math.random().toString(36).substring(2, 11)}`
-                  }
-                  className="flex justify-between items-center py-3 px-4 border-b border-gray-700/50 rounded-lg hover:bg-gray-800/20 transition-colors"
-                >
-                  <span className="text-sm text-gray-300 flex items-center">
-                    {shortcut.label === "Vyhledávání" && (
-                      <Search className="h-4 w-4 mr-2 text-primary/70" />
-                    )}
-                    {shortcut.label === "Přidat novou knihu" && (
-                      <Plus className="h-4 w-4 mr-2 text-primary/70" />
-                    )}
-                    {shortcut.label === "Zavřít formulář" && (
-                      <X className="h-4 w-4 mr-2 text-primary/70" />
-                    )}
-                    {shortcut.label}
-                  </span>
-                  <kbd className="px-3 py-1.5 bg-gray-800 rounded-md text-xs font-mono text-gray-300 border border-gray-700/50 shadow-sm">
-                    {shortcut.shortcut}
-                  </kbd>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-start gap-3 mt-6 bg-amber-500/10 p-4 rounded-lg border border-amber-500/20">
-              <Info className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-400">
-                Klávesové zkratky fungují pouze když není aktivní žádné textové
-                pole.
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
+                <Library className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground mb-1.5">
+                Zatím nemáš žádné knihy
+              </h2>
+              <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                Začni přidáním své první knihy do čtenářského deníku.
               </p>
-            </div>
-          </div>
-        </div>
-      </Modal>
+              <Button
+                onClick={() => setShowAddForm(true)}
+                className="shadow-md hover:shadow-lg transition-all duration-200"
+                size="default"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Přidat první knihu
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 gap-4 md:gap-5"
+            >
+              {(searchQuery ? filteredBooks : books).map((book) => {
+                // Debug each book before rendering
+                console.log("Rendering book:", book);
 
-      {/* AI Credits Exhausted Modal */}
-      <Modal
-        isOpen={showCreditExhaustedModal}
-        onClose={() => setShowCreditExhaustedModal(false)}
-        title="AI Kredity"
-      >
-        <AiCreditsExhaustedPrompt />
-      </Modal>
-    </SubscriptionContext.Provider>
+                // Check if book is valid
+                if (!book || Object.keys(book).length === 0) {
+                  console.error("Warning: Empty book object in list");
+                  return null;
+                }
+
+                return (
+                  <BookComponent
+                    key={
+                      book.id ||
+                      `book-${Math.random().toString(36).substring(2, 11)}`
+                    }
+                    book={book}
+                    onDelete={handleDeleteBook}
+                  />
+                );
+              })}
+            </motion.div>
+          )}
+        </>
+      )}
+    </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <SubscriptionProvider>
+      <HomeContent />
+    </SubscriptionProvider>
   );
 }
