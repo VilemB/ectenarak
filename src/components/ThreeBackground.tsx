@@ -86,7 +86,6 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     const initThreeJS = async () => {
       try {
         // Scene setup
-        const scene = new THREE.Scene();
         // ... rest of existing code ...
       } catch (error) {
         console.error("Error initializing Three.js scene:", error);
