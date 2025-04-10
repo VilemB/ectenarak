@@ -137,7 +137,7 @@ const AnimatedBackground: React.FC = () => {
             translateX: () => random(-5, 5),
             easing: "easeInOutQuad",
             duration: 8000,
-            delay: (_: any, i: number) => i * 100, // Replace anime.stagger
+            delay: (_: Element, i: number) => i * 100, // Replace anime.stagger
             complete: animateBackground,
           });
 
@@ -150,7 +150,7 @@ const AnimatedBackground: React.FC = () => {
             },
             easing: "easeInOutSine",
             duration: 25000,
-            delay: (_: any, i: number) => i * 8000, // Replace anime.stagger
+            delay: (_: Element, i: number) => i * 8000, // Replace anime.stagger
           });
 
           // Subtle fade animation for lines
@@ -159,7 +159,7 @@ const AnimatedBackground: React.FC = () => {
             opacity: [0.03, 0.07, 0.03],
             easing: "easeInOutSine",
             duration: 15000,
-            delay: (_: any, i: number) => i * 3000, // Replace anime.stagger
+            delay: (_: Element, i: number) => i * 3000, // Replace anime.stagger
           });
         };
 

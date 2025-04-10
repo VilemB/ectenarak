@@ -42,28 +42,29 @@ async function cacheSummary(cacheKey: string, summary: string): Promise<void> {
  * @param preferences Summary preferences
  * @returns Cache key string
  */
-function generateAuthorCacheKey(
-  author: string,
-  preferences: AuthorSummaryPreferences
-): string {
-  // Create a simplified version of preferences for the cache key
-  const simplifiedPrefs = {
-    style: preferences.style,
-    length: preferences.length,
-    focus: preferences.focus,
-    language: preferences.language,
-    hasTimeline: preferences.includeTimeline,
-    hasAwards: preferences.includeAwards,
-    hasInfluences: preferences.includeInfluences,
-    hasStudyGuide: preferences.studyGuide,
-  };
+// Commented out as it's not currently used
+// function generateAuthorCacheKey(
+//   author: string,
+//   preferences: AuthorSummaryPreferences
+// ): string {
+//   // Create a simplified version of preferences for the cache key
+//   const simplifiedPrefs = {
+//     style: preferences.style,
+//     length: preferences.length,
+//     focus: preferences.focus,
+//     language: preferences.language,
+//     hasTimeline: preferences.includeTimeline,
+//     hasAwards: preferences.includeAwards,
+//     hasInfluences: preferences.includeInfluences,
+//     hasStudyGuide: preferences.studyGuide,
+//   };
 
-  // Create a string to hash
-  const stringToHash = `${author}|${JSON.stringify(simplifiedPrefs)}`;
+//   // Create a string to hash
+//   const stringToHash = `${author}|${JSON.stringify(simplifiedPrefs)}`;
 
-  // Generate a hash for the cache key
-  return createHash("md5").update(stringToHash).digest("hex");
-}
+//   // Generate a hash for the cache key
+//   return createHash("md5").update(stringToHash).digest("hex");
+// }
 
 /**
  * Initialize OpenAI client with proper error handling
@@ -207,23 +208,24 @@ function isSummaryComplete(summary: string): boolean {
  * @param summary The potentially incomplete summary
  * @returns Fixed summary with a completion notice if needed
  */
-function fixIncompleteAuthorSummary(
-  summary: string,
-  author: string,
-  language: string
-): string {
-  if (isSummaryComplete(summary)) {
-    return summary;
-  }
+// Commented out as it's not currently used
+// function fixIncompleteAuthorSummary(
+//   summary: string,
+//   author: string,
+//   language: string
+// ): string {
+//   if (isSummaryComplete(summary)) {
+//     return summary;
+//   }
 
-  // Add a notice about the incomplete summary
-  const notice =
-    language === "cs"
-      ? `\n\n---\n\n**Poznámka:** Informace o autorovi ${author} mohou být neúplné. Pro získání kompletních informací zkuste přegenerovat informace o autorovi s jinými preferencemi nebo kratší délkou.`
-      : `\n\n---\n\n**Note:** The information about author ${author} may be incomplete. To get complete information, try regenerating author information with different preferences or a shorter length.`;
+//   // Add a notice about the incomplete summary
+//   const notice =
+//     language === "cs"
+//       ? `\n\n---\n\n**Poznámka:** Informace o autorovi ${author} mohou být neúplné. Pro získání kompletních informací zkuste přegenerovat informace o autorovi s jinými preferencemi nebo kratší délkou.`
+//       : `\n\n---\n\n**Note:** The information about author ${author} may be incomplete. To get complete information, try regenerating author information with different preferences or a shorter length.`;
 
-  return summary + notice;
-}
+//   return summary + notice;
+// }
 
 /**
  * Generate a summary about an author using OpenAI
@@ -245,7 +247,8 @@ export async function generateAuthorSummary(
   const model = selectOptimalAuthorModel(preferences);
   const prompt = buildAuthorSummaryPrompt(author, preferences);
 
-  const systemMessage =
+  // Replace the systemMessage declaration
+  const systemPrompt =
     preferences.language === "cs"
       ? `Jsi ${
           preferences.style === "academic"
@@ -267,7 +270,7 @@ export async function generateAuthorSummary(
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: systemMessage },
+        { role: "system", content: systemPrompt },
         { role: "user", content: prompt },
       ],
       temperature: preferences.style === "creative" ? 0.8 : 0.3,
