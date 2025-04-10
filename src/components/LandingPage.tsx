@@ -11,7 +11,6 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import dynamic from "next/dynamic";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LandingNavbar from "@/components/LandingNavbar";
 import LoginForm from "@/components/LoginForm";
@@ -19,14 +18,6 @@ import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import "@/styles/animations.css";
 import TextReveal from "@/components/TextReveal";
 import ScrollIndicator from "@/components/ScrollIndicator";
-
-// Dynamically import ThreeBackground component with ssr: false to prevent server-side rendering
-const ThreeBackground = dynamic(() => import("@/components/ThreeBackground"), {
-  ssr: false,
-  loading: () => (
-    <div className="fixed inset-0 w-full h-full z-[-1] bg-background" />
-  ),
-});
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -57,11 +48,6 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen w-full">
-      {/* Background with proper z-indexing */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <ThreeBackground />
-      </div>
-
       {/* Content with higher z-index */}
       <div className="relative z-10">
         <div className="w-full relative overflow-visible min-h-screen flex flex-col">
