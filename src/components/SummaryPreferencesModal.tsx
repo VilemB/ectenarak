@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,21 +112,21 @@ export function SummaryPreferencesModal({
   description,
 }: SummaryPreferencesModalProps) {
   // Use global preferences instead of local storage directly
-  const {
-    preferences: globalPreferences,
-    setPreferences: setGlobalPreferences,
-  } = useSummaryPreferences();
+  const { setPreferences: setGlobalPreferences } = useSummaryPreferences();
   const { canAccess } = useFeatureAccess();
 
-  const defaultPreferences: SummaryPreferences = {
-    style: "academic",
-    length: "short",
-    focus: "balanced",
-    language: "cs",
-    examFocus: false,
-    literaryContext: false,
-    studyGuide: false,
-  };
+  const defaultPreferences = useMemo<SummaryPreferences>(
+    () => ({
+      style: "academic",
+      length: "short",
+      focus: "balanced",
+      language: "cs",
+      examFocus: false,
+      literaryContext: false,
+      studyGuide: false,
+    }),
+    []
+  );
 
   const [preferences, setPreferences] =
     useState<SummaryPreferences>(defaultPreferences);
@@ -143,7 +143,7 @@ export function SummaryPreferencesModal({
   useEffect(() => {
     // Initialize with defaultPreferences instead of globalPreferences
     setPreferences(defaultPreferences);
-  }, []);
+  }, [defaultPreferences]);
 
   // Show warning when "long" length is selected
   useEffect(() => {

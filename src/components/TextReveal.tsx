@@ -8,7 +8,6 @@ interface TextRevealProps {
   className?: string;
   delay?: number;
   duration?: number;
-  threshold?: number;
   type?: "words" | "characters" | "lines";
 }
 
@@ -17,7 +16,6 @@ const TextReveal: React.FC<TextRevealProps> = ({
   className = "",
   delay = 0,
   duration = 0.8,
-  threshold = 0.2,
   type = "words",
 }) => {
   const containerVariants = {
