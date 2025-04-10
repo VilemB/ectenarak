@@ -17,13 +17,10 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
   className = "",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const animationRef = useRef<number | null>(null);
-  const scrollProgressRef = useRef(0);
   const [isMounted, setIsMounted] = useState(false);
   const [isWebGLSupported, setIsWebGLSupported] = useState(true);
   const gradientOverlayRef = useRef<HTMLDivElement>(null);
@@ -70,8 +67,9 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       setIsMounted(true);
     }
 
+    const currentResizeTimeout = resizeTimeoutRef.current;
     return () => {
-      if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+      if (currentResizeTimeout) clearTimeout(currentResizeTimeout);
     };
   }, []);
 
@@ -101,15 +99,16 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
       console.error("Error in ThreeJS initialization:", err);
     });
 
+    // Capture all refs for cleanup
+    const currentResizeTimeout = resizeTimeoutRef.current;
+    const currentAnimationRef = animationRef.current;
+    const currentRenderer = rendererRef.current;
+    const currentParticles = particlesRef.current;
+    const currentControls = controlsRef.current;
+    const currentContainer = containerRef.current;
+
     // Cleanup
     return () => {
-      const currentResizeTimeout = resizeTimeoutRef.current;
-      const currentAnimationRef = animationRef.current;
-      const currentRenderer = rendererRef.current;
-      const currentParticles = particlesRef.current;
-      const currentControls = controlsRef.current;
-      const currentContainer = containerRef.current;
-
       if (currentResizeTimeout) {
         clearTimeout(currentResizeTimeout);
       }
