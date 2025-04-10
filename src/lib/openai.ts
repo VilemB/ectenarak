@@ -1,6 +1,5 @@
 import { OpenAI } from "openai";
 import { AuthorSummaryPreferences } from "@/components/AuthorSummaryPreferencesModal";
-import { createHash } from "crypto";
 
 // Default preferences for author summaries
 export const DEFAULT_AUTHOR_PREFERENCES: AuthorSummaryPreferences = {
@@ -167,41 +166,42 @@ function selectOptimalAuthorModel(
  * @param summary The summary text to check
  * @returns True if the summary appears complete, false if it seems cut off
  */
-function isSummaryComplete(summary: string): boolean {
-  if (!summary) return false;
+// Commented out as not currently used
+// function isSummaryComplete(summary: string): boolean {
+//   if (!summary) return false;
 
-  // Trim whitespace
-  const trimmedSummary = summary.trim();
+//   // Trim whitespace
+//   const trimmedSummary = summary.trim();
 
-  // Check if summary ends with proper punctuation
-  const endsWithProperPunctuation = /[.!?]$/.test(trimmedSummary);
+//   // Check if summary ends with proper punctuation
+//   const endsWithProperPunctuation = /[.!?]$/.test(trimmedSummary);
 
-  // Check if summary has a reasonable length
-  const hasReasonableLength = trimmedSummary.length > 100;
+//   // Check if summary has a reasonable length
+//   const hasReasonableLength = trimmedSummary.length > 100;
 
-  // Check if summary contains expected sections (for structured summaries)
-  const hasExpectedSections =
-    trimmedSummary.includes("# ") && // Has a main heading
-    (trimmedSummary.includes("## ") || trimmedSummary.includes("\n\n")); // Has sections or paragraphs
+//   // Check if summary contains expected sections (for structured summaries)
+//   const hasExpectedSections =
+//     trimmedSummary.includes("# ") && // Has a main heading
+//     (trimmedSummary.includes("## ") || trimmedSummary.includes("\n\n")); // Has sections or paragraphs
 
-  // Check if summary doesn't end mid-sentence
-  const lastSentence = trimmedSummary.split(/[.!?]/).pop() || "";
-  const lastSentenceComplete =
-    lastSentence.trim().split(/\s+/).length < 4 || endsWithProperPunctuation;
+//   // Check if summary doesn't end mid-sentence
+//   const lastSentence = trimmedSummary.split(/[.!?]/).pop() || "";
+//   const lastSentenceComplete =
+//     lastSentence.trim().split(/\s+/).length < 4 || endsWithProperPunctuation;
 
-  // Check if summary doesn't have obvious truncation markers
-  const noTruncationMarkers =
-    !trimmedSummary.endsWith("...") &&
-    !trimmedSummary.endsWith("…") &&
-    !trimmedSummary.endsWith("-");
+//   // Check if summary doesn't have obvious truncation markers
+//   const noTruncationMarkers =
+//     !trimmedSummary.endsWith("...") &&
+//     !trimmedSummary.endsWith("…") &&
+//     !trimmedSummary.endsWith("-");
 
-  return (
-    hasReasonableLength &&
-    hasExpectedSections &&
-    lastSentenceComplete &&
-    noTruncationMarkers
-  );
-}
+//   return (
+//     hasReasonableLength &&
+//     hasExpectedSections &&
+//     lastSentenceComplete &&
+//     noTruncationMarkers
+//   );
+// }
 
 /**
  * Fix a potentially incomplete summary by adding a completion notice
@@ -422,28 +422,6 @@ Zaměř se na:
       structure: "7-8 detailních odstavců",
     },
   };
-
-  // Build system message based on style
-  const systemMessage =
-    preferences.language === "cs"
-      ? `Jsi ${
-          preferences.style === "academic"
-            ? "literární vědec a akademik"
-            : preferences.style === "casual"
-            ? "zkušený literární publicista"
-            : "kreativní spisovatel a vypravěč"
-        } specializující se na informace o autorech. ${
-          styleMap[preferences.style].instruction
-        }`
-      : `You are ${
-          preferences.style === "academic"
-            ? "a literary scholar and academic"
-            : preferences.style === "casual"
-            ? "an experienced literary journalist"
-            : "a creative writer and storyteller"
-        } specializing in author information. ${
-          styleMap[preferences.style].instruction
-        }`;
 
   // Build the main prompt
   let prompt = `Vytvoř ${

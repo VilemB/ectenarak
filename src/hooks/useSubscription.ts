@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 export interface Subscription {
@@ -16,13 +16,13 @@ export interface Subscription {
 }
 
 export function useSubscription() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Fetch the subscription data from the API
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!isAuthenticated) {
       setSubscription(null);
       setLoading(false);
@@ -73,7 +73,7 @@ export function useSubscription() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated]);
 
   // Update the subscription tier and billing cycle
   const updateSubscription = async (
@@ -205,7 +205,7 @@ export function useSubscription() {
   // Fetch subscription when user changes
   useEffect(() => {
     fetchSubscription();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, fetchSubscription]);
 
   return {
     subscription,

@@ -1,11 +1,16 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls.js";
 
 interface ThreeBackgroundProps {
   className?: string;
+}
+
+interface NavigatorWithDeviceInfo {
+  deviceMemory?: number;
+  hardwareConcurrency: number;
 }
 
 const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
@@ -46,15 +51,13 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         );
       setIsMobile(isMobileDevice);
 
-      // Try to detect low power devices (older phones, lower-end devices)
+      // Check if device is low-powered
+      const navigatorWithDeviceInfo = navigator as NavigatorWithDeviceInfo;
       const isLowEnd =
         isMobileDevice &&
-        // Low memory indicator if available
-        (((navigator as any).deviceMemory !== undefined &&
-          (navigator as any).deviceMemory < 4) ||
-          // Low core count if available
-          ((navigator as any).hardwareConcurrency !== undefined &&
-            (navigator as any).hardwareConcurrency < 4) ||
+        ((navigatorWithDeviceInfo.deviceMemory !== undefined &&
+          navigatorWithDeviceInfo.deviceMemory < 4) ||
+          navigatorWithDeviceInfo.hardwareConcurrency < 4 ||
           // Fallback: check screen resolution (less reliable)
           window.screen.width * window.devicePixelRatio < 1080);
       setIsLowPowerDevice(isLowEnd);
@@ -426,7 +429,7 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     };
 
     // Initialize Three.js
-    const cleanupThreeJS = initThreeJS().catch((err) => {
+    initThreeJS().catch((err) => {
       console.error("Error in ThreeJS initialization:", err);
     });
 
@@ -442,9 +445,13 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
 
-      if (containerRef.current && rendererRef.current) {
+      // Save ref to a variable to avoid React hooks warning
+      const container = containerRef.current;
+      const renderer = rendererRef.current;
+
+      if (container && renderer) {
         try {
-          containerRef.current.removeChild(rendererRef.current.domElement);
+          container.removeChild(renderer.domElement);
         } catch (e) {
           console.error("Error removing renderer:", e);
         }
