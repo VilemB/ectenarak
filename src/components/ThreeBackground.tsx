@@ -85,28 +85,11 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
     )
       return;
 
-    // Prevent memory leaks
-    let mounted = true;
-
-    // Capture container reference for cleanup to avoid React hooks warning
-    const currentContainer = containerRef.current;
-
     const initThreeJS = async () => {
       try {
         // Scene setup
         const scene = new THREE.Scene();
         // ... rest of existing code ...
-
-        /* Event cleanup is handled by the outer useEffect
-        return () => {
-          window.removeEventListener("resize", handleResize);
-          window.removeEventListener(
-            "orientationchange",
-            handleOrientationChange
-          );
-          window.removeEventListener("scroll", handleScroll);
-        };
-        */
       } catch (error) {
         console.error("Error initializing Three.js scene:", error);
         setIsWebGLSupported(false);
@@ -120,40 +103,40 @@ const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
 
     // Cleanup
     return () => {
-      mounted = false; // Set mounted flag to false to stop animation
+      const currentResizeTimeout = resizeTimeoutRef.current;
+      const currentAnimationRef = animationRef.current;
+      const currentRenderer = rendererRef.current;
+      const currentParticles = particlesRef.current;
+      const currentControls = controlsRef.current;
+      const currentContainer = containerRef.current;
 
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
+      if (currentResizeTimeout) {
+        clearTimeout(currentResizeTimeout);
       }
 
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (currentAnimationRef) {
+        cancelAnimationFrame(currentAnimationRef);
       }
 
-      const renderer = rendererRef.current;
-      const particles = particlesRef.current;
-      const controls = controlsRef.current;
-
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      if (containerRef.current && renderer) {
+      if (currentContainer && currentRenderer) {
         try {
-          containerRef.current.removeChild(renderer.domElement);
+          currentContainer.removeChild(currentRenderer.domElement);
         } catch (e) {
           console.error("Error removing renderer:", e);
         }
       }
 
-      if (particles) {
-        particles.geometry.dispose();
-        (particles.material as THREE.Material).dispose();
+      if (currentParticles) {
+        currentParticles.geometry.dispose();
+        (currentParticles.material as THREE.Material).dispose();
       }
 
-      if (controls) {
-        controls.dispose();
+      if (currentControls) {
+        currentControls.dispose();
       }
 
-      if (renderer) {
-        renderer.dispose();
+      if (currentRenderer) {
+        currentRenderer.dispose();
       }
     };
   }, [isMounted, isWebGLSupported, isMobile, isLowPowerDevice]);
