@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSubscriptionContext } from "@/app/page";
+import { useSubscriptionContext } from "@/contexts/SubscriptionContext";
 
 interface AiCreditsDisplayProps {
   aiCreditsRemaining: number;
@@ -27,14 +27,14 @@ export default function AiCreditsDisplay({
   className = "",
 }: AiCreditsDisplayProps) {
   const { user } = useAuth();
-  const { subscriptionData } = useSubscriptionContext();
+  const { subscription } = useSubscriptionContext();
   const queryClient = useQueryClient();
 
   // Use React Query to manage the credits state
-  const { data: subscription, isLoading } = useQuery({
+  const { data: subscriptionData, isLoading } = useQuery({
     queryKey: ["credits"],
     queryFn: fetchCredits,
-    initialData: subscriptionData ||
+    initialData: subscription ||
       user?.subscription || {
         aiCreditsRemaining: initialCreditsRemaining,
         aiCreditsTotal: initialCreditsTotal,
@@ -46,17 +46,17 @@ export default function AiCreditsDisplay({
 
   // Update query data when subscription context changes
   useEffect(() => {
-    if (subscriptionData) {
-      queryClient.setQueryData(["credits"], subscriptionData);
+    if (subscription) {
+      queryClient.setQueryData(["credits"], subscription);
     }
-  }, [subscriptionData, queryClient]);
+  }, [subscription, queryClient]);
 
   // Use the most up-to-date values from context if available
   const currentCredits = {
     aiCreditsRemaining:
-      subscriptionData?.aiCreditsRemaining ?? subscription.aiCreditsRemaining,
+      subscription?.aiCreditsRemaining ?? subscriptionData.aiCreditsRemaining,
     aiCreditsTotal:
-      subscriptionData?.aiCreditsTotal ?? subscription.aiCreditsTotal,
+      subscription?.aiCreditsTotal ?? subscriptionData.aiCreditsTotal,
   };
 
   // Force immediate UI update when credits change

@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Book } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   BookOpen,
   Search,
   Plus,
   PlusCircle,
   X,
-  Info,
   Sparkles,
   AlertCircle,
-  PenLine,
   Loader2,
   ChevronRight,
   ChevronLeft,
@@ -28,7 +24,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import LandingPage from "@/components/LandingPage";
 import Link from "next/link";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
-import { AiCreditsExhaustedPrompt } from "@/components/FeatureGate";
 import {
   SubscriptionProvider,
   useSubscriptionContext,
@@ -110,8 +105,6 @@ function HomeContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
-  const [showWelcome, setShowWelcome] = useLocalStorage("welcome-shown", true);
   const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
     useState(false);
   const [includeAuthorSummary, setIncludeAuthorSummary] = useState(false);
@@ -121,8 +114,6 @@ function HomeContent() {
   const [authorFocus, setAuthorFocus] = useState(false);
   const [titleTouched, setTitleTouched] = useState(false);
   const [authorTouched, setAuthorTouched] = useState(false);
-  const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
-    useState(false);
 
   const {
     subscription,
@@ -415,7 +406,6 @@ function HomeContent() {
             if (summaryResponse.status === 403) {
               const errorData = await summaryResponse.json();
               if (errorData.creditsRequired) {
-                setShowCreditExhaustedModal(true);
                 setShowAddForm(false);
 
                 // Still add the book without the summary
