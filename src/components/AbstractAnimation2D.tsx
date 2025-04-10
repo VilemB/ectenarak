@@ -16,7 +16,6 @@ interface Shape {
 const AbstractAnimation2D: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [shapes, setShapes] = useState<Shape[]>([]);
-  const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const getRandomColor = () => {
     const colors = [
