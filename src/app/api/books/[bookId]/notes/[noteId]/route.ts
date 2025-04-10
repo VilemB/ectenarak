@@ -5,6 +5,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 
+interface RouteParams {
+  bookId: string;
+  noteId: string;
+}
+
+interface RouteContext {
+  params: Promise<RouteParams>;
+}
+
 // Helper function to check if the book belongs to the user
 function checkBookOwnership(
   book: {
@@ -28,10 +37,7 @@ function checkBookOwnership(
   );
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { bookId: string; noteId: string } }
-) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     // Get the session to verify the user
     const session = await getServerSession(authOptions);
@@ -44,7 +50,7 @@ export async function DELETE(
     // Connect to the database
     await dbConnect();
 
-    const { bookId, noteId } = await params;
+    const { bookId, noteId } = await context.params;
 
     if (!bookId || !noteId) {
       return NextResponse.json(
