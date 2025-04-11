@@ -12,11 +12,53 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Čtenářský Deník",
-  description: "Vytvářejte své čtenářské zápisky jednoduše",
+  title: "Čtenářský deník | AI-Powered Digitální Čtenářský Deník pro Maturitu",
+  description:
+    "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu. Ideální pro studenty středních škol, přípravu na maturitu a milovníky literatury. Vytvořte si digitální čtenářský deník s pokročilými AI funkcemi.",
+  keywords:
+    "čtenářský deník, maturita, knihy, literatura, AI shrnutí, analýza autorů, export poznámek, digitální deník, střední škola, maturitní četba, AI asistent, generování shrnutí, literární analýza, školní četba, maturitní otázky, čtenářský deník online, digitální čtenářský deník, AI pro studenty, maturitní příprava, literatura pro maturitu",
   viewport: {
     width: "device-width",
     initialScale: 1,
+  },
+  openGraph: {
+    title:
+      "Čtenářský deník | AI-Powered Digitální Čtenářský Deník pro Maturitu",
+    description:
+      "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu. Ideální pro studenty středních škol a přípravu na maturitu.",
+    type: "website",
+    locale: "cs_CZ",
+    siteName: "Čtenářský deník",
+    images: [
+      {
+        url: "https://ctenarsky-denik.vercel.app/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Čtenářský deník - AI-Powered Digitální Čtenářský Deník",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title:
+      "Čtenářský deník | AI-Powered Digitální Čtenářský Deník pro Maturitu",
+    description:
+      "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu.",
+    images: ["https://ctenarsky-denik.vercel.app/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://ctenarsky-denik.vercel.app",
   },
 };
 

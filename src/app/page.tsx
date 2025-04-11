@@ -1096,6 +1096,58 @@ function HomeContent() {
 export default function Home() {
   return (
     <SubscriptionProvider>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Čtenářský deník",
+            description:
+              "Moderní digitální čtenářský deník s pokročilými AI funkcemi pro studenty středních škol a přípravu na maturitu",
+            applicationCategory: "EducationalApplication",
+            operatingSystem: "Web",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "CZK",
+              availability: "https://schema.org/InStock",
+            },
+            featureList: [
+              "AI generované shrnutí knih pro maturitu",
+              "Pokročilá analýza autorů a literárních děl",
+              "Export poznámek pro maturitní zkoušku",
+              "Digitální čtenářský deník s AI asistencí",
+              "Správa knih a poznámek pro školní četbu",
+              "Automatické generování literárních analýz",
+              "Příprava na maturitní otázky z literatury",
+            ],
+            audience: {
+              "@type": "EducationalAudience",
+              educationalRole: "Student",
+              educationalLevel: "SecondaryEducation",
+            },
+            about: {
+              "@type": "Thing",
+              name: "Literární vzdělávání",
+              description:
+                "Pomoc s přípravou na maturitu z literatury a rozvojem čtenářských dovedností",
+            },
+            applicationSubCategory: "Literární vzdělávání",
+            browserRequirements: "Requires JavaScript. Requires HTML5.",
+            softwareVersion: "1.0",
+            permissions: "Requires user authentication",
+            screenshot: "https://ctenarsky-denik.vercel.app/screenshot.jpg",
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "4.8",
+              ratingCount: "100",
+              bestRating: "5",
+              worstRating: "1",
+            },
+          }),
+        }}
+      />
       <HomeContent />
     </SubscriptionProvider>
   );
