@@ -79,9 +79,9 @@ export default function TermsPage() {
               6. Omezení odpovědnosti
             </h2>
             <p className="text-card-foreground">
-              Službu poskytujeme "tak jak je". Neneseme odpovědnost za přesnost
-              AI generovaného obsahu nebo za jakékoli škody vzniklé používáním
-              služby.
+              Službu poskytujeme &quot;tak jak je&quot;. Neneseme odpovědnost za
+              přesnost AI generovaného obsahu nebo za jakékoli škody vzniklé
+              používáním služby.
             </p>
           </section>
 
