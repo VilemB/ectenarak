@@ -198,7 +198,8 @@ export default function ContactPage() {
                 Chcete nahlásit chybu?
               </h3>
               <p className="text-muted-foreground">
-                Využijte formulář výše a v předmětu uveďte "Nahlášení chyby".
+                Využijte formulář výše a v předmětu uveďte &quot;Nahlášení
+                chyby&quot;.
               </p>
             </div>
           </div>

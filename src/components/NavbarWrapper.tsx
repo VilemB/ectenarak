@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
+import LandingNavbar from "@/components/LandingNavbar";
 import { Modal } from "@/components/ui/modal";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function NavbarWrapper() {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -31,11 +33,21 @@ export default function NavbarWrapper() {
     }
   };
 
-  // Only render the navbar if the user is logged in
-  if (!user) {
+  // Check if we're on a public page (legal or contact)
+  const isPublicPage =
+    pathname?.startsWith("/legal") || pathname === "/kontakt";
+
+  // If not logged in and not on a public page, don't show any navbar
+  if (!user && !isPublicPage) {
     return null;
   }
 
+  // If not logged in but on a public page, show LandingNavbar
+  if (!user && isPublicPage) {
+    return <LandingNavbar scrollY={0} scrollToSection={() => {}} />;
+  }
+
+  // If logged in, show the regular Navbar
   return (
     <>
       {isSigningOut && (
@@ -51,7 +63,7 @@ export default function NavbarWrapper() {
         </motion.div>
       )}
       <Navbar
-        user={user || null}
+        user={user}
         signOut={handleSignOut}
         setShowKeyboardShortcuts={setShowKeyboardShortcuts}
       />

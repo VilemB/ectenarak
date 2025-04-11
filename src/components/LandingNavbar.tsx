@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
-import { ArrowRight, LogIn } from "lucide-react";
+import { ArrowRight, LogIn, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 interface LandingNavbarProps {
   scrollY: number;
@@ -57,9 +59,16 @@ export default function LandingNavbar({
   const [scrollProgress, setScrollProgress] = useState(0);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerButtonRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const router = useRouter();
 
-  // Calculate scroll progress
+  // Check if we're on the landing page
+  const isLandingPage = pathname === "/";
+
+  // Calculate scroll progress (only on landing page)
   useEffect(() => {
+    if (!isLandingPage) return;
+
     const handleScroll = () => {
       const totalScroll =
         document.documentElement.scrollHeight - window.innerHeight;
@@ -72,7 +81,7 @@ export default function LandingNavbar({
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isLandingPage]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -99,48 +108,30 @@ export default function LandingNavbar({
       }
     };
 
-    // Close menu on route changes
-    const handleRouteChange = () => {
-      setIsMenuOpen(false);
-    };
-
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("popstate", handleRouteChange);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("popstate", handleRouteChange);
     };
   }, [isMenuOpen]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768 && isMenuOpen) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isMenuOpen]);
-
-  // Navigate to section with proper handling
-  const handleNavClick = (id: string) => {
-    setIsMenuOpen(false);
-
-    // Add a slight delay for mobile menu to close before scrolling
-    setTimeout(() => {
+  const handleNavClick = async (id: string) => {
+    if (isLandingPage) {
       scrollToSection(id);
-    }, 300);
+    } else {
+      // If not on landing page, navigate to landing page with hash
+      await router.push(`/#${id}`);
+      // Wait for the page to load and then scroll to the section
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+    setIsMenuOpen(false);
   };
-
-  const navItems = [
-    { id: "features-section", label: "Funkce" },
-    { id: "pricing-section", label: "Ceník" },
-    { id: "signup-section", label: "Přihlásit se", icon: LogIn },
-  ];
 
   if (!isMounted) return null;
 
@@ -169,12 +160,8 @@ export default function LandingNavbar({
           <div className="flex justify-between items-center py-3 md:py-4">
             {/* Logo */}
             <div className="flex items-center">
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+              <Link
+                href="/"
                 className="flex items-center space-x-2 text-foreground hover:text-amber-500 transition-colors group"
               >
                 <div className="transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:rotate-1">
@@ -185,31 +172,80 @@ export default function LandingNavbar({
                     className="group-hover:drop-shadow-md"
                   />
                 </div>
-              </a>
+              </Link>
             </div>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
-              {navItems.slice(0, -1).map((item) => (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-amber-500 transition-colors"
-                  onClick={() => handleNavClick(item.id)}
-                >
-                  {item.label}
-                </Button>
-              ))}
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm ml-1 group"
-                onClick={() => handleNavClick("signup-section")}
-              >
-                {navItems[navItems.length - 1].label}
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Button>
+              {isLandingPage ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-amber-500 transition-colors"
+                    onClick={() => handleNavClick("features-section")}
+                  >
+                    Funkce
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-amber-500 transition-colors"
+                    onClick={() => handleNavClick("pricing-section")}
+                  >
+                    Ceník
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm ml-1 group"
+                    onClick={() => handleNavClick("signup-section")}
+                  >
+                    Přihlásit se
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/legal/podminky">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-amber-500 transition-colors"
+                    >
+                      Podmínky
+                    </Button>
+                  </Link>
+                  <Link href="/legal/soukromi">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-amber-500 transition-colors"
+                    >
+                      Soukromí
+                    </Button>
+                  </Link>
+                  <Link href="/kontakt">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-amber-500 transition-colors"
+                    >
+                      Kontakt
+                    </Button>
+                  </Link>
+                  <Link href="/">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm ml-1 group"
+                    >
+                      <ArrowLeft className="mr-1.5 h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+                      Zpět
+                    </Button>
+                  </Link>
+                </>
+              )}
             </nav>
 
             {/* Mobile Menu Button */}
@@ -259,38 +295,138 @@ export default function LandingNavbar({
               }}
               exit={{ opacity: 0 }}
             >
-              {navItems.map((item, index) => {
-                const Icon = item?.icon;
-                return (
+              {isLandingPage ? (
+                <>
                   <motion.div
-                    key={item.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2, delay: 0.05 * index }}
+                    transition={{ duration: 0.2 }}
                   >
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
-                      onClick={() => handleNavClick(item.id)}
+                      onClick={() => handleNavClick("features-section")}
                     >
-                      {Icon && (
-                        <Icon
-                          className={`h-5 w-5 mr-2 sm:mr-3 ${
-                            index === navItems.length - 1
-                              ? "text-amber-500"
-                              : ""
-                          }`}
-                        />
-                      )}
                       <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
-                        {item.label}
+                        Funkce
                       </span>
                     </Button>
                   </motion.div>
-                );
-              })}
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.05 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      onClick={() => handleNavClick("pricing-section")}
+                    >
+                      <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                        Ceník
+                      </span>
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.1 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      onClick={() => handleNavClick("signup-section")}
+                    >
+                      <LogIn className="h-5 w-5 mr-2 sm:mr-3 text-amber-500" />
+                      <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                        Přihlásit se
+                      </span>
+                    </Button>
+                  </motion.div>
+                </>
+              ) : (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Link href="/legal/podminky" className="w-full">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      >
+                        <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                          Podmínky
+                        </span>
+                      </Button>
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.05 }}
+                  >
+                    <Link href="/legal/soukromi" className="w-full">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      >
+                        <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                          Soukromí
+                        </span>
+                      </Button>
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.1 }}
+                  >
+                    <Link href="/kontakt" className="w-full">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      >
+                        <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                          Kontakt
+                        </span>
+                      </Button>
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.15 }}
+                  >
+                    <Link href="/" className="w-full">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      >
+                        <ArrowLeft className="h-5 w-5 mr-2 sm:mr-3 text-amber-500" />
+                        <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                          Zpět
+                        </span>
+                      </Button>
+                    </Link>
+                  </motion.div>
+                </>
+              )}
             </motion.div>
 
             {/* ESC key indicator - only show when menu is active */}
