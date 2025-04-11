@@ -11,6 +11,7 @@ import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LoginForm from "@/components/LoginForm";
+import SubscriptionFAQ from "@/components/SubscriptionFAQ";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -387,56 +388,7 @@ export default function SubscriptionPage() {
             variants={itemVariants}
             className="max-w-3xl mx-auto mt-16 md:mt-20"
           >
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center">
-              Často kladené otázky
-            </h2>
-            <div className="space-y-4 md:space-y-6">
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                className="bg-[#1a2436] border border-[#2a3548] rounded-lg p-5 md:p-6 shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <h3 className="font-bold text-lg md:text-xl mb-2">
-                  Co jsou AI kredity?
-                </h3>
-                <p className="text-gray-300 text-sm md:text-base">
-                  AI kredity jsou využívány pro generování obsahu pomocí umělé
-                  inteligence. Každé použití AI funkcí (jako je generování
-                  shrnutí knih nebo informací o autorech) spotřebuje jeden
-                  kredit. Kredity se obnovují každý měsíc podle vašeho
-                  předplatného.
-                </p>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                className="bg-[#1a2436] border border-[#2a3548] rounded-lg p-5 md:p-6 shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <h3 className="font-bold text-lg md:text-xl mb-2">
-                  Jak mohu změnit své předplatné?
-                </h3>
-                <p className="text-gray-300 text-sm md:text-base">
-                  Jednoduše vyberte požadovaný plán výše a klikněte na
-                  &quot;Vybrat plán&quot;. Změna bude provedena okamžitě a nové
-                  funkce budou ihned dostupné. Při snížení úrovně předplatného
-                  můžete ztratit přístup k některým funkcím a datům.
-                </p>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                className="bg-[#1a2436] border border-[#2a3548] rounded-lg p-5 md:p-6 shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <h3 className="font-bold text-lg md:text-xl mb-2">
-                  Kdy se obnoví moje AI kredity?
-                </h3>
-                <p className="text-gray-300 text-sm md:text-base">
-                  AI kredity se obnovují automaticky na začátku každého
-                  předplatného cyklu. Nevyužité kredity z předchozího období se
-                  nepřenášejí do následujícího cyklu.
-                </p>
-              </motion.div>
-            </div>
+            <SubscriptionFAQ />
           </motion.div>
         </motion.div>
       </div>
