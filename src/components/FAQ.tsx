@@ -6,6 +6,11 @@ import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
+    question: "Pro koho je aplikace určena?",
+    answer:
+      "Aplikace je primárně určena pro:\n\n• Studenty středních škol připravující se na maturitu\n• Žáky, kteří si chtějí systematicky vést zápisky z četby\n• Každého, kdo si chce organizovat své poznámky z knih a mít je přehledně na jednom místě",
+  },
+  {
     question: "V čem mi aplikace pomůže?",
     answer:
       "Aplikace Čtenářský deník je navržena speciálně pro studenty a jejich přípravu na maturitu. Pomůže vám:\n\n• Systematicky si vést poznámky k povinné četbě\n• Generovat AI shrnutí knih a autorů\n• Exportovat poznámky do PDF pro snadné studium\n• Organizovat si četbu a přípravu na zkoušky\n• Mít všechny materiály přehledně na jednom místě",
