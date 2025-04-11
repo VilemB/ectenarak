@@ -30,13 +30,13 @@ export default function Footer() {
 
           <div className="flex flex-wrap justify-center gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/terms">Podmínky</Link>
+              <Link href="/legal/podminky">Podmínky</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/privacy">Soukromí</Link>
+              <Link href="/legal/soukromi">Soukromí</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/contact">Kontakt</Link>
+              <Link href="/kontakt">Kontakt</Link>
             </Button>
           </div>
 
