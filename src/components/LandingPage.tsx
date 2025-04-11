@@ -483,7 +483,10 @@ export default function LandingPage() {
             </section>
 
             {/* FAQ Section */}
-            <section className="py-16 sm:py-20 md:py-24 lg:py-28 relative">
+            <section
+              id="faq-section"
+              className="py-16 sm:py-20 md:py-24 lg:py-28 relative"
+            >
               <div className="container max-w-7xl mx-auto px-6 sm:px-8">
                 <FAQ />
               </div>

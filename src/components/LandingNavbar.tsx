@@ -196,6 +196,14 @@ export default function LandingNavbar({
                     Ceník
                   </Button>
                   <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-amber-500 transition-colors"
+                    onClick={() => handleNavClick("faq-section")}
+                  >
+                    FAQ
+                  </Button>
+                  <Button
                     variant="default"
                     size="sm"
                     className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm ml-1 group"
@@ -336,6 +344,23 @@ export default function LandingNavbar({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ duration: 0.2, delay: 0.1 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all duration-200 rounded-md py-5 group"
+                      onClick={() => handleNavClick("faq-section")}
+                    >
+                      <span className="text-sm sm:text-base group-hover:translate-x-0.5 transition-transform">
+                        FAQ
+                      </span>
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2, delay: 0.15 }}
                   >
                     <Button
                       variant="ghost"
