@@ -17,9 +17,35 @@ export const metadata: Metadata = {
     "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu. Ideální pro studenty středních škol, přípravu na maturitu a milovníky literatury. Vytvořte si digitální čtenářský deník s pokročilými AI funkcemi.",
   keywords:
     "čtenářský deník, maturita, knihy, literatura, AI shrnutí, analýza autorů, export poznámek, digitální deník, střední škola, maturitní četba, AI asistent, generování shrnutí, literární analýza, školní četba, maturitní otázky, čtenářský deník online, digitální čtenářský deník, AI pro studenty, maturitní příprava, literatura pro maturitu",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "48x48", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/safari-pinned-tab.svg",
+        color: "#f97316",
+      },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Čtenářský deník",
+  },
   viewport: {
     width: "device-width",
     initialScale: 1,
+    viewportFit: "cover",
+    minimumScale: 1,
   },
   openGraph: {
     title:
@@ -71,6 +97,9 @@ export default function RootLayout({
     <html lang="cs" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#f97316" />
+        <meta name="msapplication-TileColor" content="#f97316" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
       <body className={`${inter.variable} font-sans antialiased root-layout`}>
         <Providers>
