@@ -15,7 +15,6 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
-
 let count = 0
 
 function genId() {
