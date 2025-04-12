@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SessionProvider } from "next-auth/react";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { SummaryPreferencesProvider } from "@/contexts/SummaryPreferencesContext";
+import { Toaster } from "sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <SubscriptionProvider>
               <SummaryPreferencesProvider>
                 {children}
+                <Toaster position="top-center" />
               </SummaryPreferencesProvider>
             </SubscriptionProvider>
           </AuthProvider>

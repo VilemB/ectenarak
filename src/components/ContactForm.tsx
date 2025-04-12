@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Mail, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -15,7 +15,6 @@ export default function ContactForm() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,10 +33,7 @@ export default function ContactForm() {
         throw new Error("Failed to send message");
       }
 
-      toast({
-        title: "Zpráva odeslána",
-        description: "Děkujeme za vaši zprávu. Odpovím vám co nejdříve.",
-      });
+      toast.success("Zpráva byla úspěšně odeslána");
 
       setFormData({
         name: "",
@@ -47,11 +43,7 @@ export default function ContactForm() {
       });
     } catch (error) {
       console.error("Failed to send message:", error);
-      toast({
-        title: "Chyba",
-        description: "Nepodařilo se odeslat zprávu. Zkuste to prosím později.",
-        variant: "destructive",
-      });
+      toast.error("Nepodařilo se odeslat zprávu");
     } finally {
       setIsSubmitting(false);
     }

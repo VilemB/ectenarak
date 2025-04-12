@@ -5,7 +5,6 @@ import "./globals.css";
 import { Providers } from "@/app/providers";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
-import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
@@ -116,7 +115,6 @@ export default function RootLayout({
             <Footer />
           </div>
         </Providers>
-        <Toaster />
       </body>
     </html>
   );
