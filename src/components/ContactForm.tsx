@@ -4,11 +4,8 @@ import { motion } from "framer-motion";
 import { Mail, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function ContactForm() {
-  const { toast } = useToast();
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
