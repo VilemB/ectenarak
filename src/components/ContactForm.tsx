@@ -1,11 +1,71 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ContactForm() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      toast({
+        title: "Zpráva odeslána",
+        description: "Děkujeme za vaši zprávu. Odpovím vám co nejdříve.",
+      });
+
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error) {
+      toast({
+        title: "Chyba",
+        description: "Nepodařilo se odeslat zprávu. Zkuste to prosím později.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -104,7 +164,7 @@ export default function ContactForm() {
         <h2 className="text-2xl font-semibold mb-6">
           Máte otázku nebo jste našli chybu? Napište mi!
         </h2>
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
               Jméno
@@ -113,6 +173,8 @@ export default function ContactForm() {
               type="text"
               id="name"
               name="name"
+              value={formData.name}
+              onChange={handleChange}
               className="w-full px-4 py-2 bg-muted border border-input rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               required
             />
@@ -126,6 +188,8 @@ export default function ContactForm() {
               type="email"
               id="email"
               name="email"
+              value={formData.email}
+              onChange={handleChange}
               className="w-full px-4 py-2 bg-muted border border-input rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               required
             />
@@ -139,6 +203,8 @@ export default function ContactForm() {
               type="text"
               id="subject"
               name="subject"
+              value={formData.subject}
+              onChange={handleChange}
               className="w-full px-4 py-2 bg-muted border border-input rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               required
             />
@@ -151,6 +217,8 @@ export default function ContactForm() {
             <textarea
               id="message"
               name="message"
+              value={formData.message}
+              onChange={handleChange}
               rows={5}
               className="w-full px-4 py-2 bg-muted border border-input rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               required
@@ -160,8 +228,9 @@ export default function ContactForm() {
           <Button
             type="submit"
             className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+            disabled={isSubmitting}
           >
-            Odeslat zprávu
+            {isSubmitting ? "Odesílání..." : "Odeslat zprávu"}
           </Button>
         </form>
       </motion.div>

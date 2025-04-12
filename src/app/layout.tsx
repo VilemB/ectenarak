@@ -5,6 +5,8 @@ import "./globals.css";
 import { Providers } from "@/app/providers";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
+import { Toaster } from "@/components/ui/toaster";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -101,7 +103,12 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#f97316" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased root-layout`}>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          inter.variable
+        )}
+      >
         <Providers>
           <div className="flex flex-col min-h-screen relative z-10 w-full">
             <NavbarWrapper />
@@ -109,6 +116,7 @@ export default function RootLayout({
             <Footer />
           </div>
         </Providers>
+        <Toaster />
       </body>
     </html>
   );
