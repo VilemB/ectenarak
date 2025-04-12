@@ -46,6 +46,7 @@ export default function ContactForm() {
         message: "",
       });
     } catch (error) {
+      console.error("Failed to send message:", error);
       toast({
         title: "Chyba",
         description: "Nepodařilo se odeslat zprávu. Zkuste to prosím později.",
