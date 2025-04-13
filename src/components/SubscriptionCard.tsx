@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 interface SubscriptionFeatureItem {
   name: string;
@@ -58,7 +57,6 @@ export default function SubscriptionCard({
   animationDelay = 0.2,
 }: SubscriptionCardProps) {
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-  const router = useRouter();
 
   const handleCheckout = async () => {
     try {
