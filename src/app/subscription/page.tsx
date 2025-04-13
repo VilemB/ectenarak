@@ -325,8 +325,8 @@ export default function SubscriptionPage() {
               {/* Free tier */}
               <SubscriptionCard
                 title="Základní"
-                subtitle="Pro začátek"
-                description="Základní funkce pro správu zápisků"
+                subtitle="Pro běžnou četbu"
+                description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
                 price="0 Kč"
                 pricePeriod=""
                 priceId="price_free"
@@ -367,8 +367,8 @@ export default function SubscriptionPage() {
               {/* Basic tier */}
               <SubscriptionCard
                 title="Basic"
-                subtitle="Pro aktivní čtenáře"
-                description="Rozšířené funkce pro efektivnější práci"
+                subtitle="Pro ambiciózní studenty"
+                description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
                 price={billingCycle === "yearly" ? "39" : "49"}
                 pricePeriod="/ měsíc"
                 priceId={
@@ -376,6 +376,8 @@ export default function SubscriptionPage() {
                     ? "price_1R2vIpCHqJNxgUwRW12zahkB"
                     : "price_1R2vAHCHqJNxgUwRPpfqCHJF"
                 }
+                monthlyPrice={49}
+                isYearly={billingCycle === "yearly"}
                 icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
                   text: "Populární",
@@ -412,8 +414,8 @@ export default function SubscriptionPage() {
               {/* Premium tier */}
               <SubscriptionCard
                 title="Premium"
-                subtitle="Pro vášnivé čtenáře"
-                description="Kompletní sada nástrojů pro náročné čtenáře"
+                subtitle="Pro budoucí maturanty"
+                description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
                 price={billingCycle === "yearly" ? "63" : "79"}
                 pricePeriod="/ měsíc"
                 priceId={
@@ -421,6 +423,8 @@ export default function SubscriptionPage() {
                     ? "price_1RDOWLCHqJNxgUwRjnZbthf9"
                     : "price_1RDOWACHqJNxgUwR1lZD7Ap3"
                 }
+                monthlyPrice={79}
+                isYearly={billingCycle === "yearly"}
                 icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
                   text: "Doporučeno",

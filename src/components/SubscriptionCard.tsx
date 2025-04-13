@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -35,6 +35,8 @@ export interface SubscriptionCardProps {
   isPremium?: boolean;
   animationDelay?: number;
   isLandingPage?: boolean;
+  isYearly?: boolean;
+  monthlyPrice?: number | string;
 }
 
 export default function SubscriptionCard({
@@ -57,6 +59,8 @@ export default function SubscriptionCard({
   isPremium = false,
   animationDelay = 0.2,
   isLandingPage = false,
+  isYearly = false,
+  monthlyPrice,
 }: SubscriptionCardProps) {
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -144,14 +148,28 @@ export default function SubscriptionCard({
         </div>
 
         {/* Price */}
-        <div className="flex items-baseline mb-4">
-          <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
-            {typeof price === "number" ? `${price} Kč` : price}
-          </span>
-          {pricePeriod && (
-            <span className="text-muted-foreground ml-2 text-sm">
-              {pricePeriod}
+        <div className="flex flex-col mb-4">
+          <div className="flex items-baseline">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
+              {typeof price === "number" ? `${price} Kč` : price}
             </span>
+            {pricePeriod && (
+              <span className="text-muted-foreground ml-2 text-sm">
+                {pricePeriod}
+              </span>
+            )}
+          </div>
+
+          {/* Show yearly savings when applicable */}
+          {isYearly && monthlyPrice && price !== "0 Kč" && (
+            <div className="mt-2 text-sm text-emerald-400 flex items-center">
+              <Sparkles className="h-3 w-3 mr-1" />
+              <span>
+                {typeof monthlyPrice === "number" && typeof price === "number"
+                  ? `${price * 12} Kč/rok (ušetříte ${monthlyPrice * 12 - price * 12} Kč oproti měsíční platbě)`
+                  : `Ušetříte 20% oproti měsíční platbě`}
+              </span>
+            </div>
           )}
         </div>
 

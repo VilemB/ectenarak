@@ -361,8 +361,8 @@ export default function LandingPage() {
                     {/* Free Plan */}
                     <SubscriptionCard
                       title="Základní"
-                      subtitle="Pro začátek"
-                      description="Základní funkce pro správu zápisků"
+                      subtitle="Pro běžnou četbu"
+                      description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
                       price="0 Kč"
                       priceId="price_free"
                       pricePeriod=""
@@ -407,8 +407,8 @@ export default function LandingPage() {
                     {/* Basic Plan */}
                     <SubscriptionCard
                       title="Basic"
-                      subtitle="Pro aktivní čtenáře"
-                      description="Rozšířené funkce pro efektivnější práci"
+                      subtitle="Pro ambiciózní studenty"
+                      description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
                       price={yearlyBilling ? "39" : "49"}
                       priceId={
                         yearlyBilling
@@ -416,6 +416,8 @@ export default function LandingPage() {
                           : "price_1R2vAHCHqJNxgUwRPpfqCHJF"
                       }
                       pricePeriod="/ měsíc"
+                      monthlyPrice={49}
+                      isYearly={yearlyBilling}
                       icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                       badge={{
                         text: "Populární",
@@ -456,8 +458,8 @@ export default function LandingPage() {
                     {/* Premium Plan */}
                     <SubscriptionCard
                       title="Premium"
-                      subtitle="Pro vášnivé čtenáře"
-                      description="Plný přístup ke všem funkcím bez omezení"
+                      subtitle="Pro budoucí maturanty"
+                      description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
                       price={yearlyBilling ? "63" : "79"}
                       priceId={
                         yearlyBilling
@@ -465,6 +467,8 @@ export default function LandingPage() {
                           : "price_1RDOWACHqJNxgUwR1lZD7Ap3"
                       }
                       pricePeriod="/ měsíc"
+                      monthlyPrice={79}
+                      isYearly={yearlyBilling}
                       icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                       badge={{
                         text: "Doporučeno",
