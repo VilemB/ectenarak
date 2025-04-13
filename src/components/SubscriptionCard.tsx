@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface SubscriptionFeatureItem {
   name: string;
@@ -17,6 +19,7 @@ export interface SubscriptionCardProps {
   description: string;
   price: number | string;
   pricePeriod: string;
+  priceId: string; // Stripe price ID
   features: SubscriptionFeatureItem[];
   icon: React.ReactNode;
   badge?: {
@@ -40,6 +43,7 @@ export default function SubscriptionCard({
   description,
   price,
   pricePeriod,
+  priceId,
   features,
   icon,
   badge,
@@ -53,6 +57,43 @@ export default function SubscriptionCard({
   isPremium = false,
   animationDelay = 0.2,
 }: SubscriptionCardProps) {
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const router = useRouter();
+
+  const handleCheckout = async () => {
+    try {
+      setIsCheckoutLoading(true);
+
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          priceId,
+          successUrl: `${window.location.origin}/settings?success=true`,
+          cancelUrl: `${window.location.origin}/settings?canceled=true`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const { url } = await response.json();
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error(
+        "Nepodařilo se vytvořit platební relaci. Zkuste to prosím znovu."
+      );
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -125,15 +166,17 @@ export default function SubscriptionCard({
             isCurrentPlan
               ? `bg-${accentColor}/10 text-${accentColor}`
               : isPremium
-              ? `bg-gradient-to-r from-${accentColor} to-indigo-600 hover:from-${accentColor}/90 hover:to-indigo-500 text-white`
-              : `bg-[${accentColor}] hover:bg-[${accentColor}]/90 text-white`
+                ? `bg-gradient-to-r from-${accentColor} to-indigo-600 hover:from-${accentColor}/90 hover:to-indigo-500 text-white`
+                : `bg-[${accentColor}] hover:bg-[${accentColor}]/90 text-white`
           } rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
           variant={isCurrentPlan ? "outline" : "default"}
-          onClick={onSelect}
-          disabled={isCurrentPlan || isLoading || isSelected}
+          onClick={isCurrentPlan ? onSelect : handleCheckout}
+          disabled={
+            isCurrentPlan || isLoading || isSelected || isCheckoutLoading
+          }
         >
-          {isSelected ? (
-            <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin mx-auto"></div>
+          {isSelected || isCheckoutLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin mx-auto" />
           ) : isCurrentPlan ? (
             <span className="flex items-center justify-center font-medium">
               Aktivní plán <Check className="ml-2 h-4 w-4" />

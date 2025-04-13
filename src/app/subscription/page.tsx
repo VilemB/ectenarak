@@ -261,6 +261,7 @@ export default function SubscriptionPage() {
                 description="Základní funkce pro správu zápisků"
                 price="0 Kč"
                 pricePeriod=""
+                priceId="price_free"
                 icon={<BookText className="h-6 w-6 text-muted-foreground" />}
                 badge={{
                   text: "Zdarma",
@@ -302,6 +303,11 @@ export default function SubscriptionPage() {
                 description="Rozšířené funkce pro efektivnější práci"
                 price={billingCycle === "yearly" ? "39" : "49"}
                 pricePeriod="/ měsíc"
+                priceId={
+                  billingCycle === "yearly"
+                    ? "price_basic_yearly"
+                    : "price_basic_monthly"
+                }
                 icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
                   text: "Populární",
@@ -342,6 +348,11 @@ export default function SubscriptionPage() {
                 description="Kompletní sada nástrojů pro náročné čtenáře"
                 price={billingCycle === "yearly" ? "63" : "79"}
                 pricePeriod="/ měsíc"
+                priceId={
+                  billingCycle === "yearly"
+                    ? "price_premium_yearly"
+                    : "price_premium_monthly"
+                }
                 icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
                   text: "Doporučeno",
