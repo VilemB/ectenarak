@@ -29,7 +29,6 @@ export interface SubscriptionCardProps {
   isLoading: boolean;
   isSelected: boolean;
   accentColor: string;
-  mutedColor: string;
   buttonText?: string;
   onSelect: () => void;
   isPremium?: boolean;
@@ -53,7 +52,6 @@ export default function SubscriptionCard({
   isLoading,
   isSelected,
   accentColor,
-  mutedColor,
   buttonText = "Vybrat plán",
   onSelect,
   isPremium = false,
