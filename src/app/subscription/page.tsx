@@ -25,6 +25,11 @@ export default function SubscriptionPage() {
   const { subscription, loading, updateSubscription } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
 
+  // Reset loading states when component mounts
+  useEffect(() => {
+    setSelectedTier(null);
+  }, []);
+
   // Check for stored preferences from landing page
   useEffect(() => {
     // Only run on client-side
@@ -36,9 +41,22 @@ export default function SubscriptionPage() {
     const yearlyBilling = sessionStorage.getItem("yearlyBilling");
 
     if (intendedSubscription) {
-      setSelectedTier(intendedSubscription);
-      // Clear stored values
+      // Clear selected tier to reset any loading states
+      setSelectedTier(null);
+
+      // Clear stored values immediately to prevent issues with page refreshes
       sessionStorage.removeItem("intendedSubscription");
+
+      // Short delay to highlight the intended subscription
+      setTimeout(() => {
+        // Briefly show the tier as selected for visual feedback
+        setSelectedTier(intendedSubscription);
+
+        // Then clear the selection after a short delay
+        setTimeout(() => {
+          setSelectedTier(null);
+        }, 800);
+      }, 100);
     }
 
     if (yearlyBilling === "true") {

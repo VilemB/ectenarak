@@ -66,6 +66,10 @@ export default function LandingPage() {
 
     // If logged in, redirect to subscription page
     if (tier !== "free") {
+      // Store intended subscription in sessionStorage and redirect
+      sessionStorage.setItem("intendedSubscription", tier);
+      sessionStorage.setItem("yearlyBilling", yearlyBilling.toString());
+
       router.push("/subscription");
     }
   };
