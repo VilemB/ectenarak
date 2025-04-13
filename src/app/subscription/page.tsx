@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, BookText, BookOpen } from "lucide-react";
@@ -24,6 +24,29 @@ export default function SubscriptionPage() {
 
   const { subscription, loading, updateSubscription } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
+
+  // Check for stored preferences from landing page
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window === "undefined") return;
+
+    const intendedSubscription = sessionStorage.getItem(
+      "intendedSubscription"
+    ) as "basic" | "premium" | null;
+    const yearlyBilling = sessionStorage.getItem("yearlyBilling");
+
+    if (intendedSubscription) {
+      setSelectedTier(intendedSubscription);
+      // Clear stored values
+      sessionStorage.removeItem("intendedSubscription");
+    }
+
+    if (yearlyBilling === "true") {
+      setBillingCycle("yearly");
+      // Clear stored value
+      sessionStorage.removeItem("yearlyBilling");
+    }
+  }, []);
 
   const currentTier = getSubscriptionTier();
 

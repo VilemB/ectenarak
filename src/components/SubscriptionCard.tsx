@@ -34,6 +34,7 @@ export interface SubscriptionCardProps {
   onSelect: () => void;
   isPremium?: boolean;
   animationDelay?: number;
+  isLandingPage?: boolean;
 }
 
 export default function SubscriptionCard({
@@ -55,6 +56,7 @@ export default function SubscriptionCard({
   onSelect,
   isPremium = false,
   animationDelay = 0.2,
+  isLandingPage = false,
 }: SubscriptionCardProps) {
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -168,7 +170,7 @@ export default function SubscriptionCard({
                 : `bg-[${accentColor}] hover:bg-[${accentColor}]/90 text-white`
           } rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
           variant={isCurrentPlan ? "outline" : "default"}
-          onClick={isCurrentPlan ? onSelect : handleCheckout}
+          onClick={isCurrentPlan || isLandingPage ? onSelect : handleCheckout}
           disabled={
             isCurrentPlan || isLoading || isSelected || isCheckoutLoading
           }

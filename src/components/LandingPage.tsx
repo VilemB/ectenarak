@@ -19,10 +19,14 @@ import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import "@/styles/animations.css";
 import TextReveal from "@/components/TextReveal";
 import ScrollIndicator from "@/components/ScrollIndicator";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [yearlyBilling, setYearlyBilling] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,6 +48,25 @@ export default function LandingPage() {
         top: offsetPosition,
         behavior: "smooth",
       });
+    }
+  };
+
+  // Function to handle subscription selection
+  const handleSubscriptionSelect = (tier: "free" | "basic" | "premium") => {
+    if (!isAuthenticated) {
+      // If not logged in, scroll to signup section
+      scrollToSection("signup-section");
+      // Store intended subscription tier in sessionStorage
+      if (tier !== "free") {
+        sessionStorage.setItem("intendedSubscription", tier);
+        sessionStorage.setItem("yearlyBilling", yearlyBilling.toString());
+      }
+      return;
+    }
+
+    // If logged in, redirect to subscription page
+    if (tier !== "free") {
+      router.push("/subscription");
     }
   };
 
@@ -352,8 +375,9 @@ export default function LandingPage() {
                       accentColor="#6b7280"
                       mutedColor="#6b7280"
                       buttonText="Začít zdarma"
-                      onSelect={() => scrollToSection("signup-section")}
+                      onSelect={() => handleSubscriptionSelect("free")}
                       animationDelay={0.1}
+                      isLandingPage={true}
                       features={[
                         {
                           name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
@@ -384,8 +408,8 @@ export default function LandingPage() {
                       price={yearlyBilling ? "39" : "49"}
                       priceId={
                         yearlyBilling
-                          ? "price_basic_yearly"
-                          : "price_basic_monthly"
+                          ? "price_1R2vIpCHqJNxgUwRW12zahkB"
+                          : "price_1R2vAHCHqJNxgUwRPpfqCHJF"
                       }
                       pricePeriod="/ měsíc"
                       icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
@@ -398,9 +422,12 @@ export default function LandingPage() {
                       isSelected={false}
                       accentColor="#3b82f6"
                       mutedColor="#3b82f6"
-                      buttonText="Vyzkoušet Basic"
-                      onSelect={() => scrollToSection("signup-section")}
+                      buttonText={
+                        isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
+                      }
+                      onSelect={() => handleSubscriptionSelect("basic")}
                       animationDelay={0.2}
+                      isLandingPage={true}
                       features={[
                         {
                           name: "Až 100 knih v knihovně",
@@ -430,8 +457,8 @@ export default function LandingPage() {
                       price={yearlyBilling ? "63" : "79"}
                       priceId={
                         yearlyBilling
-                          ? "price_premium_yearly"
-                          : "price_premium_monthly"
+                          ? "price_1RDOWLCHqJNxgUwRjnZbthf9"
+                          : "price_1RDOWACHqJNxgUwR1lZD7Ap3"
                       }
                       pricePeriod="/ měsíc"
                       icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
@@ -444,10 +471,13 @@ export default function LandingPage() {
                       isSelected={false}
                       accentColor="#3b82f6"
                       mutedColor="#3b82f6"
-                      buttonText="Získat Premium"
-                      onSelect={() => scrollToSection("signup-section")}
+                      buttonText={
+                        isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
+                      }
+                      onSelect={() => handleSubscriptionSelect("premium")}
                       isPremium={true}
                       animationDelay={0.3}
+                      isLandingPage={true}
                       features={[
                         {
                           name: "Neomezený počet knih v knihovně",

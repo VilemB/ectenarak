@@ -58,7 +58,23 @@ export default function LoginForm() {
       }
 
       if (result?.ok) {
-        router.push("/");
+        // Check if there's a stored subscription intent
+        const intendedSubscription = sessionStorage.getItem(
+          "intendedSubscription"
+        );
+
+        if (intendedSubscription) {
+          // Clear the stored data
+          sessionStorage.removeItem("intendedSubscription");
+          sessionStorage.removeItem("yearlyBilling");
+
+          // Redirect to subscription page
+          router.push("/subscription");
+        } else {
+          // Default redirect
+          router.push("/");
+        }
+
         router.refresh();
       }
     } catch (err) {
@@ -106,7 +122,19 @@ export default function LoginForm() {
         throw new Error(data.message || "Došlo k chybě při registraci.");
       }
 
-      setSuccess("Účet byl úspěšně vytvořen! Nyní se můžete přihlásit.");
+      // Check if there's a subscription intent
+      const intendedSubscription = sessionStorage.getItem(
+        "intendedSubscription"
+      );
+
+      if (intendedSubscription) {
+        setSuccess(
+          "Účet byl úspěšně vytvořen! Přihlaste se pro dokončení vašeho předplatného."
+        );
+      } else {
+        setSuccess("Účet byl úspěšně vytvořen! Nyní se můžete přihlásit.");
+      }
+
       setFormData({ name: "", email: "", password: "" });
 
       // Switch to login tab after successful registration
@@ -126,7 +154,13 @@ export default function LoginForm() {
   const handleGoogleSignIn = async () => {
     setIsGoogleSigningIn(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
+      // Store intended redirect for Google auth callback
+      const intendedSubscription = sessionStorage.getItem(
+        "intendedSubscription"
+      );
+      const callbackUrl = intendedSubscription ? "/subscription" : "/";
+
+      await signIn("google", { callbackUrl });
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError("Došlo k chybě při přihlašování přes Google.");
