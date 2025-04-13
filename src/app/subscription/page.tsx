@@ -89,8 +89,26 @@ export default function SubscriptionPage() {
     },
   };
 
+  // Show loader while checking authentication
+  if (isLoading) {
+    return (
+      <div className="text-white min-h-screen flex flex-col items-center justify-center">
+        {/* Subtle background pattern */}
+        <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
+
+        {/* Background gradient overlay */}
+        <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
+
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-blue-500 animate-spin"></div>
+          <p className="text-gray-300">Načítání...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show login form if not authenticated
-  if (!isLoading && !isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <div className="text-white min-h-screen flex flex-col">
         {/* Subtle background pattern */}
@@ -144,11 +162,20 @@ export default function SubscriptionPage() {
     }
   };
 
-  if (isLoading) {
+  // Show loader while checking subscription data
+  if (!isLoading && isAuthenticated && loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-blue-500 animate-spin mb-4"></div>
-        <p className="text-gray-300 ml-3">Načítání předplatného...</p>
+      <div className="text-white min-h-screen flex flex-col items-center justify-center">
+        {/* Subtle background pattern */}
+        <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
+
+        {/* Background gradient overlay */}
+        <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
+
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-blue-500 animate-spin"></div>
+          <p className="text-gray-300">Načítání předplatného...</p>
+        </div>
       </div>
     );
   }
