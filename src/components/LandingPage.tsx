@@ -377,7 +377,6 @@ export default function LandingPage() {
                       isLoading={false}
                       isSelected={false}
                       accentColor="#6b7280"
-                      mutedColor="#6b7280"
                       buttonText="Začít zdarma"
                       onSelect={() => handleSubscriptionSelect("free")}
                       animationDelay={0.1}
@@ -427,7 +426,6 @@ export default function LandingPage() {
                       isLoading={false}
                       isSelected={false}
                       accentColor="#3b82f6"
-                      mutedColor="#3b82f6"
                       buttonText={
                         isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
                       }
@@ -478,7 +476,6 @@ export default function LandingPage() {
                       isLoading={false}
                       isSelected={false}
                       accentColor="#3b82f6"
-                      mutedColor="#3b82f6"
                       buttonText={
                         isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
                       }

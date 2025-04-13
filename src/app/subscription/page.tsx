@@ -339,7 +339,6 @@ export default function SubscriptionPage() {
                 isLoading={loading}
                 isSelected={selectedTier === "free"}
                 accentColor="#6b7280"
-                mutedColor="#6b7280"
                 onSelect={() => handleChangeTier("free")}
                 animationDelay={0.1}
                 features={[
@@ -387,7 +386,6 @@ export default function SubscriptionPage() {
                 isLoading={loading}
                 isSelected={selectedTier === "basic"}
                 accentColor="#3b82f6"
-                mutedColor="#3b82f6"
                 onSelect={() => handleChangeTier("basic")}
                 animationDelay={0.2}
                 features={[
@@ -434,7 +432,6 @@ export default function SubscriptionPage() {
                 isLoading={loading}
                 isSelected={selectedTier === "premium"}
                 accentColor="#3b82f6"
-                mutedColor="#3b82f6"
                 onSelect={() => handleChangeTier("premium")}
                 isPremium={true}
                 animationDelay={0.3}
