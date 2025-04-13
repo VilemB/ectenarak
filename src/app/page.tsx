@@ -69,19 +69,6 @@ interface UserWithAuth extends UserWithSubscription {
   };
 }
 
-// Type guard to check if user has auth properties
-function hasAuthInfo(user: unknown): user is UserWithAuth {
-  if (!hasSubscription(user)) return false;
-
-  const maybeUserWithAuth = user as Partial<UserWithAuth>;
-  return (
-    typeof maybeUserWithAuth === "object" &&
-    (maybeUserWithAuth.userId !== undefined ||
-      (maybeUserWithAuth.auth !== undefined &&
-        typeof maybeUserWithAuth.auth === "object"))
-  );
-}
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
