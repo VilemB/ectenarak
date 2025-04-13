@@ -337,6 +337,7 @@ export default function LandingPage() {
                       subtitle="Pro začátek"
                       description="Základní funkce pro správu zápisků"
                       price="0 Kč"
+                      priceId="price_free"
                       pricePeriod=""
                       icon={
                         <BookText className="h-6 w-6 text-muted-foreground" />
@@ -381,6 +382,11 @@ export default function LandingPage() {
                       subtitle="Pro aktivní čtenáře"
                       description="Rozšířené funkce pro efektivnější práci"
                       price={yearlyBilling ? "39" : "49"}
+                      priceId={
+                        yearlyBilling
+                          ? "price_basic_yearly"
+                          : "price_basic_monthly"
+                      }
                       pricePeriod="/ měsíc"
                       icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                       badge={{
@@ -422,6 +428,11 @@ export default function LandingPage() {
                       subtitle="Pro vášnivé čtenáře"
                       description="Plný přístup ke všem funkcím bez omezení"
                       price={yearlyBilling ? "63" : "79"}
+                      priceId={
+                        yearlyBilling
+                          ? "price_premium_yearly"
+                          : "price_premium_monthly"
+                      }
                       pricePeriod="/ měsíc"
                       icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                       badge={{
