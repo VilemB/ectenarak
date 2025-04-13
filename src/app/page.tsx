@@ -60,6 +60,28 @@ function hasSubscription(user: unknown): user is UserWithSubscription {
   );
 }
 
+// Define type for user with auth provider info
+interface UserWithAuth extends UserWithSubscription {
+  userId?: string;
+  auth?: {
+    providerId?: string;
+    provider?: string;
+  };
+}
+
+// Type guard to check if user has auth properties
+function hasAuthInfo(user: unknown): user is UserWithAuth {
+  if (!hasSubscription(user)) return false;
+
+  const maybeUserWithAuth = user as Partial<UserWithAuth>;
+  return (
+    typeof maybeUserWithAuth === "object" &&
+    (maybeUserWithAuth.userId !== undefined ||
+      (maybeUserWithAuth.auth !== undefined &&
+        typeof maybeUserWithAuth.auth === "object"))
+  );
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -158,13 +180,16 @@ function HomeContent() {
       const userEmail = encodeURIComponent(user.email || "");
 
       try {
+        // Cast user to the UserWithAuth type only for this API call, while preserving type safety
+        const userForDebug = user as unknown as Partial<UserWithAuth>;
+
         const response = await fetch(
           `/api/books?userId=${userId}&email=${userEmail}&debugId=${encodeURIComponent(
             JSON.stringify({
               id: user.id,
               email: user.email,
-              userId: (user as any).userId,
-              providerId: (user as any)?.auth?.providerId,
+              userId: userForDebug.userId,
+              providerId: userForDebug.auth?.providerId,
             })
           )}`
         );

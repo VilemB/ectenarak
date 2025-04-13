@@ -305,8 +305,8 @@ export default function SubscriptionPage() {
                 pricePeriod="/ měsíc"
                 priceId={
                   billingCycle === "yearly"
-                    ? "price_basic_yearly"
-                    : "price_basic_monthly"
+                    ? "price_1R2vIpCHqJNxgUwRW12zahkB"
+                    : "price_1R2vAHCHqJNxgUwRPpfqCHJF"
                 }
                 icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
@@ -350,8 +350,8 @@ export default function SubscriptionPage() {
                 pricePeriod="/ měsíc"
                 priceId={
                   billingCycle === "yearly"
-                    ? "price_premium_yearly"
-                    : "price_premium_monthly"
+                    ? "price_1RDOWLCHqJNxgUwRjnZbthf9"
+                    : "price_1RDOWACHqJNxgUwR1lZD7Ap3"
                 }
                 icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
