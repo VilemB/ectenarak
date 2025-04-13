@@ -72,7 +72,7 @@ export default function SubscriptionCard({
         body: JSON.stringify({
           priceId,
           successUrl: `${window.location.origin}/settings?success=true`,
-          cancelUrl: `${window.location.origin}/settings?canceled=true`,
+          cancelUrl: `${window.location.origin}/subscription`,
         }),
       });
 
