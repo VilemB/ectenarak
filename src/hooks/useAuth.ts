@@ -42,6 +42,17 @@ export function useAuth() {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // Check if there's a saved callback URL and redirect if needed
+      if (typeof window !== "undefined") {
+        const savedCallbackUrl = localStorage.getItem("authCallbackUrl");
+        if (savedCallbackUrl) {
+          localStorage.removeItem("authCallbackUrl");
+          window.location.href = savedCallbackUrl.startsWith("/")
+            ? savedCallbackUrl
+            : `/${savedCallbackUrl}`;
+        }
+      }
     }
   }, [session, status, authContext]);
 

@@ -160,7 +160,14 @@ export default function LoginForm() {
       );
       const callbackUrl = intendedSubscription ? "/subscription" : "/";
 
-      await signIn("google", { callbackUrl });
+      // Make sure the redirect URL is properly passed and save it in localStorage as well
+      localStorage.setItem("authCallbackUrl", callbackUrl);
+
+      // Use redirect: true to ensure it follows the OAuth flow correctly
+      await signIn("google", {
+        callbackUrl,
+        redirect: true,
+      });
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError("Došlo k chybě při přihlašování přes Google.");
