@@ -153,9 +153,20 @@ function HomeContent() {
       setIsLoadingBooks(true);
       setError(""); // Clear any previous errors
 
+      // Use the user's ID for fetching books, with email as fallback query param
+      const userId = encodeURIComponent(user.id);
+      const userEmail = encodeURIComponent(user.email || "");
+
       try {
         const response = await fetch(
-          `/api/books?userId=${encodeURIComponent(user.id)}`
+          `/api/books?userId=${userId}&email=${userEmail}&debugId=${encodeURIComponent(
+            JSON.stringify({
+              id: user.id,
+              email: user.email,
+              userId: (user as any).userId,
+              providerId: (user as any)?.auth?.providerId,
+            })
+          )}`
         );
 
         if (!response.ok) {
@@ -564,8 +575,8 @@ function HomeContent() {
                         titleTouched && !newBookTitle.trim()
                           ? "border-red-500/50"
                           : titleFocus
-                          ? "border-primary"
-                          : "border-border/50"
+                            ? "border-primary"
+                            : "border-border/50"
                       } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
                         titleTouched && !newBookTitle.trim()
                           ? "focus:ring-red-500/20"
@@ -639,8 +650,8 @@ function HomeContent() {
                         authorTouched && !newBookAuthor.trim()
                           ? "border-red-500/50"
                           : authorFocus
-                          ? "border-primary"
-                          : "border-border/50"
+                            ? "border-primary"
+                            : "border-border/50"
                       } rounded-lg text-foreground focus:outline-none focus:ring-2 ${
                         authorTouched && !newBookAuthor.trim()
                           ? "focus:ring-red-500/20"
@@ -853,8 +864,8 @@ function HomeContent() {
           {filteredBooks.length === 1
             ? "výsledek"
             : filteredBooks.length >= 2 && filteredBooks.length <= 4
-            ? "výsledky"
-            : "výsledků"}
+              ? "výsledky"
+              : "výsledků"}
           pro &quot;
           <span className="text-white font-medium border-b border-primary/50 pb-0.5 mx-1">
             {searchQuery}
@@ -908,15 +919,15 @@ function HomeContent() {
                         subscription?.aiCreditsRemaining !== undefined
                           ? subscription.aiCreditsRemaining
                           : hasSubscription(user)
-                          ? user.subscription.aiCreditsRemaining
-                          : 0
+                            ? user.subscription.aiCreditsRemaining
+                            : 0
                       }
                       aiCreditsTotal={
                         subscription?.aiCreditsTotal !== undefined
                           ? subscription.aiCreditsTotal
                           : hasSubscription(user)
-                          ? user.subscription.aiCreditsTotal
-                          : 3
+                            ? user.subscription.aiCreditsTotal
+                            : 3
                       }
                       showLowCreditsWarning={false}
                       className="w-48 sm:w-64"
@@ -932,9 +943,9 @@ function HomeContent() {
                   ? subscription.aiCreditsRemaining ===
                     subscription.aiCreditsTotal
                   : hasSubscription(user)
-                  ? user.subscription.aiCreditsRemaining ===
-                    user.subscription.aiCreditsTotal
-                  : false
+                    ? user.subscription.aiCreditsRemaining ===
+                      user.subscription.aiCreditsTotal
+                    : false
               ) ? (
                 <div className="flex items-center text-xs bg-green-900/30 text-green-400 py-1 px-2.5 rounded-full border border-green-800/30">
                   <svg

@@ -406,8 +406,13 @@ const NoteItem = ({
             onDelete={onDelete}
           />
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown>{note.content}</ReactMarkdown>
+          <div className="prose prose-sm dark:prose-invert max-w-none note-content text-blue-100">
+            <ReactMarkdown
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+              remarkPlugins={[remarkGfm]}
+            >
+              {note.content}
+            </ReactMarkdown>
           </div>
         )}
       </div>
@@ -547,8 +552,8 @@ const BookHeader = ({
                   {book.notes.length === 1
                     ? "poznámka"
                     : book.notes.length > 1 && book.notes.length < 5
-                    ? "poznámky"
-                    : "poznámek"}
+                      ? "poznámky"
+                      : "poznámek"}
                 </span>
               </div>
             )}
@@ -607,6 +612,20 @@ export default function BookComponent({
   // Get the auth context properly
   const authContext = useAuth();
   const useAiCreditRef = useRef(authContext.useAiCredit);
+
+  // Add global styles for notes
+  useEffect(() => {
+    // Create a style element for global note styles
+    const styleEl = document.createElement("style");
+    styleEl.type = "text/css";
+    styleEl.appendChild(document.createTextNode(globalNoteStyles));
+    document.head.appendChild(styleEl);
+
+    // Clean up on unmount
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
 
   // Update the ref if auth changes
   useEffect(() => {
@@ -1998,29 +2017,29 @@ export default function BookComponent({
           deleteModal.type === "book"
             ? handleConfirmDelete
             : deleteModal.type === "note"
-            ? handleConfirmDeleteNote
-            : handleConfirmDeleteAuthorSummary
+              ? handleConfirmDeleteNote
+              : handleConfirmDeleteAuthorSummary
         }
         title={
           deleteModal.type === "book"
             ? "Smazat knihu"
             : deleteModal.type === "note"
-            ? "Smazat poznámku"
-            : "Smazat informace o autorovi"
+              ? "Smazat poznámku"
+              : "Smazat informace o autorovi"
         }
         description={
           deleteModal.type === "book"
             ? `Opravdu chcete smazat knihu "${book.title}"? Tato akce je nevratná.`
             : deleteModal.type === "note"
-            ? "Opravdu chcete smazat tuto poznámku? Tato akce je nevratná."
-            : "Opravdu chcete smazat informace o autorovi? Tato akce je nevratná."
+              ? "Opravdu chcete smazat tuto poznámku? Tato akce je nevratná."
+              : "Opravdu chcete smazat informace o autorovi? Tato akce je nevratná."
         }
         confirmText={
           deleteModal.type === "book"
             ? "Smazat knihu"
             : deleteModal.type === "note"
-            ? "Smazat poznámku"
-            : "Smazat informace o autorovi"
+              ? "Smazat poznámku"
+              : "Smazat informace o autorovi"
         }
         cancelText="Zrušit"
         isLoading={deleteModal.isLoading}
@@ -2064,3 +2083,63 @@ export default function BookComponent({
     </div>
   );
 }
+
+// Add global styles for notes
+const globalNoteStyles = `
+  .note-content {
+    line-height: 1.6;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    color: #bfdbfe; /* Adding explicit text color (blue-100) */
+  }
+  
+  .note-content p {
+    margin-bottom: 1em;
+    color: #bfdbfe; /* blue-100 */
+  }
+  
+  .note-content h1, .note-content h2, .note-content h3, .note-content h4 {
+    color: #dbeafe; /* blue-50 */
+    font-weight: 600;
+  }
+  
+  .note-content ul, .note-content ol {
+    color: #bfdbfe; /* blue-100 */
+  }
+  
+  .note-content li {
+    color: #bfdbfe; /* blue-100 */
+  }
+  
+  .note-content img {
+    max-width: 100%;
+    border-radius: 0.25rem;
+    margin: 1em 0;
+  }
+  
+  .note-content code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: #93c5fd; /* blue-300 */
+    background-color: rgba(30, 41, 59, 0.5); /* slate-800 with opacity */
+    padding: 0.1em 0.3em;
+    border-radius: 0.25rem;
+  }
+  
+  .note-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+  }
+  
+  .note-content a:hover {
+    color: #93c5fd;
+  }
+  
+  .note-content blockquote {
+    border-left: 3px solid #3b82f6; /* blue-500 */
+    padding-left: 1em;
+    font-style: italic;
+    color: #93c5fd; /* blue-300 */
+    margin: 1em 0;
+  }
+`;

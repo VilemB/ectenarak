@@ -31,6 +31,18 @@ export async function GET(request: Request) {
     // Get the query parameters
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+    const userEmail = searchParams.get("email");
+    const debugId = searchParams.get("debugId");
+
+    // Debug information
+    if (debugId) {
+      try {
+        const debug = JSON.parse(decodeURIComponent(debugId));
+        console.log("API DEBUG - User info:", debug);
+      } catch (e) {
+        console.error("API DEBUG - Failed to parse debug info:", e);
+      }
+    }
 
     // Pagination parameters
     const page = parseInt(searchParams.get("page") || "1");
@@ -112,12 +124,34 @@ export async function GET(request: Request) {
     // Build query for MongoDB
     const query: Record<string, unknown> = {};
 
-    // Handle userId - could be ObjectId or string (for OAuth users)
-    if (mongoose.Types.ObjectId.isValid(userId)) {
-      query.userId = new mongoose.Types.ObjectId(userId);
-    } else {
-      // If not a valid ObjectId, search in both userId and legacyUserId fields
-      query.$or = [{ userId: userId }, { legacyUserId: userId }];
+    // Enhanced userId handling to catch all possible formats from NextAuth
+    if (userId) {
+      console.log(
+        `API: Using userId format: ${typeof userId}, value: ${userId}`
+      );
+
+      // Build the $or query to try all possible ID formats
+      const orConditions = [];
+
+      // Add ID-based conditions
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        orConditions.push({ userId: new mongoose.Types.ObjectId(userId) });
+      }
+      orConditions.push({ userId: userId });
+      orConditions.push({ legacyUserId: userId });
+      orConditions.push({ "auth.providerId": userId });
+
+      // Add email-based conditions if available
+      if (userEmail) {
+        console.log(`API: Also trying with email: ${userEmail}`);
+        orConditions.push({ email: userEmail });
+        orConditions.push({ userEmail: userEmail });
+      }
+
+      // Set the query
+      query.$or = orConditions;
+
+      console.log("API: Final query:", JSON.stringify(query));
     }
 
     if (author && author !== "all") {
