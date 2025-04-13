@@ -206,32 +206,39 @@ export default function SubscriptionCard({
           )}
         </Button>
 
-        {/* Features section */}
-        <div
-          className={`text-xs uppercase tracking-wider mb-4 font-medium text-[${mutedColor}] border-t border-[#2a3548] pt-4`}
-        >
-          ZAHRNUJE
+        {/* Features section with subtle divider */}
+        <div className="relative pt-4 mt-auto">
+          {/* Simple divider line */}
+          <div className="absolute left-0 right-0 top-0 h-px bg-[#2a3548]/50"></div>
+
+          {/* Section header - clearly distinguished from list items */}
+          <h4
+            className={`text-xs uppercase font-semibold tracking-wider text-${accentColor}/80 mb-5 pt-2`}
+          >
+            Co je zahrnuto
+          </h4>
+
+          <ul className="space-y-2.5 sm:space-y-3">
+            {features.map((feature, index) => (
+              <li key={index} className="flex items-start group">
+                <div
+                  className={`rounded-full p-0.5 mr-3 mt-0.5 shrink-0 transition-colors ${feature.included ? `text-${accentColor} group-hover:bg-${accentColor}/10` : "text-muted-foreground"}`}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-sm">
+                  {feature.name}
+                  {feature.description && (
+                    <span className="text-muted-foreground">
+                      {" "}
+                      {feature.description}
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="space-y-2.5 sm:space-y-3 mt-auto">
-          {features.map((feature, index) => (
-            <li key={index} className="flex items-start">
-              <Check
-                className={`h-4 w-4 text-${
-                  feature.included ? accentColor : "muted-foreground"
-                } mr-3 mt-0.5 shrink-0`}
-              />
-              <span className="text-sm">
-                {feature.name}
-                {feature.description && (
-                  <span className="text-muted-foreground">
-                    {" "}
-                    {feature.description}
-                  </span>
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
       </div>
     </motion.div>
   );
