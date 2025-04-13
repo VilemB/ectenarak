@@ -4,7 +4,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./mongodb-client";
 
 export const authOptions: NextAuthOptions = {
-  // @ts-ignore - Type mismatch between next-auth and @auth/mongodb-adapter
+  // @ts-expect-error - Type mismatch between next-auth and @auth/mongodb-adapter
   adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({

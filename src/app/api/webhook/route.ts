@@ -4,19 +4,16 @@ import { headers } from "next/headers";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 
-// Define a simple User model for this context
-// (In a real app, you'd import this from your models directory)
-interface IUser {
-  email: string;
-  name?: string;
-  subscription?: {
-    tier: string;
-    stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
-    stripePriceId?: string;
-    currentPeriodEnd?: Date;
-    isYearly: boolean;
+// Define Stripe subscription interface properties we need
+interface StripeSubscription {
+  id: string;
+  items: {
+    data: Array<{
+      price: { id: string };
+      plan: { interval: string };
+    }>;
   };
+  current_period_end: number;
 }
 
 const getUserCollection = async () => {
@@ -52,13 +49,14 @@ export async function POST(req: Request) {
         // Make sure we have the right metadata
         if (session.metadata?.userId) {
           // Fetch the subscription details
-          const subscription =
-            await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = (await stripe.subscriptions.retrieve(
+            subscriptionId
+          )) as unknown as StripeSubscription;
 
           // Get subscription data
           const priceId = subscription.items.data[0].price.id;
           const currentPeriodEnd = new Date(
-            (subscription as any).current_period_end * 1000
+            subscription.current_period_end * 1000
           );
           const isYearly = subscription.items.data[0].plan.interval === "year";
 
@@ -87,7 +85,7 @@ export async function POST(req: Request) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object;
+        const subscription = event.data.object as unknown as StripeSubscription;
 
         // Find the user with this subscription ID
         const users = await getUserCollection();
@@ -104,7 +102,7 @@ export async function POST(req: Request) {
                 "subscription.stripePriceId":
                   subscription.items.data[0].price.id,
                 "subscription.currentPeriodEnd": new Date(
-                  (subscription as any).current_period_end * 1000
+                  subscription.current_period_end * 1000
                 ),
                 "subscription.isYearly":
                   subscription.items.data[0].plan.interval === "year",
@@ -118,7 +116,7 @@ export async function POST(req: Request) {
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object;
+        const subscription = event.data.object as unknown as StripeSubscription;
 
         // Find the user with this subscription ID
         const users = await getUserCollection();
