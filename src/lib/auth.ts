@@ -1,130 +1,30 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
-import bcrypt from "bcryptjs";
-import type { NextAuthOptions } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-import type { Session, User as AuthUser } from "next-auth";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import clientPromise from "./mongodb-client";
 
 export const authOptions: NextAuthOptions = {
+  // @ts-ignore - Type mismatch between next-auth and @auth/mongodb-adapter
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        await dbConnect();
-
-        try {
-          // Find the user
-          const user = await User.findOne({ email: credentials.email });
-
-          // If user doesn't exist or password doesn't match
-          if (
-            !user ||
-            !(await bcrypt.compare(credentials.password, user.password))
-          ) {
-            return null;
-          }
-
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-          };
-        } catch (error) {
-          console.error("Authentication error:", error);
-          return null;
-        }
-      },
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }: { session: Session; token: JWT }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        await dbConnect();
-        try {
-          // Check if user exists
-          let dbUser = await User.findOne({ email: user.email });
-
-          // If not, create a new user
-          if (!dbUser) {
-            dbUser = new User({
-              email: user.email,
-              name: user.name,
-              auth: {
-                provider: "google",
-                providerId: user.id,
-              },
-              subscription: {
-                tier: "free",
-                startDate: new Date(),
-                isYearly: false,
-                aiCreditsTotal: 3,
-                aiCreditsRemaining: 3,
-                autoRenew: true,
-                lastRenewalDate: new Date(),
-                nextRenewalDate: new Date(
-                  new Date().setMonth(new Date().getMonth() + 1)
-                ),
-              },
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              lastLoginAt: new Date(),
-            });
-            await dbUser.save();
-          }
-          // If user exists but doesn't have providerId, update it
-          else if (!dbUser.auth?.providerId) {
-            dbUser.auth = {
-              ...dbUser.auth,
-              provider: "google",
-              providerId: user.id,
-            };
-            await dbUser.save();
-          }
-        } catch (error) {
-          console.error("Error during Google sign in:", error);
-          return false;
-        }
-      }
-      return true;
-    },
-  },
-  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
-  pages: {
-    signIn: "/",
+  callbacks: {
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.sub!;
+      }
+      return session;
+    },
   },
-  debug: process.env.NODE_ENV === "development",
+  pages: {
+    signIn: "/signin",
+  },
+  secret: process.env.AUTH_SECRET,
 };
-
-const { handlers, auth } = NextAuth(authOptions);
-
-export { handlers, auth };

@@ -1,6 +1,28 @@
 import { NextResponse } from "next/server";
-import { constructEventFromRequest } from "@/lib/stripe";
+import { constructEventFromRequest, stripe } from "@/lib/stripe";
 import { headers } from "next/headers";
+import dbConnect from "@/lib/mongodb";
+import mongoose from "mongoose";
+
+// Define a simple User model for this context
+// (In a real app, you'd import this from your models directory)
+interface IUser {
+  email: string;
+  name?: string;
+  subscription?: {
+    tier: string;
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    stripePriceId?: string;
+    currentPeriodEnd?: Date;
+    isYearly: boolean;
+  };
+}
+
+const getUserCollection = async () => {
+  await dbConnect();
+  return mongoose.connection.collection("users");
+};
 
 export async function POST(req: Request) {
   try {
@@ -20,18 +42,106 @@ export async function POST(req: Request) {
 
     // Handle the event
     switch (event.type) {
-      case "checkout.session.completed":
+      case "checkout.session.completed": {
         const session = event.data.object;
-        // Handle successful payment
-        console.log("Checkout session completed:", session);
-        break;
 
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted":
-        const subscription = event.data.object;
-        // Handle subscription changes
-        console.log("Subscription updated:", subscription);
+        // Get the customer and subscription details
+        const customerId = session.customer as string;
+        const subscriptionId = session.subscription as string;
+
+        // Make sure we have the right metadata
+        if (session.metadata?.userId) {
+          // Fetch the subscription details
+          const subscription =
+            await stripe.subscriptions.retrieve(subscriptionId);
+
+          // Get subscription data
+          const priceId = subscription.items.data[0].price.id;
+          const currentPeriodEnd = new Date(
+            (subscription as any).current_period_end * 1000
+          );
+          const isYearly = subscription.items.data[0].plan.interval === "year";
+
+          // Update the user in the database
+          const users = await getUserCollection();
+
+          await users.updateOne(
+            { _id: new mongoose.Types.ObjectId(session.metadata.userId) },
+            {
+              $set: {
+                "subscription.tier": "premium",
+                "subscription.stripeCustomerId": customerId,
+                "subscription.stripeSubscriptionId": subscriptionId,
+                "subscription.stripePriceId": priceId,
+                "subscription.currentPeriodEnd": currentPeriodEnd,
+                "subscription.isYearly": isYearly,
+              },
+            }
+          );
+
+          console.log(
+            `User ${session.metadata.userId} upgraded to premium subscription`
+          );
+        }
         break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscription = event.data.object;
+
+        // Find the user with this subscription ID
+        const users = await getUserCollection();
+        const user = await users.findOne({
+          "subscription.stripeSubscriptionId": subscription.id,
+        });
+
+        if (user) {
+          // Update subscription details
+          await users.updateOne(
+            { _id: user._id },
+            {
+              $set: {
+                "subscription.stripePriceId":
+                  subscription.items.data[0].price.id,
+                "subscription.currentPeriodEnd": new Date(
+                  (subscription as any).current_period_end * 1000
+                ),
+                "subscription.isYearly":
+                  subscription.items.data[0].plan.interval === "year",
+              },
+            }
+          );
+
+          console.log(`Updated subscription for user ${user._id}`);
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+
+        // Find the user with this subscription ID
+        const users = await getUserCollection();
+        const user = await users.findOne({
+          "subscription.stripeSubscriptionId": subscription.id,
+        });
+
+        if (user) {
+          // Downgrade the user to free tier
+          await users.updateOne(
+            { _id: user._id },
+            {
+              $set: {
+                "subscription.tier": "free",
+                "subscription.currentPeriodEnd": new Date(),
+              },
+            }
+          );
+
+          console.log(`Downgraded user ${user._id} to free tier`);
+        }
+        break;
+      }
 
       default:
         console.log(`Unhandled event type ${event.type}`);
