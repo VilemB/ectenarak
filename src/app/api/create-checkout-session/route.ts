@@ -12,9 +12,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { priceId } = await req.json();
+    const body = await req.json();
+    console.log("Received body in /api/create-checkout-session:", body);
+    const { priceId } = body;
 
     if (!priceId) {
+      console.error(
+        "Error creating checkout session: Price ID is required but was missing."
+      );
       return NextResponse.json(
         { error: "Price ID is required" },
         { status: 400 }
