@@ -7,32 +7,32 @@ import { Sparkles, BookText, BookOpen } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
-import { SUBSCRIPTION_LIMITS } from "@/types/user";
+import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LoginForm from "@/components/LoginForm";
 import SubscriptionFAQ from "@/components/SubscriptionFAQ";
+import { toast } from "sonner";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
-  const [selectedTier, setSelectedTier] = useState<
-    "free" | "basic" | "premium" | null
+  const [selectedTierForAction, setSelectedTierForAction] = useState<
+    "basic" | "premium" | null
   >(null);
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
 
-  const { subscription, loading, updateSubscription } = useSubscription();
+  const { subscription, loading, refreshSubscription } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
 
-  // Reset loading states when component mounts
   useEffect(() => {
-    setSelectedTier(null);
+    setIsChangingPlan(false);
+    setSelectedTierForAction(null);
   }, []);
 
-  // Check for stored preferences from landing page
   useEffect(() => {
-    // Only run on client-side
     if (typeof window === "undefined") return;
 
     const intendedSubscription = sessionStorage.getItem(
@@ -41,34 +41,132 @@ export default function SubscriptionPage() {
     const yearlyBilling = sessionStorage.getItem("yearlyBilling");
 
     if (intendedSubscription) {
-      // Clear selected tier to reset any loading states
-      setSelectedTier(null);
-
-      // Clear stored values immediately to prevent issues with page refreshes
+      setSelectedTierForAction(null);
       sessionStorage.removeItem("intendedSubscription");
 
-      // Short delay to highlight the intended subscription
       setTimeout(() => {
-        // Briefly show the tier as selected for visual feedback
-        setSelectedTier(intendedSubscription);
+        setSelectedTierForAction(intendedSubscription);
 
-        // Then clear the selection after a short delay
         setTimeout(() => {
-          setSelectedTier(null);
+          setSelectedTierForAction(null);
         }, 800);
       }, 100);
     }
 
     if (yearlyBilling === "true") {
       setBillingCycle("yearly");
-      // Clear stored value
       sessionStorage.removeItem("yearlyBilling");
     }
   }, []);
 
   const currentTier = getSubscriptionTier();
 
-  // Animation variants
+  const getPriceIdForTier = (
+    tier: "basic" | "premium",
+    cycle: "monthly" | "yearly"
+  ): string | null => {
+    let priceId: string | undefined;
+    if (tier === "basic") {
+      priceId =
+        cycle === "yearly"
+          ? process.env.NEXT_PUBLIC_STRIPE_BASIC_YEARLY_PRICE_ID
+          : process.env.NEXT_PUBLIC_STRIPE_BASIC_MONTHLY_PRICE_ID;
+    }
+    if (tier === "premium") {
+      priceId =
+        cycle === "yearly"
+          ? process.env.NEXT_PUBLIC_STRIPE_PREMIUM_YEARLY_PRICE_ID
+          : process.env.NEXT_PUBLIC_STRIPE_PREMIUM_MONTHLY_PRICE_ID;
+    }
+    return priceId || null;
+  };
+
+  const handleCheckout = async (priceId: string) => {
+    if (!priceId) {
+      toast.error("Chybějící ID ceny.");
+      return;
+    }
+    setIsChangingPlan(true);
+    try {
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error: unknown) {
+      console.error("Checkout error:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se vytvořit platební relaci.";
+      toast.error(message);
+      setIsChangingPlan(false);
+      setSelectedTierForAction(null);
+    }
+  };
+
+  const handleChangeSubscription = async (targetPriceId: string) => {
+    setIsChangingPlan(true);
+    try {
+      const response = await fetch("/api/update-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId: targetPriceId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Nepodařilo se aktualizovat předplatné");
+      }
+
+      toast.success(
+        "Požadavek na změnu předplatného byl odeslán! Změna se projeví během chvilky."
+      );
+      setTimeout(() => refreshSubscription(), 2000);
+    } catch (error: unknown) {
+      console.error("Error changing subscription:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Nepodařilo se změnit předplatné.";
+      toast.error(message);
+    } finally {
+      setIsChangingPlan(false);
+      setSelectedTierForAction(null);
+    }
+  };
+
+  const handlePlanSelect = (selectedTier: "basic" | "premium") => {
+    if (!isAuthenticated || isChangingPlan) return;
+
+    const targetPriceId = getPriceIdForTier(selectedTier, billingCycle);
+
+    if (!targetPriceId) {
+      toast.error("Konfigurace ceny pro tento plán nebyla nalezena.");
+      return;
+    }
+
+    setSelectedTierForAction(selectedTier);
+
+    const currentTierValue = getSubscriptionTier();
+
+    if (
+      currentTierValue === "free" ||
+      !(subscription as any)?.stripeSubscriptionId
+    ) {
+      handleCheckout(targetPriceId);
+    } else {
+      handleChangeSubscription(targetPriceId);
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -89,16 +187,11 @@ export default function SubscriptionPage() {
     },
   };
 
-  // Show loader while checking authentication
   if (isLoading) {
     return (
       <div className="text-white min-h-screen flex flex-col items-center justify-center">
-        {/* Subtle background pattern */}
         <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
-
-        {/* Background gradient overlay */}
         <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
-
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-blue-500 animate-spin"></div>
           <p className="text-gray-300">Načítání...</p>
@@ -107,16 +200,11 @@ export default function SubscriptionPage() {
     );
   }
 
-  // Show login form if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="text-white min-h-screen flex flex-col">
-        {/* Subtle background pattern */}
         <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
-
-        {/* Background gradient overlay */}
         <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10 flex-grow">
           <motion.div
             variants={containerVariants}
@@ -139,39 +227,11 @@ export default function SubscriptionPage() {
     );
   }
 
-  const handleChangeTier = async (tier: "free" | "basic" | "premium") => {
-    try {
-      if (tier === currentTier) {
-        // Already on this tier
-        return;
-      }
-
-      // Set selected tier for UI feedback
-      setSelectedTier(tier);
-
-      // Update the subscription
-      await updateSubscription(tier, billingCycle === "yearly");
-
-      // Show success message
-      alert(`Předplatné bylo úspěšně změněno na ${tier}`);
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-      alert("Nastala chyba při aktualizaci předplatného");
-    } finally {
-      setSelectedTier(null);
-    }
-  };
-
-  // Show loader while checking subscription data
   if (!isLoading && isAuthenticated && loading) {
     return (
       <div className="text-white min-h-screen flex flex-col items-center justify-center">
-        {/* Subtle background pattern */}
         <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
-
-        {/* Background gradient overlay */}
         <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
-
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-blue-500 animate-spin"></div>
           <p className="text-gray-300">Načítání předplatného...</p>
@@ -180,16 +240,10 @@ export default function SubscriptionPage() {
     );
   }
 
-  // If we get here, the user should be authenticated
-
   return (
     <div className="text-white min-h-screen flex flex-col">
-      {/* Subtle background pattern - fixed z-index issue */}
       <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
-
-      {/* Background gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10 flex-grow">
         <motion.div
           variants={containerVariants}
@@ -197,7 +251,6 @@ export default function SubscriptionPage() {
           animate="visible"
           className="space-y-12 md:space-y-20"
         >
-          {/* Header */}
           <motion.div
             variants={itemVariants}
             className="text-center max-w-3xl mx-auto"
@@ -210,7 +263,6 @@ export default function SubscriptionPage() {
               předplatným.
             </p>
 
-            {/* Current subscription info and AI credits visualization */}
             {user && subscription && (
               <motion.div
                 variants={itemVariants}
@@ -255,7 +307,6 @@ export default function SubscriptionPage() {
             )}
           </motion.div>
 
-          {/* Pricing Section */}
           <motion.div variants={itemVariants}>
             <div className="text-center mb-8 md:mb-12 max-w-3xl mx-auto">
               <motion.h2
@@ -277,7 +328,6 @@ export default function SubscriptionPage() {
                 Vyberte si plán, který nejlépe vyhovuje vašim potřebám
               </motion.p>
 
-              {/* Simple Pricing Toggle */}
               <div className="flex justify-center mb-8 md:mb-12">
                 <Tabs
                   defaultValue="monthly"
@@ -320,9 +370,7 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            {/* Subscription tiers using the SubscriptionCard component */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto px-2">
-              {/* Free tier */}
               <SubscriptionCard
                 title="Základní"
                 subtitle="Pro běžnou četbu"
@@ -336,10 +384,15 @@ export default function SubscriptionPage() {
                   color: "bg-[#2a3548] text-muted-foreground",
                 }}
                 isCurrentPlan={currentTier === "free"}
-                isLoading={loading}
-                isSelected={selectedTier === "free"}
+                buttonText={
+                  currentTier === "free" ? "Aktuální plán" : "Vybrat plán"
+                }
+                onSelect={() => {
+                  /* No action needed? Or maybe cancellation logic */
+                }}
+                isLoading={false}
+                isSelected={false}
                 accentColor="#6b7280"
-                onSelect={() => handleChangeTier("free")}
                 animationDelay={0.1}
                 features={[
                   {
@@ -363,18 +416,13 @@ export default function SubscriptionPage() {
                 ]}
               />
 
-              {/* Basic tier */}
               <SubscriptionCard
                 title="Basic"
                 subtitle="Pro ambiciózní studenty"
                 description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
                 price={billingCycle === "yearly" ? "39" : "49"}
                 pricePeriod="/ měsíc"
-                priceId={
-                  billingCycle === "yearly"
-                    ? "price_1R2vIpCHqJNxgUwRW12zahkB"
-                    : "price_1R2vAHCHqJNxgUwRPpfqCHJF"
-                }
+                priceId={getPriceIdForTier("basic", billingCycle) || ""}
                 monthlyPrice={49}
                 isYearly={billingCycle === "yearly"}
                 icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
@@ -383,10 +431,13 @@ export default function SubscriptionPage() {
                   color: "bg-[#2a3548] text-[#3b82f6]",
                 }}
                 isCurrentPlan={currentTier === "basic"}
-                isLoading={loading}
-                isSelected={selectedTier === "basic"}
+                buttonText={
+                  currentTier === "basic" ? "Aktuální plán" : "Vybrat plán"
+                }
+                onSelect={() => handlePlanSelect("basic")}
+                isLoading={isChangingPlan && selectedTierForAction === "basic"}
+                isSelected={selectedTierForAction === "basic"}
                 accentColor="#3b82f6"
-                onSelect={() => handleChangeTier("basic")}
                 animationDelay={0.2}
                 features={[
                   {
@@ -409,18 +460,13 @@ export default function SubscriptionPage() {
                 ]}
               />
 
-              {/* Premium tier */}
               <SubscriptionCard
                 title="Premium"
                 subtitle="Pro budoucí maturanty"
                 description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
                 price={billingCycle === "yearly" ? "63" : "79"}
                 pricePeriod="/ měsíc"
-                priceId={
-                  billingCycle === "yearly"
-                    ? "price_1RDOWLCHqJNxgUwRjnZbthf9"
-                    : "price_1RDOWACHqJNxgUwR1lZD7Ap3"
-                }
+                priceId={getPriceIdForTier("premium", billingCycle) || ""}
                 monthlyPrice={79}
                 isYearly={billingCycle === "yearly"}
                 icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
@@ -429,11 +475,15 @@ export default function SubscriptionPage() {
                   color: "bg-[#3b82f6] text-white",
                 }}
                 isCurrentPlan={currentTier === "premium"}
-                isLoading={loading}
-                isSelected={selectedTier === "premium"}
+                buttonText={
+                  currentTier === "premium" ? "Aktuální plán" : "Vybrat plán"
+                }
+                onSelect={() => handlePlanSelect("premium")}
+                isLoading={
+                  isChangingPlan && selectedTierForAction === "premium"
+                }
+                isSelected={selectedTierForAction === "premium"}
                 accentColor="#3b82f6"
-                onSelect={() => handleChangeTier("premium")}
-                isPremium={true}
                 animationDelay={0.3}
                 features={[
                   {
@@ -463,7 +513,6 @@ export default function SubscriptionPage() {
             </div>
           </motion.div>
 
-          {/* FAQ */}
           <motion.div
             variants={itemVariants}
             className="max-w-3xl mx-auto mt-16 md:mt-20"

@@ -182,18 +182,33 @@ export async function POST(req: Request) {
         });
 
         if (user) {
-          // Downgrade the user to free tier
+          // Get limits for the 'free' tier
+          const freeTierCredits = SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth;
+
+          // Downgrade the user to free tier and reset credits/dates
           await users.updateOne(
             { _id: user._id },
             {
               $set: {
                 "subscription.tier": "free",
-                "subscription.currentPeriodEnd": new Date(),
+                "subscription.stripeCustomerId": null, // Remove Stripe customer ID
+                "subscription.stripeSubscriptionId": null, // Remove Stripe subscription ID
+                "subscription.stripePriceId": null, // Remove Stripe price ID
+                "subscription.startDate":
+                  user.subscription?.startDate || new Date(), // Keep original start or set new?
+                "subscription.lastRenewalDate": new Date(), // Set renewal date to now
+                "subscription.nextRenewalDate": null, // No next renewal for free
+                "subscription.isYearly": false, // Free is not yearly
+                "subscription.autoRenew": false, // Free does not auto-renew
+                "subscription.aiCreditsTotal": freeTierCredits, // Reset total credits
+                "subscription.aiCreditsRemaining": freeTierCredits, // Reset remaining credits
               },
             }
           );
 
-          console.log(`Downgraded user ${user._id} to free tier`);
+          console.log(
+            `Webhook: Downgraded user ${user._id} to free tier and reset credits.`
+          );
         }
         break;
       }
