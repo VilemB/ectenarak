@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Book } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -1128,9 +1128,26 @@ function HomeContent() {
   );
 }
 
+// Loading component for Suspense fallback
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center -mt-16">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-lg">Načítání obsahu...</p>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <SubscriptionProvider>
+      {/* Wrap HomeContent with Suspense */}
+      <Suspense fallback={<LoadingFallback />}>
+        <HomeContent />
+      </Suspense>
+      {/* Optional: Keep Schema script outside Suspense if it doesn't depend on client state */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -1183,7 +1200,6 @@ export default function Home() {
           }),
         }}
       />
-      <HomeContent />
     </SubscriptionProvider>
   );
 }
