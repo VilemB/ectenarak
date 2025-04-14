@@ -203,10 +203,13 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error: any) {
-    // Add type annotation for error
+  } catch (error: unknown) {
     // Log the specific signature verification error
-    console.error("Webhook signature verification failed:", error.message);
+    let errorMessage = "Unknown error during webhook processing.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error("Webhook signature verification failed:", errorMessage);
     console.error("Full Webhook Error:", error);
     return NextResponse.json(
       { error: "Webhook handler failed" },
