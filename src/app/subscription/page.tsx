@@ -7,7 +7,7 @@ import { Sparkles, BookText, BookOpen } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
-import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
+import { SUBSCRIPTION_LIMITS } from "@/types/user";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LoginForm from "@/components/LoginForm";
@@ -159,7 +159,9 @@ export default function SubscriptionPage() {
 
     if (
       currentTierValue === "free" ||
-      !(subscription as any)?.stripeSubscriptionId
+      !subscription ||
+      !("stripeSubscriptionId" in subscription) ||
+      !subscription.stripeSubscriptionId
     ) {
       handleCheckout(targetPriceId);
     } else {

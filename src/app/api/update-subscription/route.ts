@@ -3,7 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
-import mongoose from "mongoose";
+// import mongoose from "mongoose"; // Remove unused import
 import User from "@/models/User"; // Make sure this path is correct for your User model
 
 export async function POST(req: Request) {
