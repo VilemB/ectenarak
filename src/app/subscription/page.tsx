@@ -81,11 +81,19 @@ export default function SubscriptionPage() {
     return priceId || null;
   };
 
-  const handleCheckout = async (priceId: string) => {
-    if (!priceId) {
-      toast.error("Chybějící ID ceny.");
+  const handleCheckout = async (priceId: string | null) => {
+    if (!priceId || priceId.trim() === "" || priceId === "price_free") {
+      console.error(
+        "handleCheckout Error: Invalid Price ID provided:",
+        priceId
+      );
+      toast.error("Nelze zpracovat platbu: Chybí nebo je neplatné ID ceny.");
+      setIsChangingPlan(false);
+      setSelectedTierForAction(null);
       return;
     }
+
+    console.log(`Attempting checkout with Price ID: ${priceId}`);
     setIsChangingPlan(true);
     try {
       const response = await fetch("/api/create-checkout-session", {
