@@ -43,22 +43,30 @@ export async function POST(req: Request) {
   // ** Read the raw body **
   const buf = await req.arrayBuffer();
   const rawBody = Buffer.from(buf);
+  console.log("Webhook handler invoked."); // Log invocation
 
   try {
     // ** Use the rawBody Buffer for verification **
     const signature = (await headers()).get("stripe-signature") as
       | string
       | null;
+    console.log(
+      `Received Stripe Signature: ${signature ? signature.substring(0, 10) + "..." : "null"}`
+    ); // Log signature (partially)
+    console.log(`Raw body length: ${rawBody.length}`); // Log body length
 
     if (!signature) {
+      console.error("Webhook Error: Missing stripe-signature header");
       return NextResponse.json(
         { error: "Missing stripe-signature header" },
         { status: 400 }
       );
     }
 
+    console.log("Attempting signature verification..."); // Log before verification
     // ** Use rawBody here instead of the potentially parsed 'body' **
     const event = await constructEventFromRequest(rawBody, signature);
+    console.log("Signature verification successful."); // Log after verification
 
     // Handle the event
     switch (event.type) {
@@ -195,8 +203,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error("Webhook error:", error);
+  } catch (error: any) {
+    // Add type annotation for error
+    // Log the specific signature verification error
+    console.error("Webhook signature verification failed:", error.message);
+    console.error("Full Webhook Error:", error);
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
