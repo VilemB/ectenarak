@@ -2,29 +2,31 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // Get the current user's session
-    const session = await getServerSession(authOptions);
+    const { priceId } = await req.json();
 
-    if (!session?.user) {
+    if (!priceId) {
       return NextResponse.json(
-        { error: "You must be logged in to create a checkout session" },
-        { status: 401 }
-      );
-    }
-
-    // Get the request body
-    const body = await req.json();
-    const { priceId, successUrl, cancelUrl } = body;
-
-    if (!priceId || !successUrl || !cancelUrl) {
-      return NextResponse.json(
-        { error: "Missing required parameters" },
+        { error: "Price ID is required" },
         { status: 400 }
       );
     }
+
+    // Get base URL from request headers
+    const origin =
+      (await headers()).get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.VERCEL_URL ||
+      "http://localhost:3000";
 
     // Create the checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -36,8 +38,8 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      success_url: `${origin}/?success=true`,
+      cancel_url: `${origin}/subscription`,
       customer_email: session.user.email || undefined,
       metadata: {
         userId: session.user.id,

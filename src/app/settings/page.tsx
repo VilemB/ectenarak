@@ -17,6 +17,44 @@ export default function SettingsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      // Small delay to ensure the loading state is visible
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await signOut();
+      // No need for toast here since we're showing a loading state
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      toast.error("Nepodařilo se odhlásit");
+      setIsSigningOut(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirmation) {
+      setDeleteConfirmation(true);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteUser();
+      setIsSigningOut(true); // Show the sign out loading state
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await signOut();
+      // No need for toast here since we're showing a loading state
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      toast.error("Nepodařilo se smazat účet");
+      setIsDeleting(false);
+      setIsSigningOut(false);
+    } finally {
+      setDeleteConfirmation(false);
+    }
+  };
+
   // Show login form if not authenticated
   if (!loading && !isAuthenticated) {
     return (
@@ -76,44 +114,6 @@ export default function SettingsPage() {
     );
   }
 
-  const handleSignOut = async () => {
-    if (isSigningOut) return;
-    setIsSigningOut(true);
-    try {
-      // Small delay to ensure the loading state is visible
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await signOut();
-      // No need for toast here since we're showing a loading state
-    } catch (error) {
-      console.error("Failed to sign out:", error);
-      toast.error("Nepodařilo se odhlásit");
-      setIsSigningOut(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!deleteConfirmation) {
-      setDeleteConfirmation(true);
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      await deleteUser();
-      setIsSigningOut(true); // Show the sign out loading state
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await signOut();
-      // No need for toast here since we're showing a loading state
-    } catch (error) {
-      console.error("Failed to delete account:", error);
-      toast.error("Nepodařilo se smazat účet");
-      setIsDeleting(false);
-      setIsSigningOut(false);
-    } finally {
-      setDeleteConfirmation(false);
-    }
-  };
-
   return (
     <div className="min-h-[calc(100vh-4rem)] relative">
       <div className="absolute inset-0 bg-gradient-to-b from-background/5 to-background/20 pointer-events-none" />
@@ -159,13 +159,15 @@ export default function SettingsPage() {
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-xl ring-1 ring-white/10 shadow-lg">
                 {user?.name
                   ? user.name.charAt(0).toUpperCase()
-                  : user?.email?.charAt(0).toUpperCase()}
+                  : (user?.email?.charAt(0).toUpperCase() ?? "U")}
               </div>
               <div className="space-y-1">
                 <p className="text-lg font-medium text-white/90">
                   {user?.name || "Uživatel"}
                 </p>
-                <p className="text-sm text-white/50">{user?.email}</p>
+                <p className="text-sm text-white/50">
+                  {user?.email ?? "Neznámý email"}
+                </p>
               </div>
             </motion.div>
 

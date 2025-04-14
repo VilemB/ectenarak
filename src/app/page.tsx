@@ -28,6 +28,8 @@ import {
   SubscriptionProvider,
   useSubscriptionContext,
 } from "@/contexts/SubscriptionContext";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 // Define interface for user with subscription
 interface UserWithSubscription {
@@ -130,6 +132,8 @@ function HomeContent() {
     refreshSubscriptionData,
   } = useSubscriptionContext();
 
+  const searchParams = useSearchParams();
+
   // Function to fetch subscription data from the API
   const handleRefreshSubscription = useCallback(async () => {
     await refreshSubscriptionData();
@@ -141,6 +145,14 @@ function HomeContent() {
       handleRefreshSubscription();
     }
   }, [user, handleRefreshSubscription]);
+
+  // Show success toast on redirect from Stripe checkout
+  useEffect(() => {
+    const success = searchParams.get("success");
+    if (success === "true") {
+      toast.success("Platba proběhla úspěšně! Děkujeme za vaše předplatné.");
+    }
+  }, [searchParams]);
 
   // Fetch books from the database when the component mounts or user changes
   useEffect(() => {
