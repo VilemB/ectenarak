@@ -5,6 +5,13 @@ import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
 
+// ** Important: Disable Next.js body parsing for this route **
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 // Define Stripe subscription interface properties we need
 interface StripeSubscription {
   id: string;
@@ -33,8 +40,12 @@ const getUserCollection = async () => {
 };
 
 export async function POST(req: Request) {
+  // ** Read the raw body **
+  const buf = await req.arrayBuffer();
+  const rawBody = Buffer.from(buf);
+
   try {
-    const body = await req.text();
+    // ** Use the rawBody Buffer for verification **
     const signature = (await headers()).get("stripe-signature") as
       | string
       | null;
@@ -46,7 +57,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const event = await constructEventFromRequest(Buffer.from(body), signature);
+    // ** Use rawBody here instead of the potentially parsed 'body' **
+    const event = await constructEventFromRequest(rawBody, signature);
 
     // Handle the event
     switch (event.type) {
