@@ -3,6 +3,7 @@ import { constructEventFromRequest, stripe } from "@/lib/stripe";
 import { headers } from "next/headers";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
+import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
 
 // Define Stripe subscription interface properties we need
 interface StripeSubscription {
@@ -15,6 +16,16 @@ interface StripeSubscription {
   };
   current_period_end: number;
 }
+
+// Price ID to Tier mapping (Ensure these match your Stripe Price IDs)
+const PRICE_ID_TO_TIER: Record<string, SubscriptionTier> = {
+  // Basic
+  price_1R2vAHCHqJNxgUwRPpfqCHJF: "basic", // Monthly
+  price_1R2vIpCHqJNxgUwRW12zahkB: "basic", // Yearly
+  // Premium
+  price_1RDOWACHqJNxgUwR1lZD7Ap3: "premium", // Monthly
+  price_1RDOWLCHqJNxgUwRjnZbthf9: "premium", // Yearly
+};
 
 const getUserCollection = async () => {
   await dbConnect();
@@ -47,40 +58,66 @@ export async function POST(req: Request) {
         const subscriptionId = session.subscription as string;
 
         // Make sure we have the right metadata
-        if (session.metadata?.userId) {
-          // Fetch the subscription details
-          const subscription = (await stripe.subscriptions.retrieve(
-            subscriptionId
-          )) as unknown as StripeSubscription;
-
-          // Get subscription data
-          const priceId = subscription.items.data[0].price.id;
-          const currentPeriodEnd = new Date(
-            subscription.current_period_end * 1000
-          );
-          const isYearly = subscription.items.data[0].plan.interval === "year";
-
-          // Update the user in the database
-          const users = await getUserCollection();
-
-          await users.updateOne(
-            { _id: new mongoose.Types.ObjectId(session.metadata.userId) },
-            {
-              $set: {
-                "subscription.tier": "premium",
-                "subscription.stripeCustomerId": customerId,
-                "subscription.stripeSubscriptionId": subscriptionId,
-                "subscription.stripePriceId": priceId,
-                "subscription.currentPeriodEnd": currentPeriodEnd,
-                "subscription.isYearly": isYearly,
-              },
-            }
-          );
-
-          console.log(
-            `User ${session.metadata.userId} upgraded to premium subscription`
+        if (!session.metadata?.userId) {
+          console.error("Webhook Error: Missing userId in session metadata");
+          return NextResponse.json(
+            { error: "Missing userId" },
+            { status: 400 }
           );
         }
+        const userId = session.metadata.userId;
+
+        // Fetch the subscription details from Stripe
+        const subscription = (await stripe.subscriptions.retrieve(
+          subscriptionId
+        )) as unknown as StripeSubscription;
+
+        // Get data needed for DB update
+        const priceId = subscription.items.data[0].price.id;
+        const purchasedTier = PRICE_ID_TO_TIER[priceId];
+        const nextRenewalDate = new Date(
+          subscription.current_period_end * 1000
+        );
+        const isYearly = subscription.items.data[0].plan.interval === "year";
+
+        if (!purchasedTier) {
+          console.error(
+            `Webhook Error: Unknown Price ID ${priceId} for user ${userId}`
+          );
+          return NextResponse.json(
+            { error: "Unknown Price ID" },
+            { status: 400 }
+          );
+        }
+
+        // Get the credit limits for the purchased tier
+        const credits = SUBSCRIPTION_LIMITS[purchasedTier].aiCreditsPerMonth;
+
+        // Update the user in the database
+        const users = await getUserCollection();
+
+        await users.updateOne(
+          { _id: new mongoose.Types.ObjectId(userId) },
+          {
+            $set: {
+              "subscription.tier": purchasedTier,
+              "subscription.stripeCustomerId": customerId,
+              "subscription.stripeSubscriptionId": subscriptionId,
+              "subscription.stripePriceId": priceId,
+              "subscription.startDate": new Date(), // Set start date on initial purchase
+              "subscription.lastRenewalDate": new Date(), // Set last renewal on initial purchase
+              "subscription.nextRenewalDate": nextRenewalDate, // Use Stripe's period end
+              "subscription.isYearly": isYearly,
+              "subscription.autoRenew": true, // Assume paid tiers auto-renew
+              "subscription.aiCreditsTotal": credits, // Reset total credits
+              "subscription.aiCreditsRemaining": credits, // Reset remaining credits
+            },
+          }
+        );
+
+        console.log(
+          `User ${userId} successfully subscribed/upgraded to ${purchasedTier} tier.`
+        );
         break;
       }
 
