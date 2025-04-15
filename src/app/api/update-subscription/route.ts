@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     );
     // Define a minimal expected type
     type UserLean = {
-      _id: any;
+      _id: string;
       subscription?: { stripeSubscriptionId?: string | null };
     } | null;
 
