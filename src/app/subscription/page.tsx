@@ -152,27 +152,62 @@ export default function SubscriptionPage() {
   };
 
   const handlePlanSelect = (selectedTier: "basic" | "premium") => {
-    if (!isAuthenticated || isChangingPlan) return;
+    // Initial checks (unchanged)
+    if (!isAuthenticated || isChangingPlan) {
+      console.log(
+        "[handlePlanSelect] Aborted: Not authenticated or already changing plan."
+      );
+      return;
+    }
 
     const targetPriceId = getPriceIdForTier(selectedTier, billingCycle);
+    console.log(
+      `[handlePlanSelect] Target Price ID for ${selectedTier}/${billingCycle}:`,
+      targetPriceId
+    );
 
     if (!targetPriceId) {
       toast.error("Konfigurace ceny pro tento plán nebyla nalezena.");
       return;
     }
 
-    setSelectedTierForAction(selectedTier);
+    setSelectedTierForAction(selectedTier); // Set visual feedback state
 
+    // --- Decision Logic ---
     const currentTierValue = getSubscriptionTier();
+    const currentStripeSubId =
+      subscription && "stripeSubscriptionId" in subscription
+        ? subscription.stripeSubscriptionId
+        : null;
 
-    if (
-      currentTierValue === "free" ||
-      !subscription ||
-      !("stripeSubscriptionId" in subscription) ||
-      !subscription.stripeSubscriptionId
-    ) {
+    // Log the decision factors clearly
+    console.log(`[handlePlanSelect] Decision Factors:`);
+    console.log(`  - Current App Tier: ${currentTierValue}`);
+    console.log(`  - Subscription Data Loaded:`, subscription);
+    console.log(`  - Found Stripe Sub ID: ${currentStripeSubId}`);
+
+    // Determine if it should be a new checkout or an update
+    const isNewCheckout = currentTierValue === "free" || !currentStripeSubId;
+
+    if (isNewCheckout) {
+      console.log("[handlePlanSelect] Decision: Starting NEW checkout.");
+      // Ensure priceId is valid before proceeding (double check)
+      if (!targetPriceId) {
+        toast.error("Interní chyba: Chybí Price ID pro checkout.");
+        setSelectedTierForAction(null);
+        return;
+      }
       handleCheckout(targetPriceId);
     } else {
+      console.log(
+        "[handlePlanSelect] Decision: Updating EXISTING subscription."
+      );
+      // Ensure priceId is valid before proceeding (double check)
+      if (!targetPriceId) {
+        toast.error("Interní chyba: Chybí Price ID pro update.");
+        setSelectedTierForAction(null);
+        return;
+      }
       handleChangeSubscription(targetPriceId);
     }
   };
@@ -424,6 +459,7 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                 ]}
+                disabled={currentTier === "free" || loading}
               />
 
               <SubscriptionCard
@@ -468,6 +504,7 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                 ]}
+                disabled={currentTier === "basic" || loading || isChangingPlan}
               />
 
               <SubscriptionCard
@@ -519,6 +556,9 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                 ]}
+                disabled={
+                  currentTier === "premium" || loading || isChangingPlan
+                }
               />
             </div>
           </motion.div>

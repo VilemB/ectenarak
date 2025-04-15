@@ -31,6 +31,7 @@ export interface SubscriptionCardProps {
   accentColor: string;
   buttonText?: string;
   onSelect: () => void;
+  disabled?: boolean;
   isPremium?: boolean;
   animationDelay?: number;
   isLandingPage?: boolean;
@@ -54,6 +55,7 @@ export default function SubscriptionCard({
   accentColor,
   buttonText = "Vybrat plán",
   onSelect,
+  disabled = false,
   isPremium = false,
   animationDelay = 0.2,
   isLandingPage = false,
@@ -186,16 +188,14 @@ export default function SubscriptionCard({
                 : `bg-[${accentColor}] hover:bg-[${accentColor}]/90 text-white`
           } rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
           variant={isCurrentPlan ? "outline" : "default"}
-          onClick={isCurrentPlan || isLandingPage ? onSelect : handleCheckout}
-          disabled={
-            isCurrentPlan || isLoading || isSelected || isCheckoutLoading
-          }
+          onClick={onSelect}
+          disabled={disabled || isCurrentPlan || isLoading || isSelected}
         >
-          {isSelected || isCheckoutLoading ? (
+          {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin mx-auto" />
           ) : isCurrentPlan ? (
             <span className="flex items-center justify-center font-medium">
-              Aktivní plán <Check className="ml-2 h-4 w-4" />
+              Aktuální plán <Check className="ml-2 h-4 w-4" />
             </span>
           ) : (
             <span className="flex items-center justify-center font-medium">

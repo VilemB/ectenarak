@@ -3,8 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
-// import mongoose from "mongoose"; // Remove unused import
-import User from "@/models/User"; // Make sure this path is correct for your User model
+import User from "@/models/User"; // Make sure this path is correct
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -25,15 +24,38 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    // Find the user and their current Stripe subscription ID
-    const user = await User.findById(session.user.id).select(
-      "subscription.stripeSubscriptionId"
+    console.log(
+      `[update-subscription] Fetching user with ID: ${session.user.id}`
     );
+    // Define a minimal expected type
+    type UserLean = {
+      _id: any;
+      subscription?: { stripeSubscriptionId?: string | null };
+    } | null;
 
-    if (!user?.subscription?.stripeSubscriptionId) {
+    // Fetch, convert to plain object, and assert type
+    const user = (await User.findById(session.user.id)
+      .select("subscription.stripeSubscriptionId")
+      .lean()) as UserLean;
+
+    // Log the plain JavaScript object
+    console.log("[update-subscription] Fetched user data (Lean obj):", user);
+
+    // Check if user exists before accessing properties
+    if (!user) {
       console.error(
-        "User does not have an active Stripe subscription to update:",
-        session.user.id
+        `[update-subscription] User not found with ID: ${session.user.id}`
+      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Safely access the nested property from the plain object
+    const currentSubscriptionId = user?.subscription?.stripeSubscriptionId;
+
+    if (!currentSubscriptionId) {
+      console.error(
+        "[update-subscription] User object or stripeSubscriptionId missing AFTER .lean().",
+        { userId: session.user.id, userData: user }
       );
       return NextResponse.json(
         { error: "No active subscription found to update" },
@@ -41,9 +63,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const currentSubscriptionId = user.subscription.stripeSubscriptionId;
+    console.log(
+      `[update-subscription] Found current Stripe Sub ID: ${currentSubscriptionId}`
+    );
 
-    // Retrieve the current subscription to get the item ID
+    // Retrieve the current subscription from Stripe using the found ID
     const currentSubscription = await stripe.subscriptions.retrieve(
       currentSubscriptionId
     );
@@ -60,6 +84,10 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      `[update-subscription] Updating Stripe sub ${currentSubscriptionId} item ${currentItemId} to price ${targetPriceId}`
+    );
+
     // Update the subscription on Stripe
     const updatedSubscription = await stripe.subscriptions.update(
       currentSubscriptionId,
@@ -71,12 +99,11 @@ export async function POST(req: Request) {
           },
         ],
         proration_behavior: "create_prorations", // Enable proration calculation
-        // cancel_at_period_end: false, // Default for upgrades
       }
     );
 
     console.log(
-      `Stripe subscription ${currentSubscriptionId} update request sent for user ${session.user.id} to price ${targetPriceId}`
+      `Stripe subscription ${currentSubscriptionId} update request SENT for user ${session.user.id} to price ${targetPriceId}`
     );
 
     // Return success, the webhook will handle the actual DB update
@@ -85,9 +112,13 @@ export async function POST(req: Request) {
       subscriptionId: updatedSubscription.id,
     });
   } catch (error: unknown) {
-    console.error("Error updating subscription:", error);
+    console.error("[update-subscription] Error during processing:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Failed to update subscription";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+
+// NOTE: We removed the config export { api: { bodyParser: false } }
+// because this simple handler doesn't need the raw body.
+// We'll add it back later if needed.
