@@ -6,11 +6,12 @@ import mongoose from "mongoose";
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
 
 // ** Important: Disable Next.js body parsing for this route **
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// This config export is generally not needed/supported in App Router
+// export const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
 
 // Define Stripe subscription interface properties we need
 interface StripeSubscription {
@@ -151,23 +152,53 @@ export async function POST(req: Request) {
         });
 
         if (user) {
-          // Update subscription details
-          await users.updateOne(
-            { _id: user._id },
-            {
-              $set: {
-                "subscription.stripePriceId":
-                  subscription.items.data[0].price.id,
-                "subscription.currentPeriodEnd": new Date(
-                  subscription.current_period_end * 1000
-                ),
-                "subscription.isYearly":
-                  subscription.items.data[0].plan.interval === "year",
-              },
-            }
-          );
+          try {
+            const newPriceId = subscription.items.data[0].price.id;
+            const updatedTier = PRICE_ID_TO_TIER[newPriceId];
+            const isYearly =
+              subscription.items.data[0].plan.interval === "year";
+            const nextRenewalDate = new Date(
+              subscription.current_period_end * 1000
+            );
 
-          console.log(`Updated subscription for user ${user._id}`);
+            if (!updatedTier) {
+              console.error(
+                `Webhook Update Error: Unknown Price ID ${newPriceId} for user ${user._id}`
+              );
+              // Potentially return error or just log and continue?
+              // For now, just log and maybe skip tier/credit update.
+            } else {
+              const credits =
+                SUBSCRIPTION_LIMITS[updatedTier].aiCreditsPerMonth;
+
+              await users.updateOne(
+                { _id: user._id },
+                {
+                  $set: {
+                    "subscription.tier": updatedTier,
+                    "subscription.stripePriceId": newPriceId,
+                    "subscription.nextRenewalDate": nextRenewalDate,
+                    "subscription.isYearly": isYearly,
+                    "subscription.aiCreditsTotal": credits,
+                    "subscription.aiCreditsRemaining": credits,
+                    "subscription.lastRenewalDate": new Date(),
+                  },
+                }
+              );
+              console.log(
+                `Webhook: Updated subscription for user ${user._id} to tier ${updatedTier}.`
+              );
+            }
+          } catch (dbError) {
+            console.error(
+              `Webhook DB Error updating subscription for user ${user._id}:`,
+              dbError
+            );
+          }
+        } else {
+          console.warn(
+            `Webhook: Received subscription update for unknown subscription ID: ${subscription.id}`
+          );
         }
         break;
       }
@@ -182,39 +213,44 @@ export async function POST(req: Request) {
         });
 
         if (user) {
-          // Get limits for the 'free' tier
-          const freeTierCredits = SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth;
-
-          // Downgrade the user to free tier and reset credits/dates
-          await users.updateOne(
-            { _id: user._id },
-            {
-              $set: {
-                "subscription.tier": "free",
-                "subscription.stripeCustomerId": null, // Remove Stripe customer ID
-                "subscription.stripeSubscriptionId": null, // Remove Stripe subscription ID
-                "subscription.stripePriceId": null, // Remove Stripe price ID
-                "subscription.startDate":
-                  user.subscription?.startDate || new Date(), // Keep original start or set new?
-                "subscription.lastRenewalDate": new Date(), // Set renewal date to now
-                "subscription.nextRenewalDate": null, // No next renewal for free
-                "subscription.isYearly": false, // Free is not yearly
-                "subscription.autoRenew": false, // Free does not auto-renew
-                "subscription.aiCreditsTotal": freeTierCredits, // Reset total credits
-                "subscription.aiCreditsRemaining": freeTierCredits, // Reset remaining credits
-              },
-            }
-          );
-
-          console.log(
-            `Webhook: Downgraded user ${user._id} to free tier and reset credits.`
+          try {
+            const freeTierCredits = SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth;
+            await users.updateOne(
+              { _id: user._id },
+              {
+                $set: {
+                  "subscription.tier": "free",
+                  "subscription.stripeCustomerId": null,
+                  "subscription.stripeSubscriptionId": null,
+                  "subscription.stripePriceId": null,
+                  "subscription.startDate":
+                    user.subscription?.startDate || new Date(),
+                  "subscription.lastRenewalDate": new Date(),
+                  "subscription.nextRenewalDate": null,
+                  "subscription.isYearly": false,
+                  "subscription.autoRenew": false,
+                  "subscription.aiCreditsTotal": freeTierCredits,
+                  "subscription.aiCreditsRemaining": freeTierCredits,
+                },
+              }
+            );
+            console.log(`Webhook: Downgraded user ${user._id} to free tier.`);
+          } catch (dbError) {
+            console.error(
+              `Webhook DB Error deleting subscription for user ${user._id}:`,
+              dbError
+            );
+          }
+        } else {
+          console.warn(
+            `Webhook: Received subscription deletion for unknown subscription ID: ${subscription.id}`
           );
         }
         break;
       }
 
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log(`Webhook: Unhandled event type ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
