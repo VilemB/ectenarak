@@ -380,7 +380,6 @@ export default function LandingPage() {
                       buttonText="Začít zdarma"
                       onSelect={() => handleSubscriptionSelect("free")}
                       animationDelay={0.1}
-                      isLandingPage={true}
                       features={[
                         {
                           name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
@@ -431,7 +430,6 @@ export default function LandingPage() {
                       }
                       onSelect={() => handleSubscriptionSelect("basic")}
                       animationDelay={0.2}
-                      isLandingPage={true}
                       features={[
                         {
                           name: "Až 100 knih v knihovně",
@@ -482,7 +480,6 @@ export default function LandingPage() {
                       onSelect={() => handleSubscriptionSelect("premium")}
                       isPremium={true}
                       animationDelay={0.3}
-                      isLandingPage={true}
                       features={[
                         {
                           name: "Neomezený počet knih v knihovně",
