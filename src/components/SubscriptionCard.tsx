@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface SubscriptionFeatureItem {
   name: string;
@@ -34,7 +33,6 @@ export interface SubscriptionCardProps {
   disabled?: boolean;
   isPremium?: boolean;
   animationDelay?: number;
-  isLandingPage?: boolean;
   isYearly?: boolean;
   monthlyPrice?: number | string;
 }
@@ -45,7 +43,6 @@ export default function SubscriptionCard({
   description,
   price,
   pricePeriod,
-  priceId,
   features,
   icon,
   badge,
@@ -58,46 +55,9 @@ export default function SubscriptionCard({
   disabled = false,
   isPremium = false,
   animationDelay = 0.2,
-  isLandingPage = false,
   isYearly = false,
   monthlyPrice,
 }: SubscriptionCardProps) {
-  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    try {
-      setIsCheckoutLoading(true);
-
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          priceId,
-          successUrl: `${window.location.origin}/settings?success=true`,
-          cancelUrl: `${window.location.origin}/subscription`,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create checkout session");
-      }
-
-      const { url } = await response.json();
-
-      // Redirect to Stripe Checkout
-      window.location.href = url;
-    } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error(
-        "Nepodařilo se vytvořit platební relaci. Zkuste to prosím znovu."
-      );
-    } finally {
-      setIsCheckoutLoading(false);
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
