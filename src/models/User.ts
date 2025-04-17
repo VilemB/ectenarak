@@ -95,7 +95,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Create indexes for common queries
-UserSchema.index({ email: 1 });
+// UserSchema.index({ email: 1 }); // Removed redundant index (unique: true is used in schema)
 UserSchema.index({ "auth.provider": 1, "auth.providerId": 1 });
 
 // Update the updatedAt field on save
