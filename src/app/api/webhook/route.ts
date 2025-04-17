@@ -41,6 +41,8 @@ const getUserCollection = async () => {
 };
 
 export async function POST(req: Request) {
+  // **** ADDED VERY EARLY LOG ****
+  console.log("!!! /api/webhook POST function START !!!");
   // ** Read the raw body **
   const buf = await req.arrayBuffer();
   const rawBody = Buffer.from(buf);
