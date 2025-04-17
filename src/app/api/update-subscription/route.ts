@@ -94,6 +94,7 @@ export async function POST(req: Request) {
         },
       ],
       proration_behavior: "create_prorations" as const, // Use 'as const' or specific literal type
+      payment_behavior: "default_incomplete" as const,
     };
 
     console.log(
