@@ -60,13 +60,21 @@ export default function SubscriptionPage() {
         const latestSub = await refreshSubscription();
 
         // Check if the fetched subscription has the expected price ID
-        // Make sure your UserSubscription type includes `stripePriceId`
         if (latestSub?.stripePriceId === expectedPriceId) {
-          console.log("[Polling] Success! Subscription updated.");
+          console.log(
+            "[Polling] Match found! Waiting briefly before confirming..."
+          );
+          stopPolling(); // Stop polling immediately to prevent further checks
+
+          // Wait for a short period (e.g., 1.5 seconds) AFTER match found
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          console.log("[Polling] Success! Subscription updated confirmed.");
           toast.success("Předplatné bylo úspěšně aktualizováno!");
-          stopPolling();
           setIsChangingPlan(false); // Reset loading state on success
           setSelectedTierForAction(null);
+          // Perform one final refresh *after* the delay to ensure UI gets latest state
+          await refreshSubscription();
           return; // Exit polling on success
         }
       } catch (error) {
