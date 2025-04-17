@@ -87,6 +87,8 @@ export default function SubscriptionPage() {
 
     await refreshSubscription();
 
+    await new Promise((resolve) => setTimeout(resolve, 50)); // 50ms delay
+
     setIsChangingPlan(false);
     setSelectedTierForAction(null);
   };
