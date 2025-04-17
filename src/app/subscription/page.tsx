@@ -354,11 +354,9 @@ export default function SubscriptionPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto px-2">
               <SubscriptionCard
                 title="Základní"
-                subtitle="Pro běžnou četbu"
                 description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
                 price="0 Kč"
                 pricePeriod=""
-                priceId="price_free"
                 icon={<BookText className="h-6 w-6 text-muted-foreground" />}
                 badge={{
                   text: "Zdarma",
@@ -373,7 +371,6 @@ export default function SubscriptionPage() {
                 }}
                 isLoading={false}
                 isSelected={false}
-                accentColor="#6b7280"
                 animationDelay={0.1}
                 features={[
                   {
@@ -400,13 +397,10 @@ export default function SubscriptionPage() {
 
               <SubscriptionCard
                 title="Basic"
-                subtitle="Pro ambiciózní studenty"
                 description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
                 price={billingCycle === "yearly" ? "39" : "49"}
                 pricePeriod="/ měsíc"
-                priceId={getPriceIdForTier("basic", billingCycle) || ""}
                 monthlyPrice={49}
-                isYearly={billingCycle === "yearly"}
                 icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
                   text: "Populární",
@@ -417,13 +411,12 @@ export default function SubscriptionPage() {
                   currentTier === "basic"
                     ? "Aktuální plán"
                     : currentTier === "premium"
-                      ? "Vybrat plán (Downgrade)"
+                      ? null
                       : "Vybrat plán"
                 }
                 onSelect={() => handlePlanSelect("basic")}
                 isLoading={isChangingPlan && selectedTierForAction === "basic"}
                 isSelected={selectedTierForAction === "basic"}
-                accentColor="#3b82f6"
                 animationDelay={0.2}
                 features={[
                   {
@@ -454,13 +447,10 @@ export default function SubscriptionPage() {
 
               <SubscriptionCard
                 title="Premium"
-                subtitle="Pro budoucí maturanty"
                 description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
                 price={billingCycle === "yearly" ? "63" : "79"}
                 pricePeriod="/ měsíc"
-                priceId={getPriceIdForTier("premium", billingCycle) || ""}
                 monthlyPrice={79}
-                isYearly={billingCycle === "yearly"}
                 icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                 badge={{
                   text: "Doporučeno",
@@ -471,7 +461,7 @@ export default function SubscriptionPage() {
                   currentTier === "premium"
                     ? "Aktuální plán"
                     : currentTier === "basic"
-                      ? "Vybrat plán (Upgrade)"
+                      ? null
                       : "Vybrat plán"
                 }
                 onSelect={() => handlePlanSelect("premium")}
@@ -479,7 +469,6 @@ export default function SubscriptionPage() {
                   isChangingPlan && selectedTierForAction === "premium"
                 }
                 isSelected={selectedTierForAction === "premium"}
-                accentColor="#3b82f6"
                 animationDelay={0.3}
                 features={[
                   {
