@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User"; // Make sure this path is correct
+import Stripe from "stripe";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -84,22 +85,26 @@ export async function POST(req: Request) {
       );
     }
 
+    // Explicitly type the proration_behavior property
+    const updatePayload: Stripe.SubscriptionUpdateParams = {
+      items: [
+        {
+          id: currentItemId,
+          price: targetPriceId,
+        },
+      ],
+      proration_behavior: "create_prorations" as const, // Use 'as const' or specific literal type
+    };
+
     console.log(
-      `[update-subscription] Updating Stripe sub ${currentSubscriptionId} item ${currentItemId} to price ${targetPriceId}`
+      `[update-subscription] Attempting to update Stripe sub ${currentSubscriptionId} with payload:`,
+      JSON.stringify(updatePayload, null, 2)
     );
 
     // Update the subscription on Stripe
     const updatedSubscription = await stripe.subscriptions.update(
       currentSubscriptionId,
-      {
-        items: [
-          {
-            id: currentItemId, // Specify the item ID to update
-            price: targetPriceId, // Set the new price ID
-          },
-        ],
-        proration_behavior: "create_prorations", // Enable proration calculation
-      }
+      updatePayload
     );
 
     console.log(
