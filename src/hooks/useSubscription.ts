@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { UserSubscription } from "@/types/user";
 
 export interface Subscription {
   tier: "free" | "basic" | "premium";
@@ -16,103 +17,94 @@ export interface Subscription {
 }
 
 export function useSubscription() {
-  const { isAuthenticated, user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [subscription, setSubscription] = useState<UserSubscription | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Fetch the subscription data from the API
-  const fetchSubscription = useCallback(async () => {
-    if (!isAuthenticated) {
-      setSubscription(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/subscription");
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          // User not found (likely deleted)
-          setSubscription(null);
-          setLoading(false);
-          return;
-        }
-        throw new Error(`Failed to fetch subscription: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setSubscription(data.subscription);
-    } catch (err) {
-      console.error("Error fetching subscription:", err);
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch subscription")
-      );
-
-      // Use fallback for free tier only if the error is not a 404
-      if (!(err instanceof Error && err.message.includes("404"))) {
-        setSubscription({
-          tier: "free",
-          startDate: new Date(),
-          isYearly: false,
-          aiCreditsRemaining: 3,
-          aiCreditsTotal: 3,
-          autoRenew: false,
-          lastRenewalDate: new Date(),
-          nextRenewalDate: new Date(
-            new Date().setMonth(new Date().getMonth() + 1)
-          ),
-        });
-      } else {
+  const refreshSubscription =
+    useCallback(async (): Promise<UserSubscription | null> => {
+      if (!isAuthenticated) {
         setSubscription(null);
+        setLoading(false);
+        return null;
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
 
-  // Update the subscription tier and billing cycle
-  const updateSubscription = async (
-    tier: "free" | "basic" | "premium",
-    isYearly?: boolean
-  ) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/subscription");
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setSubscription(null);
+            setLoading(false);
+            return null;
+          }
+          throw new Error(
+            `Failed to fetch subscription: ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        const fetchedSubscription =
+          data.subscription as UserSubscription | null;
+        setSubscription(fetchedSubscription);
+        return fetchedSubscription;
+      } catch (err) {
+        console.error("Error fetching subscription:", err);
+        setError(
+          err instanceof Error ? err : new Error("Failed to fetch subscription")
+        );
+
+        setSubscription(null);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    }, [isAuthenticated]);
+
+  // Effect to fetch initial subscription
+  useEffect(() => {
+    refreshSubscription();
+  }, [refreshSubscription]);
+
+  // Update the subscription tier and billing cycle (API call only, webhook handles DB)
+  const updateSubscriptionApi = async (
+    priceId: string
+  ): Promise<{ success: boolean; subscriptionId?: string }> => {
     if (!isAuthenticated) {
       throw new Error("User must be authenticated to update subscription");
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/subscription", {
+      const response = await fetch("/api/update-subscription", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ tier, isYearly }),
+        body: JSON.stringify({ priceId }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(
-          `Failed to update subscription: ${response.statusText}`
-        );
+        throw new Error(data.error || "Failed to update subscription via API");
       }
 
-      const data = await response.json();
-      setSubscription(data.subscription);
-      return data.subscription;
+      return { success: true, subscriptionId: data.subscriptionId };
     } catch (err) {
-      console.error("Error updating subscription:", err);
+      console.error("Error calling update subscription API:", err);
       setError(
         err instanceof Error ? err : new Error("Failed to update subscription")
       );
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -202,19 +194,14 @@ export function useSubscription() {
     return !!subscription && subscription.aiCreditsRemaining > 0;
   };
 
-  // Fetch subscription when user changes
-  useEffect(() => {
-    fetchSubscription();
-  }, [isAuthenticated, user, fetchSubscription]);
-
   return {
     subscription,
     loading,
     error,
-    updateSubscription,
+    refreshSubscription,
+    updateSubscriptionApi,
     useAiCredit,
     hasAccess,
     hasRemainingAiCredits,
-    refreshSubscription: fetchSubscription,
   };
 }

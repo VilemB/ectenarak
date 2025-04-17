@@ -20,6 +20,7 @@ export interface UserSubscription {
   autoRenew: boolean;
   lastRenewalDate: Date;
   nextRenewalDate: Date;
+  stripePriceId?: string | null;
 }
 
 export interface User {
