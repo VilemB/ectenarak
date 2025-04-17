@@ -65,9 +65,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     <motion.div
       variants={itemVariants}
       className={cn(
-        "relative flex flex-col h-full rounded-2xl border border-border/20 bg-card/80 p-6 shadow-lg backdrop-blur-sm",
-        isCurrentPlan ? "border-blue-500 ring-2 ring-blue-500/50" : "",
-        isSelected ? "border-white" : ""
+        "relative flex flex-col h-full rounded-2xl border p-6 shadow-lg backdrop-blur-sm",
+        "border-border/20 bg-card/80",
+        isCurrentPlan &&
+          "border-blue-500 border-2 bg-blue-900/10 ring-1 ring-blue-500/60",
+        isSelected && "border-white ring-2 ring-white/80",
+        isCurrentPlan && isSelected && "border-blue-500 ring-1 ring-blue-500/60"
       )}
     >
       {badge && (
@@ -75,6 +78,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           className={`absolute top-0 right-6 -translate-y-1/2 rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}
         >
           {badge.text}
+        </div>
+      )}
+
+      {isCurrentPlan && (
+        <div className="absolute top-4 left-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
+          Aktuální plán
         </div>
       )}
 
@@ -130,18 +139,15 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       </ul>
 
       <div className="mt-8 pt-6 border-t border-border/20">
-        {buttonText && (
+        {buttonText && !isCurrentPlan && (
           <Button
             onClick={onSelect}
-            disabled={disabled || isLoading || isCurrentPlan}
+            disabled={disabled || isLoading}
             className={cn(
               "w-full transition-all duration-300 shadow-md text-base font-semibold py-3 rounded-full",
-              isCurrentPlan &&
-                "bg-muted/50 text-muted-foreground cursor-not-allowed",
-              !isCurrentPlan &&
-                (disabled
-                  ? "bg-gray-600 hover:bg-gray-500 cursor-not-allowed opacity-60"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"),
+              disabled
+                ? "bg-gray-600 hover:bg-gray-500 cursor-not-allowed opacity-60"
+                : "bg-blue-600 hover:bg-blue-700 text-white",
               isLoading && "opacity-70 cursor-wait",
               isSelected &&
                 "ring-2 ring-offset-2 ring-offset-background ring-white"

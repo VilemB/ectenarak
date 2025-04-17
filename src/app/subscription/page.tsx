@@ -363,9 +363,7 @@ export default function SubscriptionPage() {
                   color: "bg-[#2a3548] text-muted-foreground",
                 }}
                 isCurrentPlan={currentTier === "free"}
-                buttonText={
-                  currentTier === "free" ? "Aktuální plán" : "Vybrat plán"
-                }
+                buttonText={null}
                 onSelect={() => {
                   /* No action needed? Or maybe cancellation logic */
                 }}

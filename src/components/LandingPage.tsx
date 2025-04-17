@@ -374,10 +374,8 @@ export default function LandingPage() {
                       isCurrentPlan={false}
                       isLoading={false}
                       isSelected={false}
-                      buttonText={null}
-                      onSelect={() => {
-                        /* No action needed if button is hidden */
-                      }}
+                      buttonText="Začít zdarma"
+                      onSelect={() => handleSubscriptionSelect("free")}
                       features={[
                         {
                           name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
@@ -417,7 +415,7 @@ export default function LandingPage() {
                       isLoading={false}
                       isSelected={false}
                       buttonText={
-                        isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
+                        isAuthenticated ? "Vybrat Basic" : "Začít s Basic"
                       }
                       onSelect={() => handleSubscriptionSelect("basic")}
                       features={[
@@ -458,7 +456,7 @@ export default function LandingPage() {
                       isLoading={false}
                       isSelected={false}
                       buttonText={
-                        isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
+                        isAuthenticated ? "Vybrat Premium" : "Začít s Premium"
                       }
                       onSelect={() => handleSubscriptionSelect("premium")}
                       features={[
