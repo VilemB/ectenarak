@@ -61,6 +61,11 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     },
   };
 
+  // Determine badge content and style based on current plan status
+  const finalBadge = isCurrentPlan
+    ? { text: "Aktuální plán", color: "bg-blue-600 text-white" } // Highlighted current plan badge
+    : badge; // Use provided badge otherwise
+
   return (
     <motion.div
       variants={itemVariants}
@@ -73,17 +78,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         isCurrentPlan && isSelected && "border-blue-500 ring-1 ring-blue-500/60"
       )}
     >
-      {badge && (
+      {/* Render the finalBadge content in the top-right corner */}
+      {finalBadge && (
         <div
-          className={`absolute top-0 right-6 -translate-y-1/2 rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}
+          className={`absolute top-0 right-6 -translate-y-1/2 rounded-full px-3 py-1 text-xs font-semibold shadow-md ${finalBadge.color}`}
         >
-          {badge.text}
-        </div>
-      )}
-
-      {isCurrentPlan && (
-        <div className="absolute top-4 left-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
-          Aktuální plán
+          {finalBadge.text}
         </div>
       )}
 
