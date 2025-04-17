@@ -361,10 +361,8 @@ export default function LandingPage() {
                     {/* Free Plan */}
                     <SubscriptionCard
                       title="Základní"
-                      subtitle="Pro běžnou četbu"
                       description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
                       price="0 Kč"
-                      priceId="price_free"
                       pricePeriod=""
                       icon={
                         <BookText className="h-6 w-6 text-muted-foreground" />
@@ -376,10 +374,8 @@ export default function LandingPage() {
                       isCurrentPlan={false}
                       isLoading={false}
                       isSelected={false}
-                      accentColor="#6b7280"
                       buttonText="Začít zdarma"
                       onSelect={() => handleSubscriptionSelect("free")}
-                      animationDelay={0.1}
                       features={[
                         {
                           name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
@@ -405,14 +401,8 @@ export default function LandingPage() {
                     {/* Basic Plan */}
                     <SubscriptionCard
                       title="Basic"
-                      subtitle="Pro ambiciózní studenty"
                       description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
                       price={yearlyBilling ? "39" : "49"}
-                      priceId={
-                        yearlyBilling
-                          ? "price_1R2vIpCHqJNxgUwRW12zahkB"
-                          : "price_1R2vAHCHqJNxgUwRPpfqCHJF"
-                      }
                       pricePeriod="/ měsíc"
                       monthlyPrice={49}
                       isYearly={yearlyBilling}
@@ -424,12 +414,10 @@ export default function LandingPage() {
                       isCurrentPlan={false}
                       isLoading={false}
                       isSelected={false}
-                      accentColor="#3b82f6"
                       buttonText={
                         isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
                       }
                       onSelect={() => handleSubscriptionSelect("basic")}
-                      animationDelay={0.2}
                       features={[
                         {
                           name: "Až 100 knih v knihovně",
@@ -454,14 +442,8 @@ export default function LandingPage() {
                     {/* Premium Plan */}
                     <SubscriptionCard
                       title="Premium"
-                      subtitle="Pro budoucí maturanty"
                       description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
                       price={yearlyBilling ? "63" : "79"}
-                      priceId={
-                        yearlyBilling
-                          ? "price_1RDOWLCHqJNxgUwRjnZbthf9"
-                          : "price_1RDOWACHqJNxgUwR1lZD7Ap3"
-                      }
                       pricePeriod="/ měsíc"
                       monthlyPrice={79}
                       isYearly={yearlyBilling}
@@ -473,13 +455,10 @@ export default function LandingPage() {
                       isCurrentPlan={false}
                       isLoading={false}
                       isSelected={false}
-                      accentColor="#3b82f6"
                       buttonText={
                         isAuthenticated ? "Vybrat předplatné" : "Přihlásit se"
                       }
                       onSelect={() => handleSubscriptionSelect("premium")}
-                      isPremium={true}
-                      animationDelay={0.3}
                       features={[
                         {
                           name: "Neomezený počet knih v knihovně",
