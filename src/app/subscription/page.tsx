@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, BookText, BookOpen } from "lucide-react";
@@ -24,76 +24,8 @@ export default function SubscriptionPage() {
   >(null);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
 
-  const { subscription, loading, refreshSubscription } = useSubscription();
+  const { subscription, loading } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
-
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const stopPolling = () => {
-    if (pollIntervalRef.current) {
-      clearTimeout(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    return () => stopPolling();
-  }, []);
-
-  const pollForSubscriptionChange = async (
-    expectedPriceId: string,
-    maxAttempts = 12, // Approx 42 seconds
-    interval = 3500 // 3.5 seconds
-  ) => {
-    console.log(`[Polling] Starting polling for price ID: ${expectedPriceId}`);
-    let success = false;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      console.log(`[Polling] Attempt ${attempt}/${maxAttempts}...`);
-      try {
-        const latestSub = await refreshSubscription();
-
-        if (latestSub?.stripePriceId === expectedPriceId) {
-          console.log("[Polling] Success! Match found.");
-          success = true;
-          break;
-        }
-      } catch (error) {
-        console.error("[Polling] Error during refresh:", error);
-      }
-
-      if (attempt < maxAttempts) {
-        await new Promise((resolve) => {
-          pollIntervalRef.current = setTimeout(resolve, interval);
-        });
-        if (!pollIntervalRef.current) {
-          console.log("[Polling] Polling stopped externally.");
-          return;
-        }
-      }
-    }
-
-    stopPolling();
-
-    if (success) {
-      console.log("[Polling] Confirmed. Reloading page.");
-      toast.success(
-        "Předplatné bylo úspěšně aktualizováno! Stránka se nyní obnoví."
-      );
-      setTimeout(() => window.location.reload(), 1000);
-    } else {
-      console.warn("[Polling] Timeout. Reloading page.");
-      toast.warning(
-        "Aktualizaci předplatného se nepodařilo potvrdit včas. Stránka se nyní obnoví."
-      );
-      setTimeout(() => window.location.reload(), 1500);
-    }
-  };
-
-  useEffect(() => {
-    setIsChangingPlan(false);
-    setSelectedTierForAction(null);
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -183,48 +115,10 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleChangeSubscription = async (targetPriceId: string) => {
-    setIsChangingPlan(true);
-    setSelectedTierForAction(null);
-    const tier =
-      targetPriceId === getPriceIdForTier("basic", billingCycle)
-        ? "basic"
-        : "premium";
-    setSelectedTierForAction(tier);
-
-    try {
-      stopPolling();
-
-      const response = await fetch("/api/update-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: targetPriceId }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Nepodařilo se aktualizovat předplatné");
-      }
-
-      toast.info("Požadavek odeslán. Ověřuji stav aktualizace předplatného...");
-      pollForSubscriptionChange(targetPriceId);
-    } catch (error: unknown) {
-      console.error("Error initiating subscription change:", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Nepodařilo se změnit předplatné.";
-      toast.error(message);
-      stopPolling();
-      setIsChangingPlan(false);
-      setSelectedTierForAction(null);
-    }
-  };
-
   const handlePlanSelect = (selectedTier: "basic" | "premium") => {
     if (!isAuthenticated || isChangingPlan) {
       console.log(
-        "[handlePlanSelect] Aborted: Not authenticated or already changing plan."
+        "[handlePlanSelect] Aborted: Not authenticated or action in progress."
       );
       return;
     }
@@ -236,23 +130,21 @@ export default function SubscriptionPage() {
     }
 
     const currentTierValue = getSubscriptionTier();
-    const currentStripeSubId = subscription?.stripeSubscriptionId || null;
 
-    console.log(`[handlePlanSelect] Decision Factors:`);
-    console.log(`  - Current App Tier: ${currentTierValue}`);
-    console.log(`  - Current Stripe Sub ID: ${currentStripeSubId}`);
-    console.log(`  - Target Price ID: ${targetPriceId}`);
-
-    const isNewCheckout = currentTierValue === "free" || !currentStripeSubId;
+    const isNewCheckout = currentTierValue === "free";
 
     if (isNewCheckout) {
-      console.log("[handlePlanSelect] Decision: Starting NEW checkout.");
+      console.log(
+        `[handlePlanSelect] User is FREE. Starting checkout for ${selectedTier}.`
+      );
+      setSelectedTierForAction(selectedTier);
       handleCheckout(targetPriceId);
     } else {
       console.log(
-        "[handlePlanSelect] Decision: Updating EXISTING subscription."
+        `[handlePlanSelect] User already on paid plan (${currentTierValue}). Change disabled.`
       );
-      handleChangeSubscription(targetPriceId);
+      toast.info("Pro změnu existujícího předplatného nás prosím kontaktujte.");
+      setSelectedTierForAction(null);
     }
   };
 
@@ -522,7 +414,11 @@ export default function SubscriptionPage() {
                 }}
                 isCurrentPlan={currentTier === "basic"}
                 buttonText={
-                  currentTier === "basic" ? "Aktuální plán" : "Vybrat plán"
+                  currentTier === "basic"
+                    ? "Aktuální plán"
+                    : currentTier === "premium"
+                      ? "Vybrat plán (Downgrade)"
+                      : "Vybrat plán"
                 }
                 onSelect={() => handlePlanSelect("basic")}
                 isLoading={isChangingPlan && selectedTierForAction === "basic"}
@@ -548,7 +444,12 @@ export default function SubscriptionPage() {
                     included: true,
                   },
                 ]}
-                disabled={currentTier === "basic" || loading || isChangingPlan}
+                disabled={
+                  currentTier === "basic" ||
+                  currentTier === "premium" ||
+                  loading ||
+                  isChangingPlan
+                }
               />
 
               <SubscriptionCard
@@ -567,7 +468,11 @@ export default function SubscriptionPage() {
                 }}
                 isCurrentPlan={currentTier === "premium"}
                 buttonText={
-                  currentTier === "premium" ? "Aktuální plán" : "Vybrat plán"
+                  currentTier === "premium"
+                    ? "Aktuální plán"
+                    : currentTier === "basic"
+                      ? "Vybrat plán (Upgrade)"
+                      : "Vybrat plán"
                 }
                 onSelect={() => handlePlanSelect("premium")}
                 isLoading={
@@ -601,7 +506,10 @@ export default function SubscriptionPage() {
                   },
                 ]}
                 disabled={
-                  currentTier === "premium" || loading || isChangingPlan
+                  currentTier === "premium" ||
+                  currentTier === "basic" ||
+                  loading ||
+                  isChangingPlan
                 }
               />
             </div>
