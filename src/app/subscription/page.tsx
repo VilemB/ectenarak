@@ -76,21 +76,18 @@ export default function SubscriptionPage() {
     stopPolling();
 
     if (success) {
-      console.log("[Polling] Confirmed. Updating UI.");
-      toast.success("Předplatné bylo úspěšně aktualizováno!");
-    } else {
-      console.warn("[Polling] Timeout. Update not confirmed.");
-      toast.warning(
-        "Aktualizace předplatného se stále zpracovává nebo se nepodařilo potvrdit. Zkuste prosím obnovit stránku."
+      console.log("[Polling] Confirmed. Reloading page.");
+      toast.success(
+        "Předplatné bylo úspěšně aktualizováno! Stránka se nyní obnoví."
       );
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      console.warn("[Polling] Timeout. Reloading page.");
+      toast.warning(
+        "Aktualizaci předplatného se nepodařilo potvrdit včas. Stránka se nyní obnoví."
+      );
+      setTimeout(() => window.location.reload(), 1500);
     }
-
-    await refreshSubscription();
-
-    await new Promise((resolve) => setTimeout(resolve, 50)); // 50ms delay
-
-    setIsChangingPlan(false);
-    setSelectedTierForAction(null);
   };
 
   useEffect(() => {
