@@ -21,6 +21,7 @@ export interface UserSubscription {
   lastRenewalDate: Date;
   nextRenewalDate: Date;
   stripePriceId?: string | null;
+  stripeSubscriptionId?: string | null;
 }
 
 export interface User {

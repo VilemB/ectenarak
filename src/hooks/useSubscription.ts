@@ -29,11 +29,9 @@ export function useSubscription() {
     useCallback(async (): Promise<UserSubscription | null> => {
       if (!isAuthenticated) {
         setSubscription(null);
-        setLoading(false);
         return null;
       }
 
-      setLoading(true);
       setError(null);
 
       try {
@@ -42,7 +40,6 @@ export function useSubscription() {
         if (!response.ok) {
           if (response.status === 404) {
             setSubscription(null);
-            setLoading(false);
             return null;
           }
           throw new Error(
@@ -63,14 +60,17 @@ export function useSubscription() {
 
         setSubscription(null);
         return null;
-      } finally {
-        setLoading(false);
       }
     }, [isAuthenticated]);
 
-  // Effect to fetch initial subscription
+  // Effect to fetch initial subscription AND set initial loading state
   useEffect(() => {
-    refreshSubscription();
+    const initialFetch = async () => {
+      setLoading(true);
+      await refreshSubscription();
+      setLoading(false);
+    };
+    initialFetch();
   }, [refreshSubscription]);
 
   // Update the subscription tier and billing cycle (API call only, webhook handles DB)

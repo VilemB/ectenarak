@@ -27,68 +27,45 @@ export default function SubscriptionPage() {
   const { subscription, loading, refreshSubscription } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
 
-  // Refs for polling timers
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Stop polling function
   const stopPolling = () => {
     if (pollIntervalRef.current) {
       clearTimeout(pollIntervalRef.current);
       pollIntervalRef.current = null;
     }
-    // Keep isChangingPlan true until success or timeout, then reset
-    // Resetting is handled within the polling logic or error handler
   };
 
-  // Cleanup polling on component unmount
   useEffect(() => {
     return () => stopPolling();
   }, []);
 
-  // Polling function
   const pollForSubscriptionChange = async (
     expectedPriceId: string,
-    maxAttempts = 10, // Approx 30 seconds
-    interval = 3000 // 3 seconds
+    maxAttempts = 12, // Approx 42 seconds
+    interval = 3500 // 3.5 seconds
   ) => {
     console.log(`[Polling] Starting polling for price ID: ${expectedPriceId}`);
+    let success = false;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       console.log(`[Polling] Attempt ${attempt}/${maxAttempts}...`);
       try {
-        // Fetch the latest subscription data
         const latestSub = await refreshSubscription();
 
-        // Check if the fetched subscription has the expected price ID
         if (latestSub?.stripePriceId === expectedPriceId) {
-          console.log(
-            "[Polling] Match found! Waiting briefly before confirming..."
-          );
-          stopPolling(); // Stop polling immediately to prevent further checks
-
-          // Wait for a short period (e.g., 1.5 seconds) AFTER match found
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-
-          console.log("[Polling] Success! Subscription updated confirmed.");
-          toast.success("Předplatné bylo úspěšně aktualizováno!");
-          setIsChangingPlan(false); // Reset loading state on success
-          setSelectedTierForAction(null);
-          // Perform one final refresh *after* the delay to ensure UI gets latest state
-          await refreshSubscription();
-          return; // Exit polling on success
+          console.log("[Polling] Success! Match found.");
+          success = true;
+          break;
         }
       } catch (error) {
         console.error("[Polling] Error during refresh:", error);
-        // Decide if you want to stop polling on fetch error, or continue?
-        // For now, let's continue polling, but log the error.
       }
 
-      // If not found and not the last attempt, wait for the next interval
       if (attempt < maxAttempts) {
         await new Promise((resolve) => {
           pollIntervalRef.current = setTimeout(resolve, interval);
         });
-        // Check if polling was stopped externally (e.g., unmount) while waiting
         if (!pollIntervalRef.current) {
           console.log("[Polling] Polling stopped externally.");
           return;
@@ -96,17 +73,22 @@ export default function SubscriptionPage() {
       }
     }
 
-    // If loop finishes without success (timeout)
-    console.warn(
-      "[Polling] Timeout reached. Subscription update not confirmed."
-    );
-    toast.warning(
-      "Aktualizace předplatného se stále zpracovává. Změna se projeví za chvíli. Můžete obnovit stránku."
-    );
     stopPolling();
-    setIsChangingPlan(false); // Reset loading state on timeout
+
+    if (success) {
+      console.log("[Polling] Confirmed. Updating UI.");
+      toast.success("Předplatné bylo úspěšně aktualizováno!");
+    } else {
+      console.warn("[Polling] Timeout. Update not confirmed.");
+      toast.warning(
+        "Aktualizace předplatného se stále zpracovává nebo se nepodařilo potvrdit. Zkuste prosím obnovit stránku."
+      );
+    }
+
+    await refreshSubscription();
+
+    setIsChangingPlan(false);
     setSelectedTierForAction(null);
-    await refreshSubscription(); // Attempt one final refresh
   };
 
   useEffect(() => {
@@ -204,9 +186,14 @@ export default function SubscriptionPage() {
 
   const handleChangeSubscription = async (targetPriceId: string) => {
     setIsChangingPlan(true);
-    // No need to set selectedTierForAction here, handlePlanSelect does it
+    setSelectedTierForAction(null);
+    const tier =
+      targetPriceId === getPriceIdForTier("basic", billingCycle)
+        ? "basic"
+        : "premium";
+    setSelectedTierForAction(tier);
+
     try {
-      // Stop any previous polling just in case
       stopPolling();
 
       const response = await fetch("/api/update-subscription", {
@@ -220,33 +207,22 @@ export default function SubscriptionPage() {
         throw new Error(data.error || "Nepodařilo se aktualizovat předplatné");
       }
 
-      // Instead of simple success toast and setTimeout, start polling
       toast.info("Požadavek odeslán. Ověřuji stav aktualizace předplatného...");
-      // Don't reset isChangingPlan or selectedTierForAction here, polling function will do it
       pollForSubscriptionChange(targetPriceId);
-
-      // Remove the old setTimeout
-      // setTimeout(() => refreshSubscription(), 2000);
     } catch (error: unknown) {
-      console.error("Error changing subscription:", error);
+      console.error("Error initiating subscription change:", error);
       const message =
         error instanceof Error
           ? error.message
           : "Nepodařilo se změnit předplatné.";
       toast.error(message);
-      stopPolling(); // Stop polling on error
-      setIsChangingPlan(false); // Reset loading state on error
+      stopPolling();
+      setIsChangingPlan(false);
       setSelectedTierForAction(null);
     }
-    // Remove the finally block as state is handled by polling/error paths
-    // finally {
-    //   setIsChangingPlan(false);
-    //   setSelectedTierForAction(null);
-    // }
   };
 
   const handlePlanSelect = (selectedTier: "basic" | "premium") => {
-    // Initial checks (unchanged)
     if (!isAuthenticated || isChangingPlan) {
       console.log(
         "[handlePlanSelect] Aborted: Not authenticated or already changing plan."
@@ -255,53 +231,28 @@ export default function SubscriptionPage() {
     }
 
     const targetPriceId = getPriceIdForTier(selectedTier, billingCycle);
-    console.log(
-      `[handlePlanSelect] Target Price ID for ${selectedTier}/${billingCycle}:`,
-      targetPriceId
-    );
-
     if (!targetPriceId) {
       toast.error("Konfigurace ceny pro tento plán nebyla nalezena.");
       return;
     }
 
-    setSelectedTierForAction(selectedTier); // Set visual feedback state
-
-    // --- Decision Logic ---
     const currentTierValue = getSubscriptionTier();
-    const currentStripeSubId =
-      subscription && "stripeSubscriptionId" in subscription
-        ? subscription.stripeSubscriptionId
-        : null;
+    const currentStripeSubId = subscription?.stripeSubscriptionId || null;
 
-    // Log the decision factors clearly
     console.log(`[handlePlanSelect] Decision Factors:`);
     console.log(`  - Current App Tier: ${currentTierValue}`);
-    console.log(`  - Subscription Data Loaded:`, subscription);
-    console.log(`  - Found Stripe Sub ID: ${currentStripeSubId}`);
+    console.log(`  - Current Stripe Sub ID: ${currentStripeSubId}`);
+    console.log(`  - Target Price ID: ${targetPriceId}`);
 
-    // Determine if it should be a new checkout or an update
     const isNewCheckout = currentTierValue === "free" || !currentStripeSubId;
 
     if (isNewCheckout) {
       console.log("[handlePlanSelect] Decision: Starting NEW checkout.");
-      // Ensure priceId is valid before proceeding (double check)
-      if (!targetPriceId) {
-        toast.error("Interní chyba: Chybí Price ID pro checkout.");
-        setSelectedTierForAction(null);
-        return;
-      }
       handleCheckout(targetPriceId);
     } else {
       console.log(
         "[handlePlanSelect] Decision: Updating EXISTING subscription."
       );
-      // Ensure priceId is valid before proceeding (double check)
-      if (!targetPriceId) {
-        toast.error("Interní chyba: Chybí Price ID pro update.");
-        setSelectedTierForAction(null);
-        return;
-      }
       handleChangeSubscription(targetPriceId);
     }
   };
