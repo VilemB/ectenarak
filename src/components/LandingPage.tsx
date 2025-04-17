@@ -374,8 +374,10 @@ export default function LandingPage() {
                       isCurrentPlan={false}
                       isLoading={false}
                       isSelected={false}
-                      buttonText="Začít zdarma"
-                      onSelect={() => handleSubscriptionSelect("free")}
+                      buttonText={null}
+                      onSelect={() => {
+                        /* No action needed if button is hidden */
+                      }}
                       features={[
                         {
                           name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
