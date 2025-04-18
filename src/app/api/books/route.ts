@@ -416,6 +416,49 @@ export async function POST(request: Request) {
 
     await book.save();
 
+    // --- Update User document with the new book ID ---
+    try {
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+
+      const updatedUser = await User.findByIdAndUpdate(
+        userObjectId,
+        { $push: { books: book._id } },
+        { new: true, useFindAndModify: false }
+      );
+
+      // Log the result to see if Mongoose believes the update happened
+      if (updatedUser) {
+        console.log(
+          `[Add Book] User.findByIdAndUpdate successful for user ${userId}. Returned user books array:`,
+          JSON.stringify(updatedUser.books) // Log the books array from the returned doc
+        );
+        if (
+          !updatedUser.books
+            .map((id: mongoose.Types.ObjectId) => id.toString())
+            .includes(book._id.toString())
+        ) {
+          console.error(
+            `[Add Book] CRITICAL: Update seemed successful but book ${book._id} not found in returned user.books!`
+          );
+        }
+      } else {
+        console.error(
+          `[Add Book] User.findByIdAndUpdate did not return an updated document for user ${userId}.`
+        );
+      }
+    } catch (userUpdateError) {
+      console.error(
+        `[Add Book] Failed to add book ${book._id} to user ${userId} after book creation:`,
+        userUpdateError
+      );
+      // Decide how to handle this error. Options:
+      // 1. Continue and return success (book created, user link failed - may cause inconsistency)
+      // 2. Try to delete the created book for atomicity (more complex)
+      // 3. Return an error indicating partial failure
+      // For now, we'll log the error and continue, but this might need refinement.
+    }
+    // --- End User Update ---
+
     return NextResponse.json({
       book: {
         id: book._id,

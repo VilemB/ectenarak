@@ -50,6 +50,12 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  // Array to store references to the user's books
+  books: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "Book",
+    default: [], // Explicitly default to an empty array
+  },
   // Subscription information
   subscription: {
     tier: {
@@ -104,6 +110,7 @@ UserSchema.pre("save", function (next) {
   next();
 });
 
+/* // Removed conflicting virtual field definition
 // Virtual for getting all books by this user
 // This is a reverse reference - not stored in the database
 UserSchema.virtual("books", {
@@ -112,6 +119,7 @@ UserSchema.virtual("books", {
   foreignField: "userId",
   justOne: false,
 });
+*/
 
 // Method to update last login time
 UserSchema.methods.updateLastLogin = async function () {
@@ -238,6 +246,7 @@ UserSchema.set("toJSON", {
     ret.id = ret._id;
     delete ret._id;
     delete ret.__v;
+    // delete ret.books; // Optionally remove the populated virtual if keeping the real one
     // Don't expose password in JSON
     delete ret.password;
     delete ret.auth.resetPasswordToken;
@@ -251,6 +260,7 @@ interface IUser {
   email: string;
   name: string;
   password?: string;
+  books?: mongoose.Types.ObjectId[]; // Add the real books array to the interface
   auth?: {
     provider: "local" | "google" | "facebook" | "apple";
     providerId?: string;
