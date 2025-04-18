@@ -350,11 +350,11 @@ export async function POST(request: Request) {
         );
         return NextResponse.json(
           {
-            error: "Book limit reached",
-            message: `Your current plan (${userTier}) allows a maximum of ${maxBooks} books. Please upgrade your plan to add more.`,
+            error: "Limit knih dosažen",
+            message: `Váš aktuální plán (${userTier}) povoluje maximálně ${maxBooks} knih. Pro přidání dalších knih si prosím upgradujte plán.`,
             limit: maxBooks,
             tier: userTier,
-            limitReached: true, // Add a flag for easier frontend handling
+            limitReached: true,
           },
           { status: 403 } // 403 Forbidden is appropriate for plan limits
         );

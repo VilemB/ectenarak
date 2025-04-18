@@ -145,9 +145,10 @@ export default function AddBookForm({
         if (data.limitReached) {
           toast.error(data.message, {
             action: {
-              label: "Upgrade",
+              label: "Přejít na předplatné",
               onClick: () => router.push("/subscription"),
             },
+            duration: 10000,
           });
           setFormError(data.message);
         } else {
