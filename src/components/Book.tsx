@@ -1079,7 +1079,6 @@ export default function BookComponent({
     try {
       // Call the onDelete function passed from the parent
       await onDelete(book.id);
-      toast.success("Kniha byla úspěšně smazána");
     } catch (error) {
       console.error("Error deleting book:", error);
       toast.error("Nepodařilo se smazat knihu. Zkuste to prosím znovu.");
