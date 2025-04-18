@@ -4,6 +4,9 @@ import Book from "@/models/Book";
 import Author from "@/models/Author";
 import User from "@/models/User";
 import mongoose from "mongoose";
+import { SUBSCRIPTION_LIMITS } from "@/types/user";
+// Import SubscriptionTier explicitly for casting
+import { SubscriptionTier } from "@/types/user";
 
 // Define a type for mock books with only the fields we need
 interface MockBook {
@@ -307,10 +310,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Connect to the database
     await dbConnect();
-
-    // Get book data from the request
     const { userId, title, author } = await request.json();
 
     if (!userId || !title || !author) {
@@ -319,6 +319,48 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // --- Add Book Limit Check ---
+    console.log(`[Add Book] Checking limits for user: ${userId}`);
+    // Fetch the full user document first
+    const user = await User.findById(userId);
+
+    if (!user) {
+      console.error(`[Add Book] User not found for ID: ${userId}`);
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Get the tier, default to free
+    const userTierValue = user.subscription?.tier || "free";
+    // Cast the value to SubscriptionTier before using it as an index
+    const userTier = userTierValue as SubscriptionTier;
+
+    const maxBooks = SUBSCRIPTION_LIMITS[userTier].maxBooks;
+    console.log(`[Add Book] User tier: ${userTier}, Max books: ${maxBooks}`);
+
+    // Only check limit if not premium (Infinity)
+    if (maxBooks !== Infinity) {
+      // Use userId directly here, it's confirmed valid
+      const currentBookCount = await Book.countDocuments({ userId: userId });
+      console.log(`[Add Book] Current book count: ${currentBookCount}`);
+
+      if (currentBookCount >= maxBooks) {
+        console.warn(
+          `[Add Book] Limit reached for user ${userId} (Tier: ${userTier}, Limit: ${maxBooks})`
+        );
+        return NextResponse.json(
+          {
+            error: "Book limit reached",
+            message: `Your current plan (${userTier}) allows a maximum of ${maxBooks} books. Please upgrade your plan to add more.`,
+            limit: maxBooks,
+            tier: userTier,
+            limitReached: true, // Add a flag for easier frontend handling
+          },
+          { status: 403 } // 403 Forbidden is appropriate for plan limits
+        );
+      }
+    }
+    // --- End Book Limit Check ---
 
     // If using mock connection, return a mock response
     if (isMockConnection) {
