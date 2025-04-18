@@ -5,17 +5,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Book } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, PlusCircle, X, Coins } from "lucide-react";
+import { Search, Plus, X, Coins } from "lucide-react";
 import BookComponent from "@/components/Book";
 import { motion, AnimatePresence } from "framer-motion";
 import LandingPage from "@/components/LandingPage";
 import Link from "next/link";
 import AiCreditsDisplay from "@/components/AiCreditsDisplay";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import AddBookForm from "@/components/AddBookForm";
 
 // Define interface for user with subscription
 interface UserWithSubscription {
@@ -78,20 +76,7 @@ interface RawBookData {
   notes?: RawNoteData[]; // Use the defined interface array
 }
 
-const formVariants = {
-  hidden: { opacity: 0, y: -20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-    },
-  },
-};
-
-// Define LoadingSpinner component
+// Define LoadingSpinner component locally
 const LoadingSpinner = () => (
   <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center">
     <div className="text-center">
@@ -104,7 +89,6 @@ const LoadingSpinner = () => (
 function HomeContent() {
   const { user, loading: authLoading } = useAuth();
   const { subscription, loading: subLoading } = useSubscription();
-  const router = useRouter();
 
   // Local state for books, loading, error, pagination
   const [books, setBooks] = useState<Book[]>([]);
@@ -112,14 +96,8 @@ function HomeContent() {
   const [booksError, setBooksError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
 
-  // Local state for form and UI
-  const [newBookTitle, setNewBookTitle] = useState("");
-  const [newBookAuthor, setNewBookAuthor] = useState("");
-  const [formError, setFormError] = useState("");
+  // Keep state for showing/hiding the form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [titleTouched, setTitleTouched] = useState(false);
-  const [authorTouched, setAuthorTouched] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Function to fetch books
@@ -187,62 +165,6 @@ function HomeContent() {
   };
   const limitText = getLimitText();
 
-  // Add Book Handler
-  const handleAddBook = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(""); // Clear previous form error
-    setTitleTouched(true);
-    setAuthorTouched(true);
-
-    const title = newBookTitle.trim();
-    const author = newBookAuthor.trim();
-
-    if (!title || !author) {
-      setFormError("Prosím vyplňte název knihy a autora");
-      return;
-    }
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/books", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id, title, author }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.limitReached) {
-          toast.error(data.message, {
-            action: {
-              label: "Upgrade",
-              onClick: () => router.push("/subscription"),
-            },
-          });
-          setFormError(data.message); // Show error near the form
-        } else {
-          throw new Error(data.error || "Failed to create book");
-        }
-      } else {
-        await fetchBooks(); // Refetch books on success
-        setShowAddForm(false);
-        setNewBookTitle("");
-        setNewBookAuthor("");
-        setTitleTouched(false);
-        setAuthorTouched(false);
-        toast.success("Kniha úspěšně přidána!");
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Neznámá chyba";
-      console.error("Error adding book:", err);
-      setFormError(message); // Show general error near the form
-      toast.error(`Chyba při přidávání knihy: ${message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Delete Book Handler
   const handleDeleteBook = async (bookId: string) => {
     // Optimistic UI update (optional)
@@ -284,7 +206,7 @@ function HomeContent() {
             Tvůj osobní elektronický čtenářský deník
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:flex-none sm:w-64">
             <Search className="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground search-icon" />
             <input
@@ -298,10 +220,18 @@ function HomeContent() {
           <Button
             onClick={() => setShowAddForm(true)}
             className="flex-none shadow-sm hover:shadow-md transition-all duration-200"
+            disabled={showAddForm}
           >
             <Plus className="h-4 w-4 mr-2" />
             Přidat knihu
           </Button>
+          {limitText && (
+            <div className="w-full sm:w-auto text-right sm:ml-4 mt-2 sm:mt-0">
+              <p className="text-xs text-muted-foreground">
+                Limit: {limitText}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -337,7 +267,6 @@ function HomeContent() {
         </motion.div>
       )}
 
-      {/* AI Credits Display */}
       {user && !showAddForm && (
         <motion.div className="mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-3 border border-gray-700/40 shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -360,14 +289,6 @@ function HomeContent() {
                     )}
                 </div>
                 <div className="flex items-center mt-1.5">
-                  {/* isLoadingSubscription ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-amber-500 mr-2"></div>
-                      <span className="text-xs text-gray-400">
-                        Načítání kreditů...
-                      </span>
-                    </div>
-                  ) : */}
                   <AiCreditsDisplay
                     aiCreditsRemaining={
                       subscription?.aiCreditsRemaining !== undefined
@@ -493,133 +414,23 @@ function HomeContent() {
         </motion.div>
       )}
 
-      {/* --- Display Book Limit --- */}
-      {limitText && (
-        <div className="text-center mb-4">
-          <p className="text-sm text-muted-foreground">Využito: {limitText}</p>
-        </div>
-      )}
-      {/* --- End Display Book Limit --- */}
-
-      {/* Add Book Button / Form Area */}
-      <div className="mb-6">
-        {!showAddForm && (
-          <Button onClick={() => setShowAddForm(true)} className="shadow-md">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Přidat knihu
-          </Button>
+      <AnimatePresence>
+        {showAddForm && user?.id && (
+          <AddBookForm
+            userId={user.id}
+            onBookAdded={fetchBooks}
+            onClose={() => setShowAddForm(false)}
+          />
         )}
+      </AnimatePresence>
 
-        {/* Add Book Form */}
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              variants={formVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="bg-card border border-border/40 rounded-lg shadow-lg p-4 sm:p-6 mt-4 relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/80"></div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Přidat novou knihu</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setFormError("");
-                    setNewBookTitle("");
-                    setNewBookAuthor("");
-                    setTitleTouched(false);
-                    setAuthorTouched(false);
-                  }}
-                  className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <form onSubmit={handleAddBook} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Název knihy
-                  </label>
-                  <Input
-                    id="title"
-                    type="text"
-                    value={newBookTitle}
-                    onChange={(e) => {
-                      setNewBookTitle(e.target.value);
-                      setFormError("");
-                      if (!titleTouched) setTitleTouched(true);
-                    }}
-                    placeholder="Např. Hobit..."
-                    className={cn(
-                      titleTouched && !newBookTitle.trim() && "border-red-500"
-                    )}
-                  />
-                  {titleTouched && !newBookTitle.trim() && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Název je povinný
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="author"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Autor
-                  </label>
-                  <Input
-                    id="author"
-                    type="text"
-                    value={newBookAuthor}
-                    onChange={(e) => {
-                      setNewBookAuthor(e.target.value);
-                      setFormError("");
-                      if (!authorTouched) setAuthorTouched(true);
-                    }}
-                    placeholder="Např. J.R.R. Tolkien..."
-                    className={cn(
-                      authorTouched && !newBookAuthor.trim() && "border-red-500"
-                    )}
-                  />
-                  {authorTouched && !newBookAuthor.trim() && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Autor je povinný
-                    </p>
-                  )}
-                </div>
-                {formError && (
-                  <p className="text-sm text-red-500">{formError}</p>
-                )}
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Přidávám..." : "Přidat knihu"}
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Filters/Sorting */}
-      {/* Remove filter/sort controls if state was removed */}
-      {/* ... */}
-
-      {/* Book List Area */}
       {isLoadingBooks ? (
         <LoadingSpinner />
       ) : booksError ? (
         <p className="text-red-500 text-center">{booksError}</p>
       ) : (
         <AnimatePresence>
-          <motion.div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+          <motion.div className="grid grid-cols-1 gap-4 md:gap-5">
             {books && books.length > 0 ? (
               books.map((book) => (
                 <BookComponent
@@ -636,10 +447,6 @@ function HomeContent() {
           </motion.div>
         </AnimatePresence>
       )}
-
-      {/* Pagination */}
-      {/* Remove pagination controls if state was removed */}
-      {/* ... */}
     </main>
   );
 }
