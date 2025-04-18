@@ -570,6 +570,7 @@ const BookHeader = ({
                   {isExpanded ? "Zavřít" : "Rozbalit"}
                 </span>
 
+                {/* Hide keyboard hint on smaller screens */}
                 <span className="hidden sm:inline-flex text-xs ml-1 items-center text-zinc-400">
                   <kbd className="px-1 py-0.5 text-[10px] font-mono bg-blue-900/40 rounded border border-blue-800/50">
                     {isExpanded ? "ESC" : "Enter"}
@@ -579,9 +580,9 @@ const BookHeader = ({
             </div>
           </div>
 
-          {/* Import and use the standalone BookActionButtons component with improved positioning */}
+          {/* Container for BookActionButtons - ensure it handles mobile correctly */}
           <div
-            className="flex justify-start sm:justify-end mt-1 sm:mt-0"
+            className="flex justify-start sm:justify-end mt-2 sm:mt-0 w-full sm:w-auto" // Added w-full sm:w-auto
             data-no-toggle="true"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1781,12 +1782,13 @@ export default function BookComponent({
           transitionDuration: isExpanded ? "350ms" : "200ms",
         }}
       >
-        {/* Notes Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 pb-2 border-b border-blue-800/50">
-          <h3 className="text-base sm:text-lg font-medium text-blue-100">
+        {/* Notes Section Header - Ensure vertical stacking on smallest screens */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2 pt-4 pb-3 border-b border-blue-800/50">
+          <h3 className="text-base font-medium text-blue-100">
             Poznámky a shrnutí
           </h3>
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Container for buttons - Stacks vertically by default */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             {/* Note Filter Buttons */}
             <div
               className="flex items-center bg-blue-950/40 rounded-md p-0.5 border border-blue-900/30"
@@ -1846,7 +1848,7 @@ export default function BookComponent({
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
+                className="w-full sm:w-auto bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
                 disabled={isGenerating}
                 onClick={(e) => {
                   e.stopPropagation();

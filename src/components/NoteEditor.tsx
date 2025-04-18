@@ -209,9 +209,9 @@ export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
       <div
         className={`w-full rounded-lg border border-border/60 bg-background/80 shadow-sm transition-all duration-200 hover:shadow ${className}`}
       >
-        {/* Simplified Toolbar - only essential formatting options */}
-        <div className="flex items-center justify-between border-b border-border/40 bg-secondary/30 px-2 py-1 rounded-t-lg">
-          <div className="flex flex-wrap items-center gap-0.5">
+        {/* Simplified Toolbar - Increased gap */}
+        <div className="flex items-center justify-between border-b border-border/40 bg-secondary/30 px-2 py-1.5 rounded-t-lg">
+          <div className="flex flex-wrap items-center gap-1">
             <Tooltip content="Tučné (Ctrl+B)">
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -339,10 +339,10 @@ export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
           )}
         </AnimatePresence>
 
-        {/* Editor or Preview */}
-        <div className="p-3">
+        {/* Editor or Preview - Increased padding and min-height */}
+        <div className="p-4">
           {isPreviewMode ? (
-            <div className="min-h-[100px] prose prose-sm dark:prose-invert max-w-none">
+            <div className="min-h-[120px] prose prose-sm dark:prose-invert max-w-none">
               {value.trim() ? (
                 <ReactMarkdown>{value}</ReactMarkdown>
               ) : (
@@ -359,23 +359,23 @@ export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               rows={rows}
-              className="w-full resize-none bg-transparent outline-none placeholder:text-muted-foreground/60 min-h-[100px]"
+              className="w-full resize-none bg-transparent outline-none placeholder:text-muted-foreground/60 min-h-[120px]"
             />
           )}
         </div>
 
-        {/* Character count and buttons */}
-        <div className="flex items-center justify-between px-3 py-2 border-t border-border/40 bg-secondary/10">
-          <div className="text-xs text-muted-foreground">
+        {/* Character count and buttons - Adjusted padding */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 px-4 py-3 sm:px-3 sm:py-2 border-t border-border/40 bg-secondary/10">
+          <div className="text-xs text-muted-foreground text-center sm:text-left mb-1 sm:mb-0">
             {value.length > 0 ? (
               <span>{value.length} znaků</span>
             ) : (
-              <span className="text-muted-foreground/60">
+              <span className="hidden sm:inline text-muted-foreground/60">
                 Tip: Ctrl+Enter pro rychlé uložení
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-3 w-full sm:w-auto">
             {onCancel && (
               <motion.div
                 whileHover={{ scale: 1.01 }}
@@ -400,7 +400,7 @@ export const NoteEditor = forwardRef<HTMLTextAreaElement, NoteEditorProps>(
                 size="sm"
                 disabled={!value.trim() || isSubmitting}
                 onClick={(e) => onSubmit(e as unknown as React.FormEvent)}
-                className="h-7 px-3 bg-primary text-primary-foreground"
+                className="h-8 sm:h-7 px-4 sm:px-3 bg-primary text-primary-foreground grow sm:grow-0"
               >
                 {isSubmitting ? (
                   <>
