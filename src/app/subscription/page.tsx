@@ -442,7 +442,7 @@ export default function SubscriptionPage() {
                               : "Zrušit Předplatné"}
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="border-destructive/50">
+                        <AlertDialogContent className="border-destructive/50 sm:max-w-lg">
                           <AlertDialogHeader>
                             <div className="flex items-center space-x-2">
                               <AlertTriangle className="h-5 w-5 text-destructive" />
