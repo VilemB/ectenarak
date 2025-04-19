@@ -434,51 +434,64 @@ export default function SubscriptionPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full text-red-400 border-red-400/50 hover:bg-red-900/30 hover:text-red-300 hover:border-red-400/70 transition-colors duration-200"
+                            className="w-full text-red-400 border-red-400/50 hover:bg-red-900/30 hover:text-red-300 hover:border-red-400/70 focus-visible:ring-destructive/50 transition-colors duration-200 group"
                             disabled={isCancelling}
                           >
-                            {isCancelling
-                              ? "Zpracovávání..."
-                              : "Zrušit Předplatné"}
+                            {isCancelling ? (
+                              <>
+                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />{" "}
+                                Zpracovávání...
+                              </>
+                            ) : (
+                              <span className="group-hover:text-red-300 transition-colors">
+                                Zrušit Předplatné
+                              </span>
+                            )}
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="border-destructive/50 sm:max-w-lg">
-                          <AlertDialogHeader>
-                            <div className="flex items-center space-x-2">
-                              <AlertTriangle className="h-5 w-5 text-destructive" />
-                              <AlertDialogTitle className="text-destructive">
-                                Potvrzení Zrušení Předplatného
-                              </AlertDialogTitle>
+
+                        <AlertDialogContent className="sm:max-w-md bg-gradient-to-br from-muted/70 via-background/80 to-muted/70 border-border/50 backdrop-blur-lg shadow-2xl rounded-xl overflow-hidden">
+                          <AlertDialogHeader className="text-center pt-6 pb-4 px-6">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-4 border border-destructive/20">
+                              <AlertTriangle
+                                className="h-6 w-6 text-destructive"
+                                aria-hidden="true"
+                              />
                             </div>
-                            <AlertDialogDescription className="pt-3">
-                              Chystáte se zrušit své{" "}
-                              <span className="font-semibold capitalize text-foreground">
+                            <AlertDialogTitle className="text-xl font-semibold text-foreground">
+                              Opravdu chcete zrušit předplatné?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                              Tímto krokem naplánujete zrušení vašeho{" "}
+                              <strong className="text-foreground/90 capitalize">
                                 {currentTier}
-                              </span>{" "}
-                              předplatné. Zůstane aktivní do{" "}
-                              <span className="font-semibold text-foreground">
+                              </strong>{" "}
+                              plánu ke konci aktuálního fakturačního období (
+                              <strong className="text-foreground/90">
                                 {subscription.nextRenewalDate
                                   ? new Date(
                                       subscription.nextRenewalDate
                                     ).toLocaleDateString("cs-CZ")
-                                  : "konce období"}
-                              </span>
-                              . Poté bude váš účet převeden na tarif Free a
-                              přijdete o zbývající AI kredity. Opravdu chcete
-                              pokračovat?
+                                  : "N/A"}
+                              </strong>
+                              ).
+                              <br />
+                              Poté budete převedeni na tarif Free a ztratíte
+                              zbývající AI kredity.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter className="mt-4">
+
+                          <AlertDialogFooter className="bg-gradient-to-t from-black/10 to-transparent px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
                             <AlertDialogCancel
                               disabled={isCancelling}
-                              className="transition-colors"
+                              className="mt-2 sm:mt-0 w-full sm:w-auto bg-transparent border-border/50 hover:bg-muted/50 transition-colors"
                             >
-                              Ponechat předplatné
+                              Zpět
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleCancelSubscription}
                               disabled={isCancelling}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                              className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive transition-colors flex items-center justify-center"
                             >
                               {isCancelling ? (
                                 <>
@@ -486,7 +499,7 @@ export default function SubscriptionPage() {
                                   Rušení...
                                 </>
                               ) : (
-                                "Ano, zrušit předplatné"
+                                "Ano, potvrdit zrušení"
                               )}
                             </AlertDialogAction>
                           </AlertDialogFooter>
