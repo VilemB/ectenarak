@@ -52,7 +52,7 @@ const AuthorSchema = new mongoose.Schema({
 });
 
 // Create indexes for common queries
-AuthorSchema.index({ name: 1 });
+// AuthorSchema.index({ name: 1 }); // Removed duplicate index (unique: true used in schema)
 AuthorSchema.index({ nationality: 1 });
 AuthorSchema.index({ genres: 1 });
 
