@@ -110,7 +110,10 @@ export default function SubscriptionPage() {
     return priceId || null;
   };
 
-  const handleCheckout = async (priceId: string | null) => {
+  const handleCheckout = async (
+    priceId: string | null,
+    tierForCheckout: "basic" | "premium"
+  ) => {
     if (!priceId || priceId.trim() === "" || priceId === "price_free") {
       console.error(
         "handleCheckout Error: Invalid Price ID provided:",
@@ -122,19 +125,12 @@ export default function SubscriptionPage() {
       return;
     }
 
-    if (!selectedTierForAction) {
-      console.error(
-        "handleCheckout Error: selectedTierForAction is null, cannot proceed."
-      );
-      toast.error("Došlo k chybě při výběru plánu. Zkuste to prosím znovu.");
-      setIsChangingPlan(false);
-      return;
-    }
-
-    console.log(`Attempting checkout with Price ID: ${priceId}`);
+    console.log(
+      `Attempting checkout with Price ID: ${priceId} for tier: ${tierForCheckout}`
+    );
     setIsChangingPlan(true);
     try {
-      sessionStorage.setItem("intendedSubscription", selectedTierForAction);
+      sessionStorage.setItem("intendedSubscription", tierForCheckout);
       sessionStorage.setItem(
         "yearlyBilling",
         billingCycle === "yearly" ? "true" : "false"
@@ -193,7 +189,7 @@ export default function SubscriptionPage() {
       console.log(
         `[handlePlanSelect] Starting checkout for ${selectedTier}. Current: ${currentTierValue}`
       );
-      handleCheckout(targetPriceId);
+      handleCheckout(targetPriceId, selectedTier);
     } else {
       console.log(
         `[handlePlanSelect] User already on paid plan (${currentTierValue}). Direct change via UI currently disabled for this scenario.`
