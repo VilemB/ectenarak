@@ -13,15 +13,15 @@ import { ObjectId } from "mongodb";
  */
 export async function GET(): Promise<NextResponse> {
   try {
-    console.log("🔄 GET /api/subscription - Getting current subscription data");
+    // console.log("🔄 GET /api/subscription - Getting current subscription data");
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      console.error("❌ No authenticated user found");
+      // console.error("❌ No authenticated user found");
       return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
 
-    console.log(`👤 User ID: ${session.user.id}`);
+    // console.log(`👤 User ID: ${session.user.id}`);
 
     const { db } = await connectToDatabase();
     const usersCollection = db.collection("users");
@@ -52,29 +52,29 @@ export async function GET(): Promise<NextResponse> {
     }
 
     if (!user) {
-      console.error("❌ User not found in database");
+      // console.error("❌ User not found in database");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    console.log(
-      "📊 Found user subscription data:",
-      JSON.stringify(
-        {
-          hasSubscription: !!user.subscription,
-          aiCreditsRemaining: user.subscription?.aiCreditsRemaining,
-          aiCreditsTotal: user.subscription?.aiCreditsTotal,
-          nextRenewalDate: user.subscription?.nextRenewalDate,
-        },
-        null,
-        2
-      )
-    );
+    // console.log(
+    //   "📊 Found user subscription data:",
+    //   JSON.stringify(
+    //     {
+    //       hasSubscription: !!user.subscription,
+    //       aiCreditsRemaining: user.subscription?.aiCreditsRemaining,
+    //       aiCreditsTotal: user.subscription?.aiCreditsTotal,
+    //       nextRenewalDate: user.subscription?.nextRenewalDate,
+    //     },
+    //     null,
+    //     2
+    //   )
+    // );
 
     return NextResponse.json({
       subscription: user.subscription || null,
     });
   } catch (error: Error | unknown) {
-    console.error("❌ Error in subscription API:", error);
+    // console.error("❌ Error in subscription API:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json({ error: errorMessage }, { status: 500 });

@@ -40,8 +40,9 @@ export async function GET(request: Request) {
     // Debug information
     if (debugId) {
       try {
-        const debug = JSON.parse(decodeURIComponent(debugId));
-        console.log("API DEBUG - User info:", debug);
+        JSON.parse(decodeURIComponent(debugId)); // Parse but don't assign if unused
+        // const debug = JSON.parse(decodeURIComponent(debugId)); // Removed unused variable
+        // console.log("API DEBUG - User info:", debug); // Remove log
       } catch (e) {
         console.error("API DEBUG - Failed to parse debug info:", e);
       }
@@ -59,10 +60,10 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
-    console.log("API: Fetching books for userId:", userId);
-    console.log("API: Pagination:", { page, limit });
-    console.log("API: Filters:", { author, searchTerm });
-    console.log("API: Sorting:", { sortBy, sortOrder });
+    // console.log("API: Fetching books for userId:", userId); // Remove log
+    // console.log("API: Pagination:", { page, limit }); // Remove log
+    // console.log("API: Filters:", { author, searchTerm }); // Remove log
+    // console.log("API: Sorting:", { sortBy, sortOrder }); // Remove log
 
     if (!userId) {
       console.error("API: Missing userId in request");
@@ -74,7 +75,7 @@ export async function GET(request: Request) {
 
     // If using mock connection, return mock data
     if (isMockConnection) {
-      console.log("API: Using mock data for books");
+      // console.log("API: Using mock data for books"); // Remove log
 
       // Filter mock books to match the requested userId
       let mockBooksForUser = mockData.books.map((book) => ({
@@ -129,9 +130,9 @@ export async function GET(request: Request) {
 
     // Enhanced userId handling to catch all possible formats from NextAuth
     if (userId) {
-      console.log(
-        `API: Using userId format: ${typeof userId}, value: ${userId}`
-      );
+      // console.log( // Remove log
+      //   `API: Using userId format: ${typeof userId}, value: ${userId}`
+      // );
 
       // Build the $or query to try all possible ID formats
       const orConditions = [];
@@ -146,7 +147,7 @@ export async function GET(request: Request) {
 
       // Add email-based conditions if available
       if (userEmail) {
-        console.log(`API: Also trying with email: ${userEmail}`);
+        // console.log(`API: Also trying with email: ${userEmail}`); // Remove log
         orConditions.push({ email: userEmail });
         orConditions.push({ userEmail: userEmail });
       }
@@ -154,7 +155,7 @@ export async function GET(request: Request) {
       // Set the query
       query.$or = orConditions;
 
-      console.log("API: Final query:", JSON.stringify(query));
+      // console.log("API: Final query:", JSON.stringify(query)); // Remove log
     }
 
     if (author && author !== "all") {
@@ -185,12 +186,12 @@ export async function GET(request: Request) {
       .limit(limit)
       .populate("authorId", "name summary photoUrl");
 
-    console.log(`API: Found ${rawBooks.length} raw books for user ${userId}`);
+    // console.log(`API: Found ${rawBooks.length} raw books for user ${userId}`); // Remove log
 
     // Log each book for debugging
-    rawBooks.forEach((book, index) => {
-      console.log(`API: Book ${index}:`, JSON.stringify(book));
-    });
+    // rawBooks.forEach((book, index) => { // Remove log block
+    //   console.log(`API: Book ${index}:`, JSON.stringify(book));
+    // });
 
     // Filter out any invalid books with strict validation
     const validBooks = rawBooks.filter((book) => {
@@ -266,7 +267,7 @@ export async function GET(request: Request) {
       };
     });
 
-    console.log(`API: Returning ${cleanBooks.length} clean books`);
+    // console.log(`API: Returning ${cleanBooks.length} clean books`); // Remove log
 
     // Update user's last active time
     try {
@@ -321,7 +322,7 @@ export async function POST(request: Request) {
     }
 
     // --- Add Book Limit Check ---
-    console.log(`[Add Book] Checking limits for user: ${userId}`);
+    // console.log(`[Add Book] Checking limits for user: ${userId}`); // Remove log
     // Fetch the full user document first
     const user = await User.findById(userId);
 
@@ -336,13 +337,13 @@ export async function POST(request: Request) {
     const userTier = userTierValue as SubscriptionTier;
 
     const maxBooks = SUBSCRIPTION_LIMITS[userTier].maxBooks;
-    console.log(`[Add Book] User tier: ${userTier}, Max books: ${maxBooks}`);
+    // console.log(`[Add Book] User tier: ${userTier}, Max books: ${maxBooks}`); // Remove log
 
     // Only check limit if not premium (Infinity)
     if (maxBooks !== Infinity) {
       // Use userId directly here, it's confirmed valid
       const currentBookCount = await Book.countDocuments({ userId: userId });
-      console.log(`[Add Book] Current book count: ${currentBookCount}`);
+      // console.log(`[Add Book] Current book count: ${currentBookCount}`); // Remove log
 
       if (currentBookCount >= maxBooks) {
         console.warn(
@@ -364,7 +365,7 @@ export async function POST(request: Request) {
 
     // If using mock connection, return a mock response
     if (isMockConnection) {
-      console.log("API: Using mock data for creating a book");
+      // console.log("API: Using mock data for creating a book"); // Remove log
 
       // Create a mock book
       const mockBook = {
@@ -428,10 +429,10 @@ export async function POST(request: Request) {
 
       // Log the result to see if Mongoose believes the update happened
       if (updatedUser) {
-        console.log(
-          `[Add Book] User.findByIdAndUpdate successful for user ${userId}. Returned user books array:`,
-          JSON.stringify(updatedUser.books) // Log the books array from the returned doc
-        );
+        // console.log( // Remove log
+        //   `[Add Book] User.findByIdAndUpdate successful for user ${userId}. Returned user books array:`,
+        //   JSON.stringify(updatedUser.books)
+        // );
         if (
           !updatedUser.books
             .map((id: mongoose.Types.ObjectId) => id.toString())
