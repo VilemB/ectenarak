@@ -243,9 +243,11 @@ export default function AddBookForm({
                       onBlur={validateStep1}
                       placeholder="Např. Hobit aneb Cesta tam a zase zpátky"
                       className={cn(
-                        "bg-transparent border-white/10 focus-visible:ring-primary/30",
+                        "bg-transparent border border-white/5 rounded-md transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary",
+                        "placeholder:text-muted-foreground/50",
                         titleError &&
-                          "border-destructive focus-visible:ring-destructive/50 bg-destructive/5"
+                          "border-destructive focus-visible:ring-destructive bg-destructive/5"
                       )}
                       aria-required="true"
                       aria-invalid={!!titleError}
@@ -280,9 +282,11 @@ export default function AddBookForm({
                       onBlur={validateStep2}
                       placeholder="Např. J. R. R. Tolkien"
                       className={cn(
-                        "bg-transparent border-white/10 focus-visible:ring-primary/30",
+                        "bg-transparent border border-white/5 rounded-md transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary",
+                        "placeholder:text-muted-foreground/50",
                         authorError &&
-                          "border-destructive focus-visible:ring-destructive/50 bg-destructive/5"
+                          "border-destructive focus-visible:ring-destructive bg-destructive/5"
                       )}
                       required
                       aria-required="true"
