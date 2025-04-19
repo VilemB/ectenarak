@@ -80,6 +80,10 @@ export async function POST(req: Request) {
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
 
+        console.log(
+          `[Webhook] Checkout completed for sub ID: ${subscriptionId}`
+        ); // Log Sub ID
+
         // Make sure we have the right metadata
         if (!session.metadata?.userId) {
           console.error("Webhook Error: Missing userId in session metadata");
@@ -95,12 +99,26 @@ export async function POST(req: Request) {
           subscriptionId
         )) as unknown as StripeSubscription;
 
+        // *** Add Logging Here ***
+        console.log(
+          `[Webhook] Retrieved Stripe Sub for ${subscriptionId}:`,
+          subscription
+        );
+        console.log(
+          `[Webhook] current_period_end from Stripe: ${subscription.current_period_end}`
+        );
+
         // Get data needed for DB update
         const priceId = subscription.items.data[0].price.id;
         const purchasedTier = PRICE_ID_TO_TIER[priceId];
-        const nextRenewalDate = new Date(
-          subscription.current_period_end * 1000
+        const currentPeriodEndTimestamp = subscription.current_period_end;
+        const nextRenewalDate = new Date(currentPeriodEndTimestamp * 1000);
+
+        // *** Add Logging Here ***
+        console.log(
+          `[Webhook] Calculated nextRenewalDate: ${nextRenewalDate.toISOString()}`
         );
+
         const isYearly = subscription.items.data[0].plan.interval === "year";
 
         if (!purchasedTier) {
@@ -119,6 +137,10 @@ export async function POST(req: Request) {
         // Update the user in the database
         const users = await getUserCollection();
 
+        console.log(
+          `[Webhook] Attempting DB update for user ${userId} with nextRenewalDate: ${nextRenewalDate.toISOString()}`
+        );
+
         await users.updateOne(
           { _id: new mongoose.Types.ObjectId(userId) },
           {
@@ -134,6 +156,7 @@ export async function POST(req: Request) {
               "subscription.autoRenew": true, // Assume paid tiers auto-renew
               "subscription.aiCreditsTotal": credits, // Reset total credits
               "subscription.aiCreditsRemaining": credits, // Reset remaining credits
+              "subscription.cancelAtPeriodEnd": false, // Ensure this is false initially
             },
           }
         );
