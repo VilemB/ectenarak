@@ -10,6 +10,7 @@ import {
   Info,
   Calendar,
   RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -441,33 +442,52 @@ export default function SubscriptionPage() {
                               : "Zrušit Předplatné"}
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="border-destructive/50">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Opravdu chcete zrušit předplatné?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Vaše předplatné zůstane aktivní do konce
-                              aktuálního fakturačního období (
-                              {subscription.nextRenewalDate
-                                ? new Date(
-                                    subscription.nextRenewalDate
-                                  ).toLocaleDateString("cs-CZ")
-                                : "N/A"}
-                              ). Poté bude automaticky zrušeno a váš účet
-                              převeden na tarif Free. AI kredity propadnou.
+                            <div className="flex items-center space-x-2">
+                              <AlertTriangle className="h-5 w-5 text-destructive" />
+                              <AlertDialogTitle className="text-destructive">
+                                Potvrzení Zrušení Předplatného
+                              </AlertDialogTitle>
+                            </div>
+                            <AlertDialogDescription className="pt-3">
+                              Chystáte se zrušit své{" "}
+                              <span className="font-semibold capitalize text-foreground">
+                                {currentTier}
+                              </span>{" "}
+                              předplatné. Zůstane aktivní do{" "}
+                              <span className="font-semibold text-foreground">
+                                {subscription.nextRenewalDate
+                                  ? new Date(
+                                      subscription.nextRenewalDate
+                                    ).toLocaleDateString("cs-CZ")
+                                  : "konce období"}
+                              </span>
+                              . Poté bude váš účet převeden na tarif Free a
+                              přijdete o zbývající AI kredity. Opravdu chcete
+                              pokračovat?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isCancelling}>
-                              Zpět
+                          <AlertDialogFooter className="mt-4">
+                            <AlertDialogCancel
+                              disabled={isCancelling}
+                              className="transition-colors"
+                            >
+                              Ponechat předplatné
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleCancelSubscription}
                               disabled={isCancelling}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
                             >
-                              {isCancelling ? "Rušení..." : "Potvrdit Zrušení"}
+                              {isCancelling ? (
+                                <>
+                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />{" "}
+                                  Rušení...
+                                </>
+                              ) : (
+                                "Ano, zrušit předplatné"
+                              )}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
