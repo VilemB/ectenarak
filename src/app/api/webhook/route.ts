@@ -108,17 +108,43 @@ export async function POST(req: Request) {
           `[Webhook] current_period_end from Stripe: ${subscription.current_period_end}`
         );
 
+        // ** Validate the timestamp and calculate nextRenewalDate **
+        let nextRenewalDate: Date | null = null;
+        if (
+          subscription.current_period_end &&
+          typeof subscription.current_period_end === "number" &&
+          subscription.current_period_end > 0
+        ) {
+          try {
+            nextRenewalDate = new Date(subscription.current_period_end * 1000);
+            // Check if the resulting date is valid
+            if (isNaN(nextRenewalDate.getTime())) {
+              console.error(
+                `[Webhook] Failed to create valid date from timestamp: ${subscription.current_period_end}`
+              );
+              nextRenewalDate = null; // Set to null if date creation failed
+            }
+          } catch (dateError) {
+            console.error(
+              `[Webhook] Error creating date from timestamp: ${subscription.current_period_end}`,
+              dateError
+            );
+            nextRenewalDate = null; // Set to null on error
+          }
+        } else {
+          console.warn(
+            `[Webhook] Invalid or missing current_period_end timestamp received: ${subscription.current_period_end}. Setting nextRenewalDate to null.`
+          );
+        }
+
+        // Log the calculated date (conditionally)
+        console.log(
+          `[Webhook] Calculated nextRenewalDate for DB: ${nextRenewalDate instanceof Date ? nextRenewalDate.toISOString() : "null"}`
+        );
+
         // Get data needed for DB update
         const priceId = subscription.items.data[0].price.id;
         const purchasedTier = PRICE_ID_TO_TIER[priceId];
-        const currentPeriodEndTimestamp = subscription.current_period_end;
-        const nextRenewalDate = new Date(currentPeriodEndTimestamp * 1000);
-
-        // *** Add Logging Here ***
-        console.log(
-          `[Webhook] Calculated nextRenewalDate: ${nextRenewalDate.toISOString()}`
-        );
-
         const isYearly = subscription.items.data[0].plan.interval === "year";
 
         if (!purchasedTier) {
@@ -138,7 +164,7 @@ export async function POST(req: Request) {
         const users = await getUserCollection();
 
         console.log(
-          `[Webhook] Attempting DB update for user ${userId} with nextRenewalDate: ${nextRenewalDate.toISOString()}`
+          `[Webhook] Attempting DB update for user ${userId} with nextRenewalDate: ${nextRenewalDate instanceof Date ? nextRenewalDate.toISOString() : "null"}`
         );
 
         await users.updateOne(
