@@ -3,17 +3,32 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, BookText, BookOpen } from "lucide-react";
+import {
+  Sparkles,
+  BookText,
+  BookOpen,
+  Info,
+  Calendar,
+  RefreshCw,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
-// import AiCreditsDisplay from "@/components/AiCreditsDisplay"; // Removed unused import
+import AiCreditsDisplay from "@/components/AiCreditsDisplay";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LoginForm from "@/components/LoginForm";
 import SubscriptionFAQ from "@/components/SubscriptionFAQ";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +40,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -101,9 +122,24 @@ export default function SubscriptionPage() {
       return;
     }
 
+    if (!selectedTierForAction) {
+      console.error(
+        "handleCheckout Error: selectedTierForAction is null, cannot proceed."
+      );
+      toast.error("Došlo k chybě při výběru plánu. Zkuste to prosím znovu.");
+      setIsChangingPlan(false);
+      return;
+    }
+
     console.log(`Attempting checkout with Price ID: ${priceId}`);
     setIsChangingPlan(true);
     try {
+      sessionStorage.setItem("intendedSubscription", selectedTierForAction);
+      sessionStorage.setItem(
+        "yearlyBilling",
+        billingCycle === "yearly" ? "true" : "false"
+      );
+
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,6 +161,8 @@ export default function SubscriptionPage() {
       toast.error(message);
       setIsChangingPlan(false);
       setSelectedTierForAction(null);
+      sessionStorage.removeItem("intendedSubscription");
+      sessionStorage.removeItem("yearlyBilling");
     }
   };
 
@@ -136,27 +174,33 @@ export default function SubscriptionPage() {
       return;
     }
 
+    setSelectedTierForAction(selectedTier);
+
     const targetPriceId = getPriceIdForTier(selectedTier, billingCycle);
     if (!targetPriceId) {
       toast.error("Konfigurace ceny pro tento plán nebyla nalezena.");
+      setSelectedTierForAction(null);
       return;
     }
 
     const currentTierValue = getSubscriptionTier();
 
     const isNewCheckout = currentTierValue === "free";
+    const isUpgrade =
+      currentTierValue === "basic" && selectedTier === "premium";
 
-    if (isNewCheckout) {
+    if (isNewCheckout || isUpgrade) {
       console.log(
-        `[handlePlanSelect] User is FREE. Starting checkout for ${selectedTier}.`
+        `[handlePlanSelect] Starting checkout for ${selectedTier}. Current: ${currentTierValue}`
       );
-      setSelectedTierForAction(selectedTier);
       handleCheckout(targetPriceId);
     } else {
       console.log(
-        `[handlePlanSelect] User already on paid plan (${currentTierValue}). Change disabled.`
+        `[handlePlanSelect] User already on paid plan (${currentTierValue}). Direct change via UI currently disabled for this scenario.`
       );
-      toast.info("Pro změnu existujícího předplatného nás prosím kontaktujte.");
+      toast.info(
+        "Pro změnu nebo zrušení stávajícího předplatného použijte sekci 'Správa předplatného'."
+      );
       setSelectedTierForAction(null);
     }
   };
@@ -259,335 +303,409 @@ export default function SubscriptionPage() {
         <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-t-transparent border-blue-500 animate-spin"></div>
-          <p className="text-gray-300">Načítání předplatného...</p>
+          <p className="text-gray-300">Načítání informací o předplatném...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="text-white min-h-screen flex flex-col">
-      <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10 flex-grow">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-12 md:space-y-20"
-        >
+    <TooltipProvider>
+      <div className="text-white min-h-screen flex flex-col">
+        <div className="fixed inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
+        <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10 flex-grow">
           <motion.div
-            variants={itemVariants}
-            className="text-center max-w-3xl mx-auto"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-12 md:space-y-16"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
-              Vyberte si ideální plán
-            </h1>
-            <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-6">
-              Odemkněte plný potenciál vaší čtenářské cesty s naším prémiovým
-              předplatným.
-            </p>
+            <motion.div
+              variants={itemVariants}
+              className="text-center max-w-4xl mx-auto"
+            >
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
+                Správa předplatného
+              </h1>
+              <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-6">
+                {currentTier === "free"
+                  ? "Odemkněte plný potenciál vaší čtenářské cesty s naším prémiovým předplatným."
+                  : "Zde naleznete informace o vašem aktuálním plánu a kreditech."}
+              </p>
+            </motion.div>
 
             {user && subscription && currentTier !== "free" && (
-              <motion.div
-                variants={itemVariants}
-                className="mt-8 md:mt-10 bg-card/50 border border-border/40 rounded-xl p-5 md:p-6 max-w-lg mx-auto shadow-lg"
-              >
-                <h2 className="text-xl font-semibold text-center mb-4">
-                  Vaše aktuální předplatné
-                </h2>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    Tarif:{" "}
-                    <span className="font-medium text-foreground capitalize">
-                      {currentTier}
-                    </span>
-                  </p>
-                  {subscription.nextRenewalDate && (
-                    <p>
-                      {subscription.cancelAtPeriodEnd
-                        ? "Bude zrušeno dne: "
-                        : "Obnoví se dne: "}
-                      <span className="font-medium text-foreground">
-                        {new Date(
-                          subscription.nextRenewalDate
-                        ).toLocaleDateString("cs-CZ")}
+              <motion.div variants={itemVariants} className="max-w-2xl mx-auto">
+                <Card className="bg-card/60 backdrop-blur-sm border border-border/40 shadow-xl overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-2xl font-semibold text-center text-foreground">
+                      Váš Aktuální Plán
+                    </CardTitle>
+                    <CardDescription className="text-center text-muted-foreground pt-1">
+                      Přehled vašeho předplatného a využití.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5 px-6 pt-4 pb-6">
+                    <motion.div
+                      variants={itemVariants}
+                      className="flex items-center justify-between py-3 border-b border-border/30"
+                    >
+                      <span className="text-sm font-medium text-muted-foreground flex items-center">
+                        <Info className="h-4 w-4 mr-2 text-blue-400" /> Typ
+                        předplatného:
                       </span>
-                    </p>
-                  )}
-                  {subscription.cancelAtPeriodEnd ? (
-                    <p className="text-amber-400 italic">
-                      Předplatné je naplánováno ke zrušení na konci období.
-                    </p>
-                  ) : (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="w-full mt-4"
-                          disabled={isCancelling}
-                        >
-                          {isCancelling ? "Rušení..." : "Zrušit předplatné"}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Opravdu chcete zrušit předplatné?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Vaše předplatné zůstane aktivní do konce aktuálního
-                            fakturačního období (
-                            {new Date(
-                              subscription.nextRenewalDate
-                            ).toLocaleDateString("cs-CZ")}
-                            ). Poté bude automaticky zrušeno a váš účet převeden
-                            na tarif Free.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isCancelling}>
-                            Zpět
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleCancelSubscription}
+                      <span className="font-semibold text-lg capitalize bg-gradient-to-r from-blue-400 to-indigo-400 text-transparent bg-clip-text">
+                        {currentTier}
+                      </span>
+                    </motion.div>
+
+                    {subscription.nextRenewalDate && (
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between py-3 border-b border-border/30"
+                      >
+                        <span className="text-sm font-medium text-muted-foreground flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-green-400" />
+                          {subscription.cancelAtPeriodEnd
+                            ? "Platnost do:"
+                            : "Příští platba:"}
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {new Date(
+                            Number(subscription.nextRenewalDate) * 1000
+                          ).toLocaleDateString("cs-CZ", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <motion.div
+                      variants={itemVariants}
+                      className="py-3 space-y-2"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-muted-foreground flex items-center">
+                          <Sparkles className="h-4 w-4 mr-2 text-amber-400" />{" "}
+                          AI Kredity:
+                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={refreshSubscription}
+                              disabled={loading}
+                            >
+                              <RefreshCw
+                                className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+                              />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Aktualizovat kredity</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <AiCreditsDisplay
+                        aiCreditsRemaining={
+                          subscription.aiCreditsRemaining ?? 0
+                        }
+                        aiCreditsTotal={
+                          subscription.aiCreditsTotal ??
+                          SUBSCRIPTION_LIMITS[currentTier]?.aiCreditsPerMonth ??
+                          0
+                        }
+                        showLowCreditsWarning={true}
+                      />
+                      {subscription.cancelAtPeriodEnd && (
+                        <p className="text-xs text-amber-400 italic pt-3 text-center">
+                          Vaše předplatné je naplánováno ke zrušení. Kredity
+                          můžete využívat do konce období.
+                        </p>
+                      )}
+                    </motion.div>
+                  </CardContent>
+                  {!subscription.cancelAtPeriodEnd && (
+                    <CardFooter className="bg-muted/20 px-6 py-4 border-t border-border/30">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-red-400 border-red-400/50 hover:bg-red-900/30 hover:text-red-300 hover:border-red-400/70 transition-colors duration-200"
                             disabled={isCancelling}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            {isCancelling ? "Rušení..." : "Potvrdit zrušení"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            {isCancelling
+                              ? "Zpracovávání..."
+                              : "Zrušit Předplatné"}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Opravdu chcete zrušit předplatné?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Vaše předplatné zůstane aktivní do konce
+                              aktuálního fakturačního období (
+                              {new Date(
+                                Number(subscription.nextRenewalDate) * 1000
+                              ).toLocaleDateString("cs-CZ")}
+                              ). Poté bude automaticky zrušeno a váš účet
+                              převeden na tarif Free. AI kredity propadnou.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isCancelling}>
+                              Zpět
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleCancelSubscription}
+                              disabled={isCancelling}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {isCancelling ? "Rušení..." : "Potvrdit Zrušení"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </CardFooter>
                   )}
-                </div>
+                </Card>
               </motion.div>
             )}
-          </motion.div>
 
-          <motion.div variants={itemVariants}>
-            <div className="text-center mb-8 md:mb-12 max-w-3xl mx-auto">
-              <motion.h2
-                className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4 text-foreground"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                {user ? "Změnit předplatné" : "Vyberte si plán"}
-              </motion.h2>
-              <motion.p
-                className="text-muted-foreground text-base md:text-lg lg:text-xl mb-6 md:mb-8"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                Vyberte si plán, který nejlépe vyhovuje vašim potřebám
-              </motion.p>
-
-              <div className="flex justify-center mb-8 md:mb-12">
-                <Tabs
-                  defaultValue="monthly"
-                  value={billingCycle}
-                  onValueChange={(value) =>
-                    setBillingCycle(value as "monthly" | "yearly")
-                  }
-                  className="w-full max-w-md"
+            <motion.div variants={itemVariants} className="pt-8">
+              <div className="text-center mb-8 md:mb-12 max-w-3xl mx-auto">
+                <motion.h2
+                  className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4 text-foreground"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
                 >
-                  <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/30 backdrop-blur-sm border border-white/5 shadow-md">
-                    <TabsTrigger
-                      value="monthly"
-                      className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
-                    >
-                      Měsíčně
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="yearly"
-                      className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
-                    >
-                      Ročně{" "}
-                      <motion.span
-                        className="inline-flex items-center ml-1"
-                        initial={{ scale: 1 }}
-                        whileHover={{ scale: 1.1 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 10,
-                        }}
+                  {currentTier !== "free"
+                    ? "Dostupné Plány"
+                    : "Vyberte si Plán"}
+                </motion.h2>
+                <motion.p
+                  className="text-muted-foreground text-base md:text-lg lg:text-xl mb-6 md:mb-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  {currentTier !== "free"
+                    ? "Níže naleznete přehled všech dostupných plánů."
+                    : "Vyberte si plán, který nejlépe vyhovuje vašim potřebám."}
+                </motion.p>
+
+                <div className="flex justify-center mb-8 md:mb-12">
+                  <Tabs
+                    defaultValue="monthly"
+                    value={billingCycle}
+                    onValueChange={(value) =>
+                      setBillingCycle(value as "monthly" | "yearly")
+                    }
+                    className="w-full max-w-md"
+                  >
+                    <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/30 backdrop-blur-sm border border-white/5 shadow-md">
+                      <TabsTrigger
+                        value="monthly"
+                        className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
                       >
-                        <span className="text-xs font-medium bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
-                          -20%
-                        </span>
-                        <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
-                      </motion.span>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                        Měsíčně
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="yearly"
+                        className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+                      >
+                        Ročně{" "}
+                        <motion.span
+                          className="inline-flex items-center ml-1"
+                          initial={{ scale: 1 }}
+                          whileHover={{ scale: 1.1 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 10,
+                          }}
+                        >
+                          <span className="text-xs font-medium bg-gradient-to-r from-emerald-400 to-emerald-500 text-transparent bg-clip-text">
+                            -20%
+                          </span>
+                          <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
+                        </motion.span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto px-2">
-              <SubscriptionCard
-                title="Základní"
-                description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
-                price="0 Kč"
-                pricePeriod=""
-                icon={<BookText className="h-6 w-6 text-muted-foreground" />}
-                badge={{
-                  text: "Zdarma",
-                  color: "bg-[#2a3548] text-muted-foreground",
-                }}
-                isCurrentPlan={currentTier === "free"}
-                buttonText={null}
-                onSelect={() => {
-                  /* No action needed? Or maybe cancellation logic */
-                }}
-                isLoading={false}
-                isSelected={false}
-                animationDelay={0.1}
-                features={[
-                  {
-                    name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
-                    included: true,
-                  },
-                  {
-                    name: "Manuální poznámky",
-                    included: true,
-                  },
-                  {
-                    name: `${SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI kredity`,
-                    description: "měsíčně",
-                    included: true,
-                  },
-                  {
-                    name: "Základní funkce",
-                    description: "pro začátek",
-                    included: true,
-                  },
-                ]}
-                disabled={currentTier === "free" || loading}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto px-2">
+                <SubscriptionCard
+                  title="Základní"
+                  description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
+                  price="0 Kč"
+                  pricePeriod=""
+                  icon={<BookText className="h-6 w-6 text-muted-foreground" />}
+                  badge={{
+                    text: "Zdarma",
+                    color: "bg-[#2a3548] text-muted-foreground",
+                  }}
+                  isCurrentPlan={currentTier === "free"}
+                  buttonText={null}
+                  onSelect={() => {}}
+                  isLoading={false}
+                  isSelected={false}
+                  animationDelay={0.1}
+                  features={[
+                    {
+                      name: `Až ${SUBSCRIPTION_LIMITS.free.maxBooks} knih v knihovně`,
+                      included: true,
+                    },
+                    {
+                      name: "Manuální poznámky",
+                      included: true,
+                    },
+                    {
+                      name: `${SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth} AI kredity`,
+                      description: "měsíčně",
+                      included: true,
+                    },
+                    {
+                      name: "Základní funkce",
+                      description: "pro začátek",
+                      included: true,
+                    },
+                  ]}
+                  disabled={true}
+                />
 
-              <SubscriptionCard
-                title="Basic"
-                description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
-                price={billingCycle === "yearly" ? "39" : "49"}
-                pricePeriod="/ měsíc"
-                monthlyPrice={49}
-                icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
-                badge={{
-                  text: "Populární",
-                  color: "bg-[#2a3548] text-[#3b82f6]",
-                }}
-                isCurrentPlan={currentTier === "basic"}
-                buttonText={
-                  currentTier === "basic"
-                    ? "Aktuální plán"
-                    : currentTier === "premium"
-                      ? null
-                      : "Vybrat plán"
-                }
-                onSelect={() => handlePlanSelect("basic")}
-                isLoading={isChangingPlan && selectedTierForAction === "basic"}
-                isSelected={selectedTierForAction === "basic"}
-                animationDelay={0.2}
-                features={[
-                  {
-                    name: "Až 100 knih v knihovně",
-                    included: true,
-                  },
-                  {
-                    name: "50 AI kreditů",
-                    description: "měsíčně",
-                    included: true,
-                  },
-                  {
-                    name: "Export poznámek do PDF",
-                    included: true,
-                  },
-                  {
-                    name: "Všechny funkce ze Základního plánu",
-                    included: true,
-                  },
-                ]}
-                disabled={
-                  currentTier === "basic" ||
-                  currentTier === "premium" ||
-                  loading ||
-                  isChangingPlan
-                }
-              />
+                <SubscriptionCard
+                  title="Basic"
+                  description="Rozšířené funkce pro důkladnou přípravu k maturitě a zvládnutí povinné četby"
+                  price={billingCycle === "yearly" ? "39" : "49"}
+                  pricePeriod="/ měsíc"
+                  monthlyPrice={49}
+                  icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
+                  badge={{
+                    text: currentTier === "basic" ? "Váš Plán" : "Populární",
+                    color:
+                      currentTier === "basic"
+                        ? "bg-blue-600 text-white"
+                        : "bg-[#2a3548] text-[#3b82f6]",
+                  }}
+                  isCurrentPlan={currentTier === "basic"}
+                  buttonText={
+                    currentTier === "basic"
+                      ? "Aktuální Plán"
+                      : currentTier === "premium"
+                        ? null
+                        : "Vybrat Plán"
+                  }
+                  onSelect={() => handlePlanSelect("basic")}
+                  isLoading={
+                    isChangingPlan && selectedTierForAction === "basic"
+                  }
+                  isSelected={selectedTierForAction === "basic"}
+                  animationDelay={0.2}
+                  features={[
+                    {
+                      name: `Až ${SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně`,
+                      included: true,
+                    },
+                    {
+                      name: `${SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI kreditů`,
+                      description: "měsíčně",
+                      included: true,
+                    },
+                    {
+                      name: "Export poznámek do PDF",
+                      included: true,
+                    },
+                    {
+                      name: "Všechny funkce ze Základního plánu",
+                      included: true,
+                    },
+                  ]}
+                  disabled={
+                    currentTier === "basic" ||
+                    currentTier === "premium" ||
+                    loading ||
+                    isChangingPlan
+                  }
+                />
 
-              <SubscriptionCard
-                title="Premium"
-                description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
-                price={billingCycle === "yearly" ? "63" : "79"}
-                pricePeriod="/ měsíc"
-                monthlyPrice={79}
-                icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
-                badge={{
-                  text: "Doporučeno",
-                  color: "bg-[#3b82f6] text-white",
-                }}
-                isCurrentPlan={currentTier === "premium"}
-                buttonText={
-                  currentTier === "premium"
-                    ? "Aktuální plán"
-                    : currentTier === "basic"
-                      ? null
-                      : "Vybrat plán"
-                }
-                onSelect={() => handlePlanSelect("premium")}
-                isLoading={
-                  isChangingPlan && selectedTierForAction === "premium"
-                }
-                isSelected={selectedTierForAction === "premium"}
-                animationDelay={0.3}
-                features={[
-                  {
-                    name: "Neomezený počet knih v knihovně",
-                    included: true,
-                  },
-                  {
-                    name: "100 AI kreditů",
-                    description: "měsíčně",
-                    included: true,
-                  },
-                  {
-                    name: "Přizpůsobění AI shrnutí",
-                    description: "Zaměření, detailnost, styl",
-                    included: true,
-                  },
-                  {
-                    name: "Prioritní podpora",
-                    included: true,
-                  },
-                  {
-                    name: "Všechny funkce z Basic plánu",
-                    included: true,
-                  },
-                ]}
-                disabled={
-                  currentTier === "premium" ||
-                  currentTier === "basic" ||
-                  loading ||
-                  isChangingPlan
-                }
-              />
-            </div>
+                <SubscriptionCard
+                  title="Premium"
+                  description="Kompletní sada nástrojů pro perfektní přípravu k maturitě z literatury a dokonalé zvládnutí povinné četby"
+                  price={billingCycle === "yearly" ? "63" : "79"}
+                  pricePeriod="/ měsíc"
+                  monthlyPrice={79}
+                  icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
+                  badge={{
+                    text: currentTier === "premium" ? "Váš Plán" : "Doporučeno",
+                    color:
+                      currentTier === "premium"
+                        ? "bg-blue-600 text-white"
+                        : "bg-[#3b82f6] text-white",
+                  }}
+                  isCurrentPlan={currentTier === "premium"}
+                  buttonText={
+                    currentTier === "premium" ? "Aktuální Plán" : "Vybrat Plán"
+                  }
+                  onSelect={() => handlePlanSelect("premium")}
+                  isLoading={
+                    isChangingPlan && selectedTierForAction === "premium"
+                  }
+                  isSelected={selectedTierForAction === "premium"}
+                  animationDelay={0.3}
+                  features={[
+                    {
+                      name: `Až ${SUBSCRIPTION_LIMITS.premium.maxBooks} knih v knihovně`,
+                      included: true,
+                    },
+                    {
+                      name: `${SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI kreditů`,
+                      description: "měsíčně",
+                      included: true,
+                    },
+                    {
+                      name: "Přizpůsobení AI shrnutí",
+                      description: "Zaměření, detailnost, styl",
+                      included: true,
+                    },
+                    {
+                      name: "Prioritní podpora",
+                      included: true,
+                    },
+                    {
+                      name: "Všechny funkce z Basic plánu",
+                      included: true,
+                    },
+                  ]}
+                  disabled={
+                    currentTier === "premium" || loading || isChangingPlan
+                  }
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              variants={itemVariants}
+              className="max-w-3xl mx-auto mt-16 md:mt-20"
+            >
+              <SubscriptionFAQ />
+            </motion.div>
           </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            className="max-w-3xl mx-auto mt-16 md:mt-20"
-          >
-            <SubscriptionFAQ />
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
