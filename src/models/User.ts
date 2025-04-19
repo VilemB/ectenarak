@@ -58,6 +58,20 @@ const UserSchema = new mongoose.Schema({
   },
   // Subscription information
   subscription: {
+    // Stripe specific IDs
+    stripeCustomerId: {
+      type: String,
+      required: false,
+    },
+    stripeSubscriptionId: {
+      type: String,
+      required: false,
+    },
+    // Status flags
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false,
+    },
     tier: {
       type: String,
       enum: ["free", "basic", "premium"],
@@ -277,6 +291,9 @@ interface IUser {
     aiCreditsRemaining: number;
     lastRenewalDate: Date;
     nextRenewalDate: Date;
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    cancelAtPeriodEnd?: boolean;
   };
   createdAt: Date;
   updatedAt: Date;

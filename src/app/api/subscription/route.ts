@@ -6,6 +6,13 @@ import User from "@/models/User";
 import { SubscriptionTier } from "@/types/user";
 import { connectToDatabase } from "@/lib/db";
 import { ObjectId } from "mongodb";
+import Stripe from "stripe";
+
+// Initialize Stripe (Make sure STRIPE_SECRET_KEY is in your .env)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  // apiVersion: "2024-06-20" as any,
+  typescript: true,
+});
 
 /**
  * GET /api/subscription
@@ -166,6 +173,76 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error("Error updating subscription:", error);
     return NextResponse.json(
       { error: "Failed to update subscription" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/subscription
+ * Mark the user's Stripe subscription to cancel at the end of the period.
+ */
+export async function DELETE(): Promise<NextResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+
+    // Find the user, ensuring we get the subscription details including Stripe ID
+    const user = await User.findById(session.user.id).select(
+      "+subscription.stripeSubscriptionId"
+    );
+
+    if (!user || !user.subscription?.stripeSubscriptionId) {
+      console.error(
+        `User ${session.user.id} not found or missing Stripe Subscription ID.`
+      );
+      return NextResponse.json(
+        { error: "Subscription not found or cannot be cancelled." },
+        { status: 404 }
+      );
+    }
+
+    // --- Update Stripe Subscription ---
+    try {
+      await stripe.subscriptions.update(
+        user.subscription.stripeSubscriptionId,
+        {
+          cancel_at_period_end: true,
+        }
+      );
+      console.log(
+        `[Cancel Sub] Stripe subscription ${user.subscription.stripeSubscriptionId} marked for cancellation at period end.`
+      );
+    } catch (stripeError) {
+      console.error(
+        `[Cancel Sub] Stripe API error for user ${session.user.id}:`,
+        stripeError
+      );
+      // Don't fail the whole request if Stripe update fails, but log it.
+      // We can still update our local flag.
+      // Consider adding more robust error handling/retries if needed.
+    }
+
+    // --- Update Local User Record ---
+    user.subscription.cancelAtPeriodEnd = true;
+    await user.save();
+    console.log(
+      `[Cancel Sub] Local user record ${session.user.id} updated with cancelAtPeriodEnd=true.`
+    );
+
+    // Return the updated subscription status
+    return NextResponse.json({
+      message: "Subscription scheduled for cancellation at period end.",
+      subscription: user.subscription,
+    });
+  } catch (error) {
+    console.error("Error cancelling subscription:", error);
+    return NextResponse.json(
+      { error: "Failed to schedule subscription cancellation" },
       { status: 500 }
     );
   }

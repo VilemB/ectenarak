@@ -8,11 +8,23 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
-import AiCreditsDisplay from "@/components/AiCreditsDisplay";
+// import AiCreditsDisplay from "@/components/AiCreditsDisplay"; // Removed unused import
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LoginForm from "@/components/LoginForm";
 import SubscriptionFAQ from "@/components/SubscriptionFAQ";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -23,8 +35,9 @@ export default function SubscriptionPage() {
     "basic" | "premium" | null
   >(null);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const { subscription, loading } = useSubscription();
+  const { subscription, loading, refreshSubscription } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
 
   useEffect(() => {
@@ -148,6 +161,37 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    try {
+      const response = await fetch("/api/subscription", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(
+          data.error || "Nepodařilo se naplánovat zrušení předplatného."
+        );
+      }
+
+      await refreshSubscription();
+
+      toast.success(
+        "Vaše předplatné bude zrušeno na konci fakturačního období."
+      );
+    } catch (error: unknown) {
+      console.error("Cancellation error:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Při rušení předplatného došlo k chybě.";
+      toast.error(message);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -244,45 +288,79 @@ export default function SubscriptionPage() {
               předplatným.
             </p>
 
-            {user && subscription && (
+            {user && subscription && currentTier !== "free" && (
               <motion.div
                 variants={itemVariants}
-                className="mt-8 md:mt-10 bg-[#1a2436] border border-[#2a3548] rounded-xl p-5 md:p-6 max-w-lg mx-auto shadow-lg"
+                className="mt-8 md:mt-10 bg-card/50 border border-border/40 rounded-xl p-5 md:p-6 max-w-lg mx-auto shadow-lg"
               >
-                <h2 className="text-xl font-bold mb-3">
-                  Vaše předplatné:{" "}
-                  <span className="text-blue-400">
-                    {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
-                  </span>
+                <h2 className="text-xl font-semibold text-center mb-4">
+                  Vaše aktuální předplatné
                 </h2>
-
-                <div className="bg-[#0f1729] rounded-lg p-4 mb-4 shadow-inner">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-300">
-                      AI Kredity tento měsíc
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    Tarif:{" "}
+                    <span className="font-medium text-foreground capitalize">
+                      {currentTier}
                     </span>
-                    <span className="text-xs text-gray-400">
-                      Obnovení:{" "}
-                      {subscription?.nextRenewalDate
-                        ? new Date(
-                            subscription.nextRenewalDate
-                          ).toLocaleDateString("cs-CZ")
-                        : new Date(
-                            new Date().setMonth(new Date().getMonth() + 1)
-                          ).toLocaleDateString("cs-CZ")}
-                    </span>
-                  </div>
-
-                  <AiCreditsDisplay
-                    aiCreditsRemaining={subscription.aiCreditsRemaining}
-                    aiCreditsTotal={subscription.aiCreditsTotal}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="text-sm text-center text-gray-400 mt-3">
-                  Změňte své předplatné níže pro přístup k více funkcím nebo
-                  kreditům
+                  </p>
+                  {subscription.nextRenewalDate && (
+                    <p>
+                      {subscription.cancelAtPeriodEnd
+                        ? "Bude zrušeno dne: "
+                        : "Obnoví se dne: "}
+                      <span className="font-medium text-foreground">
+                        {new Date(
+                          subscription.nextRenewalDate
+                        ).toLocaleDateString("cs-CZ")}
+                      </span>
+                    </p>
+                  )}
+                  {subscription.cancelAtPeriodEnd ? (
+                    <p className="text-amber-400 italic">
+                      Předplatné je naplánováno ke zrušení na konci období.
+                    </p>
+                  ) : (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="w-full mt-4"
+                          disabled={isCancelling}
+                        >
+                          {isCancelling ? "Rušení..." : "Zrušit předplatné"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Opravdu chcete zrušit předplatné?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Vaše předplatné zůstane aktivní do konce aktuálního
+                            fakturačního období (
+                            {new Date(
+                              subscription.nextRenewalDate
+                            ).toLocaleDateString("cs-CZ")}
+                            ). Poté bude automaticky zrušeno a váš účet převeden
+                            na tarif Free.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isCancelling}>
+                            Zpět
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleCancelSubscription}
+                            disabled={isCancelling}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isCancelling ? "Rušení..." : "Potvrdit zrušení"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </motion.div>
             )}
