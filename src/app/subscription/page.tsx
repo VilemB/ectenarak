@@ -373,7 +373,7 @@ export default function SubscriptionPage() {
                         </span>
                         <span className="font-medium text-foreground">
                           {new Date(
-                            Number(subscription.nextRenewalDate) * 1000
+                            subscription.nextRenewalDate
                           ).toLocaleDateString("cs-CZ", {
                             day: "2-digit",
                             month: "2-digit",
@@ -453,9 +453,11 @@ export default function SubscriptionPage() {
                             <AlertDialogDescription>
                               Vaše předplatné zůstane aktivní do konce
                               aktuálního fakturačního období (
-                              {new Date(
-                                Number(subscription.nextRenewalDate) * 1000
-                              ).toLocaleDateString("cs-CZ")}
+                              {subscription.nextRenewalDate
+                                ? new Date(
+                                    subscription.nextRenewalDate
+                                  ).toLocaleDateString("cs-CZ")
+                                : "N/A"}
                               ). Poté bude automaticky zrušeno a váš účet
                               převeden na tarif Free. AI kredity propadnou.
                             </AlertDialogDescription>
