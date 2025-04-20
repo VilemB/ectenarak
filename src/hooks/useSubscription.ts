@@ -161,7 +161,7 @@ export function useSubscription() {
         extendedAiSummary: false,
       },
       basic: {
-        maxBooks: 50,
+        maxBooks: 100,
         aiCreditsPerMonth: 50,
         exportToPdf: true,
         advancedNoteFormat: true,

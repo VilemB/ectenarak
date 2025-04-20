@@ -88,16 +88,8 @@
   }
 
   body {
-    /* Ensure dark background is applied by default */
-    background: linear-gradient(
-      135deg,
-      var(--background-dark),
-      var(--background),
-      var(--background-light)
-    );
-    background-size: 400% 400%;
-    background-attachment: fixed;
-    animation: gradientFlow 15s ease infinite;
+    /* Simplified background */
+    background-color: var(--background);
 
     /* Apply text color and layout settings */
     @apply text-foreground min-h-screen flex flex-col;
@@ -106,10 +98,12 @@
       "calt" 1;
 
     position: relative;
-    overflow-x: hidden;
+    /* Allow vertical scroll for page content */
+    /* overflow-x: hidden; */ /* Removing this as vertical scroll needs body scroll */
   }
 
-  /* Modern background elements */
+  /* Commenting out complex background pseudo-elements for now */
+  /*
   body::before {
     content: "";
     position: fixed;
@@ -131,7 +125,6 @@
     z-index: -2;
   }
 
-  /* Subtle noise texture */
   body::after {
     content: "";
     position: fixed;
@@ -144,6 +137,7 @@
     opacity: 0.4;
     z-index: -1;
   }
+  */
 
   /* Ensure content starts below the navbar */
   main {
