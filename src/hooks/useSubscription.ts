@@ -32,6 +32,7 @@ export function useSubscription() {
         return null;
       }
 
+      setLoading(true);
       setError(null);
 
       try {
@@ -60,6 +61,8 @@ export function useSubscription() {
 
         setSubscription(null);
         return null;
+      } finally {
+        setLoading(false);
       }
     }, [isAuthenticated]);
 

@@ -88,14 +88,14 @@ export default function AiCreditsDisplay({
     <div className={`ai-credits-display ${className}`}>
       <div className="flex items-center">
         <div className="flex-1">
-          <div className="h-2.5 bg-[#0f1729] rounded-full overflow-hidden relative">
+          <div className="h-2.5 bg-muted rounded-full overflow-hidden relative">
             <motion.div
               className={`h-full transition-all duration-700 ease-out ${
                 isZeroCredits
                   ? "bg-red-600/70"
                   : isLowCredits
-                  ? "bg-gradient-to-r from-amber-600/70 to-amber-500"
-                  : "bg-gradient-to-r from-amber-600/70 to-amber-400"
+                    ? "bg-gradient-to-r from-amber-600/70 to-amber-500"
+                    : "bg-gradient-to-r from-amber-600/70 to-amber-400"
               }`}
               initial={{ width: "0%" }}
               animate={{ width: `${percentRemaining}%` }}
@@ -123,15 +123,15 @@ export default function AiCreditsDisplay({
                 isZeroCredits
                   ? "text-red-400"
                   : isLowCredits
-                  ? "text-amber-400"
-                  : "text-amber-500"
+                    ? "text-amber-400"
+                    : "text-amber-500"
               }`}
             >
               {currentCredits.aiCreditsRemaining}
             </motion.span>
           </AnimatePresence>
-          <span className="text-gray-500 mx-1 text-sm">/</span>
-          <span className="text-gray-400 text-sm">
+          <span className="text-muted-foreground mx-1 text-sm">/</span>
+          <span className="text-muted-foreground text-sm">
             {currentCredits.aiCreditsTotal}
           </span>
           {isLoading && (

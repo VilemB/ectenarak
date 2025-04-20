@@ -10,6 +10,7 @@ import {
   Calendar,
   RefreshCw,
   AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -44,6 +45,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -324,11 +326,12 @@ export default function SubscriptionPage() {
               className="max-w-3xl mx-auto"
             >
               {user && subscription && currentTier !== "free" ? (
-                <Card className="bg-card/60 backdrop-blur-sm border border-border/40 shadow-xl overflow-hidden">
-                  <CardHeader className="border-b border-border/30 pb-5">
+                <Card className="bg-card border border-border shadow-md overflow-hidden">
+                  <CardHeader className="border-b border-border/30 pb-5 flex flex-row items-center space-x-3">
+                    <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />
                     <CardTitle
                       id="current-plan-heading"
-                      className="text-3xl sm:text-4xl font-bold tracking-tight text-center text-foreground"
+                      className="text-2xl font-semibold text-left text-foreground"
                     >
                       Váš Aktuální Plán
                     </CardTitle>
@@ -336,7 +339,7 @@ export default function SubscriptionPage() {
                   <CardContent className="space-y-5 px-6 pt-6 pb-6">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground flex items-center">
-                        <Info className="h-4 w-4 mr-2 text-blue-400" /> Typ
+                        <Info className="h-4 w-4 mr-2 text-primary" /> Typ
                         předplatného:
                       </span>
                       <span className="font-medium text-foreground capitalize">
@@ -345,7 +348,7 @@ export default function SubscriptionPage() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-green-400" />
+                        <Calendar className="h-4 w-4 mr-2 text-primary" />
                         {subscription.cancelAtPeriodEnd
                           ? "Platnost do:"
                           : "Příští platba:"}
@@ -431,7 +434,7 @@ export default function SubscriptionPage() {
                             )}
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="sm:max-w-md bg-gradient-to-br from-muted/70 via-background/80 to-muted/70 border-border/50 backdrop-blur-lg shadow-2xl rounded-xl overflow-hidden">
+                        <AlertDialogContent className="sm:max-w-md bg-card border-border shadow-lg rounded-lg">
                           <AlertDialogHeader className="text-center pt-6 pb-4 px-6">
                             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-4 border border-destructive/20">
                               <AlertTriangle
@@ -461,17 +464,20 @@ export default function SubscriptionPage() {
                               zbývající AI kredity.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter className="bg-gradient-to-t from-black/10 to-transparent px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+                          <AlertDialogFooter className="bg-muted/50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 rounded-b-lg">
                             <AlertDialogCancel
                               disabled={isCancelling}
-                              className="mt-2 sm:mt-0 w-full sm:w-auto bg-transparent border-border/50 hover:bg-muted/50 transition-colors"
+                              className="mt-2 sm:mt-0 w-full sm:w-auto"
                             >
                               Zpět
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleCancelSubscription}
                               disabled={isCancelling}
-                              className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive transition-colors flex items-center justify-center"
+                              className={cn(
+                                "w-full sm:w-auto flex items-center justify-center",
+                                "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              )}
                             >
                               {isCancelling ? (
                                 <>
@@ -491,7 +497,7 @@ export default function SubscriptionPage() {
               ) : (
                 <motion.div
                   variants={sectionVariants}
-                  className="text-center p-8 bg-card/50 border border-border/30 rounded-lg shadow-lg max-w-md mx-auto"
+                  className="text-center p-8 bg-card border border-border shadow-md rounded-lg max-w-md mx-auto"
                 >
                   <h3
                     id="current-plan-heading"
@@ -543,7 +549,7 @@ export default function SubscriptionPage() {
                     className={`rounded-full px-6 transition-all duration-300 ${billingCycle === "yearly" ? "bg-primary/80 shadow-md text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
                   >
                     Ročně{" "}
-                    <span className="ml-1.5 text-xs font-medium text-emerald-400 opacity-90">
+                    <span className="ml-1.5 text-xs font-medium text-primary opacity-90">
                       (Ušetřete 20%)
                     </span>
                   </Button>
@@ -557,13 +563,13 @@ export default function SubscriptionPage() {
                   price={billingCycle === "yearly" ? "39" : "49"}
                   pricePeriod="/ měsíc"
                   monthlyPrice={49}
-                  icon={<BookOpen className="h-6 w-6 text-blue-500" />}
+                  icon={<BookOpen className="h-6 w-6 text-primary" />}
                   badge={{
                     text: currentTier === "basic" ? "Váš Plán" : "Populární",
                     color:
                       currentTier === "basic"
-                        ? "bg-blue-600 text-white"
-                        : "bg-blue-900/30 text-blue-400",
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground",
                   }}
                   isCurrentPlan={currentTier === "basic"}
                   buttonText={
@@ -608,13 +614,13 @@ export default function SubscriptionPage() {
                   price={billingCycle === "yearly" ? "63" : "79"}
                   pricePeriod="/ měsíc"
                   monthlyPrice={79}
-                  icon={<Sparkles className="h-6 w-6 text-purple-500" />}
+                  icon={<Sparkles className="h-6 w-6 text-primary" />}
                   badge={{
                     text: currentTier === "premium" ? "Váš Plán" : "Doporučeno",
                     color:
                       currentTier === "premium"
-                        ? "bg-blue-600 text-white"
-                        : "bg-purple-600 text-white",
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-amber-600 text-white",
                   }}
                   isCurrentPlan={currentTier === "premium"}
                   buttonText={
