@@ -2,7 +2,6 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +17,6 @@ export interface SubscriptionCardProps {
   price: number | string;
   pricePeriod: string;
   features: SubscriptionFeatureItem[];
-  icon: React.ReactNode;
   badge?: {
     text: string;
     color: string;
@@ -40,7 +38,6 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   price,
   pricePeriod,
   features,
-  icon,
   badge,
   isCurrentPlan,
   isLoading,
@@ -87,10 +84,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         </div>
       )}
 
-      <div className="mb-5 flex items-center space-x-3">
-        <div className="rounded-lg bg-muted/40 p-2">{icon}</div>
-        <h3 className="text-xl font-semibold text-foreground">{title}</h3>
-      </div>
+      {/* Display Title directly */}
+      <h3 className="text-xl font-semibold text-foreground mb-4">{title}</h3>
 
       <p className="mb-5 min-h-[40px] text-muted-foreground text-sm">
         {description}
@@ -111,20 +106,15 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         </p>
       )}
 
-      <ul className="space-y-3 text-sm flex-grow">
+      <ul className="space-y-2 text-sm flex-grow mt-4">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start">
-            <Check
-              className={cn(
-                "mr-2 mt-0.5 h-4 w-4 flex-shrink-0",
-                feature.included ? "text-blue-500" : "text-muted-foreground/50"
-              )}
-            />
             <span
               className={cn(
+                "ml-2",
                 feature.included
                   ? "text-foreground"
-                  : "text-muted-foreground/70"
+                  : "text-muted-foreground/70 line-through"
               )}
             >
               {feature.name}

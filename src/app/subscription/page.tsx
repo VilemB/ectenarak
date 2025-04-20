@@ -3,15 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Sparkles,
-  BookOpen,
-  Info,
-  Calendar,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle,
-} from "lucide-react";
+import { RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
@@ -21,13 +13,6 @@ import LoginForm from "@/components/LoginForm";
 import SubscriptionFAQ from "@/components/SubscriptionFAQ";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -300,7 +285,7 @@ export default function SubscriptionPage() {
         <div className="fixed inset-0 top-[15%] sm:top-[20%] bg-[url('/grid-pattern.svg')] bg-center opacity-5 pointer-events-none z-[-1]"></div>
         <div className="fixed inset-0 top-[15%] sm:top-[20%] bg-gradient-to-b from-transparent via-background/5 to-background/20 pointer-events-none z-[-1]"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20 flex-grow w-full">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20 flex-grow w-full">
           <motion.div
             variants={sectionVariants}
             initial="hidden"
@@ -317,43 +302,38 @@ export default function SubscriptionPage() {
             </p>
           </motion.div>
 
-          <div className="space-y-20 md:space-y-28 lg:space-y-32">
+          <div className="space-y-16 md:space-y-20">
             <motion.section
-              aria-labelledby="current-plan-heading"
+              aria-labelledby="current-status-heading"
               variants={sectionVariants}
               initial="hidden"
               animate="visible"
-              className="max-w-3xl mx-auto"
+              className="w-full"
             >
               {user && subscription && currentTier !== "free" ? (
-                <Card className="bg-card border border-border shadow-md overflow-hidden">
-                  <CardHeader className="border-b border-border/30 pb-5 flex flex-row items-center space-x-3">
-                    <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />
-                    <CardTitle
-                      id="current-plan-heading"
-                      className="text-2xl font-semibold text-left text-foreground"
-                    >
-                      Váš Aktuální Plán
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-5 px-6 pt-6 pb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground flex items-center">
-                        <Info className="h-4 w-4 mr-2 text-primary" /> Typ
-                        předplatného:
+                <div className="bg-muted/30 border border-border/20 rounded-lg p-6 md:p-8 space-y-6 shadow-sm">
+                  <h2
+                    id="current-status-heading"
+                    className="text-2xl font-semibold text-foreground mb-1"
+                  >
+                    Váš Aktuální Plán
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground block mb-1">
+                        Typ předplatného:
                       </span>
-                      <span className="font-medium text-foreground capitalize">
+                      <span className="font-medium text-foreground capitalize text-base">
                         {currentTier}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-primary" />
+                    <div>
+                      <span className="text-muted-foreground block mb-1">
                         {subscription.cancelAtPeriodEnd
                           ? "Platnost do:"
                           : "Příští platba:"}
                       </span>
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-foreground text-base">
                         {subscription.nextRenewalDate ? (
                           new Date(
                             subscription.nextRenewalDate
@@ -369,57 +349,53 @@ export default function SubscriptionPage() {
                         )}
                       </span>
                     </div>
-                    <div className="pt-2 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground flex items-center">
-                          <Sparkles className="h-4 w-4 mr-2 text-amber-400" />{" "}
-                          AI Kredity:
-                        </span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                              onClick={refreshSubscription}
-                              disabled={loading}
-                            >
-                              <RefreshCw
-                                className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
-                              />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Aktualizovat</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <AiCreditsDisplay
-                        aiCreditsRemaining={
-                          subscription.aiCreditsRemaining ?? 0
-                        }
-                        aiCreditsTotal={
-                          subscription.aiCreditsTotal ??
-                          SUBSCRIPTION_LIMITS[currentTier]?.aiCreditsPerMonth ??
-                          0
-                        }
-                        showLowCreditsWarning={true}
-                      />
-                      {subscription.cancelAtPeriodEnd && (
-                        <p className="text-xs text-amber-400 italic pt-3 text-center">
-                          Vaše předplatné je naplánováno ke zrušení.
-                        </p>
-                      )}
+                  </div>
+                  <div className="pt-4 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">AI Kredity:</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={refreshSubscription}
+                            disabled={loading}
+                          >
+                            <RefreshCw
+                              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+                            />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Aktualizovat</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
-                  </CardContent>
+                    <AiCreditsDisplay
+                      aiCreditsRemaining={subscription.aiCreditsRemaining ?? 0}
+                      aiCreditsTotal={
+                        subscription.aiCreditsTotal ??
+                        SUBSCRIPTION_LIMITS[currentTier]?.aiCreditsPerMonth ??
+                        0
+                      }
+                      showLowCreditsWarning={true}
+                    />
+                    {subscription.cancelAtPeriodEnd && (
+                      <p className="text-xs text-amber-400 italic pt-3 text-center">
+                        Vaše předplatné je naplánováno ke zrušení.
+                      </p>
+                    )}
+                  </div>
+
                   {!subscription.cancelAtPeriodEnd && (
-                    <CardFooter className="bg-gradient-to-t from-black/10 to-transparent px-6 py-4 border-t border-border/30">
+                    <div className="pt-6 border-t border-border/20">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="outline"
+                            variant="destructive"
                             size="sm"
-                            className="w-full text-red-400 border-red-400/50 hover:bg-red-900/30 hover:text-red-300 hover:border-red-400/70 focus-visible:ring-destructive/50 transition-colors duration-200 group"
+                            className="w-full sm:w-auto transition-colors duration-200 group flex items-center justify-center"
                             disabled={isCancelling}
                           >
                             {isCancelling ? (
@@ -428,9 +404,10 @@ export default function SubscriptionPage() {
                                 Zpracovávání...
                               </>
                             ) : (
-                              <span className="group-hover:text-red-300 transition-colors">
-                                Zrušit Předplatné
-                              </span>
+                              <>
+                                <Trash2 className="mr-2 h-4 w-4" />{" "}
+                                <span>Zrušit Předplatné</span>
+                              </>
                             )}
                           </Button>
                         </AlertDialogTrigger>
@@ -491,16 +468,16 @@ export default function SubscriptionPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </CardFooter>
+                    </div>
                   )}
-                </Card>
+                </div>
               ) : (
                 <motion.div
                   variants={sectionVariants}
-                  className="text-center p-8 bg-card border border-border shadow-md rounded-lg max-w-md mx-auto"
+                  className="text-center p-8 bg-muted/30 border border-border/20 rounded-lg shadow-sm max-w-2xl mx-auto"
                 >
                   <h3
-                    id="current-plan-heading"
+                    id="current-status-heading"
                     className="text-xl font-semibold mb-3 text-foreground"
                   >
                     Jste na tarifu Free
@@ -518,21 +495,21 @@ export default function SubscriptionPage() {
               variants={sectionVariants}
               initial="hidden"
               animate="visible"
-              className="space-y-12 md:space-y-16"
+              className="w-full space-y-10 md:space-y-12"
             >
               <div className="text-center max-w-2xl mx-auto">
                 <h2
                   id="available-plans-heading"
-                  className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-4"
+                  className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-3"
                 >
-                  Dostupné Plány
+                  Vyberte si plán
                 </h2>
                 <p className="text-muted-foreground text-lg md:text-xl">
                   Vyberte si měsíční nebo roční fakturaci (s 20% slevou).
                 </p>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex justify-center mt-6 mb-10">
                 <div className="inline-flex rounded-full bg-muted/40 backdrop-blur-sm border border-white/10 shadow-inner p-1">
                   <Button
                     onClick={() => setBillingCycle("monthly")}
@@ -556,14 +533,13 @@ export default function SubscriptionPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <SubscriptionCard
                   title="Basic"
                   description="Rozšířené funkce pro důkladnou přípravu k maturitě."
                   price={billingCycle === "yearly" ? "39" : "49"}
                   pricePeriod="/ měsíc"
                   monthlyPrice={49}
-                  icon={<BookOpen className="h-6 w-6 text-primary" />}
                   badge={{
                     text: currentTier === "basic" ? "Váš Plán" : "Populární",
                     color:
@@ -614,7 +590,6 @@ export default function SubscriptionPage() {
                   price={billingCycle === "yearly" ? "63" : "79"}
                   pricePeriod="/ měsíc"
                   monthlyPrice={79}
-                  icon={<Sparkles className="h-6 w-6 text-primary" />}
                   badge={{
                     text: currentTier === "premium" ? "Váš Plán" : "Doporučeno",
                     color:
@@ -633,10 +608,7 @@ export default function SubscriptionPage() {
                   isSelected={selectedTierForAction === "premium"}
                   animationDelay={0.2}
                   features={[
-                    {
-                      name: `Neomezený počet knih v knihovně`,
-                      included: true,
-                    },
+                    { name: `Neomezený počet knih v knihovně`, included: true },
                     {
                       name: `${SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI kreditů`,
                       description: "měsíčně",
@@ -662,7 +634,7 @@ export default function SubscriptionPage() {
               variants={sectionVariants}
               initial="hidden"
               animate="visible"
-              className="max-w-3xl mx-auto"
+              className="w-full pt-10 border-t border-border/20"
             >
               <SubscriptionFAQ />
             </motion.section>
