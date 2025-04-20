@@ -396,7 +396,7 @@ export default function SubscriptionPage() {
                           className={cn(
                             "transition-all duration-200 group flex items-center justify-center",
                             !isConfirmingCancel &&
-                              "bg-transparent text-destructive border border-destructive/50 hover:bg-destructive/10 hover:border-destructive/70 hover:scale-[1.03] active:scale-[0.98]",
+                              "bg-transparent text-destructive hover:bg-destructive/10 hover:scale-[1.03] active:scale-[0.98]",
                             isConfirmingCancel &&
                               "border-0 text-muted-foreground"
                           )}
