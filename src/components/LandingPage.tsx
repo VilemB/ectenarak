@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   BookText,
-  BookOpen,
   Sparkles,
   PenLine,
   ImageIcon,
@@ -364,9 +363,6 @@ export default function LandingPage() {
                       description="Základní funkce pro přípravu čtenářských zápisků potřebných k maturitě"
                       price="0 Kč"
                       pricePeriod=""
-                      icon={
-                        <BookText className="h-6 w-6 text-muted-foreground" />
-                      }
                       badge={{
                         text: "Zdarma",
                         color: "bg-[#2a3548] text-muted-foreground",
@@ -406,7 +402,6 @@ export default function LandingPage() {
                       pricePeriod="/ měsíc"
                       monthlyPrice={49}
                       isYearly={yearlyBilling}
-                      icon={<BookOpen className="h-6 w-6 text-[#3b82f6]" />}
                       badge={{
                         text: "Populární",
                         color: "bg-[#2a3548] text-[#3b82f6]",
@@ -447,7 +442,6 @@ export default function LandingPage() {
                       pricePeriod="/ měsíc"
                       monthlyPrice={79}
                       isYearly={yearlyBilling}
-                      icon={<Sparkles className="h-6 w-6 text-[#3b82f6]" />}
                       badge={{
                         text: "Doporučeno",
                         color: "bg-[#3b82f6] text-white",
