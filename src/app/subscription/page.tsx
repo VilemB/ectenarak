@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
+import { RefreshCw, Trash2, X } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SUBSCRIPTION_LIMITS } from "@/types/user";
@@ -13,17 +13,6 @@ import LoginForm from "@/components/LoginForm";
 import SubscriptionFAQ from "@/components/SubscriptionFAQ";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -42,6 +31,7 @@ export default function SubscriptionPage() {
   >(null);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
 
   const { subscription, loading, refreshSubscription } = useSubscription();
   const { getSubscriptionTier } = useFeatureAccess();
@@ -389,85 +379,76 @@ export default function SubscriptionPage() {
                   </div>
 
                   {!subscription.cancelAtPeriodEnd && (
-                    <div className="pt-6 border-t border-border/20">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="w-full sm:w-auto transition-colors duration-200 group flex items-center justify-center"
-                            disabled={isCancelling}
-                          >
-                            {isCancelling ? (
-                              <>
-                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />{" "}
-                                Zpracovávání...
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="mr-2 h-4 w-4" />{" "}
-                                <span>Zrušit Předplatné</span>
-                              </>
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="sm:max-w-md bg-card border-border shadow-lg rounded-lg">
-                          <AlertDialogHeader className="text-center pt-6 pb-4 px-6">
-                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-4 border border-destructive/20">
-                              <AlertTriangle
-                                className="h-6 w-6 text-destructive"
-                                aria-hidden="true"
-                              />
-                            </div>
-                            <AlertDialogTitle className="text-xl font-semibold text-foreground">
-                              Opravdu chcete zrušit předplatné?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                              Tímto krokem naplánujete zrušení vašeho{" "}
-                              <strong className="text-foreground/90 capitalize">
-                                {currentTier}
-                              </strong>{" "}
-                              plánu ke konci aktuálního fakturačního období (
-                              <strong className="text-foreground/90">
-                                {subscription.nextRenewalDate
-                                  ? new Date(
-                                      subscription.nextRenewalDate
-                                    ).toLocaleDateString("cs-CZ")
-                                  : "N/A"}
-                              </strong>
-                              ).
-                              <br />
-                              Poté budete převedeni na tarif Free a ztratíte
-                              zbývající AI kredity.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="bg-muted/50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 rounded-b-lg">
-                            <AlertDialogCancel
-                              disabled={isCancelling}
-                              className="mt-2 sm:mt-0 w-full sm:w-auto"
+                    <div className="pt-6 border-t border-border/20 flex items-center justify-start">
+                      <motion.div
+                        layout
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 30,
+                        }}
+                        className="flex items-center gap-x-2 p-1 bg-background rounded-lg border border-border"
+                        style={{ overflow: "hidden" }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "transition-all duration-200 group flex items-center justify-center",
+                            !isConfirmingCancel &&
+                              "bg-transparent text-destructive border border-destructive/50 hover:bg-destructive/10 hover:border-destructive/70 hover:scale-[1.03] active:scale-[0.98]",
+                            isConfirmingCancel &&
+                              "border-0 text-muted-foreground"
+                          )}
+                          onClick={() => setIsConfirmingCancel(true)}
+                          disabled={isCancelling || isConfirmingCancel}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />{" "}
+                          <span>Zrušit Předplatné</span>
+                        </Button>
+
+                        <AnimatePresence>
+                          {isConfirmingCancel && (
+                            <motion.div
+                              className="flex items-center gap-x-1"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              transition={{ duration: 0.2 }}
                             >
-                              Zpět
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleCancelSubscription}
-                              disabled={isCancelling}
-                              className={cn(
-                                "w-full sm:w-auto flex items-center justify-center",
-                                "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              )}
-                            >
-                              {isCancelling ? (
-                                <>
-                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />{" "}
-                                  Rušení...
-                                </>
-                              ) : (
-                                "Ano, potvrdit zrušení"
-                              )}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={handleCancelSubscription}
+                                disabled={isCancelling}
+                                className={cn(
+                                  "w-full sm:w-auto whitespace-nowrap",
+                                  "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.03] active:scale-[0.98]",
+                                  "disabled:opacity-100 disabled:pointer-events-auto"
+                                )}
+                              >
+                                {isCancelling ? (
+                                  <>
+                                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />{" "}
+                                    Rušení...
+                                  </>
+                                ) : (
+                                  "Potvrdit zrušení"
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setIsConfirmingCancel(false)}
+                                disabled={isCancelling}
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
                     </div>
                   )}
                 </div>
