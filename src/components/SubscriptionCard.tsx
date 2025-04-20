@@ -30,6 +30,7 @@ export interface SubscriptionCardProps {
   animationDelay?: number;
   isYearly?: boolean;
   monthlyPrice?: number | string;
+  isRecommended?: boolean;
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
@@ -48,6 +49,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   animationDelay = 0,
   isYearly = false,
   monthlyPrice,
+  isRecommended = false,
 }) => {
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -72,7 +74,10 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         isCurrentPlan &&
           "border-blue-500 border-2 bg-blue-900/10 ring-1 ring-blue-500/60",
         isSelected && "border-white ring-2 ring-white/80",
-        isCurrentPlan && isSelected && "border-blue-500 ring-1 ring-blue-500/60"
+        isCurrentPlan &&
+          isSelected &&
+          "border-blue-500 ring-1 ring-blue-500/60",
+        isRecommended && "border-amber-500 ring-2 ring-amber-500/30"
       )}
     >
       {/* Render the finalBadge content in the top-right corner */}

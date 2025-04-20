@@ -509,24 +509,41 @@ export default function SubscriptionPage() {
                 </p>
               </div>
 
-              <div className="flex justify-center mt-6 mb-10">
-                <div className="inline-flex rounded-full bg-muted/40 backdrop-blur-sm border border-white/10 shadow-inner p-1">
+              <div className="flex justify-center mt-8 mb-12">
+                <div className="inline-flex items-center rounded-full bg-muted/50 border border-border/30 p-1 shadow-sm">
                   <Button
                     onClick={() => setBillingCycle("monthly")}
-                    variant={billingCycle === "monthly" ? "default" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className={`rounded-full px-6 transition-all duration-300 ${billingCycle === "monthly" ? "bg-primary/80 shadow-md text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+                    className={cn(
+                      "rounded-full px-6 py-1.5 transition-colors duration-200",
+                      billingCycle === "monthly"
+                        ? "bg-primary text-primary-foreground shadow"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
                   >
                     Měsíčně
                   </Button>
                   <Button
                     onClick={() => setBillingCycle("yearly")}
-                    variant={billingCycle === "yearly" ? "default" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className={`rounded-full px-6 transition-all duration-300 ${billingCycle === "yearly" ? "bg-primary/80 shadow-md text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+                    className={cn(
+                      "rounded-full px-6 py-1.5 transition-colors duration-200",
+                      billingCycle === "yearly"
+                        ? "bg-primary text-primary-foreground shadow"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
                   >
-                    Ročně{" "}
-                    <span className="ml-1.5 text-xs font-medium text-primary opacity-90">
+                    Ročně
+                    <span
+                      className={cn(
+                        "ml-2 inline-block rounded-md px-1.5 py-0.5 text-xs font-medium",
+                        billingCycle === "yearly"
+                          ? "bg-primary-foreground/20 text-primary-foreground"
+                          : "bg-primary/10 text-primary"
+                      )}
+                    >
                       (Ušetřete 20%)
                     </span>
                   </Button>
@@ -590,6 +607,7 @@ export default function SubscriptionPage() {
                   price={billingCycle === "yearly" ? "63" : "79"}
                   pricePeriod="/ měsíc"
                   monthlyPrice={79}
+                  isRecommended={true}
                   badge={{
                     text: currentTier === "premium" ? "Váš Plán" : "Doporučeno",
                     color:
