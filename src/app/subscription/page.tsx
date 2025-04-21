@@ -63,6 +63,29 @@ export default function SubscriptionPage() {
     }
   }, []);
 
+  // Effect to check for successful checkout redirect
+  useEffect(() => {
+    // Check if running in the browser
+    if (typeof window === "undefined") return;
+
+    const queryParams = new URLSearchParams(window.location.search);
+    const sessionId = queryParams.get("session_id"); // Check for session_id from Stripe
+
+    if (sessionId) {
+      console.log(
+        "[SubscriptionPage] Detected successful checkout redirect with session_id:",
+        sessionId
+      );
+      toast.success("Platba proběhla úspěšně! Děkujeme.");
+
+      // Optionally trigger a subscription refresh here if desired
+      // refreshSubscription();
+
+      // Clean the URL to remove query parameters
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []); // Run only once on component mount
+
   const currentTier = getSubscriptionTier();
 
   const getPriceIdForTier = (
