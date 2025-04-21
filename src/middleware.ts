@@ -8,7 +8,12 @@ export async function middleware(request: NextRequest) {
   console.log(`Middleware processing: ${request.nextUrl.pathname}`);
 
   // Only protect specific routes
-  const protectedRoutes = ["/settings", "/api/user/delete", "/subscription"];
+  const protectedRoutes = [
+    "/settings",
+    "/api/user/delete",
+    "/subscription", // Frontend page
+    "/api/subscription", // API endpoint
+  ];
   const isProtectedRoute = protectedRoutes.some(
     (route) =>
       request.nextUrl.pathname === route ||
