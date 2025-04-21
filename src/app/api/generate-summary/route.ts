@@ -7,8 +7,40 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import { checkSubscription } from "@/middleware/subscriptionMiddleware";
 // Import Vercel AI SDK components
-import { streamText } from "ai"; // Core function for streaming text
+import { streamText, formatDataStreamPart } from "ai"; // Core function for streaming text
 import { openai as openaiProvider } from "@ai-sdk/openai"; // OpenAI provider
+import { Redis } from "@upstash/redis"; // Import Redis client
+import { createHash } from "crypto"; // Import crypto for cache key generation
+
+// Instantiate Redis client using environment variables
+const redis = new Redis({
+  url: process.env.KV_URL!,
+  token: process.env.KV_TOKEN!,
+});
+
+// Cache expiration time (e.g., 24 hours in seconds)
+const CACHE_EXPIRATION_SECONDS = 24 * 60 * 60;
+
+// Re-introduce cache key generation function
+function generateCacheKey(
+  bookTitle: string,
+  author: string,
+  preferences: SummaryPreferences
+): string {
+  const simplifiedPrefs = {
+    style: preferences.style,
+    length: preferences.length,
+    focus: preferences.focus,
+    language: preferences.language,
+    hasExamFocus: preferences.examFocus,
+    hasLiteraryContext: preferences.literaryContext,
+    hasStudyGuide: preferences.studyGuide,
+  };
+  const stringToHash = `${bookTitle}|${author}|${JSON.stringify(
+    simplifiedPrefs
+  )}`;
+  return `summary:${createHash("md5").update(stringToHash).digest("hex")}`;
+}
 
 // Remove the direct OpenAI client instantiation if only used for the API call
 // const openai = new OpenAI({
@@ -386,7 +418,7 @@ function isSummaryComplete(...) { ... }
 */
 
 export async function POST(request: Request) {
-  console.log("=== GENERATE SUMMARY API ROUTE CALLED (STREAMING) ===");
+  console.log("=== GENERATE SUMMARY API ROUTE CALLED (STREAMING + CACHE) ===");
 
   try {
     // Get the request body
@@ -452,18 +484,31 @@ export async function POST(request: Request) {
       preferences,
     });
 
-    // Remove cache check logic
-    /*
-    if (!notes || notes.trim() === "") {
-      const cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
-      const cachedEntry = summaryCache[cacheKey];
-      if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_EXPIRATION) {
-        console.log("Cache hit! Returning cached summary");
-        return NextResponse.json({ summary: cachedEntry.summary, fromCache: true });
+    const hasUserNotes = notes && notes.trim() !== "";
+    let cacheKey: string | null = null;
+
+    // --- Cache Check --- (Only if no user notes are provided)
+    if (!hasUserNotes) {
+      cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
+      console.log(`Checking cache with key: ${cacheKey}`);
+      try {
+        const cachedSummary = await redis.get<string>(cacheKey);
+        if (cachedSummary != null) {
+          console.log("Cache hit! Returning cached summary.");
+          // Return the cached text, formatted as a stream part
+          // Use Response directly as StreamingTextResponse might not be ideal for single chunk
+          return new Response(formatDataStreamPart("text", cachedSummary), {
+            status: 200,
+            headers: { "Content-Type": "text/plain; charset=utf-8" }, // Use text/plain for Vercel AI SDK data stream format
+          });
+        }
+        console.log("Cache miss.");
+      } catch (cacheError) {
+        console.error("Redis cache read error:", cacheError);
+        // Continue without cache if Redis fails
       }
-      console.log("Cache miss or expired entry");
     }
-    */
+    // --- End Cache Check ---
 
     // Use intelligent truncation for notes
     let processedNotes = notes;
@@ -508,6 +553,23 @@ export async function POST(request: Request) {
       maxTokens: maxTokens,
       frequencyPenalty: 0.1,
       presencePenalty: 0.1,
+      // --- Cache Saving --- (Add onFinish callback)
+      async onFinish({ text }) {
+        // Only cache if cacheKey was generated (meaning no user notes)
+        if (cacheKey) {
+          console.log(`Attempting to cache result for key: ${cacheKey}`);
+          try {
+            await redis.set(cacheKey, text, {
+              ex: CACHE_EXPIRATION_SECONDS,
+            });
+            console.log("Summary cached successfully.");
+          } catch (cacheError) {
+            console.error("Redis cache write error:", cacheError);
+            // Failed to cache, but proceed anyway
+          }
+        }
+      },
+      // --- End Cache Saving ---
     });
 
     console.log("AI SDK stream initiated");
