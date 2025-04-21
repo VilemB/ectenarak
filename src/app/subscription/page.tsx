@@ -292,7 +292,7 @@ export default function SubscriptionPage() {
             </p>
           </motion.div>
 
-          <div className="space-y-16 md:space-y-20">
+          <div className="space-y-12 md:space-y-16">
             <motion.section
               aria-labelledby="current-status-heading"
               variants={sectionVariants}
@@ -302,81 +302,87 @@ export default function SubscriptionPage() {
             >
               {user && subscription && currentTier !== "free" ? (
                 <div className="bg-muted/30 border border-border/20 rounded-lg p-6 md:p-8 space-y-6 shadow-sm">
-                  <h2
-                    id="current-status-heading"
-                    className="text-2xl font-semibold text-foreground mb-1"
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="space-y-6"
                   >
-                    Váš Aktuální Plán
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground block mb-1">
-                        Typ předplatného:
-                      </span>
-                      <span className="font-medium text-foreground capitalize text-base">
-                        {currentTier}
-                      </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground block mb-1">
+                          Typ předplatného:
+                        </span>
+                        <span className="font-medium text-foreground capitalize text-base">
+                          {currentTier}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block mb-1">
+                          {subscription.cancelAtPeriodEnd
+                            ? "Platnost do:"
+                            : "Příští platba:"}
+                        </span>
+                        <span className="font-medium text-foreground text-base">
+                          {subscription.nextRenewalDate ? (
+                            new Date(
+                              subscription.nextRenewalDate
+                            ).toLocaleDateString("cs-CZ", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })
+                          ) : (
+                            <span className="italic text-muted-foreground/80">
+                              Není k dispozici
+                            </span>
+                          )}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground block mb-1">
-                        {subscription.cancelAtPeriodEnd
-                          ? "Platnost do:"
-                          : "Příští platba:"}
-                      </span>
-                      <span className="font-medium text-foreground text-base">
-                        {subscription.nextRenewalDate ? (
-                          new Date(
-                            subscription.nextRenewalDate
-                          ).toLocaleDateString("cs-CZ", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })
-                        ) : (
-                          <span className="italic text-muted-foreground/80">
-                            Není k dispozici
-                          </span>
-                        )}
-                      </span>
+                    <div className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          AI Kredity:
+                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={refreshSubscription}
+                              disabled={loading}
+                            >
+                              <RefreshCw
+                                className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+                              />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Aktualizovat</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <AiCreditsDisplay
+                        aiCreditsRemaining={
+                          subscription.aiCreditsRemaining ?? 0
+                        }
+                        aiCreditsTotal={
+                          subscription.aiCreditsTotal ??
+                          SUBSCRIPTION_LIMITS[currentTier]?.aiCreditsPerMonth ??
+                          0
+                        }
+                        showLowCreditsWarning={true}
+                      />
+                      {subscription.cancelAtPeriodEnd && (
+                        <p className="text-xs text-amber-400 italic pt-3 text-center">
+                          Vaše předplatné je naplánováno ke zrušení.
+                        </p>
+                      )}
                     </div>
-                  </div>
-                  <div className="pt-4 space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">AI Kredity:</span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            onClick={refreshSubscription}
-                            disabled={loading}
-                          >
-                            <RefreshCw
-                              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
-                            />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Aktualizovat</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <AiCreditsDisplay
-                      aiCreditsRemaining={subscription.aiCreditsRemaining ?? 0}
-                      aiCreditsTotal={
-                        subscription.aiCreditsTotal ??
-                        SUBSCRIPTION_LIMITS[currentTier]?.aiCreditsPerMonth ??
-                        0
-                      }
-                      showLowCreditsWarning={true}
-                    />
-                    {subscription.cancelAtPeriodEnd && (
-                      <p className="text-xs text-amber-400 italic pt-3 text-center">
-                        Vaše předplatné je naplánováno ke zrušení.
-                      </p>
-                    )}
-                  </div>
+                  </motion.div>
 
                   {!subscription.cancelAtPeriodEnd && (
                     <div className="pt-6 border-t border-border/20 flex items-center justify-start">
@@ -455,18 +461,17 @@ export default function SubscriptionPage() {
               ) : (
                 <motion.div
                   variants={sectionVariants}
-                  className="text-center p-8 bg-muted/30 border border-border/20 rounded-lg shadow-sm max-w-2xl mx-auto"
+                  className="text-center max-w-2xl mx-auto"
                 >
-                  <h3
-                    id="current-status-heading"
-                    className="text-xl font-semibold mb-3 text-foreground"
+                  <motion.p
+                    className="text-muted-foreground text-lg leading-relaxed mb-8 mt-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
                   >
-                    Jste na tarifu Free
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Získejte více AI kreditů a odemkněte pokročilé funkce s
-                    placeným plánem.
-                  </p>
+                    Přejděte na Basic nebo Premium a získejte více AI kreditů a
+                    pokročilé funkce pro snadnější přípravu k maturitě.
+                  </motion.p>
                 </motion.div>
               )}
             </motion.section>
@@ -481,7 +486,7 @@ export default function SubscriptionPage() {
               <div className="text-center max-w-2xl mx-auto">
                 <h2
                   id="available-plans-heading"
-                  className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-3"
+                  className="text-2xl font-semibold tracking-tight text-foreground mb-3"
                 >
                   Vyberte si plán
                 </h2>
@@ -490,7 +495,13 @@ export default function SubscriptionPage() {
                 </p>
               </div>
 
-              <div className="flex justify-center mt-8 mb-12">
+              <motion.div
+                className="flex justify-center mt-8 mb-12"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ duration: 0.5 }}
+              >
                 <div className="inline-flex items-center rounded-full bg-muted/50 border border-border/30 p-1 shadow-sm">
                   <Button
                     onClick={() => setBillingCycle("monthly")}
@@ -529,102 +540,122 @@ export default function SubscriptionPage() {
                     </span>
                   </Button>
                 </div>
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <SubscriptionCard
-                  title="Basic"
-                  description="Rozšířené funkce pro důkladnou přípravu k maturitě."
-                  price={billingCycle === "yearly" ? "39" : "49"}
-                  pricePeriod="/ měsíc"
-                  monthlyPrice={49}
-                  badge={{
-                    text: currentTier === "basic" ? "Váš Plán" : "Populární",
-                    color:
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  <SubscriptionCard
+                    title="Basic"
+                    description="Rozšířené funkce pro důkladnou přípravu k maturitě."
+                    price={billingCycle === "yearly" ? "39" : "49"}
+                    pricePeriod="/ měsíc"
+                    monthlyPrice={49}
+                    badge={{
+                      text: currentTier === "basic" ? "Váš Plán" : "Populární",
+                      color:
+                        currentTier === "basic"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                    }}
+                    isCurrentPlan={currentTier === "basic"}
+                    buttonText={
                       currentTier === "basic"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground",
-                  }}
-                  isCurrentPlan={currentTier === "basic"}
-                  buttonText={
-                    currentTier === "basic"
-                      ? "Aktuální Plán"
-                      : currentTier === "premium"
-                        ? null
-                        : "Vybrat Plán"
-                  }
-                  onSelect={() => handlePlanSelect("basic")}
-                  isLoading={
-                    isChangingPlan && selectedTierForAction === "basic"
-                  }
-                  isSelected={selectedTierForAction === "basic"}
-                  animationDelay={0.1}
-                  features={[
-                    {
-                      name: `Až ${SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně`,
-                      included: true,
-                    },
-                    {
-                      name: `${SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI kreditů`,
-                      description: "měsíčně",
-                      included: true,
-                    },
-                    { name: "Export poznámek do PDF", included: true },
-                    {
-                      name: "Všechny funkce ze Základního plánu",
-                      included: true,
-                    },
-                  ]}
-                  disabled={
-                    currentTier === "basic" ||
-                    currentTier === "premium" ||
-                    loading ||
-                    isChangingPlan
-                  }
-                />
-                <SubscriptionCard
-                  title="Premium"
-                  description="Kompletní sada nástrojů pro perfektní přípravu."
-                  price={billingCycle === "yearly" ? "63" : "79"}
-                  pricePeriod="/ měsíc"
-                  monthlyPrice={79}
-                  isRecommended={true}
-                  badge={{
-                    text: currentTier === "premium" ? "Váš Plán" : "Doporučeno",
-                    color:
+                        ? "Aktuální Plán"
+                        : currentTier === "premium"
+                          ? null
+                          : "Vybrat Plán"
+                    }
+                    onSelect={() => handlePlanSelect("basic")}
+                    isLoading={
+                      isChangingPlan && selectedTierForAction === "basic"
+                    }
+                    isSelected={selectedTierForAction === "basic"}
+                    animationDelay={0.1}
+                    features={[
+                      {
+                        name: `Až ${SUBSCRIPTION_LIMITS.basic.maxBooks} knih v knihovně`,
+                        included: true,
+                      },
+                      {
+                        name: `${SUBSCRIPTION_LIMITS.basic.aiCreditsPerMonth} AI kreditů`,
+                        description: "měsíčně",
+                        included: true,
+                      },
+                      { name: "Export poznámek do PDF", included: true },
+                      {
+                        name: "Všechny funkce ze Základního plánu",
+                        included: true,
+                      },
+                    ]}
+                    disabled={
+                      currentTier === "basic" ||
+                      currentTier === "premium" ||
+                      loading ||
+                      isChangingPlan
+                    }
+                  />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <SubscriptionCard
+                    title="Premium"
+                    description="Kompletní sada nástrojů pro perfektní přípravu."
+                    price={billingCycle === "yearly" ? "63" : "79"}
+                    pricePeriod="/ měsíc"
+                    monthlyPrice={79}
+                    isRecommended={true}
+                    badge={{
+                      text:
+                        currentTier === "premium" ? "Váš Plán" : "Doporučeno",
+                      color:
+                        currentTier === "premium"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-amber-600 text-white",
+                    }}
+                    isCurrentPlan={currentTier === "premium"}
+                    buttonText={
                       currentTier === "premium"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-amber-600 text-white",
-                  }}
-                  isCurrentPlan={currentTier === "premium"}
-                  buttonText={
-                    currentTier === "premium" ? "Aktuální Plán" : "Vybrat Plán"
-                  }
-                  onSelect={() => handlePlanSelect("premium")}
-                  isLoading={
-                    isChangingPlan && selectedTierForAction === "premium"
-                  }
-                  isSelected={selectedTierForAction === "premium"}
-                  animationDelay={0.2}
-                  features={[
-                    { name: `Neomezený počet knih v knihovně`, included: true },
-                    {
-                      name: `${SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI kreditů`,
-                      description: "měsíčně",
-                      included: true,
-                    },
-                    {
-                      name: "Přizpůsobení AI shrnutí",
-                      description: "Zaměření, detailnost, styl",
-                      included: true,
-                    },
-                    { name: "Prioritní podpora", included: true },
-                    { name: "Všechny funkce z Basic plánu", included: true },
-                  ]}
-                  disabled={
-                    currentTier === "premium" || loading || isChangingPlan
-                  }
-                />
+                        ? "Aktuální Plán"
+                        : "Vybrat Plán"
+                    }
+                    onSelect={() => handlePlanSelect("premium")}
+                    isLoading={
+                      isChangingPlan && selectedTierForAction === "premium"
+                    }
+                    isSelected={selectedTierForAction === "premium"}
+                    animationDelay={0.2}
+                    features={[
+                      {
+                        name: `Neomezený počet knih v knihovně`,
+                        included: true,
+                      },
+                      {
+                        name: `${SUBSCRIPTION_LIMITS.premium.aiCreditsPerMonth} AI kreditů`,
+                        description: "měsíčně",
+                        included: true,
+                      },
+                      {
+                        name: "Přizpůsobení AI shrnutí",
+                        description: "Zaměření, detailnost, styl",
+                        included: true,
+                      },
+                      { name: "Prioritní podpora", included: true },
+                      { name: "Všechny funkce z Basic plánu", included: true },
+                    ]}
+                    disabled={
+                      currentTier === "premium" || loading || isChangingPlan
+                    }
+                  />
+                </motion.div>
               </div>
             </motion.section>
 
