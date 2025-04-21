@@ -15,8 +15,8 @@ import { openai as openaiProvider } from "@ai-sdk/openai"; // OpenAI provider
 //   apiKey: process.env.OPENAI_API_KEY,
 // });
 
-// Vercel AI SDK config (optional but recommended)
-export const runtime = "edge";
+// Remove Edge runtime configuration to allow Node.js APIs like 'crypto' (used by next-auth)
+// export const runtime = "edge";
 
 // Remove in-memory cache related code as it's not directly compatible with streaming
 /*
