@@ -249,9 +249,39 @@ export async function POST(req: Request) {
             const updatedTier = PRICE_ID_TO_TIER[newPriceId];
             const isYearly =
               subscription.items.data[0].plan.interval === "year";
-            const nextRenewalDate = new Date(
-              subscription.current_period_end * 1000
-            );
+
+            // Validate timestamp before creating Date
+            let nextRenewalDateForUpdate: Date | null = null;
+            const nextRenewalTimestamp = subscription.current_period_end;
+
+            if (
+              nextRenewalTimestamp &&
+              typeof nextRenewalTimestamp === "number" &&
+              nextRenewalTimestamp > 0
+            ) {
+              try {
+                nextRenewalDateForUpdate = new Date(
+                  nextRenewalTimestamp * 1000
+                );
+                if (isNaN(nextRenewalDateForUpdate.getTime())) {
+                  console.error(
+                    `[Webhook Update] Failed to create valid date from timestamp: ${nextRenewalTimestamp}`
+                  );
+                  nextRenewalDateForUpdate = null;
+                }
+              } catch (dateError) {
+                console.error(
+                  `[Webhook Update] Error creating date from timestamp: ${nextRenewalTimestamp}`,
+                  dateError
+                );
+                nextRenewalDateForUpdate = null;
+              }
+            } else {
+              console.warn(
+                `[Webhook Update] Invalid or missing current_period_end timestamp received: ${nextRenewalTimestamp}. Setting nextRenewalDateForUpdate to null.`
+              );
+              // Already null by default
+            }
 
             if (!updatedTier) {
               console.error(
@@ -269,7 +299,7 @@ export async function POST(req: Request) {
                   $set: {
                     "subscription.tier": updatedTier,
                     "subscription.stripePriceId": newPriceId,
-                    "subscription.nextRenewalDate": nextRenewalDate,
+                    "subscription.nextRenewalDate": nextRenewalDateForUpdate, // Use validated date
                     "subscription.isYearly": isYearly,
                     "subscription.aiCreditsTotal": credits,
                     "subscription.aiCreditsRemaining": credits,
