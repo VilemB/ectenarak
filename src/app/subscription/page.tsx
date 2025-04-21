@@ -67,9 +67,12 @@ export default function SubscriptionPage() {
   useEffect(() => {
     // Check if running in the browser
     if (typeof window === "undefined") return;
+    console.log("[SubscriptionPage] Success check useEffect running...");
 
     const queryParams = new URLSearchParams(window.location.search);
     const sessionId = queryParams.get("session_id"); // Check for session_id from Stripe
+    console.log("[SubscriptionPage] Query parameters:", window.location.search);
+    console.log("[SubscriptionPage] Detected session_id:", sessionId);
 
     if (sessionId) {
       console.log(
@@ -82,6 +85,7 @@ export default function SubscriptionPage() {
       // refreshSubscription();
 
       // Clean the URL to remove query parameters
+      console.log("[SubscriptionPage] Cleaning URL parameters...");
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, []); // Run only once on component mount
