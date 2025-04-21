@@ -132,6 +132,11 @@ export async function POST(req: Request) {
             nextRenewalDate = null; // Set to null on error
           }
         } else {
+          // Add detailed logging before the warning check
+          console.log(
+            "[Webhook] Object being checked for current_period_end:",
+            JSON.stringify(subscription, null, 2)
+          );
           console.warn(
             `[Webhook] Invalid or missing current_period_end timestamp received: ${subscription.current_period_end}. Setting nextRenewalDate to null.`
           );
@@ -247,8 +252,13 @@ export async function POST(req: Request) {
             );
           }
         } else {
+          // It's possible an update event might not have the full data, log it here too
+          console.log(
+            "[Webhook] Subscription object from 'customer.subscription.updated' event data:",
+            JSON.stringify(subscription, null, 2)
+          );
           console.warn(
-            `Webhook: Received subscription update for unknown subscription ID: ${subscription.id}`
+            `[Webhook] Received subscription update for unknown subscription ID: ${subscription.id}`
           );
         }
         break;
