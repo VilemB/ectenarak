@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
@@ -387,9 +386,6 @@ export default function SubscriptionPage() {
                               />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Aktualizovat</p>
-                          </TooltipContent>
                         </Tooltip>
                       </div>
                       <AiCreditsDisplay

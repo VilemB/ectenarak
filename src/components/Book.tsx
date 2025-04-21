@@ -1270,15 +1270,20 @@ export default function BookComponent({
 
   // Initialize useCompletion hook
   const { complete, isLoading } = useCompletion({
-    api: "/api/generate-summary", // Use the streaming API endpoint
-    // Handle completion finish
+    api: "/api/generate-summary",
     onFinish: async (prompt, completionText) => {
-      console.log("useCompletion finished:", completionText);
-      // Check if preferences were stored
+      console.log(
+        "useCompletion: onFinish triggered. completionText length:",
+        completionText?.length
+      );
+      console.log(
+        "useCompletion: onFinish - Current generatingPreferences:",
+        generatingPreferences
+      );
       if (!generatingPreferences) {
-        console.error("Preferences not found during generation completion.");
+        console.error("useCompletion: onFinish Error - Preferences were null.");
         toast.error("Chyba při ukládání shrnutí: Chybějící nastavení.");
-        setGeneratingPreferences(null); // Reset stored preferences
+        setGeneratingPreferences(null);
         return;
       }
 
@@ -1316,24 +1321,25 @@ export default function BookComponent({
         // Dispatch event to refresh credits (API doesn't return it now)
         window.dispatchEvent(new CustomEvent("refresh-credits"));
       } catch (saveError) {
-        console.error("Error saving summary note:", saveError);
+        console.error(
+          "useCompletion: onFinish - Error saving summary note:",
+          saveError
+        );
         toast.error("Vygenerované shrnutí se nepodařilo uložit.");
       } finally {
         setGeneratingPreferences(null); // Reset stored preferences
       }
     },
-    // Handle errors from the API stream
     onError: (err) => {
-      console.error("useCompletion error:", err);
-      // Show generic error or specific error if available
+      console.error("useCompletion: onError triggered:", err);
+      console.log(
+        "useCompletion: onError - Current generatingPreferences:",
+        generatingPreferences
+      );
       const message =
         err.message || "Nastala chyba při generování shrnutí knihy";
       toast.error(message);
 
-      // Check for potential credit errors (status code might be embedded in message or need specific handling)
-      // If the API route returns a specific status code (e.g., 403) in its JSON error for credits,
-      // you might need to parse `err.message` if it contains the JSON string, or adjust API error handling.
-      // For now, showing the modal based on a possible error message content.
       if (message.includes("403") || message.toLowerCase().includes("credit")) {
         setShowCreditExhaustedModal(true);
         setSummaryModal(false);
@@ -1344,60 +1350,55 @@ export default function BookComponent({
 
   // Update handleGenerateSummary to use the hook
   const handleGenerateSummary = async (preferences: SummaryPreferences) => {
-    // Store preferences to use in onFinish callback
+    console.log("handleGenerateSummary: Setting preferences:", preferences);
     setGeneratingPreferences(preferences);
+    const { user } = authContext;
 
     try {
-      // Keep initial checks
-      const { user } = authContext;
-      if (!user?.subscription) {
-        window.dispatchEvent(
-          new CustomEvent("show-subscription-modal", {
-            detail: {
-              feature: "aiCustomization",
-              needsCredits: true,
-              creditsOnly: true,
-            },
-          })
-        );
-        setGeneratingPreferences(null); // Reset stored preferences if check fails
+      if (!user?.subscription /*... other checks ...*/) {
+        console.log("handleGenerateSummary: Failing auth/credit check.");
+        setGeneratingPreferences(null); // Reset if check fails
         return;
       }
 
-      // Check credits locally before starting (optional but good UX)
+      // Temporarily comment out the local credit check to isolate the issue
+      /*
       if (!hasAiCredits()) {
-        setShowCreditExhaustedModal(true);
-        setSummaryModal(false);
-        setGeneratingPreferences(null); // Reset stored preferences if check fails
-        return;
+         console.log("handleGenerateSummary: Failing local AI credit check.");
+         setShowCreditExhaustedModal(true);
+         setSummaryModal(false);
+         setGeneratingPreferences(null); // Reset if check fails
+         return;
       }
+      */
 
-      // Call the 'complete' function from the hook
+      console.log(
+        "handleGenerateSummary: Checks passed (local credit check skipped), calling complete(). Prefs:",
+        preferences
+      );
       await complete("", {
-        // Prompt is now handled by the API based on body
+        // Prompt is handled by API
         body: {
           bookTitle: book.title,
           bookAuthor: book.author,
-          // Send only non-AI notes
           notes: notes
             .filter((n) => !n.isAISummary)
             .map((note) => note.content)
             .join("\n\n"),
           preferences,
-          // Indicate that credit deduction might happen client-side if needed (or handle fully server-side)
-          // clientSideDeduction: true, // Add this if your API expects it
         },
       });
-
-      // No need to handle response data here, onFinish and onError handle it
-      // No need to update credits here, API/onFinish handles it
+      console.log(
+        "handleGenerateSummary: complete() call finished without throwing sync error."
+      );
     } catch (error) {
-      // Errors during the `complete` call setup (not stream errors) are caught here
-      console.error("Error setting up summary generation:", error);
+      console.error(
+        "handleGenerateSummary: Error during setup or complete() call:",
+        error
+      );
       toast.error("Nepodařilo se spustit generování shrnutí.");
       setGeneratingPreferences(null); // Reset stored preferences on setup error
     }
-    // Don't set isGenerating false here, useCompletion hook handles loading state
   };
 
   // Update the handleBookDelete function
