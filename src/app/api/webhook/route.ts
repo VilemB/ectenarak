@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
+import Stripe from "stripe"; // Import the official Stripe type
 
 // ** Important: Disable Next.js body parsing for this route **
 // This config export is generally not needed/supported in App Router
@@ -12,18 +13,6 @@ import { SUBSCRIPTION_LIMITS, SubscriptionTier } from "@/types/user";
 //     bodyParser: false,
 //   },
 // };
-
-// Define Stripe subscription interface properties we need
-interface StripeSubscription {
-  id: string;
-  items: {
-    data: Array<{
-      price: { id: string };
-      plan: { interval: string };
-    }>;
-  };
-  current_period_end: number;
-}
 
 // Price ID to Tier mapping (Ensure these match your Stripe Price IDs)
 const PRICE_ID_TO_TIER: Record<string, SubscriptionTier> = {
@@ -113,24 +102,36 @@ export async function POST(req: Request) {
         try {
           // Add try...catch around the Stripe call
           // Fetch the subscription details from Stripe
-          const rawSubscriptionObject =
+          const retrievedSubscription: Stripe.Subscription = // Use official Stripe type
             await stripe.subscriptions.retrieve(subscriptionId);
-          // Log the RAW object BEFORE casting
+          // Log the RAW object BEFORE casting/validation
           console.log(
             `[Webhook] RAW retrieved Stripe Sub for ${subscriptionId}:`,
-            JSON.stringify(rawSubscriptionObject, null, 2)
+            JSON.stringify(retrievedSubscription, null, 2)
           );
 
-          // Cast AFTER logging
-          const subscription =
-            rawSubscriptionObject as unknown as StripeSubscription;
+          // Validate the structure again, specifically for the nested property
+          if (
+            !retrievedSubscription.items?.data?.[0] ||
+            typeof retrievedSubscription.items.data[0].current_period_end !==
+              "number"
+          ) {
+            console.error(
+              `[Webhook] Retrieved Stripe subscription object for ${subscriptionId} is missing items.data[0].current_period_end.`
+            );
+            return NextResponse.json(
+              { error: "Invalid subscription item data received from Stripe." },
+              { status: 500 }
+            );
+          }
 
           console.log(
-            `[Webhook] current_period_end from Casted Stripe Sub: ${subscription.current_period_end}`
+            `[Webhook] current_period_end from Validated Stripe Sub Item: ${retrievedSubscription.items.data[0].current_period_end}`
           );
 
           // ** Validate the timestamp and calculate nextRenewalDate **
-          const nextRenewalTimestamp = subscription.current_period_end; // Use const
+          const nextRenewalTimestamp =
+            retrievedSubscription.items.data[0].current_period_end; // Use validated data from the item
 
           let nextRenewalDate: Date | null = null;
           // Check the potentially undefined timestamp
@@ -160,10 +161,10 @@ export async function POST(req: Request) {
             // Log the CASTED object here to see what caused the undefined check
             console.log(
               "[Webhook] Object being checked for current_period_end:",
-              JSON.stringify(subscription, null, 2)
+              JSON.stringify(retrievedSubscription, null, 2)
             );
             console.warn(
-              `[Webhook] Invalid or missing current_period_end timestamp received: ${nextRenewalTimestamp}. Setting nextRenewalDate to null.`
+              `[Webhook] Invalid or missing current_period_end timestamp received from item: ${nextRenewalTimestamp}. Setting nextRenewalDate to null.`
             );
           }
 
@@ -173,9 +174,10 @@ export async function POST(req: Request) {
           );
 
           // Get data needed for DB update
-          const priceId = subscription.items.data[0].price.id;
+          const priceId = retrievedSubscription.items.data[0].price.id;
           const purchasedTier = PRICE_ID_TO_TIER[priceId];
-          const isYearly = subscription.items.data[0].plan.interval === "year";
+          const isYearly =
+            retrievedSubscription.items.data[0].plan.interval === "year";
 
           if (!purchasedTier) {
             console.error(
@@ -235,25 +237,78 @@ export async function POST(req: Request) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as unknown as StripeSubscription;
+        // Use the official Stripe type here too for consistency
+        const subscriptionUpdate = event.data.object as Stripe.Subscription;
+
+        // Add validation similar to checkout.session.completed if needed
+        if (!subscriptionUpdate || !subscriptionUpdate.id) {
+          console.error(
+            "[Webhook Update] Invalid subscription object in event data."
+          );
+          return NextResponse.json(
+            { error: "Invalid event data" },
+            { status: 400 }
+          );
+        }
+
+        console.log(
+          "[Webhook Update] Processing update for subscription ID:",
+          subscriptionUpdate.id
+        );
+        // Log the object received in the update event
+        console.log(
+          "[Webhook Update] Received subscription object:",
+          JSON.stringify(subscriptionUpdate, null, 2)
+        );
 
         // Find the user with this subscription ID
         const users = await getUserCollection();
         const user = await users.findOne({
-          "subscription.stripeSubscriptionId": subscription.id,
+          "subscription.stripeSubscriptionId": subscriptionUpdate.id,
         });
 
         if (user) {
           try {
-            const newPriceId = subscription.items.data[0].price.id;
+            // Directly use properties from the validated subscriptionUpdate object
+            const newPriceId = subscriptionUpdate.items.data[0]?.price?.id;
+            const planInterval =
+              subscriptionUpdate.items.data[0]?.plan?.interval;
+            const cancelAtPeriodEnd = subscriptionUpdate.cancel_at_period_end; // Get cancellation status
+
+            // Validate access to the nested property on the update object too
+            if (
+              !subscriptionUpdate.items?.data?.[0] ||
+              typeof subscriptionUpdate.items.data[0].current_period_end !==
+                "number"
+            ) {
+              console.error(
+                `[Webhook Update] Subscription update object for ${subscriptionUpdate.id} is missing items.data[0].current_period_end.`
+              );
+              return NextResponse.json(
+                { error: "Invalid subscription item data in update event." },
+                { status: 400 }
+              );
+            }
+            const nextRenewalTimestamp =
+              subscriptionUpdate.items.data[0].current_period_end;
+
+            // Ensure necessary data exists before proceeding
+            if (!newPriceId || !planInterval) {
+              console.error(
+                `[Webhook Update] Missing price ID or plan interval for subscription ${subscriptionUpdate.id}`
+              );
+              // Decide how to handle: return error or skip update?
+              return NextResponse.json(
+                { error: "Missing required subscription item data" },
+                { status: 400 }
+              );
+            }
+
             const updatedTier = PRICE_ID_TO_TIER[newPriceId];
-            const isYearly =
-              subscription.items.data[0].plan.interval === "year";
+            const isYearly = planInterval === "year";
 
             // Validate timestamp before creating Date
             let nextRenewalDateForUpdate: Date | null = null;
-            const nextRenewalTimestamp = subscription.current_period_end;
-
             if (
               nextRenewalTimestamp &&
               typeof nextRenewalTimestamp === "number" &&
@@ -278,7 +333,7 @@ export async function POST(req: Request) {
               }
             } else {
               console.warn(
-                `[Webhook Update] Invalid or missing current_period_end timestamp received: ${nextRenewalTimestamp}. Setting nextRenewalDateForUpdate to null.`
+                `[Webhook Update] Invalid or missing current_period_end timestamp received from item: ${nextRenewalTimestamp}. Setting nextRenewalDateForUpdate to null.`
               );
               // Already null by default
             }
@@ -304,11 +359,12 @@ export async function POST(req: Request) {
                     "subscription.aiCreditsTotal": credits,
                     "subscription.aiCreditsRemaining": credits,
                     "subscription.lastRenewalDate": new Date(),
+                    "subscription.cancelAtPeriodEnd": cancelAtPeriodEnd, // Use validated cancellation status
                   },
                 }
               );
               console.log(
-                `Webhook: Updated subscription for user ${user._id} to tier ${updatedTier}.`
+                `Webhook: Updated subscription for user ${user._id} to tier ${updatedTier}. Cancel at period end: ${cancelAtPeriodEnd}` // Log cancellation status
               );
             }
           } catch (dbError) {
@@ -321,22 +377,39 @@ export async function POST(req: Request) {
           // It's possible an update event might not have the full data, log it here too
           console.log(
             "[Webhook] Subscription object from 'customer.subscription.updated' event data:",
-            JSON.stringify(subscription, null, 2)
+            JSON.stringify(subscriptionUpdate, null, 2)
           );
           console.warn(
-            `[Webhook] Received subscription update for unknown subscription ID: ${subscription.id}`
+            `[Webhook] Received subscription update for unknown subscription ID: ${subscriptionUpdate.id}`
           );
         }
         break;
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as unknown as StripeSubscription;
+        // Use the official Stripe type
+        const subscriptionDelete = event.data.object as Stripe.Subscription;
+
+        // Add validation
+        if (!subscriptionDelete || !subscriptionDelete.id) {
+          console.error(
+            "[Webhook Delete] Invalid subscription object in event data."
+          );
+          return NextResponse.json(
+            { error: "Invalid event data" },
+            { status: 400 }
+          );
+        }
+
+        console.log(
+          "[Webhook Delete] Processing delete for subscription ID:",
+          subscriptionDelete.id
+        );
 
         // Find the user with this subscription ID
         const users = await getUserCollection();
         const user = await users.findOne({
-          "subscription.stripeSubscriptionId": subscription.id,
+          "subscription.stripeSubscriptionId": subscriptionDelete.id,
         });
 
         if (user) {
@@ -374,7 +447,7 @@ export async function POST(req: Request) {
           }
         } else {
           console.warn(
-            `Webhook: Received subscription deletion for unknown subscription ID: ${subscription.id}`
+            `Webhook: Received subscription deletion for unknown subscription ID: ${subscriptionDelete.id}`
           );
         }
         break;
