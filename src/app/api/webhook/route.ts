@@ -80,6 +80,11 @@ export async function POST(req: Request) {
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
 
+        // Log extracted IDs
+        console.log(
+          `[Webhook] Extracted customerId: ${customerId}, subscriptionId: ${subscriptionId}`
+        );
+
         console.log(
           `[Webhook] Checkout completed for sub ID: ${subscriptionId}`
         ); // Log Sub ID
@@ -94,110 +99,138 @@ export async function POST(req: Request) {
         }
         const userId = session.metadata.userId;
 
-        // Fetch the subscription details from Stripe
-        const rawSubscriptionObject =
-          await stripe.subscriptions.retrieve(subscriptionId);
-        // Log the RAW object BEFORE casting
-        console.log(
-          `[Webhook] RAW retrieved Stripe Sub for ${subscriptionId}:`,
-          JSON.stringify(rawSubscriptionObject, null, 2)
-        );
-
-        // Cast AFTER logging
-        const subscription =
-          rawSubscriptionObject as unknown as StripeSubscription;
-
-        console.log(
-          `[Webhook] current_period_end from Casted Stripe Sub: ${subscription.current_period_end}`
-        );
-
-        // ** Validate the timestamp and calculate nextRenewalDate **
-        let nextRenewalDate: Date | null = null;
-        if (
-          subscription.current_period_end &&
-          typeof subscription.current_period_end === "number" &&
-          subscription.current_period_end > 0
-        ) {
-          try {
-            nextRenewalDate = new Date(subscription.current_period_end * 1000);
-            // Check if the resulting date is valid
-            if (isNaN(nextRenewalDate.getTime())) {
-              console.error(
-                `[Webhook] Failed to create valid date from timestamp: ${subscription.current_period_end}`
-              );
-              nextRenewalDate = null; // Set to null if date creation failed
-            }
-          } catch (dateError) {
-            console.error(
-              `[Webhook] Error creating date from timestamp: ${subscription.current_period_end}`,
-              dateError
-            );
-            nextRenewalDate = null; // Set to null on error
-          }
-        } else {
-          // Add detailed logging before the warning check
-          console.log(
-            "[Webhook] Object being checked for current_period_end:",
-            JSON.stringify(subscription, null, 2)
-          );
-          console.warn(
-            `[Webhook] Invalid or missing current_period_end timestamp received: ${subscription.current_period_end}. Setting nextRenewalDate to null.`
-          );
-        }
-
-        // Log the calculated date (conditionally)
-        console.log(
-          `[Webhook] Calculated nextRenewalDate for DB: ${nextRenewalDate instanceof Date ? nextRenewalDate.toISOString() : "null"}`
-        );
-
-        // Get data needed for DB update
-        const priceId = subscription.items.data[0].price.id;
-        const purchasedTier = PRICE_ID_TO_TIER[priceId];
-        const isYearly = subscription.items.data[0].plan.interval === "year";
-
-        if (!purchasedTier) {
+        // Check if subscriptionId is actually valid before retrieving
+        if (!subscriptionId || typeof subscriptionId !== "string") {
           console.error(
-            `Webhook Error: Unknown Price ID ${priceId} for user ${userId}`
+            `[Webhook] Invalid or missing subscription ID from session: ${subscriptionId}`
           );
           return NextResponse.json(
-            { error: "Unknown Price ID" },
+            { error: "Invalid subscription ID in session" },
             { status: 400 }
           );
         }
 
-        // Get the credit limits for the purchased tier
-        const credits = SUBSCRIPTION_LIMITS[purchasedTier].aiCreditsPerMonth;
+        try {
+          // Add try...catch around the Stripe call
+          // Fetch the subscription details from Stripe
+          const rawSubscriptionObject =
+            await stripe.subscriptions.retrieve(subscriptionId);
+          // Log the RAW object BEFORE casting
+          console.log(
+            `[Webhook] RAW retrieved Stripe Sub for ${subscriptionId}:`,
+            JSON.stringify(rawSubscriptionObject, null, 2)
+          );
 
-        // Update the user in the database
-        const users = await getUserCollection();
+          // Cast AFTER logging
+          const subscription =
+            rawSubscriptionObject as unknown as StripeSubscription;
 
-        console.log(
-          `[Webhook] Attempting DB update for user ${userId} with nextRenewalDate: ${nextRenewalDate instanceof Date ? nextRenewalDate.toISOString() : "null"}`
-        );
+          console.log(
+            `[Webhook] current_period_end from Casted Stripe Sub: ${subscription.current_period_end}`
+          );
 
-        await users.updateOne(
-          { _id: new mongoose.Types.ObjectId(userId) },
-          {
-            $set: {
-              "subscription.tier": purchasedTier,
-              "subscription.stripeCustomerId": customerId,
-              "subscription.stripeSubscriptionId": subscriptionId,
-              "subscription.stripePriceId": priceId,
-              "subscription.startDate": new Date(), // Set start date on initial purchase
-              "subscription.lastRenewalDate": new Date(), // Set last renewal on initial purchase
-              "subscription.nextRenewalDate": nextRenewalDate, // Use Stripe's period end
-              "subscription.isYearly": isYearly,
-              "subscription.autoRenew": true, // Assume paid tiers auto-renew
-              "subscription.aiCreditsTotal": credits, // Reset total credits
-              "subscription.aiCreditsRemaining": credits, // Reset remaining credits
-              "subscription.cancelAtPeriodEnd": false, // Ensure this is false initially
-            },
+          // ** Validate the timestamp and calculate nextRenewalDate **
+          const nextRenewalTimestamp = subscription.current_period_end; // Use const
+
+          let nextRenewalDate: Date | null = null;
+          // Check the potentially undefined timestamp
+          if (
+            nextRenewalTimestamp &&
+            typeof nextRenewalTimestamp === "number" &&
+            nextRenewalTimestamp > 0
+          ) {
+            try {
+              nextRenewalDate = new Date(nextRenewalTimestamp * 1000);
+              // Check if the resulting date is valid
+              if (isNaN(nextRenewalDate.getTime())) {
+                console.error(
+                  `[Webhook] Failed to create valid date from timestamp: ${nextRenewalTimestamp}`
+                );
+                nextRenewalDate = null; // Set to null if date creation failed
+              }
+            } catch (dateError) {
+              console.error(
+                `[Webhook] Error creating date from timestamp: ${nextRenewalTimestamp}`,
+                dateError
+              );
+              nextRenewalDate = null; // Set to null on error
+            }
+          } else {
+            // Add detailed logging before the warning check
+            // Log the CASTED object here to see what caused the undefined check
+            console.log(
+              "[Webhook] Object being checked for current_period_end:",
+              JSON.stringify(subscription, null, 2)
+            );
+            console.warn(
+              `[Webhook] Invalid or missing current_period_end timestamp received: ${nextRenewalTimestamp}. Setting nextRenewalDate to null.`
+            );
           }
-        );
 
-        console.log(
-          `User ${userId} successfully subscribed/upgraded to ${purchasedTier} tier.`
-        );
+          // Log the calculated date (conditionally)
+          console.log(
+            `[Webhook] Calculated nextRenewalDate for DB: ${nextRenewalDate instanceof Date ? nextRenewalDate.toISOString() : "null"}`
+          );
+
+          // Get data needed for DB update
+          const priceId = subscription.items.data[0].price.id;
+          const purchasedTier = PRICE_ID_TO_TIER[priceId];
+          const isYearly = subscription.items.data[0].plan.interval === "year";
+
+          if (!purchasedTier) {
+            console.error(
+              `Webhook Error: Unknown Price ID ${priceId} for user ${userId}`
+            );
+            return NextResponse.json(
+              { error: "Unknown Price ID" },
+              { status: 400 }
+            );
+          }
+
+          // Get the credit limits for the purchased tier
+          const credits = SUBSCRIPTION_LIMITS[purchasedTier].aiCreditsPerMonth;
+
+          // Update the user in the database
+          const users = await getUserCollection();
+
+          console.log(
+            `[Webhook] Attempting DB update for user ${userId} with nextRenewalDate: ${nextRenewalDate instanceof Date ? nextRenewalDate.toISOString() : "null"}`
+          );
+
+          await users.updateOne(
+            { _id: new mongoose.Types.ObjectId(userId) },
+            {
+              $set: {
+                "subscription.tier": purchasedTier,
+                "subscription.stripeCustomerId": customerId,
+                "subscription.stripeSubscriptionId": subscriptionId,
+                "subscription.stripePriceId": priceId,
+                "subscription.startDate": new Date(), // Set start date on initial purchase
+                "subscription.lastRenewalDate": new Date(), // Set last renewal on initial purchase
+                "subscription.nextRenewalDate": nextRenewalDate, // Use Stripe's period end
+                "subscription.isYearly": isYearly,
+                "subscription.autoRenew": true, // Assume paid tiers auto-renew
+                "subscription.aiCreditsTotal": credits, // Reset total credits
+                "subscription.aiCreditsRemaining": credits, // Reset remaining credits
+                "subscription.cancelAtPeriodEnd": false, // Ensure this is false initially
+              },
+            }
+          );
+
+          console.log(
+            `User ${userId} successfully subscribed/upgraded to ${purchasedTier} tier.`
+          );
+        } catch (stripeError) {
+          console.error(
+            `[Webhook] Error retrieving Stripe subscription ${subscriptionId}:`,
+            stripeError
+          );
+          // Decide how to handle this - maybe return an error response?
+          return NextResponse.json(
+            { error: "Failed to retrieve subscription from Stripe" },
+            { status: 500 }
+          );
+        }
         break;
       }
 
