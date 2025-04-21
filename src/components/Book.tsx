@@ -31,13 +31,15 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
   AuthorSummaryPreferencesModal,
   AuthorSummaryPreferences,
-} from "@/components/AuthorSummaryPreferencesModal";
+} from "./AuthorSummaryPreferencesModal";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import AiCreditsExhaustedPrompt from "./AiCreditsExhaustedPrompt";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
+// Import useCompletion hook
+import { useCompletion } from "@ai-sdk/react";
 
 // Study-friendly content formatter component
 const StudyContent = ({ content }: { content: string }) => {
@@ -658,7 +660,6 @@ export default function BookComponent({
   const [isExpanded, setIsExpanded] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingAuthorSummary, setIsGeneratingAuthorSummary] =
     useState(false);
   const [summaryModal, setSummaryModal] = useState(false);
@@ -687,6 +688,9 @@ export default function BookComponent({
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
     useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  // State to store preferences during generation
+  const [generatingPreferences, setGeneratingPreferences] =
+    useState<SummaryPreferences | null>(null);
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -1264,13 +1268,88 @@ export default function BookComponent({
     }
   };
 
-  // Handle generating the summary
-  const handleGenerateSummary = async (preferences: SummaryPreferences) => {
-    try {
-      setIsGenerating(true);
+  // Initialize useCompletion hook
+  const { complete, isLoading } = useCompletion({
+    api: "/api/generate-summary", // Use the streaming API endpoint
+    // Handle completion finish
+    onFinish: async (prompt, completionText) => {
+      console.log("useCompletion finished:", completionText);
+      // Check if preferences were stored
+      if (!generatingPreferences) {
+        console.error("Preferences not found during generation completion.");
+        toast.error("Chyba při ukládání shrnutí: Chybějící nastavení.");
+        setGeneratingPreferences(null); // Reset stored preferences
+        return;
+      }
 
-      // Check if user has AI credits
-      const { user, setUser } = authContext;
+      // Create the new note object
+      const newSummaryNote: Note = {
+        id: `ai-summary-${Date.now()}`,
+        content: completionText,
+        createdAt: new Date().toISOString(),
+        isAISummary: true,
+        // Optionally store preferences used for this summary
+        // generationPreferences: generatingPreferences, // You might need to add this field to your Note type
+      };
+
+      try {
+        // Save the note to the database
+        const saveResponse = await fetch(`/api/books/${book.id}/notes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newSummaryNote),
+        });
+
+        if (!saveResponse.ok) {
+          throw new Error("Failed to save summary note to database");
+        }
+
+        // Update local state with the new note
+        setNotes((prevNotes) => [...prevNotes, newSummaryNote]);
+        toast.success("Shrnutí knihy bylo úspěšně vygenerováno a uloženo!");
+        setSummaryModal(false);
+        setActiveNoteFilter("ai");
+        scrollToNewlyAddedNote(newSummaryNote.id);
+
+        // Dispatch event to refresh credits (API doesn't return it now)
+        window.dispatchEvent(new CustomEvent("refresh-credits"));
+      } catch (saveError) {
+        console.error("Error saving summary note:", saveError);
+        toast.error("Vygenerované shrnutí se nepodařilo uložit.");
+      } finally {
+        setGeneratingPreferences(null); // Reset stored preferences
+      }
+    },
+    // Handle errors from the API stream
+    onError: (err) => {
+      console.error("useCompletion error:", err);
+      // Show generic error or specific error if available
+      const message =
+        err.message || "Nastala chyba při generování shrnutí knihy";
+      toast.error(message);
+
+      // Check for potential credit errors (status code might be embedded in message or need specific handling)
+      // If the API route returns a specific status code (e.g., 403) in its JSON error for credits,
+      // you might need to parse `err.message` if it contains the JSON string, or adjust API error handling.
+      // For now, showing the modal based on a possible error message content.
+      if (message.includes("403") || message.toLowerCase().includes("credit")) {
+        setShowCreditExhaustedModal(true);
+        setSummaryModal(false);
+      }
+      setGeneratingPreferences(null); // Reset stored preferences on error
+    },
+  });
+
+  // Update handleGenerateSummary to use the hook
+  const handleGenerateSummary = async (preferences: SummaryPreferences) => {
+    // Store preferences to use in onFinish callback
+    setGeneratingPreferences(preferences);
+
+    try {
+      // Keep initial checks
+      const { user } = authContext;
       if (!user?.subscription) {
         window.dispatchEvent(
           new CustomEvent("show-subscription-modal", {
@@ -1281,99 +1360,44 @@ export default function BookComponent({
             },
           })
         );
+        setGeneratingPreferences(null); // Reset stored preferences if check fails
         return;
       }
 
-      // Call the API to generate the summary
-      const response = await fetch("/api/generate-summary", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Check credits locally before starting (optional but good UX)
+      if (!hasAiCredits()) {
+        setShowCreditExhaustedModal(true);
+        setSummaryModal(false);
+        setGeneratingPreferences(null); // Reset stored preferences if check fails
+        return;
+      }
+
+      // Call the 'complete' function from the hook
+      await complete("", {
+        // Prompt is now handled by the API based on body
+        body: {
           bookTitle: book.title,
           bookAuthor: book.author,
-          notes: notes.map((note) => note.content).join("\n\n"),
+          // Send only non-AI notes
+          notes: notes
+            .filter((n) => !n.isAISummary)
+            .map((note) => note.content)
+            .join("\n\n"),
           preferences,
-        }),
-      });
-
-      // Check content type and handle non-JSON responses
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("Received non-JSON response:", text);
-        throw new Error("Server returned non-JSON response");
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          setShowCreditExhaustedModal(true);
-          setSummaryModal(false);
-          return;
-        }
-        throw new Error(data.error || `API error: ${response.status}`);
-      }
-
-      if (!data || !data.summary) {
-        throw new Error("Invalid response data");
-      }
-
-      // Create the new note
-      const newNote: Note = {
-        id: data.noteId || `ai-summary-${Date.now()}`,
-        content: data.summary,
-        createdAt: new Date().toISOString(),
-        isAISummary: true,
-      };
-
-      // Save the note to the database
-      const saveResponse = await fetch(`/api/books/${book.id}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+          // Indicate that credit deduction might happen client-side if needed (or handle fully server-side)
+          // clientSideDeduction: true, // Add this if your API expects it
         },
-        body: JSON.stringify(newNote),
       });
 
-      if (!saveResponse.ok) {
-        throw new Error("Failed to save summary note to database");
-      }
-
-      // Update user's credit count in the UI and trigger a refresh event
-      if (data.creditsRemaining !== undefined && setUser) {
-        const updatedUser = {
-          ...user,
-          subscription: {
-            ...user.subscription,
-            aiCreditsRemaining: data.creditsRemaining,
-            aiCreditsTotal: data.creditsTotal,
-          },
-        };
-        setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-
-        // Dispatch event to refresh credits display
-        window.dispatchEvent(new CustomEvent("refresh-credits"));
-
-        // Wait for the UI to update
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      // Update local state with the new note
-      setNotes((prevNotes) => [...prevNotes, newNote]);
-      toast.success("Shrnutí knihy bylo úspěšně vygenerováno!");
-      setSummaryModal(false);
-      setActiveNoteFilter("ai");
-      scrollToNewlyAddedNote(newNote.id);
+      // No need to handle response data here, onFinish and onError handle it
+      // No need to update credits here, API/onFinish handles it
     } catch (error) {
-      console.error("Error in handleGenerateSummary:", error);
-      toast.error("Nastala chyba při generování shrnutí knihy");
-    } finally {
-      setIsGenerating(false);
+      // Errors during the `complete` call setup (not stream errors) are caught here
+      console.error("Error setting up summary generation:", error);
+      toast.error("Nepodařilo se spustit generování shrnutí.");
+      setGeneratingPreferences(null); // Reset stored preferences on setup error
     }
+    // Don't set isGenerating false here, useCompletion hook handles loading state
   };
 
   // Update the handleBookDelete function
@@ -1848,18 +1872,18 @@ export default function BookComponent({
                 variant="outline"
                 size="sm"
                 className="w-full sm:w-auto bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
-                disabled={isGenerating}
+                disabled={isLoading} // Use isLoading from the hook
                 onClick={(e) => {
                   e.stopPropagation();
                   handleFeatureAction(
                     "aiCustomization",
                     hasAiCustomizationSubscription,
                     () => setSummaryModal(true),
-                    isGenerating
+                    isLoading // Pass isLoading state
                   );
                 }}
               >
-                {isGenerating ? (
+                {isLoading ? ( // Use isLoading from the hook
                   <>
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
                     <span>Generuji...</span>
@@ -1871,11 +1895,10 @@ export default function BookComponent({
                   </>
                 )}
               </Button>
-
-              {/* Lock indicator for AI Summary - REMOVE */}
-              {(!hasAiCustomizationSubscription || // <-- Corrected check
-                (hasAiCustomizationSubscription && !userHasAiCredits)) && // <-- Corrected check
-                !isGenerating && <span>{/* Lock removed */}</span>}
+              {/* Lock indicator for AI Summary */}
+              {(!hasAiCustomizationSubscription ||
+                (hasAiCustomizationSubscription && !userHasAiCredits)) &&
+                !isLoading && <span>{/* Lock removed - Placeholder */}</span>}
             </div>
           </div>
         </div>
@@ -2050,8 +2073,8 @@ export default function BookComponent({
       <SummaryPreferencesModal
         isOpen={summaryModal}
         onClose={() => setSummaryModal(false)}
-        onGenerate={handleGenerateSummary}
-        isGenerating={isGenerating}
+        onGenerate={handleGenerateSummary} // Pass the updated handler
+        isGenerating={isLoading} // Use isLoading from the hook
         title="Generovat shrnutí knihy"
         description="Vyberte preferovaný styl a zaměření shrnutí knihy."
       />
