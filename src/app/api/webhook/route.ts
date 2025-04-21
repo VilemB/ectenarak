@@ -95,17 +95,20 @@ export async function POST(req: Request) {
         const userId = session.metadata.userId;
 
         // Fetch the subscription details from Stripe
-        const subscription = (await stripe.subscriptions.retrieve(
-          subscriptionId
-        )) as unknown as StripeSubscription;
-
-        // *** Add Logging Here ***
+        const rawSubscriptionObject =
+          await stripe.subscriptions.retrieve(subscriptionId);
+        // Log the RAW object BEFORE casting
         console.log(
-          `[Webhook] Retrieved Stripe Sub for ${subscriptionId}:`,
-          subscription
+          `[Webhook] RAW retrieved Stripe Sub for ${subscriptionId}:`,
+          JSON.stringify(rawSubscriptionObject, null, 2)
         );
+
+        // Cast AFTER logging
+        const subscription =
+          rawSubscriptionObject as unknown as StripeSubscription;
+
         console.log(
-          `[Webhook] current_period_end from Stripe: ${subscription.current_period_end}`
+          `[Webhook] current_period_end from Casted Stripe Sub: ${subscription.current_period_end}`
         );
 
         // ** Validate the timestamp and calculate nextRenewalDate **
@@ -276,7 +279,7 @@ export async function POST(req: Request) {
         if (user) {
           try {
             const freeTierCredits = SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth;
-            await users.updateOne(
+            const updateResult = await users.updateOne(
               { _id: user._id },
               {
                 $set: {
@@ -287,15 +290,19 @@ export async function POST(req: Request) {
                   "subscription.startDate":
                     user.subscription?.startDate || new Date(),
                   "subscription.lastRenewalDate": new Date(),
-                  "subscription.nextRenewalDate": null,
+                  "subscription.nextRenewalDate": null, // Explicitly setting null
                   "subscription.isYearly": false,
                   "subscription.autoRenew": false,
                   "subscription.aiCreditsTotal": freeTierCredits,
                   "subscription.aiCreditsRemaining": freeTierCredits,
+                  "subscription.cancelAtPeriodEnd": false, // Ensure this is false on downgrade
                 },
               }
             );
-            console.log(`Webhook: Downgraded user ${user._id} to free tier.`);
+            // Add log confirming DB update result
+            console.log(
+              `[Webhook] Completed DB update for deleted sub for user ${user._id}. Matched: ${updateResult.matchedCount}, Modified: ${updateResult.modifiedCount}`
+            );
           } catch (dbError) {
             console.error(
               `Webhook DB Error deleting subscription for user ${user._id}:`,
