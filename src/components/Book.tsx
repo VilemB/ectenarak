@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import React from "react";
 import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -179,7 +179,11 @@ const NotesList = ({
   handleCloseSummary: () => void;
   bookTitle: string;
 }) => {
-  const filteredNotes = notes.filter((note) => {
+  // Create a reversed copy of the notes array for display
+  const reversedNotes = useMemo(() => [...notes].reverse(), [notes]);
+
+  // Filter the reversed notes
+  const filteredNotes = reversedNotes.filter((note) => {
     if (activeNoteFilter === "all") return true;
     if (activeNoteFilter === "ai" && note.isAISummary) return true;
     if (activeNoteFilter === "manual" && !note.isAISummary) return true;
@@ -205,6 +209,7 @@ const NotesList = ({
       data-no-toggle="true"
       onClick={(e) => e.stopPropagation()}
     >
+      {/* Map over the filtered and reversed notes */}
       {filteredNotes.map((note) => (
         <NoteItem
           key={note.id}
