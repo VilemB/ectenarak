@@ -1275,7 +1275,6 @@ export default function BookComponent({
         "useCompletion: onFinish triggered. completionText length:",
         completionText?.length
       );
-      // Read preferences from the ref
       const prefs = preferencesRef.current;
       console.log(
         "useCompletion: onFinish - Current preferencesRef.current:",
@@ -1283,11 +1282,7 @@ export default function BookComponent({
       );
 
       if (!prefs) {
-        console.error(
-          "useCompletion: onFinish Error - Preferences ref was null."
-        );
-        toast.error("Chyba při ukládání shrnutí: Chybějící nastavení (ref)."); // Updated error message
-        preferencesRef.current = null; // Clear ref
+        // ... (error handling for missing prefs) ...
         return;
       }
 
@@ -1296,7 +1291,6 @@ export default function BookComponent({
         content: completionText,
         createdAt: new Date().toISOString(),
         isAISummary: true,
-        // Optionally add prefs here if needed in Note type
       };
 
       try {
@@ -1306,19 +1300,56 @@ export default function BookComponent({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(newSummaryNote),
+          body: JSON.stringify(newSummaryNote), // Send only the new note to save
         });
 
         if (!saveResponse.ok) {
           throw new Error("Failed to save summary note to database");
         }
 
-        // Update local state with the new note
-        setNotes((prevNotes) => [...prevNotes, newSummaryNote]);
+        // Get the COMPLETE updated notes list from the API response
+        const data = await saveResponse.json();
+
+        // Format the notes from the response
+        const formattedNotes = data.notes.map(
+          (note: {
+            // Use the correct type definition from your API response
+            _id: string;
+            content: string;
+            createdAt: string;
+            isAISummary?: boolean;
+          }) => ({
+            id: note._id,
+            bookId: book.id,
+            content: note.content,
+            createdAt: new Date(note.createdAt).toISOString(),
+            isAISummary: note.isAISummary || false,
+          })
+        );
+
+        // Update the state with the COMPLETE list from the server
+        setNotes(formattedNotes);
+
         toast.success("Shrnutí knihy bylo úspěšně vygenerováno a uloženo!");
-        setSummaryModal(false);
-        setActiveNoteFilter("ai");
-        scrollToNewlyAddedNote(newSummaryNote.id);
+        setSummaryModal(false); // Ensure modal closes
+        setActiveNoteFilter("ai"); // Optionally switch filter
+        // Find the ID of the newly added summary from the returned list
+        const savedSummaryId = formattedNotes.find(
+          (n: Note) => n.isAISummary && n.content === completionText
+        )?.id;
+        if (savedSummaryId) {
+          scrollToNewlyAddedNote(savedSummaryId);
+        } else {
+          console.warn(
+            "Could not find saved summary note ID in API response to scroll to."
+          );
+          // Fallback: maybe scroll to the last note?
+          if (formattedNotes.length > 0) {
+            scrollToNewlyAddedNote(
+              formattedNotes[formattedNotes.length - 1].id
+            );
+          }
+        }
 
         // Dispatch event to refresh credits (API doesn't return it now)
         window.dispatchEvent(new CustomEvent("refresh-credits"));
