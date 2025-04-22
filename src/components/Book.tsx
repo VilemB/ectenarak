@@ -1347,7 +1347,8 @@ export default function BookComponent({
 
         toast.success("Shrnutí knihy bylo úspěšně vygenerováno a uloženo!");
         setSummaryModal(false); // Ensure modal closes
-        setActiveNoteFilter("ai"); // Optionally switch filter
+        // setActiveNoteFilter("ai"); // Remove automatic filter switch
+
         // Find the ID of the newly added summary from the returned list
         const savedSummaryId = formattedNotes.find(
           (n: Note) => n.isAISummary && n.content === completionText
