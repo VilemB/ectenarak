@@ -1307,10 +1307,22 @@ export default function BookComponent({
           throw new Error("Failed to save summary note to database");
         }
 
-        // Get the COMPLETE updated notes list from the API response
         const data = await saveResponse.json();
+        // Log the data received from the API
+        console.log("onFinish: Data received from save note API:", data);
 
-        // Format the notes from the response
+        // Check if data.notes exists and is an array before mapping
+        if (!data || !Array.isArray(data.notes)) {
+          console.error(
+            "onFinish: Invalid notes data received from API:",
+            data
+          );
+          toast.error(
+            "Chyba při zpracování odpovědi serveru po uložení poznámky."
+          );
+          return; // Stop processing if data format is wrong
+        }
+
         const formattedNotes = data.notes.map(
           (note: {
             // Use the correct type definition from your API response
@@ -1327,7 +1339,10 @@ export default function BookComponent({
           })
         );
 
-        // Update the state with the COMPLETE list from the server
+        console.log(
+          "onFinish: Setting notes state with formatted notes:",
+          formattedNotes
+        );
         setNotes(formattedNotes);
 
         toast.success("Shrnutí knihy bylo úspěšně vygenerováno a uloženo!");
