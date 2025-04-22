@@ -1268,7 +1268,7 @@ export default function BookComponent({
   };
 
   // Initialize useCompletion hook
-  const { complete, isLoading } = useCompletion({
+  const { complete, isLoading, completion } = useCompletion({
     api: "/api/generate-summary",
     onFinish: async (prompt, completionText) => {
       console.log(
@@ -1979,6 +1979,38 @@ export default function BookComponent({
                   handleCloseSummary={handleCloseSummary}
                   bookTitle={book.title}
                 />
+
+                {/* Render streaming completion text */}
+                {isLoading && completion && (
+                  <motion.div
+                    initial={{ opacity: 0.5, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-background rounded-lg p-3 sm:p-4 border border-orange-800/50 shadow-sm opacity-90"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+                      <span className="text-xs text-orange-400">
+                        Generuji AI Shrnutí...
+                      </span>
+                      {/* Optional: Add a subtle loading bar */}
+                      <div className="w-full h-1 bg-orange-900/30 rounded-full overflow-hidden mt-1">
+                        <div
+                          className="h-full bg-orange-500 animate-pulse rounded-full"
+                          style={{ width: "50%" }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="prose prose-sm dark:prose-invert max-w-none note-content text-blue-100/80">
+                      <ReactMarkdown
+                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {completion}
+                      </ReactMarkdown>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
 
