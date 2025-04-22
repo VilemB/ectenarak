@@ -4,6 +4,12 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import mongoose from "mongoose";
+import Stripe from "stripe";
+
+// Initialize Stripe (ensure STRIPE_SECRET_KEY is in your .env)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  typescript: true,
+});
 
 export async function DELETE() {
   try {
@@ -41,6 +47,47 @@ export async function DELETE() {
     mongoSession.startTransaction();
 
     try {
+      // --- Fetch User and Attempt Stripe Subscription Cancellation ---
+      const userToDelete = await User.findOne({ email: userEmail })
+        .select("+subscription.stripeSubscriptionId") // Ensure we get the Stripe ID
+        .session(mongoSession); // Run find within the transaction
+
+      if (!userToDelete) {
+        await mongoSession.abortTransaction();
+        mongoSession.endSession();
+        return NextResponse.json(
+          { message: "Uživatel nebyl nalezen" },
+          { status: 404 }
+        );
+      }
+
+      // Check if user has an active Stripe subscription and cancel it
+      if (userToDelete.subscription?.stripeSubscriptionId) {
+        const stripeSubId = userToDelete.subscription.stripeSubscriptionId;
+        console.log(
+          `[Delete User] User ${userEmail} has Stripe subscription ${stripeSubId}. Attempting cancellation.`
+        );
+        try {
+          await stripe.subscriptions.cancel(stripeSubId);
+          console.log(
+            `[Delete User] Successfully cancelled Stripe subscription ${stripeSubId} for user ${userEmail}.`
+          );
+        } catch (stripeError) {
+          console.error(
+            `[Delete User] Failed to cancel Stripe subscription ${stripeSubId} for user ${userEmail}. Proceeding with DB deletion. Error:`,
+            stripeError
+          );
+          // Log the error but do not abort the transaction.
+          // We still want to delete the user's data even if Stripe fails.
+        }
+      } else {
+        console.log(
+          `[Delete User] User ${userEmail} does not have an active Stripe subscription ID.`
+        );
+      }
+
+      // --- Proceed with deleting user data from DB ---
+
       // First, get the list of books for this user
       // This helps us identify which author summaries are linked to the user's books
       const userBooks = await db
@@ -87,17 +134,18 @@ export async function DELETE() {
       );
 
       // Delete the user account
-      const userResult = await User.findOneAndDelete(
-        { email: userEmail },
+      // We use deleteOne now since we already fetched the user
+      const userResult = await User.deleteOne(
+        { _id: userToDelete._id }, // Use the ID we found
         { session: mongoSession }
       );
 
-      if (!userResult) {
-        // Rollback the transaction if user not found
+      if (userResult.deletedCount === 0) {
+        // This shouldn't happen if we found the user above, but added as a safeguard
         await mongoSession.abortTransaction();
         return NextResponse.json(
-          { message: "Uživatel nebyl nalezen" },
-          { status: 404 }
+          { message: "Nepodařilo se smazat uživatelský záznam" },
+          { status: 500 }
         );
       }
 
