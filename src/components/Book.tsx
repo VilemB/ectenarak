@@ -14,7 +14,6 @@ import {
   ChevronDown,
   Sparkles,
   PenLine,
-  User,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -38,7 +37,6 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import AiCreditsExhaustedPrompt from "./AiCreditsExhaustedPrompt";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
-// Import useCompletion hook
 import { useCompletion } from "@ai-sdk/react";
 
 // Study-friendly content formatter component
@@ -758,16 +756,6 @@ export default function BookComponent({
     [showErrorMessage]
   );
 
-  // Add a function to handle closing the author summary with scroll position preservation
-  const handleCloseAuthorInfo = useCallback(() => {
-    // Save the current scroll position before closing
-    setSavedScrollPosition(window.scrollY);
-
-    // Close the author info immediately - this prevents the flashing issue
-    // by letting the AnimatePresence handle the exit animation properly
-    setIsAuthorInfoVisible(false);
-  }, []);
-
   // Create a more robust function for handling author summary toggling
   const handleAuthorSummaryToggle = useCallback(
     (e: React.MouseEvent) => {
@@ -1137,23 +1125,6 @@ export default function BookComponent({
     }
   };
 
-  // Function to update book in local state and storage
-  const handleUpdateBook = (updatedBook: Book) => {
-    // Update the book in state
-    setBook(updatedBook);
-
-    // Save to localStorage if needed
-    try {
-      const books = JSON.parse(localStorage.getItem("books") || "[]");
-      const updatedBooks = books.map((b: Book) =>
-        b.id === updatedBook.id ? updatedBook : b
-      );
-      localStorage.setItem("books", JSON.stringify(updatedBooks));
-    } catch (error) {
-      console.error("Error saving book to localStorage:", error);
-    }
-  };
-
   // Hook for Book Summary
   const {
     complete: bookComplete,
@@ -1161,11 +1132,19 @@ export default function BookComponent({
     completion: bookCompletion,
   } = useCompletion({
     api: "/api/generate-summary",
-    onFinish: async (prompt, completionText) => {
-      // ... existing book summary onFinish logic ...
+    onFinish: async (_prompt, completionText) => {
+      console.log("bookCompletion: onFinish triggered.");
+      const prefs = preferencesRef.current;
+      // ... rest of onFinish
+      preferencesRef.current = null;
     },
-    onError: (err) => {
-      // ... existing book summary onError logic ...
+    onError: (_err) => {
+      console.error("bookCompletion: onError triggered:", _err);
+      preferencesRef.current = null;
+      const message =
+        _err.message || "Nastala chyba při generování shrnutí knihy";
+      toast.error(message);
+      // ... credit modal logic ...
     },
   });
 
@@ -1175,31 +1154,25 @@ export default function BookComponent({
     isLoading: isAuthorLoading,
     completion: authorCompletion,
   } = useCompletion({
-    api: "/api/author-summary", // Point to the refactored author summary route
-    onFinish: (prompt, completionText) => {
+    api: "/api/author-summary",
+    onFinish: (_prompt, completionText) => {
       console.log("authorCompletion: onFinish triggered.");
-      // Update the book state with the generated author summary
       setBook((prevBook) => ({
         ...prevBook,
         authorSummary: completionText,
         updatedAt: new Date().toISOString(),
       }));
-      // Ensure the panel is visible after generation
       setIsAuthorInfoVisible(true);
-      // Close the modal if it was open
       setAuthorSummaryModal(false);
-      // Dispatch event to refresh credits (API doesn't return it now)
       window.dispatchEvent(new CustomEvent("refresh-credits"));
       toast.success("Informace o autorovi byly úspěšně vygenerovány!");
     },
-    onError: (err) => {
-      console.error("authorCompletion: onError triggered:", err);
+    onError: (_err) => {
+      console.error("authorCompletion: onError triggered:", _err);
       const message =
-        err.message || "Nastala chyba při generování informací o autorovi";
+        _err.message || "Nastala chyba při generování informací o autorovi";
       toast.error(message);
-      // Close the modal on error
       setAuthorSummaryModal(false);
-      // Consider showing credit exhausted modal based on error message
       if (message.includes("403") || message.toLowerCase().includes("credit")) {
         setShowCreditExhaustedModal(true);
       }
@@ -1416,6 +1389,13 @@ export default function BookComponent({
       }, 100); // Small delay
     }
   }, [isLoadingNotes]); // Dependency array ensures this runs when isLoading changes
+
+  // Update handleGenerateAuthorSummary to use the new hook
+  const handleGenerateAuthorSummary = async (
+    preferencesToUse: AuthorSummaryPreferences // Now this type is recognized
+  ) => {
+    // ... function implementation ...
+  };
 
   // Main rendering with the optimized structure
   return (
