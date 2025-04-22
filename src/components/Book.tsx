@@ -1971,7 +1971,6 @@ export default function BookComponent({
           </div>
         </div>
 
-        {/* Notes List - now using the NotesList component */}
         {isExpanded && (
           <>
             {isLoadingNotes ? (
@@ -1981,42 +1980,13 @@ export default function BookComponent({
                 </div>
                 <p className="text-sm text-blue-300 font-medium">Načítání...</p>
               </div>
-            ) : notes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 px-4">
-                <div className="relative w-20 h-20 mb-4">
-                  <div className="absolute inset-0 bg-blue-900/30 rounded-lg shadow-inner flex items-center justify-center border border-blue-800/50">
-                    <PenLine className="h-8 w-8 text-blue-400" />
-                  </div>
-                  <div className="absolute inset-0 animate-pulse opacity-70">
-                    <div className="w-full h-full bg-blue-800 rounded-lg blur-xl"></div>
-                  </div>
-                </div>
-                <p className="text-center text-blue-100 font-medium">
-                  Zatím nemáte žádné poznámky k této knize
-                </p>
-                <p className="text-center text-blue-300 text-sm mt-1 max-w-md">
-                  Přidejte poznámku pomocí formuláře níže nebo vygenerujte
-                  shrnutí pomocí AI asistenta
-                </p>
-              </div>
             ) : (
               <div
                 className="space-y-4"
                 data-no-toggle="true"
                 onClick={(e) => e.stopPropagation()}
               >
-                <NotesList
-                  notes={notes}
-                  activeNoteFilter={activeNoteFilter}
-                  activeNoteId={activeNoteId}
-                  handleDeleteNote={handleDeleteNote}
-                  handleCopyNote={handleCopyNote}
-                  handleViewSummary={handleViewSummary}
-                  handleCloseSummary={handleCloseSummary}
-                  bookTitle={book.title}
-                />
-
-                {/* Render streaming completion text - ADD REF HERE */}
+                {/* Render streaming completion text FIRST when loading */}
                 {isLoading && completion && (
                   <motion.div
                     ref={streamingCompletionRef} // Assign the ref
@@ -2030,7 +2000,6 @@ export default function BookComponent({
                       <span className="text-xs text-orange-400">
                         Generuji AI Shrnutí...
                       </span>
-                      {/* Optional: Add a subtle loading bar */}
                       <div className="w-full h-1 bg-orange-900/30 rounded-full overflow-hidden mt-1">
                         <div
                           className="h-full bg-orange-500 animate-pulse rounded-full"
@@ -2048,6 +2017,18 @@ export default function BookComponent({
                     </div>
                   </motion.div>
                 )}
+
+                {/* Render existing notes (now uses reversed list internally) */}
+                <NotesList
+                  notes={notes}
+                  activeNoteFilter={activeNoteFilter}
+                  activeNoteId={activeNoteId}
+                  handleDeleteNote={handleDeleteNote}
+                  handleCopyNote={handleCopyNote}
+                  handleViewSummary={handleViewSummary}
+                  handleCloseSummary={handleCloseSummary}
+                  bookTitle={book.title}
+                />
               </div>
             )}
 
