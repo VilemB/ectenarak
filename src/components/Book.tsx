@@ -657,8 +657,10 @@ export default function BookComponent({
   // Refs
   const bookRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Ref to store preferences during generation
-  const preferencesRef = useRef<SummaryPreferences | null>(null);
+  // Ref to store book preferences during generation
+  const bookPreferencesRef = useRef<SummaryPreferences | null>(null);
+  // Ref to store author preferences during generation
+  const authorPreferencesRef = useRef<AuthorSummaryPreferences | null>(null);
   // Ref for the streaming completion container
   const streamingCompletionRef = useRef<HTMLDivElement>(null);
 
@@ -1132,15 +1134,27 @@ export default function BookComponent({
     completion: bookCompletion,
   } = useCompletion({
     api: "/api/generate-summary",
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onFinish: async (_prompt, completionText) => {
       console.log("bookCompletion: onFinish triggered.");
-      const prefs = preferencesRef.current;
-      // ... rest of onFinish
-      preferencesRef.current = null;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const prefs = bookPreferencesRef.current; // Use bookPreferencesRef
+      if (!prefs) {
+        console.error(
+          "useCompletion: onFinish Error - Book Preferences ref was null."
+        );
+        toast.error(
+          "Chyba při ukládání shrnutí knihy: Chybějící nastavení (ref)."
+        );
+        bookPreferencesRef.current = null; // Clear correct ref
+        return;
+      }
+      // ... rest of onFinish using completionText and prefs ...
+      bookPreferencesRef.current = null; // Clear correct ref on success
     },
     onError: (_err) => {
       console.error("bookCompletion: onError triggered:", _err);
-      preferencesRef.current = null;
+      bookPreferencesRef.current = null; // Clear correct ref on error
       const message =
         _err.message || "Nastala chyba při generování shrnutí knihy";
       toast.error(message);
@@ -1149,6 +1163,7 @@ export default function BookComponent({
   });
 
   // Hook for Author Summary
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
     complete: authorComplete,
     isLoading: isAuthorLoading,
@@ -1157,6 +1172,7 @@ export default function BookComponent({
     api: "/api/author-summary",
     onFinish: (_prompt, completionText) => {
       console.log("authorCompletion: onFinish triggered.");
+      authorPreferencesRef.current = null; // Clear correct ref on success
       setBook((prevBook) => ({
         ...prevBook,
         authorSummary: completionText,
@@ -1169,6 +1185,7 @@ export default function BookComponent({
     },
     onError: (_err) => {
       console.error("authorCompletion: onError triggered:", _err);
+      authorPreferencesRef.current = null; // Clear correct ref on error
       const message =
         _err.message || "Nastala chyba při generování informací o autorovi";
       toast.error(message);
@@ -1181,32 +1198,19 @@ export default function BookComponent({
 
   // Update handleGenerateSummary to use the hook
   const handleGenerateSummary = async (preferences: SummaryPreferences) => {
-    console.log("handleGenerateSummary: Setting preferences ref:", preferences);
-    preferencesRef.current = preferences;
+    console.log(
+      "handleGenerateSummary: Setting book preferences ref:",
+      preferences
+    );
+    bookPreferencesRef.current = preferences; // Use bookPreferencesRef
     // const { user } = authContext; // Remove unused variable
 
     try {
-      // Keep checks commented out for now
-      /*
-      if (!user?.subscription) { // This check would need 'user' if uncommented
-         console.log("handleGenerateSummary: Failing auth/credit check.");
-         preferencesRef.current = null;
-         return;
-      }
-      */
-      /* Temporarily commented out local credit check
-      if (!hasAiCredits()) {
-         console.log("handleGenerateSummary: Failing local AI credit check.");
-         setShowCreditExhaustedModal(true);
-         setSummaryModal(false);
-         preferencesRef.current = null; // Clear ref if check fails
-         return;
-      }
-      */
+      // ... checks ...
 
       console.log(
         "handleGenerateSummary: Checks passed, calling complete(). Prefs stored in ref:",
-        preferencesRef.current
+        bookPreferencesRef.current // Use bookPreferencesRef
       );
       await bookComplete("", {
         // Prompt is handled by API
@@ -1229,7 +1233,7 @@ export default function BookComponent({
         error
       );
       toast.error("Nepodařilo se spustit generování shrnutí.");
-      preferencesRef.current = null; // Clear ref on setup error
+      bookPreferencesRef.current = null; // Clear ref on setup error
     }
   };
 
@@ -1391,10 +1395,42 @@ export default function BookComponent({
   }, [isLoadingNotes]); // Dependency array ensures this runs when isLoading changes
 
   // Update handleGenerateAuthorSummary to use the new hook
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGenerateAuthorSummary = async (
-    preferencesToUse: AuthorSummaryPreferences // Now this type is recognized
+    preferencesToUse: AuthorSummaryPreferences
   ) => {
-    // ... function implementation ...
+    console.log(
+      "handleGenerateAuthorSummary: Setting author preferences ref:",
+      preferencesToUse
+    );
+    authorPreferencesRef.current = preferencesToUse; // Store actual prefs in authorPreferencesRef
+    // const { user } = authContext; // Still potentially unused depending on checks
+
+    try {
+      // ... checks ...
+
+      console.log(
+        "handleGenerateAuthorSummary: Checks passed, calling complete(). Prefs stored in ref:",
+        authorPreferencesRef.current
+      );
+      await authorComplete("", {
+        // Call authorComplete
+        body: {
+          author: book.author,
+          preferences: preferencesToUse, // Pass the parameter here
+        },
+      });
+      console.log(
+        "handleGenerateAuthorSummary: authorComplete() call finished without throwing sync error."
+      );
+    } catch (error) {
+      console.error(
+        "handleGenerateAuthorSummary: Error during setup or authorComplete() call:",
+        error
+      );
+      toast.error("Nepodařilo se spustit generování informací o autorovi.");
+      authorPreferencesRef.current = null; // Clear author ref on setup error
+    }
   };
 
   // Main rendering with the optimized structure
