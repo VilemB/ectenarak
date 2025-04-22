@@ -656,6 +656,8 @@ export default function BookComponent({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Ref to store preferences during generation
   const preferencesRef = useRef<SummaryPreferences | null>(null);
+  // Ref for the streaming completion container
+  const streamingCompletionRef = useRef<HTMLDivElement>(null);
 
   // State
   const [book, setBook] = useState<Book>(safeBook);
@@ -1618,6 +1620,19 @@ export default function BookComponent({
     }
   };
 
+  // Scroll to streaming container when loading starts
+  useEffect(() => {
+    if (isLoading && streamingCompletionRef.current) {
+      // Use setTimeout to ensure the element is rendered before scrolling
+      setTimeout(() => {
+        streamingCompletionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest", // Try 'nearest' or 'center' if 'start' scrolls too much
+        });
+      }, 100); // Small delay
+    }
+  }, [isLoading]); // Dependency array ensures this runs when isLoading changes
+
   // Main rendering with the optimized structure
   return (
     <div
@@ -1996,9 +2011,10 @@ export default function BookComponent({
                   bookTitle={book.title}
                 />
 
-                {/* Render streaming completion text */}
+                {/* Render streaming completion text - ADD REF HERE */}
                 {isLoading && completion && (
                   <motion.div
+                    ref={streamingCompletionRef} // Assign the ref
                     initial={{ opacity: 0.5, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}

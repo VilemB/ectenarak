@@ -386,8 +386,9 @@ function selectOptimalModel(
   else if (notesLength > 1000) complexityScore += 1;
 
   // Define absolute maximum token limits to prevent excessive consumption
-  const MAX_TOKENS_LIMIT = 4000; // Hard limit for any request
-  const SAFE_TOKENS_LIMIT = 3000; // Default safe limit for most cases
+  // Increased limits slightly
+  const MAX_TOKENS_LIMIT = 4000; // Still leave some buffer from absolute model limits (e.g., 4096)
+  const SAFE_TOKENS_LIMIT = 3500; // Increased default safe limit
 
   // Select model based on complexity
   let model: string;
@@ -398,26 +399,27 @@ function selectOptimalModel(
     model = "gpt-4o";
     maxTokens =
       preferences.length === "long"
-        ? Math.min(3500, MAX_TOKENS_LIMIT)
+        ? Math.min(3800, MAX_TOKENS_LIMIT) // Increased long limit for gpt-4o
         : preferences.length === "medium"
-          ? Math.min(2500, SAFE_TOKENS_LIMIT)
-          : Math.min(1500, SAFE_TOKENS_LIMIT);
+          ? Math.min(3000, SAFE_TOKENS_LIMIT) // Increased medium limit for gpt-4o
+          : Math.min(1800, SAFE_TOKENS_LIMIT); // Increased short limit for gpt-4o
   } else {
     // Use GPT-4o-mini for all other cases
     model = "gpt-4o-mini";
     maxTokens =
       preferences.length === "long"
-        ? Math.min(3000, SAFE_TOKENS_LIMIT)
+        ? Math.min(3500, MAX_TOKENS_LIMIT) // Increased long limit for mini
         : preferences.length === "medium"
-          ? Math.min(2000, SAFE_TOKENS_LIMIT)
-          : Math.min(1200, SAFE_TOKENS_LIMIT);
+          ? Math.min(2500, SAFE_TOKENS_LIMIT) // Increased medium limit for mini
+          : Math.min(1500, SAFE_TOKENS_LIMIT); // Increased short limit for mini
   }
 
   // Apply a cost-based adjustment based on notes length
+  // Slightly increase limits when notes are present
   const hasSignificantNotes = notesLength > 1000;
   const costAdjustedLimit = hasSignificantNotes
-    ? maxTokens
-    : Math.min(maxTokens, model === "gpt-4o" ? 3000 : 2500);
+    ? Math.min(maxTokens + 300, MAX_TOKENS_LIMIT) // Give slightly more room if notes are present
+    : maxTokens; // Keep base limit if few/no notes
 
   console.log(
     `Selected model: ${model} (complexity score: ${complexityScore}, tokens: ${costAdjustedLimit})`
