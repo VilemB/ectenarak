@@ -554,7 +554,8 @@ export async function POST(request: Request) {
       preferences,
       processedNotes?.length || 0
     );
-    console.log(`Using model: ${model} with max tokens: ${maxTokens}`);
+    // Log the selected model
+    console.log(`Using OpenAI model: ${model} with max_tokens: ${maxTokens}`);
 
     console.log("Calling AI SDK streamText...");
 
