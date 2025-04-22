@@ -12,11 +12,24 @@ import { openai as openaiProvider } from "@ai-sdk/openai"; // OpenAI provider
 import { Redis } from "@upstash/redis"; // Import Redis client
 import { createHash } from "crypto"; // Import crypto for cache key generation
 
-// Instantiate Redis client using environment variables
-const redis = new Redis({
-  url: process.env.KV_URL!,
-  token: process.env.KV_TOKEN!,
-});
+// Instantiate Redis client using the correct environment variable names
+let redis: Redis | null = null;
+const kvUrl = process.env.KV_REST_API_URL; // Use KV_REST_API_URL
+const kvToken = process.env.KV_REST_API_TOKEN; // Use KV_REST_API_TOKEN
+
+if (kvUrl && kvToken) {
+  redis = new Redis({
+    url: kvUrl,
+    token: kvToken,
+  });
+  console.log(
+    "Redis client initialized successfully using KV_REST_API variables."
+  );
+} else {
+  console.warn(
+    "KV_REST_API_URL or KV_REST_API_TOKEN environment variables are missing. Redis caching will be disabled."
+  );
+}
 
 // Cache expiration time (e.g., 24 hours in seconds)
 const CACHE_EXPIRATION_SECONDS = 24 * 60 * 60;
@@ -487,19 +500,18 @@ export async function POST(request: Request) {
     const hasUserNotes = notes && notes.trim() !== "";
     let cacheKey: string | null = null;
 
-    // --- Cache Check --- (Only if no user notes are provided)
-    if (!hasUserNotes) {
+    // --- Cache Check --- (Only if no user notes and Redis is configured)
+    if (!hasUserNotes && redis) {
+      // Check if redis client was initialized
       cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
       console.log(`Checking cache with key: ${cacheKey}`);
       try {
         const cachedSummary = await redis.get<string>(cacheKey);
         if (cachedSummary != null) {
           console.log("Cache hit! Returning cached summary.");
-          // Return the cached text, formatted as a stream part
-          // Use Response directly as StreamingTextResponse might not be ideal for single chunk
           return new Response(formatDataStreamPart("text", cachedSummary), {
             status: 200,
-            headers: { "Content-Type": "text/plain; charset=utf-8" }, // Use text/plain for Vercel AI SDK data stream format
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
           });
         }
         console.log("Cache miss.");
@@ -507,6 +519,8 @@ export async function POST(request: Request) {
         console.error("Redis cache read error:", cacheError);
         // Continue without cache if Redis fails
       }
+    } else if (!hasUserNotes) {
+      console.log("Redis not configured, skipping cache check.");
     }
     // --- End Cache Check ---
 
@@ -555,8 +569,9 @@ export async function POST(request: Request) {
       presencePenalty: 0.1,
       // --- Cache Saving --- (Add onFinish callback)
       async onFinish({ text }) {
-        // Only cache if cacheKey was generated (meaning no user notes)
-        if (cacheKey) {
+        // Only cache if cacheKey was generated and Redis is configured
+        if (cacheKey && redis) {
+          // Check redis again
           console.log(`Attempting to cache result for key: ${cacheKey}`);
           try {
             await redis.set(cacheKey, text, {
@@ -565,7 +580,6 @@ export async function POST(request: Request) {
             console.log("Summary cached successfully.");
           } catch (cacheError) {
             console.error("Redis cache write error:", cacheError);
-            // Failed to cache, but proceed anyway
           }
         }
       },
