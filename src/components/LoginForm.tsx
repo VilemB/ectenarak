@@ -303,13 +303,6 @@ export default function LoginForm() {
                         required
                         className="w-full pl-10 pr-28 h-11 bg-blue-950/30 border-blue-400/10 rounded-lg focus:border-blue-400/30 focus:ring-0 placeholder:text-blue-300/30"
                       />
-                      <Button
-                        variant="link"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0 h-auto text-xs text-blue-400 hover:text-blue-300 hover:underline z-20"
-                        type="button"
-                      >
-                        Zapomenuté heslo?
-                      </Button>
                     </div>
                   </motion.div>
 
