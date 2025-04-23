@@ -58,9 +58,13 @@ export default function FAQ() {
 
       <div className="space-y-2">
         {faqs.map((faq, index) => (
-          <div
+          <motion.div
             key={index}
             className="border-b border-border/40 last:border-b-0"
+            initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
             <button
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-muted/50 transition-colors"
@@ -90,7 +94,7 @@ export default function FAQ() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
