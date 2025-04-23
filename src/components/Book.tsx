@@ -1135,9 +1135,8 @@ export default function BookComponent({
   } = useCompletion({
     api: "/api/generate-summary",
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onFinish: async (_prompt, completionText) => {
+    onFinish: async (_prompt, _completionText) => {
       console.log("bookCompletion: onFinish triggered.");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const prefs = bookPreferencesRef.current; // Use bookPreferencesRef
       if (!prefs) {
         console.error(
@@ -1163,7 +1162,6 @@ export default function BookComponent({
   });
 
   // Hook for Author Summary
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
     complete: authorComplete,
     isLoading: isAuthorLoading,
@@ -1395,7 +1393,6 @@ export default function BookComponent({
   }, [isLoadingNotes]); // Dependency array ensures this runs when isLoading changes
 
   // Update handleGenerateAuthorSummary to use the new hook
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGenerateAuthorSummary = async (
     preferencesToUse: AuthorSummaryPreferences
   ) => {
