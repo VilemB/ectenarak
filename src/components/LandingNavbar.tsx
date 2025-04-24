@@ -55,6 +55,7 @@ export default function LandingNavbar({ scrollY }: LandingNavbarProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerButtonRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -112,26 +113,39 @@ export default function LandingNavbar({ scrollY }: LandingNavbarProps) {
     };
   }, [isMenuOpen]);
 
+  // Custom smooth scroll function that accounts for header height
+  const customSmoothScrollTo = (id: string) => {
+    const element = document.getElementById(id);
+    const headerHeight = headerRef.current?.offsetHeight || 0;
+    if (element) {
+      const elementPosition =
+        element.getBoundingClientRect().top + window.scrollY;
+      const offsetPosition = elementPosition - headerHeight - 10; // Subtract header height and add a small buffer
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+  };
+
   const handleNavClick = async (id: string) => {
+    // Close the menu immediately, regardless of landing page or not
+    setIsMenuOpen(false);
+
     if (isLandingPage) {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: "auto" });
-      }
-      // Re-introduce a delay before closing the menu
+      // Use a small delay to allow the menu closing animation to start
+      // before calculating scroll position, preventing layout shifts from interfering.
       setTimeout(() => {
-        setIsMenuOpen(false);
-      }, 150); // 150ms delay
+        customSmoothScrollTo(id);
+      }, 50); // 50ms delay - adjust if needed
     } else {
       // If not on landing page, navigate to landing page with hash
       await router.push(`/#${id}`);
-      // Wait for the page to load and then scroll to the section
+      // Wait for the page to load/re-render and then scroll using the consistent function
       setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
+        customSmoothScrollTo(id); // Use custom scroll logic here too
+      }, 200); // Increased delay slightly to ensure element exists after navigation
     }
   };
 
@@ -144,6 +158,7 @@ export default function LandingNavbar({ scrollY }: LandingNavbarProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="fixed top-0 left-0 right-0 z-[100] w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
+        ref={headerRef}
       >
         {/* Progress indicator using amber gradient - expands from center */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden">

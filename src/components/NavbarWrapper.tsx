@@ -44,7 +44,7 @@ export default function NavbarWrapper() {
 
   // If not logged in but on a public page, show LandingNavbar
   if (!user && isPublicPage) {
-    return <LandingNavbar scrollY={0} scrollToSection={() => {}} />;
+    return <LandingNavbar scrollY={0} />;
   }
 
   // If logged in, show the regular Navbar
