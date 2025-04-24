@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  Suspense,
+  useMemo,
+} from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Book } from "@/types";
@@ -98,7 +104,22 @@ function HomeContent() {
 
   // Keep state for showing/hiding the form
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Search state
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms debounce delay
+
+    // Cleanup function to cancel the timeout if query changes quickly
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   // Function to fetch books
   const fetchBooks = useCallback(async () => {
@@ -140,6 +161,19 @@ function HomeContent() {
   useEffect(() => {
     fetchBooks();
   }, [fetchBooks]);
+
+  // Filtered books based on debounced search query
+  const filteredBooks = useMemo(() => {
+    if (!debouncedSearchQuery) {
+      return books; // Return all books if search is empty
+    }
+    const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+    return books.filter(
+      (book) =>
+        book.title.toLowerCase().includes(lowerCaseQuery) ||
+        book.author.toLowerCase().includes(lowerCaseQuery)
+    );
+  }, [books, debouncedSearchQuery]);
 
   // Calculate book limit display text
   const getLimitText = () => {
@@ -235,7 +269,7 @@ function HomeContent() {
         </div>
       </div>
 
-      {searchQuery && books.length > 0 && (
+      {debouncedSearchQuery && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -243,18 +277,24 @@ function HomeContent() {
           className="mb-4 text-xs text-white flex items-center bg-secondary/30 p-2 px-3 rounded-lg border border-border/30"
         >
           <Search className="h-3 w-3 mr-2 text-primary" />
-          Nalezeno{" "}
-          <span className="font-medium text-primary mx-1">{books.length}</span>
-          {books.length === 1
+          Pro &quot;
+          <span className="text-white font-medium border-b border-primary/50 pb-0.5 mx-1">
+            {debouncedSearchQuery}
+          </span>
+          &quot; nalezen
+          {filteredBooks.length === 1
+            ? ""
+            : filteredBooks.length >= 2 && filteredBooks.length <= 4
+              ? "y"
+              : "o"}{" "}
+          <span className="font-medium text-primary mx-1">
+            {filteredBooks.length}
+          </span>
+          {filteredBooks.length === 1
             ? "výsledek"
-            : books.length >= 2 && books.length <= 4
+            : filteredBooks.length >= 2 && filteredBooks.length <= 4
               ? "výsledky"
               : "výsledků"}
-          pro &quot;
-          <span className="text-white font-medium border-b border-primary/50 pb-0.5 mx-1">
-            {searchQuery}
-          </span>
-          &quot;
           <Button
             variant="ghost"
             size="sm"
@@ -267,10 +307,8 @@ function HomeContent() {
         </motion.div>
       )}
 
-      {/* Wrap BOTH form and credits display in AnimatePresence for coordinated animations */}
       <AnimatePresence mode="wait">
         {showAddForm && user?.id ? (
-          // Key is important for AnimatePresence to track the component
           <motion.div
             key="add-book-form"
             initial={{ opacity: 0, y: -20 }}
@@ -292,21 +330,20 @@ function HomeContent() {
             />
           </motion.div>
         ) : (
-          // Use a different key for the credits display section
           user && (
             <motion.div
               key="credits-display-section"
-              initial={{ opacity: 0, y: 10 }} // Enters from slightly below
+              initial={{ opacity: 0, y: 10 }}
               animate={{
                 opacity: 1,
                 y: 0,
                 transition: { duration: 0.3, ease: "easeOut", delay: 0.1 },
-              }} // Slight delay
+              }}
               exit={{
                 opacity: 0,
                 y: 10,
                 transition: { duration: 0.2, ease: "easeIn" },
-              }} // Exits downwards
+              }}
               className="mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-gray-900/60 to-gray-800/60 rounded-lg p-3 border border-gray-700/40 shadow-md"
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -471,8 +508,8 @@ function HomeContent() {
       ) : (
         <AnimatePresence>
           <motion.div className="grid grid-cols-1 gap-4 md:gap-5">
-            {books && books.length > 0 ? (
-              books.map((book) => (
+            {filteredBooks.length > 0 ? (
+              filteredBooks.map((book) => (
                 <BookComponent
                   key={book.id}
                   book={book}
@@ -481,7 +518,9 @@ function HomeContent() {
               ))
             ) : (
               <p className="text-center text-muted-foreground col-span-full mt-8">
-                Nemáte přidané žádné knihy.
+                {debouncedSearchQuery
+                  ? `Pro "${debouncedSearchQuery}" nebyly nalezeny žádné knihy.`
+                  : "Nemáte přidané žádné knihy."}
               </p>
             )}
           </motion.div>
