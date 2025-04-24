@@ -207,7 +207,7 @@ function HomeContent() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 sm:flex-none sm:w-64">
+          <div className="relative w-full sm:w-auto sm:flex-1 md:flex-none md:w-64">
             <Search className="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground search-icon" />
             <input
               type="text"
@@ -226,7 +226,7 @@ function HomeContent() {
             Přidat knihu
           </Button>
           {limitText && (
-            <div className="w-full sm:w-auto text-right sm:ml-4 mt-2 sm:mt-0">
+            <div className="w-full sm:w-auto text-left sm:text-right md:ml-4 mt-2 sm:mt-0">
               <p className="text-xs text-muted-foreground">
                 Limit: {limitText}
               </p>
@@ -350,7 +350,7 @@ function HomeContent() {
                               : 3
                         }
                         showLowCreditsWarning={false}
-                        className="w-48 sm:w-64"
+                        className="w-full sm:w-64"
                       />
                     </div>
                   </div>
@@ -470,7 +470,7 @@ function HomeContent() {
         <p className="text-red-500 text-center">{booksError}</p>
       ) : (
         <AnimatePresence>
-          <motion.div className="grid grid-cols-1 gap-4 md:gap-5">
+          <motion.div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
             {books && books.length > 0 ? (
               books.map((book) => (
                 <BookComponent
