@@ -335,7 +335,7 @@ export default function SubscriptionPage() {
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="space-y-6"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 sm:gap-y-4 text-sm">
                       <div>
                         <span className="text-muted-foreground block mb-1">
                           Typ předplatného:
@@ -451,7 +451,7 @@ export default function SubscriptionPage() {
                                 onClick={handleCancelSubscription}
                                 disabled={isCancelling}
                                 className={cn(
-                                  "w-full sm:w-auto whitespace-nowrap",
+                                  "w-auto whitespace-nowrap",
                                   "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.03] active:scale-[0.98]",
                                   "disabled:opacity-100 disabled:pointer-events-auto"
                                 )}
