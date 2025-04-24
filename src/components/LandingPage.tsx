@@ -84,12 +84,12 @@ export default function LandingPage() {
                       type="words"
                       className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
                     >
-                      Vytvářejte své{" "}
+                      eČtenářák: Váš AI{" "}
                       <span className="text-primary relative inline-block gradient-text">
-                        čtenářské zápisky
+                        čtenářský deník
                         <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/50 rounded-full"></span>
                       </span>{" "}
-                      jednoduše
+                      k maturitě
                     </TextReveal>
                   </div>
 

@@ -13,11 +13,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Čtenářský deník | AI-Powered Digitální Čtenářský Deník pro Maturitu",
+  title: "eČtenářák: AI Čtenářský deník pro maturanty | Povinná četba snadno",
   description:
-    "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu. Ideální pro studenty středních škol, přípravu na maturitu a milovníky literatury. Vytvořte si digitální čtenářský deník s pokročilými AI funkcemi.",
+    "Zvládněte maturitu z češtiny s eČtenářákem! Váš online čtenářský deník pro povinnou četbu s chytrými AI shrnutími knih, analýzami a poznámkami. Ideální pro přípravu na maturitu.",
   keywords:
-    "čtenářský deník, maturita, knihy, literatura, AI shrnutí, analýza autorů, export poznámek, digitální deník, střední škola, maturitní četba, AI asistent, generování shrnutí, literární analýza, školní četba, maturitní otázky, čtenářský deník online, digitální čtenářský deník, AI pro studenty, maturitní příprava, literatura pro maturitu",
+    "eČtenářák, čtenářský deník, povinná četba, maturita, maturanti, AI shrnutí, AI čtenářský deník, shrnutí knih k maturitě, online, čeština, literatura, analýza autorů, export poznámek, digitální deník, střední škola, maturitní četba, AI asistent, generování shrnutí, literární analýza, školní četba, maturitní otázky, čtenářský deník online, digitální čtenářský deník, AI pro studenty, maturitní příprava, literatura pro maturitu",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Čtenářský deník",
+    title: "eČtenářák",
   },
   viewport: {
     width: "device-width",
@@ -49,28 +49,26 @@ export const metadata: Metadata = {
     minimumScale: 1,
   },
   openGraph: {
-    title:
-      "Čtenářský deník | AI-Powered Digitální Čtenářský Deník pro Maturitu",
+    title: "eČtenářák: AI Čtenářský deník pro maturanty | Povinná četba snadno",
     description:
-      "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu. Ideální pro studenty středních škol a přípravu na maturitu.",
+      "Zvládněte maturitu z češtiny s eČtenářákem! Váš online čtenářský deník pro povinnou četbu s chytrými AI shrnutími knih, analýzami a poznámkami. Ideální pro přípravu na maturitu.",
     type: "website",
     locale: "cs_CZ",
-    siteName: "Čtenářský deník",
+    siteName: "eČtenářák",
     images: [
       {
         url: "https://ctenarsky-denik.vercel.app/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Čtenářský deník - AI-Powered Digitální Čtenářský Deník",
+        alt: "eČtenářák - AI Čtenářský deník pro maturanty",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "Čtenářský deník | AI-Powered Digitální Čtenářský Deník pro Maturitu",
+    title: "eČtenářák: AI Čtenářský deník pro maturanty | Povinná četba snadno",
     description:
-      "Moderní čtenářský deník s umělou inteligencí. Generujte AI shrnutí knih, analýzy autorů a exportujte poznámky pro maturitu.",
+      "Zvládněte maturitu z češtiny s eČtenářákem! Online čtenářský deník pro povinnou četbu s AI shrnutími.",
     images: ["https://ctenarsky-denik.vercel.app/og-image.jpg"],
   },
   robots: {
