@@ -470,7 +470,7 @@ function HomeContent() {
         <p className="text-red-500 text-center">{booksError}</p>
       ) : (
         <AnimatePresence>
-          <motion.div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+          <motion.div className="grid grid-cols-1 gap-4 md:gap-5">
             {books && books.length > 0 ? (
               books.map((book) => (
                 <BookComponent
