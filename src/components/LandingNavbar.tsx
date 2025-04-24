@@ -116,12 +116,12 @@ export default function LandingNavbar({ scrollY }: LandingNavbarProps) {
     if (isLandingPage) {
       const element = document.getElementById(id);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        element.scrollIntoView({ behavior: "auto" });
       }
-      // Add a small delay before closing the menu to ensure scroll starts
+      // Re-introduce a delay before closing the menu
       setTimeout(() => {
         setIsMenuOpen(false);
-      }, 100); // 100ms delay
+      }, 150); // 150ms delay
     } else {
       // If not on landing page, navigate to landing page with hash
       await router.push(`/#${id}`);
@@ -269,7 +269,7 @@ export default function LandingNavbar({ scrollY }: LandingNavbarProps) {
         </div>
       </motion.header>
 
-      {/* Mobile Menu - exactly matching Navbar.tsx style */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
