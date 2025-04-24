@@ -39,14 +39,7 @@ export default function LandingPage() {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const headerOffset = 70;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.scrollY - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -79,7 +72,7 @@ export default function LandingPage() {
       <div className="relative z-10">
         <div className="w-full relative overflow-visible min-h-screen flex flex-col">
           {/* Landing page navbar */}
-          <LandingNavbar scrollY={scrollY} scrollToSection={scrollToSection} />
+          <LandingNavbar scrollY={scrollY} />
 
           <main className="flex-grow">
             <section className="py-12 md:py-24 lg:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -147,7 +140,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Image placeholder */}
-                <div className="relative w-full h-[400px] rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-card/60 to-card border border-border hover:shadow-xl transition-all duration-500 group flex items-center justify-center">
+                <div className="relative w-full h-[250px] sm:h-[400px] rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-card/60 to-card border border-border hover:shadow-xl transition-all duration-500 group flex items-center justify-center">
                   <div className="text-center p-8">
                     <ImageIcon className="h-16 w-16 mb-4 text-muted-foreground/50 mx-auto" />
                     <p className="text-muted-foreground text-lg">
@@ -168,7 +161,7 @@ export default function LandingPage() {
               id="features-section"
               className="py-12 sm:py-16 md:py-24 lg:py-32 relative"
             >
-              <div className="container max-w-7xl mx-auto px-6 sm:px-8">
+              <div className="container max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 <div className="text-center mb-10 sm:mb-16">
                   <motion.h2
                     className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
@@ -503,7 +496,7 @@ export default function LandingPage() {
               id="faq-section"
               className="py-16 sm:py-20 md:py-24 lg:py-28 relative"
             >
-              <div className="container max-w-7xl mx-auto px-6 sm:px-8">
+              <div className="container max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 <FAQ />
               </div>
             </section>
@@ -513,7 +506,7 @@ export default function LandingPage() {
               id="signup-section"
               className="py-16 sm:py-20 md:py-28 lg:py-32 relative overflow-hidden"
             >
-              <div className="container max-w-7xl mx-auto px-6 sm:px-8">
+              <div className="container max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-16 items-center justify-center">
                   <div className="flex-1 max-w-lg space-y-5 sm:space-y-6 text-center lg:text-left">
                     <motion.h2

@@ -10,7 +10,6 @@ import { usePathname, useRouter } from "next/navigation";
 
 interface LandingNavbarProps {
   scrollY: number;
-  scrollToSection: (id: string) => void;
 }
 
 // Animated hamburger menu component matching Navbar.tsx
@@ -50,10 +49,7 @@ const HamburgerMenuButton = ({
   );
 };
 
-export default function LandingNavbar({
-  scrollY,
-  scrollToSection,
-}: LandingNavbarProps) {
+export default function LandingNavbar({ scrollY }: LandingNavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -118,7 +114,14 @@ export default function LandingNavbar({
 
   const handleNavClick = async (id: string) => {
     if (isLandingPage) {
-      scrollToSection(id);
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+      // Add a small delay before closing the menu to ensure scroll starts
+      setTimeout(() => {
+        setIsMenuOpen(false);
+      }, 100); // 100ms delay
     } else {
       // If not on landing page, navigate to landing page with hash
       await router.push(`/#${id}`);
@@ -130,7 +133,6 @@ export default function LandingNavbar({
         }
       }, 100);
     }
-    setIsMenuOpen(false);
   };
 
   if (!isMounted) return null;

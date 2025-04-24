@@ -776,3 +776,11 @@ body {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+/* Add scroll margin to account for fixed header */
+#features-section,
+#pricing-section,
+#faq-section,
+#signup-section {
+  scroll-margin-top: 64px; /* Adjust if header height changes */
+}
