@@ -196,24 +196,24 @@ export function SummaryPreferencesModal({
       preferences.style === "academic"
         ? "akademickém"
         : preferences.style === "casual"
-        ? "neformálním"
-        : "kreativním";
+          ? "neformálním"
+          : "kreativním";
 
     const length =
       preferences.length === "short"
         ? "krátké"
         : preferences.length === "medium"
-        ? "středně dlouhé"
-        : "dlouhé";
+          ? "středně dlouhé"
+          : "dlouhé";
 
     const focus =
       preferences.focus === "plot"
         ? "děj"
         : preferences.focus === "characters"
-        ? "postavy"
-        : preferences.focus === "themes"
-        ? "témata"
-        : "vyvážený obsah";
+          ? "postavy"
+          : preferences.focus === "themes"
+            ? "témata"
+            : "vyvážený obsah";
 
     const language = preferences.language === "cs" ? "češtině" : "angličtině";
 
@@ -871,30 +871,29 @@ export function SummaryPreferencesModal({
             </div>
           </div>
 
-          {/* Add the action buttons at the bottom of the form */}
-          <div className="mt-6 pt-4 border-t border-gray-700/30 flex flex-col sm:flex-row justify-between gap-3">
+          {/* Adjust button layout - add sm:items-center to parent */}
+          <div className="mt-6 pt-4 border-t border-gray-700/30 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            {/* Revert to items-center for consistent vertical centering with the right button group */}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 onClick={resetToDefaults}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground px-2 py-1 text-xs"
                 disabled={!hasAiCustomization}
               >
-                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                <RotateCcw className="h-3 w-3 mr-1.5" />
                 <span>Obnovit výchozí</span>
               </Button>
 
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 onClick={saveAsDefault}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground px-2 py-1 text-xs"
                 disabled={!hasAiCustomization}
               >
-                <Save className="h-3.5 w-3.5 mr-1.5" />
+                <Save className="h-3 w-3 mr-1.5" />
                 <span>Uložit jako výchozí</span>
               </Button>
 
@@ -911,6 +910,7 @@ export function SummaryPreferencesModal({
                 )}
               </AnimatePresence>
             </div>
+            {/* Removed sm:ml-auto as justify-between handles spacing */}
             <div className="flex items-center w-full sm:w-auto">
               <Button
                 type="submit"
