@@ -6,6 +6,7 @@ import clientPromise from "./mongodb-client";
 import dbConnect from "./mongodb";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { sendWelcomeEmail } from "./email";
 
 // Extend the Session type to include userId
 declare module "next-auth" {
@@ -179,6 +180,21 @@ export const authOptions: NextAuthOptions = {
 
             await users.insertOne(newUser);
             console.log("Created new user:", user.email);
+
+            // Send welcome email for new Google user - Fire and forget
+            if (newUser.email && newUser.name) {
+              sendWelcomeEmail(newUser.email, newUser.name).catch((error) => {
+                console.error(
+                  "Failed to send welcome email asynchronously for Google user:",
+                  error
+                );
+              });
+            } else {
+              console.warn(
+                "Could not send welcome email for Google user: missing email or name",
+                newUser
+              );
+            }
           }
           // If user exists but doesn't have providerId, update it
           else if (!dbUser.auth?.providerId) {
