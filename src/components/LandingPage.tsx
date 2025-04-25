@@ -82,12 +82,13 @@ export default function LandingPage() {
                   <div>
                     <TextReveal
                       type="words"
-                      className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+                      className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground"
                     >
                       eČtenářák: Váš AI{" "}
-                      <span className="text-primary relative inline-block gradient-text">
-                        čtenářský deník
-                        <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/50 rounded-full"></span>
+                      <span className="relative inline-block">
+                        <span className="bg-gradient-to-r from-primary to-blue-400 text-transparent bg-clip-text">
+                          čtenářský deník
+                        </span>
                       </span>{" "}
                       k maturitě
                     </TextReveal>
@@ -95,8 +96,9 @@ export default function LandingPage() {
 
                   <div>
                     <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
-                      Zapisujte si poznámky k povinné četbě, generujte shrnutí
-                      knih a autorů, a exportujte své zápisky do PDF.
+                      Zvládněte povinnou četbu k maturitě snadněji. Využijte AI
+                      pro generování shrnutí děl i autorů, pište si poznámky a
+                      mějte vše přehledně na jednom místě.
                     </p>
                   </div>
 
@@ -112,7 +114,7 @@ export default function LandingPage() {
                         }
                       }}
                     >
-                      Začít zdarma
+                      Začít s přípravou k maturitě
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                     <Button
@@ -170,8 +172,8 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
                   >
-                    Funkce navržené pro{" "}
-                    <span className="text-foreground">studenty</span>
+                    Nástroje pro{" "}
+                    <span className="text-foreground">zvládnutí maturity</span>
                   </motion.h2>
                   <motion.p
                     className="mt-4 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
@@ -180,8 +182,8 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                   >
-                    Vše, co potřebujete pro efektivní organizaci povinné četby a
-                    přípravu do školy
+                    Vše, co potřebujete pro efektivní přípravu na maturitu z
+                    češtiny.
                   </motion.p>
                 </div>
 
@@ -203,9 +205,9 @@ export default function LandingPage() {
                         Poznámky ke knihám
                       </h3>
                       <p className="text-sm sm:text-base text-muted-foreground">
-                        Uchovávejte všechny své poznámky k povinné četbě na
-                        jednom místě a mějte je vždy po ruce pro přípravu do
-                        školy.
+                        Uchovávejte všechny své poznámky k maturitní četbě na
+                        jednom místě. Mějte klíčové informace vždy po ruce pro
+                        ústní zkoušku i písemnou práci.
                       </p>
                     </div>
                   </motion.div>
@@ -224,11 +226,12 @@ export default function LandingPage() {
                         <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
                       </div>
                       <h3 className="text-xl sm:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
-                        Generování shrnutí
+                        AI Shrnutí a Analýzy
                       </h3>
                       <p className="text-sm sm:text-base text-muted-foreground">
-                        Získejte AI generovaná shrnutí knih a informace o
-                        autorech pro rychlejší a efektivnější přípravu na testy.
+                        Nerozumíte dílu nebo autorovi? Získejte AI generovaná
+                        shrnutí a informace o autorech pro rychlé pochopení
+                        kontextu a hlavních myšlenek.
                       </p>
                     </div>
                   </motion.div>
@@ -250,8 +253,9 @@ export default function LandingPage() {
                         Export do PDF
                       </h3>
                       <p className="text-sm sm:text-base text-muted-foreground">
-                        Exportujte své poznámky do PDF formátu pro snadné
-                        sdílení nebo tisk při přípravě na hodiny literatury.
+                        Vytvořte si perfektní podklady. Exportujte své poznámky
+                        a AI shrnutí do PDF pro snadné opakování a učení
+                        offline.
                       </p>
                     </div>
                   </motion.div>
@@ -273,7 +277,7 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                   >
-                    Vyberte si plán, který vám vyhovuje
+                    Plány navržené pro maturanty
                   </motion.h2>
                   <motion.p
                     className="text-muted-foreground text-lg md:text-xl mb-8"
@@ -282,8 +286,8 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
-                    Získejte přístup k pokročilým funkcím, které vám pomohou s
-                    přípravou do školy.
+                    Vyberte si úroveň podpory, která vám nejlépe pomůže uspět u
+                    maturity.
                   </motion.p>
 
                   {/* Simple Pricing Toggle */}
@@ -516,7 +520,7 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5 }}
                     >
-                      Připojte se k čtenářské komunitě
+                      Začněte s přípravou na maturitu ještě dnes!
                     </motion.h2>
                     <motion.p
                       className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0"
@@ -525,8 +529,8 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: 0.1 }}
                     >
-                      Vytvořte si účet a začněte organizovat svou povinnou četbu
-                      již dnes.
+                      Vytvořte si účet zdarma a získejte náskok v přípravě na
+                      maturitu z češtiny.
                     </motion.p>
                   </div>
 
