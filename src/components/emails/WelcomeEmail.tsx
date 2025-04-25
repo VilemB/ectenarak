@@ -37,12 +37,12 @@ export const WelcomeEmail: React.FC<Readonly<WelcomeEmailProps>> = ({
           fontWeight: "600",
         }}
       >
-        Vítejte v eČtenářáku, {name}! 👋
+        Vítejte v eČtenářáku, {name}! 🎓 Usnadněte si Maturitu!
       </h1>
       <p style={{ color: "#34495e", fontSize: "16px", marginBottom: "20px" }}>
-        Jsme nadšeni, že jste se k nám připojili! eČtenářák je váš nový
-        digitální společník pro správu četby a využívání AI k prohloubení vašich
-        literárních zážitků.
+        Jsme tu, abychom vám pomohli s přípravou na Maturitu z češtiny!
+        eČtenářák je váš digitální pomocník pro zvládnutí povinné četby a
+        pochopení literárních děl i autorů.
       </p>
       <p
         style={{
@@ -52,36 +52,40 @@ export const WelcomeEmail: React.FC<Readonly<WelcomeEmailProps>> = ({
           marginBottom: "10px",
         }}
       >
-        Co můžete ihned vyzkoušet:
+        Jak vám eČtenářák pomůže s Maturitou:
       </p>
       <ul
         style={{
           color: "#34495e",
           paddingLeft: "25px",
           marginBottom: "25px",
-          listStyleType: "'✨ '",
+          listStyleType: "'📚 '",
         }}
       >
         <li style={{ marginBottom: "10px" }}>
-          <strong>Využít sílu AI:</strong> Použijte své počáteční AI kredity (
-          {SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth}) k automatickému
-          generování shrnutí a klíčových poznatků z vašich knih.
+          <strong>AI Shrnutí Děl a Autorů:</strong> Využijte své počáteční AI
+          kredity ({SUBSCRIPTION_LIMITS.free.aiCreditsPerMonth}) pro rychlé
+          pochopení hlavních myšlenek knihy nebo života a díla autora. Ušetřete
+          čas a získejte přehled!
         </li>
         <li style={{ marginBottom: "10px" }}>
-          <strong>Organizovat svou četbu:</strong> Přidávejte knihy (až{" "}
-          {SUBSCRIPTION_LIMITS.free.maxBooks} zdarma) a pište si k nim vlastní
-          poznámky.
+          <strong>Organizace Četby:</strong> Mějte přehled o své maturitní
+          četbě. Přidávejte knihy (až {SUBSCRIPTION_LIMITS.free.maxBooks}{" "}
+          zdarma) a pište si vlastní podrobné poznámky.
         </li>
         <li style={{ marginBottom: "10px" }}>
-          <strong>Exportovat poznámky:</strong> Později můžete snadno exportovat
-          své poznámky do PDF (funkce dostupná v placených tarifech Basic a
+          <strong>Přizpůsobení AI:</strong> V placených tarifech si můžete
+          nastavit styl a zaměření AI shrnutí přesně podle vašich potřeb.
+        </li>
+        <li style={{ marginBottom: "10px" }}>
+          <strong>Export Poznámek:</strong> Vytvořte si perfektní podklady pro
+          učení exportem poznámek do PDF (funkce dostupná v tarifech Basic a
           Premium).
         </li>
       </ul>
       <p style={{ color: "#34495e", fontSize: "16px", marginBottom: "25px" }}>
-        Přihlaste se a začněte naplno využívat všechny možnosti, které eČtenářák
-        nabízí. Jsme tu pro vás, pokud byste měli jakékoli dotazy nebo
-        potřebovali pomoci.
+        Přihlaste se a začněte efektivně pracovat na své maturitní přípravě.
+        Hodně štěstí!
       </p>
       <div style={{ textAlign: "center" }}>
         {" "}
@@ -110,7 +114,7 @@ export const WelcomeEmail: React.FC<Readonly<WelcomeEmailProps>> = ({
             (e.currentTarget.style.backgroundColor = "#3498db")
           }
         >
-          Přejít do aplikace eČtenářák
+          Začít s přípravou na Maturitu
         </a>
       </div>
       <p
@@ -122,7 +126,7 @@ export const WelcomeEmail: React.FC<Readonly<WelcomeEmailProps>> = ({
           paddingTop: "20px",
         }}
       >
-        Přejeme spoustu skvělých čtenářských zážitků!
+        Držíme palce u maturity!
         <br />
         Váš tým eČtenářáku
       </p>
