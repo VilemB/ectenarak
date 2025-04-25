@@ -105,10 +105,10 @@ export default function PrivacyPage() {
               S dotazy ohledně ochrany soukromí nás můžete kontaktovat na
               e-mailu:{" "}
               <a
-                href="mailto:privacy@ctenarsky-denik.cz"
+                href="mailto:barnetv7@gmail.com"
                 className="text-orange-500 hover:text-orange-600"
               >
-                privacy@ctenarsky-denik.cz
+                barnetv7@gmail.com
               </a>
             </p>
           </section>

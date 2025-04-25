@@ -99,7 +99,7 @@ export default function ContactForm() {
             <Button
               variant="outline"
               size="sm"
-              className="w-full group"
+              className="w-full group hover:bg-muted/50 hover:text-foreground"
               asChild
             >
               <Link href="mailto:barnetv7@gmail.com">
@@ -132,7 +132,7 @@ export default function ContactForm() {
             <Button
               variant="outline"
               size="sm"
-              className="w-full group"
+              className="w-full group hover:bg-muted/50 hover:text-foreground"
               asChild
             >
               <Link
