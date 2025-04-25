@@ -1136,10 +1136,10 @@ export default function BookComponent({
     api: "/api/generate-summary",
     onFinish: async (_prompt, completionText) => {
       console.log(
-        "bookCompletion: onFinish triggered with text:",
-        completionText
+        "bookCompletion: onFinish triggered with text length:",
+        completionText?.length ?? 0
       );
-      const prefs = bookPreferencesRef.current; // Use bookPreferencesRef
+      const prefs = bookPreferencesRef.current;
       if (!prefs) {
         console.error(
           "useCompletion: onFinish Error - Book Preferences ref was null."
@@ -1147,42 +1147,89 @@ export default function BookComponent({
         toast.error(
           "Chyba při ukládání shrnutí knihy: Chybějící nastavení (ref)."
         );
-        bookPreferencesRef.current = null; // Clear correct ref
+        bookPreferencesRef.current = null;
         return;
       }
 
-      // --- Add logic to save the completed summary ---
-      try {
-        // Create a new Note object for the AI summary
-        const newAiNote: Note = {
-          // Generate a temporary client-side ID until backend confirms
-          id: `ai-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
-          content: completionText,
-          createdAt: new Date().toISOString(),
-          isAISummary: true,
-          // Add preferences used for generation if needed, e.g., for display
-          // preferences: prefs,
-        };
+      // --- Save the completed summary via API ---
+      if (!book.id || !completionText) {
+        toast.error("Chyba: Chybí ID knihy nebo obsah shrnutí pro uložení.");
+        bookPreferencesRef.current = null;
+        return;
+      }
 
-        // Add the new note to the beginning of the list for immediate visibility
-        const updatedNotes = [newAiNote, ...notes];
-        setNotes(updatedNotes);
+      try {
+        console.log(`Saving AI summary for book ${book.id}...`);
+        const response = await fetch(`/api/books/${book.id}/notes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: completionText, // The generated summary text
+            isAISummary: true, // Flag indicating it's an AI summary
+            // Optionally include preferences if the backend needs them
+            // preferences: prefs,
+          }),
+        });
+
+        if (!response.ok) {
+          let errorMsg = "Nepodařilo se uložit AI shrnutí.";
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } catch {
+            // Ignore if response is not JSON - removed unused jsonError variable
+          }
+          throw new Error(errorMsg);
+        }
+
+        // API should return the updated notes list including the new one
+        const data = await response.json();
+
+        // Format the notes from the response (ensure consistent formatting)
+        const formattedNotes = data.notes.map(
+          (note: {
+            _id: string;
+            content: string;
+            createdAt: string;
+            isAISummary?: boolean;
+          }) => ({
+            id: note._id,
+            content: note.content,
+            createdAt: new Date(note.createdAt).toISOString(),
+            isAISummary: note.isAISummary || false,
+          })
+        );
+
+        // Update the notes state with the list from the backend
+        setNotes(formattedNotes);
 
         // Update the book state as well if necessary
         setBook((prevBook) => ({
           ...prevBook,
-          notes: updatedNotes,
+          notes: formattedNotes,
           updatedAt: new Date().toISOString(),
         }));
 
         // Show success toast
-        toast.success("AI shrnutí bylo úspěšně vygenerováno!");
+        toast.success("AI shrnutí bylo úspěšně vygenerováno a uloženo!");
 
         // Trigger credit refresh in UI
         window.dispatchEvent(new CustomEvent("refresh-credits"));
 
-        // Optionally, scroll to the new note
-        scrollToNewlyAddedNote(newAiNote.id);
+        // Find the newly added note ID from the response for scrolling
+        const newNoteId = formattedNotes.find(
+          (note: Note) => note.content === completionText && note.isAISummary
+        )?.id;
+
+        if (newNoteId) {
+          scrollToNewlyAddedNote(newNoteId);
+        } else {
+          console.warn(
+            "Could not find newly added AI note in API response for scrolling."
+          );
+        }
 
         // Set filter to show AI notes if not already visible
         if (activeNoteFilter === "manual") {
@@ -1192,18 +1239,22 @@ export default function BookComponent({
         } else {
           setActiveNoteFilter("ai"); // Default to AI filter if current is 'ai'
         }
-      } catch (saveError) {
-        console.error("Error processing completion in onFinish:", saveError);
-        toast.error("Nepodařilo se zpracovat vygenerované shrnutí.");
+      } catch (error: unknown) {
+        // Use unknown type for caught error
+        console.error("Error saving AI summary via API:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Neznámá chyba";
+        toast.error(`Chyba při ukládání AI shrnutí: ${errorMessage}`);
       } finally {
         // --- End logic ---
-        bookPreferencesRef.current = null; // Clear correct ref on success/error
+        bookPreferencesRef.current = null; // Clear ref on success/error
       }
     },
-    onError: (_err) => {
-      console.error("bookCompletion: onError triggered:", _err);
+    onError: (err: Error) => {
+      // Specify Error type for err parameter
+      console.error("bookCompletion: onError triggered:", err);
       const message =
-        _err.message || "Nastala chyba při generování shrnutí knihy";
+        err.message || "Nastala chyba při generování shrnutí knihy";
       toast.error(message);
 
       // Check if error is related to credits
