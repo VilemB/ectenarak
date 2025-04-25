@@ -371,58 +371,39 @@ function selectOptimalModel(
   preferences: SummaryPreferences,
   notesLength: number = 0
 ): { model: string; maxTokens: number } {
-  // Base complexity score starts at 0
-  let complexityScore = 0;
+  // Force gpt-4o-mini for faster processing within timeout limits
+  const model = "gpt-4o-mini";
 
-  // Add complexity based on preferences
-  if (preferences.studyGuide) complexityScore += 3;
-  if (preferences.examFocus) complexityScore += 2;
-  if (preferences.literaryContext) complexityScore += 2;
-  if (preferences.style === "academic") complexityScore += 1;
-  if (preferences.length === "long") complexityScore += 2;
+  // Define slightly reduced maximum token limits for gpt-4o-mini
+  const MAX_TOKENS_LIMIT = 3800; // Keep a buffer from absolute limits
+  const SAFE_TOKENS_LIMIT = 3400; // Slightly reduced safe limit
 
-  // Add complexity based on notes length
-  if (notesLength > 3000) complexityScore += 2;
-  else if (notesLength > 1000) complexityScore += 1;
-
-  // Define absolute maximum token limits to prevent excessive consumption
-  // Increased limits slightly
-  const MAX_TOKENS_LIMIT = 4000; // Still leave some buffer from absolute model limits (e.g., 4096)
-  const SAFE_TOKENS_LIMIT = 3500; // Increased default safe limit
-
-  // Select model based on complexity
-  let model: string;
   let maxTokens: number;
 
-  if (complexityScore >= 6) {
-    // High complexity - use GPT-4o for best quality
-    model = "gpt-4o";
-    maxTokens =
-      preferences.length === "long"
-        ? Math.min(3800, MAX_TOKENS_LIMIT) // Increased long limit for gpt-4o
-        : preferences.length === "medium"
-          ? Math.min(3000, SAFE_TOKENS_LIMIT) // Increased medium limit for gpt-4o
-          : Math.min(1800, SAFE_TOKENS_LIMIT); // Increased short limit for gpt-4o
-  } else {
-    // Use GPT-4o-mini for all other cases
-    model = "gpt-4o-mini";
-    maxTokens =
-      preferences.length === "long"
-        ? Math.min(3500, MAX_TOKENS_LIMIT) // Increased long limit for mini
-        : preferences.length === "medium"
-          ? Math.min(2500, SAFE_TOKENS_LIMIT) // Increased medium limit for mini
-          : Math.min(1500, SAFE_TOKENS_LIMIT); // Increased short limit for mini
+  // Select maxTokens based on desired length, slightly reduced
+  switch (preferences.length) {
+    case "long":
+      maxTokens = Math.min(3300, MAX_TOKENS_LIMIT); // Reduced from 3500
+      break;
+    case "medium":
+      maxTokens = Math.min(2300, SAFE_TOKENS_LIMIT); // Reduced from 2500
+      break;
+    case "short":
+    default:
+      maxTokens = Math.min(1350, SAFE_TOKENS_LIMIT); // Reduced from 1500
+      break;
   }
 
-  // Apply a cost-based adjustment based on notes length
-  // Slightly increase limits when notes are present
+  // Apply a small boost if significant notes are present
   const hasSignificantNotes = notesLength > 1000;
   const costAdjustedLimit = hasSignificantNotes
-    ? Math.min(maxTokens + 300, MAX_TOKENS_LIMIT) // Give slightly more room if notes are present
-    : maxTokens; // Keep base limit if few/no notes
+    ? Math.min(maxTokens + 200, MAX_TOKENS_LIMIT) // Slightly smaller boost
+    : maxTokens;
+
+  // Removed complexity score logic as we force gpt-4o-mini
 
   console.log(
-    `Selected model: ${model} (complexity score: ${complexityScore}, tokens: ${costAdjustedLimit})`
+    `Selected model: ${model} (forced mini, tokens: ${costAdjustedLimit})`
   );
   return { model, maxTokens: costAdjustedLimit };
 }
@@ -433,11 +414,14 @@ function isSummaryComplete(...) { ... }
 */
 
 export async function POST(request: Request) {
-  console.log("=== GENERATE SUMMARY API ROUTE CALLED (STREAMING + CACHE) ===");
+  const startTime = Date.now();
+  console.log(`[${startTime}] === GENERATE SUMMARY API START ===`);
 
   try {
     // Get the request body
+    console.log(`[${Date.now()}] Parsing request body...`);
     const body = await request.json();
+    console.log(`[${Date.now()}] Request body parsed.`);
     const {
       bookTitle,
       bookAuthor,
@@ -456,32 +440,39 @@ export async function POST(request: Request) {
 
     // Validate inputs
     if (!bookTitle || !bookAuthor) {
-      console.log("Missing required parameters");
+      console.log(`[${Date.now()}] Missing required parameters`);
       return NextResponse.json(
         { error: "Chybí povinné parametry" },
         { status: 400 }
       );
     }
 
-    // Connect to database
+    // Connect to database - Note: Remove if MongoDB is not used for saving summaries here
+    console.log(`[${Date.now()}] Connecting to DB...`);
     await dbConnect();
+    console.log(`[${Date.now()}] DB Connected.`);
 
     // Check if the user is authenticated and has AI credits
+    console.log(`[${Date.now()}] Checking session...`);
     const session = await getServerSession(authOptions);
+    console.log(`[${Date.now()}] Session checked.`);
     if (!session?.user) {
-      console.log("Unauthorized: No user session found");
+      console.log(`[${Date.now()}] Unauthorized: No user session found`);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check subscription requirements - verify AI credits
+    console.log(`[${Date.now()}] Checking subscription...`);
     const subscriptionCheck = await checkSubscription(
       request as unknown as NextRequest,
       {
         requireAiCredits: true,
       }
     );
+    console.log(`[${Date.now()}] Subscription checked.`);
 
     if (!subscriptionCheck.allowed) {
+      console.log(`[${Date.now()}] Subscription check failed.`);
       return subscriptionCheck.response as NextResponse;
     }
 
@@ -506,32 +497,39 @@ export async function POST(request: Request) {
     if (!hasUserNotes && redis) {
       // Check if redis client was initialized
       cacheKey = generateCacheKey(bookTitle, bookAuthor, preferences);
-      console.log(`Checking cache with key: ${cacheKey}`);
+      console.log(`[${Date.now()}] Checking cache with key: ${cacheKey}`);
       try {
         const cachedSummary = await redis.get<string>(cacheKey);
         if (cachedSummary != null) {
-          console.log("Cache hit! Returning cached summary.");
+          console.log(`[${Date.now()}] Cache hit! Returning cached summary.`);
+          const endTime = Date.now();
+          console.log(
+            `[${endTime}] API Route Total Time (Cache Hit): ${endTime - startTime}ms`
+          );
           return new Response(formatDataStreamPart("text", cachedSummary), {
             status: 200,
             headers: { "Content-Type": "text/plain; charset=utf-8" },
           });
         }
-        console.log("Cache miss.");
+        console.log(`[${Date.now()}] Cache miss.`);
       } catch (cacheError) {
-        console.error("Redis cache read error:", cacheError);
+        console.error(`[${Date.now()}] Redis cache read error:`, cacheError);
         // Continue without cache if Redis fails
       }
     } else if (!hasUserNotes) {
-      console.log("Redis not configured, skipping cache check.");
+      console.log(
+        `[${Date.now()}] Redis not configured or notes present, skipping cache check.`
+      );
     }
     // --- End Cache Check ---
 
     // Use intelligent truncation for notes
     let processedNotes = notes;
     if (notes && notes.length > 6000) {
+      console.log(`[${Date.now()}] Starting notes truncation...`);
       processedNotes = intelligentlyTruncateNotes(notes, 6000);
       console.log(
-        "Notes intelligently truncated from",
+        `[${Date.now()}] Notes intelligently truncated from`,
         notes.length,
         "to",
         processedNotes.length,
@@ -539,28 +537,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Remove retry logic
-    // let attempts = 0; ... while (attempts < maxAttempts) { ... }
-
-    console.log(`Generating prompt for single attempt`);
+    console.log(`[${Date.now()}] Generating prompt...`);
     const prompt = generatePrompt(
       bookTitle,
       bookAuthor,
       processedNotes,
       preferences // Use original preferences, no retry adjustments
     );
-    console.log("Prompt generated, length:", prompt.length);
+    console.log(`[${Date.now()}] Prompt generated, length:`, prompt.length);
 
     // Select optimal model based on original request complexity
+    console.log(`[${Date.now()}] Selecting model...`);
     const { model, maxTokens } = selectOptimalModel(
       preferences,
       processedNotes?.length || 0
     );
-    // Log the selected model
-    console.log(`Using OpenAI model: ${model} with max_tokens: ${maxTokens}`);
+    console.log(
+      `[${Date.now()}] Model selected: ${model}, max_tokens: ${maxTokens}`
+    );
 
-    console.log("Calling AI SDK streamText...");
-
+    console.log(`[${Date.now()}] Calling AI SDK streamText...`);
     // Use streamText from the AI SDK
     const result = await streamText({
       // Use the imported provider. It should pick up the API key from process.env.OPENAI_API_KEY
@@ -572,50 +568,66 @@ export async function POST(request: Request) {
       presencePenalty: 0.1,
       // --- Cache Saving --- (Add onFinish callback)
       async onFinish({ text }) {
+        const finishTime = Date.now();
+        console.log(
+          `[${finishTime}] AI stream finished. Total stream time: ${finishTime - startTime}ms`
+        ); // Log time when stream finishes
         // Only cache if cacheKey was generated and Redis is configured
         if (cacheKey && redis) {
           // Check redis again
-          console.log(`Attempting to cache result for key: ${cacheKey}`);
+          console.log(
+            `[${finishTime}] Attempting to cache result for key: ${cacheKey}`
+          );
           try {
             await redis.set(cacheKey, text, {
               ex: CACHE_EXPIRATION_SECONDS,
             });
-            console.log("Summary cached successfully.");
+            console.log(`[${Date.now()}] Summary cached successfully.`);
           } catch (cacheError) {
-            console.error("Redis cache write error:", cacheError);
+            console.error(
+              `[${Date.now()}] Redis cache write error:`,
+              cacheError
+            );
           }
+        } else {
+          console.log(
+            `[${finishTime}] Caching skipped (no cache key or Redis unavailable).`
+          );
         }
+        // --- Add Credit Deduction within onFinish for reliability ---
+        console.log(
+          `[${Date.now()}] Attempting credit deduction post-generation...`
+        );
+        try {
+          if (!clientSideDeduction && user) {
+            await user.useAiCredit(); // Await the deduction here
+            console.log(`[${Date.now()}] AI credit deducted successfully.`);
+            // Optionally log remaining credits if the method returns it
+          } else {
+            console.log(
+              `[${Date.now()}] Credit deduction skipped (client-side or no user).`
+            );
+          }
+        } catch (creditError) {
+          console.error(
+            `[${Date.now()}] Error during AI credit deduction in onFinish:`,
+            creditError
+          );
+        }
+        // --- End Credit Deduction in onFinish ---
       },
       // --- End Cache Saving ---
     });
 
-    console.log("AI SDK stream initiated");
-
-    // Deduct credit *after* initiating the stream (optimistic approach)
-    // Note: Consider using onFinish callback from streamText for more robust credit deduction
-    try {
-      if (!clientSideDeduction && user) {
-        user
-          .useAiCredit()
-          .then((remainingCredits) => {
-            console.log(
-              `AI credit deducted asynchronously. Remaining credits: ${remainingCredits}`
-            );
-          })
-          .catch((creditError) => {
-            console.error("Async AI credit deduction error:", creditError);
-          });
-      } else {
-        console.log(
-          "Credit already deducted on client side or no user, skipping server deduction"
-        );
-      }
-    } catch (creditError) {
-      console.error("Error setting up AI credit deduction:", creditError);
-    }
+    console.log(`[${Date.now()}] AI SDK stream initiated, returning response.`);
 
     // Respond with the stream using the AI SDK helper
-    return result.toDataStreamResponse();
+    const streamResponse = result.toDataStreamResponse();
+    const finalEndTime = Date.now();
+    console.log(
+      `[${finalEndTime}] API Route Total Time (Stream Response): ${finalEndTime - startTime}ms`
+    ); // Log total time before returning stream
+    return streamResponse;
 
     // Remove old response logic (NextResponse.json)
     /*
@@ -625,7 +637,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ... });
     */
   } catch (error) {
-    console.error("Error generating summary stream:", error);
+    const errorTime = Date.now();
+    console.error(`[${errorTime}] Error generating summary stream:`, error);
+    const totalTime = errorTime - startTime;
+    console.log(`[${errorTime}] API Route Total Time (Error): ${totalTime}ms`);
 
     // Handle potential OpenAI API errors (check if the type still matches or adjust)
     // The error structure might change slightly with the AI SDK
