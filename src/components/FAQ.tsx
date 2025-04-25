@@ -40,6 +40,28 @@ const faqs = [
     answer:
       "Ano, bezpečnost vašich údajů je pro nás prioritou. Všechna data jsou šifrována a ukládána v zabezpečeném prostředí. Nikdy nesdílíme vaše osobní údaje s třetími stranami. Můžete si také kdykoliv stáhnout svá data nebo požádat o jejich smazání.",
   },
+  {
+    question:
+      "Co když potřebuji shrnutí pro knihu nebo autora, který není v běžném maturitním seznamu?",
+    answer:
+      "Naše AI se snaží pokrýt širokou škálu literatury. Pokud zadáte název díla nebo autora, AI se pokusí vygenerovat relevantní informace. Pro nejlepší výsledky doporučujeme používat přesné názvy.",
+  },
+  {
+    question:
+      "Jaký je rozdíl oproti běžnému textovému editoru nebo poznámkové aplikaci?",
+    answer:
+      "eČtenářák je specializovaný nástroj. Hlavní výhodou je integrace AI pro generování shrnutí děl a autorů přímo v kontextu vašich poznámek, přednastavené struktury pro zápisky a funkce navržené specificky pro potřeby studentů literatury (jako správa knihovny a budoucí specifické funkce).",
+  },
+  {
+    question: "Plánujete přidat další funkce?",
+    answer:
+      "Ano! Neustále pracujeme na vylepšování eČtenářáku. V blízké budoucnosti se chceme zaměřit například na vylepšené možnosti formátování poznámek a možnost přidávat vlastní tagy ke knihám. Sledujte naše novinky!",
+  },
+  {
+    question: "Co když narazím na problém nebo mám nápad na vylepšení?",
+    answer:
+      "Vaše zpětná vazba je pro nás důležitá! Pokud máte problém nebo nápad, neváhejte nás kontaktovat prostřednictvím kontaktního formuláře na našem webu.",
+  },
 ];
 
 export default function FAQ() {

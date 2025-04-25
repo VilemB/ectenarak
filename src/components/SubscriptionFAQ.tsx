@@ -13,22 +13,38 @@ const subscriptionFaqs = [
   {
     question: "Jak mohu změnit své předplatné?",
     answer:
-      'Jednoduše vyberte požadovaný plán výše a klikněte na "Vybrat plán". Změna bude provedena okamžitě a nové funkce budou ihned dostupné. Při snížení úrovně předplatného můžete ztratit přístup k některým funkcím a datům.',
+      "V současné době není možné přímo přejít mezi tarify. Pokud chcete změnit svůj tarif (např. z Basic na Premium nebo naopak), musíte nejprve zrušit své stávající předplatné ve správě účtu a poté si zakoupit nový požadovaný tarif. Nové předplatné začne platit ihned po zakoupení.",
   },
   {
     question: "Kdy se obnoví moje AI kredity?",
     answer:
-      "AI kredity se obnovují automaticky na začátku každého předplatného cyklu. Nevyužité kredity z předchozího období se nepřenášejí do následujícího cyklu.",
+      "AI kredity se obnovují automaticky vždy prvního dne v kalendářním měsíci, bez ohledu na datum zahájení vašeho předplatného. Nevyužité kredity z předchozího měsíce se nepřevádějí.",
   },
   {
     question: "Mohu zrušit předplatné?",
     answer:
-      "Ano, předplatné můžete zrušit kdykoliv. Po zrušení budete mít přístup k placeným funkcím do konce aktuálního zúčtovacího období. Poté se váš účet automaticky převede na bezplatnou verzi.",
+      "Ano, předplatné můžete zrušit kdykoliv ve správě účtu. Po zrušení budete mít přístup k placeným funkcím do konce aktuálního zúčtovacího období. Poté se váš účet automaticky převede na bezplatnou verzi.",
   },
   {
     question: "Jaké platební metody přijímáte?",
     answer:
-      "Přijímáme platební karty (Visa, Mastercard) a digitální peněženky (Apple Pay, Google Pay). Platby jsou zpracovávány bezpečně přes Stripe, což znamená, že vaše platební údaje jsou vždy šifrované a nikdy nejsou uloženy na našich serverech.",
+      "Platby jsou bezpečně zpracovávány prostřednictvím služby Stripe. Přijímáme všechny běžné platební metody, které Stripe v našem regionu podporuje, včetně většiny platebních karet a digitálních peněženek. Konkrétní dostupné možnosti uvidíte při placení.",
+  },
+  {
+    question:
+      "Co se stane s mými poznámkami a knihami, když přejdu na bezplatný tarif?",
+    answer:
+      "Vaše existující poznámky zůstanou zachovány. Pokud však počet vašich knih přesahuje limit bezplatného tarifu (aktuálně 3), nebudete moci přidávat nové knihy, dokud jejich počet nesnížíte. Přijdete také o přístup k prémiovým funkcím jako export do PDF a pokročilé nastavení AI.",
+  },
+  {
+    question: "Nabízíte slevy pro školy nebo větší skupiny studentů?",
+    answer:
+      "V současné době standardní hromadné slevy nenabízíme, ale pokud máte zájem o licenci pro celou třídu nebo školu, kontaktujte nás prosím individuálně.",
+  },
+  {
+    question: "Můžu si AI kredity dokoupit, pokud mi dojdou?",
+    answer:
+      "Momentálně není možné dokoupit jednotlivé AI kredity. Pokud potřebujete více kreditů pravidelně, doporučujeme zvážit přechod na vyšší tarif (Basic nebo Premium), který obsahuje větší měsíční příděl.",
   },
 ];
 
