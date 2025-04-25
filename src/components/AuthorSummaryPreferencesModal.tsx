@@ -783,6 +783,7 @@ export function AuthorSummaryPreferencesModal({
                 variant="outline"
                 size="sm"
                 disabled={isGenerating}
+                onClick={handleSubmit}
                 className={`
                   flex items-center gap-2 w-full sm:w-auto justify-center 
                   bg-blue-500/10 text-blue-500 border border-blue-500/20 
