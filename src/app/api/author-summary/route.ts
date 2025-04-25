@@ -93,36 +93,83 @@ export async function POST(req: NextRequest) {
 
       // Save to DB on completion
       async onFinish({ text }) {
-        console.log("Author summary generation finished. Saving to DB...");
+        console.log(
+          `[Author Summary API] onFinish triggered for author: ${author}, text length: ${text?.length ?? 0}`
+        );
         try {
+          console.log(
+            `[Author Summary API] Attempting DB connection inside onFinish...`
+          );
+          await dbConnect(); // Ensure connection within this scope if needed
+          console.log(
+            `[Author Summary API] Finding author document for: ${author}`
+          );
+          let authorDoc = await Author.findOne({ name: author });
+
           if (!authorDoc) {
+            console.log(
+              `[Author Summary API] Author '${author}' not found, creating new document.`
+            );
             authorDoc = new Author({ name: author, summary: text });
           } else {
+            console.log(
+              `[Author Summary API] Author '${author}' found (ID: ${authorDoc._id}), updating summary.`
+            );
             authorDoc.summary = text;
+            authorDoc.updatedAt = new Date(); // Explicitly set updatedAt
           }
-          await authorDoc.save();
-          console.log(`Author summary saved to DB for: ${author}`);
+
+          console.log(
+            `[Author Summary API] Attempting to save author document (ID: ${authorDoc._id})...`
+          );
+          // Wrap save in its own try...catch for specific logging
+          try {
+            const savedDoc = await authorDoc.save();
+            console.log(
+              `[Author Summary API] Successfully saved author summary to DB for: ${author} (ID: ${savedDoc._id}). Summary length: ${savedDoc.summary?.length ?? 0}`
+            );
+          } catch (saveError) {
+            console.error(
+              `[Author Summary API] !!! Specific DB save error for author ${author}:`,
+              saveError
+            );
+            // Re-throw or handle as needed, but log specifically
+            throw saveError; // Rethrow to be caught by the outer catch
+          }
 
           // Deduct credit server-side ONLY if not deducted on client
           if (!clientSideDeduction && user) {
+            console.log(
+              `[Author Summary API] Attempting async credit deduction for user ${user.id}...`
+            );
             // Fire and forget credit deduction
             user
               .useAiCredit()
               .then((remaining) =>
                 console.log(
-                  `Async credit deducted for author summary. Remaining: ${remaining}`
+                  `[Author Summary API] Async credit deducted for author summary. Remaining: ${remaining}`
                 )
               )
               .catch((err) =>
-                console.error("Async credit deduction error:", err)
+                console.error(
+                  "[Author Summary API] Async credit deduction error:",
+                  err
+                )
               );
+          } else {
+            console.log(
+              `[Author Summary API] Skipping server-side credit deduction (clientSide: ${clientSideDeduction}, user: ${!!user})`
+            );
           }
         } catch (dbError) {
+          // This catches errors from findOne, save, or the connection
           console.error(
-            `Error saving author summary to DB for ${author}:`,
+            `[Author Summary API] !!! Error during DB operations in onFinish for ${author}:`,
             dbError
           );
           // Don't throw error to client, just log it. Generation succeeded.
+          // We might reconsider this - perhaps the client *should* know saving failed?
+          // For now, keeping original behavior: log error but don't fail the response.
         }
       },
     });

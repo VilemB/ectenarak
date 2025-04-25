@@ -186,12 +186,50 @@ export async function GET(request: Request) {
       .limit(limit)
       .populate("authorId", "name summary photoUrl");
 
-    // console.log(`API: Found ${rawBooks.length} raw books for user ${userId}`); // Remove log
+    console.log(
+      `[Books API] Found ${rawBooks.length} raw books for user ${userId}. Checking population...`
+    );
 
-    // Log each book for debugging
-    // rawBooks.forEach((book, index) => { // Remove log block
-    //   console.log(`API: Book ${index}:`, JSON.stringify(book));
-    // });
+    // Log the populated author details for the first few books (if they exist)
+    for (let i = 0; i < Math.min(rawBooks.length, 3); i++) {
+      const book = rawBooks[i];
+      if (book && book.authorId) {
+        // Check if authorId is populated (is an object)
+        if (
+          typeof book.authorId === "object" &&
+          book.authorId !== null &&
+          "_id" in book.authorId
+        ) {
+          // Define a type for the populated author fields we expect
+          type PopulatedAuthor = {
+            _id: mongoose.Types.ObjectId | string; // ID field
+            name?: string;
+            summary?: string;
+            photoUrl?: string;
+          };
+          // Log the populated authorId field directly
+          console.log(
+            `[Books API] Book ${i + 1} (${book.title}) - Populated authorId:`,
+            JSON.stringify(book.authorId)
+          );
+          // Explicitly check for summary within the populated object
+          const populatedAuthor = book.authorId as PopulatedAuthor;
+          console.log(
+            `[Books API] Book ${i + 1} - Populated author summary length: ${populatedAuthor?.summary?.length ?? "N/A"}`
+          );
+        } else {
+          // Log if authorId is just an ID (population might have failed or wasn't an object)
+          console.log(
+            `[Books API] Book ${i + 1} (${book.title}) - authorId is not a populated object:`,
+            book.authorId
+          );
+        }
+      } else {
+        console.log(
+          `[Books API] Book ${i + 1} (${book.title}) - Missing book or authorId for population check.`
+        );
+      }
+    }
 
     // Filter out any invalid books with strict validation
     const validBooks = rawBooks.filter((book) => {
