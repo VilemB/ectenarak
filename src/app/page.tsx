@@ -109,6 +109,9 @@ function HomeContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
+  // Memoize the current book count - Moved to top level
+  const currentBookCount = useMemo(() => books.length, [books]);
+
   // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -155,7 +158,7 @@ function HomeContent() {
     } finally {
       setIsLoadingBooks(false);
     }
-  }, [user?.id]);
+  }, [user?.id, debouncedSearchQuery]);
 
   // Fetch books on mount or when user changes
   useEffect(() => {
@@ -200,29 +203,34 @@ function HomeContent() {
   const limitText = getLimitText();
 
   // Delete Book Handler
-  const handleDeleteBook = async (bookId: string) => {
-    // Optimistic UI update (optional)
-    // setBooks(prev => prev.filter(b => b.id !== bookId));
-    try {
-      const response = await fetch(`/api/books/${bookId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        // Revert optimistic update if failed
-        throw new Error("Nepodařilo se smazat knihu");
+  const handleDeleteBook = useCallback(
+    async (bookId: string) => {
+      // Optimistic UI update (optional)
+      // setBooks(prev => prev.filter(b => b.id !== bookId));
+      try {
+        const response = await fetch(`/api/books/${bookId}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          // Revert optimistic update if failed
+          throw new Error("Nepodařilo se smazat knihu");
+        }
+        toast.success("Kniha smazána");
+        await fetchBooks(); // Refetch books to confirm deletion and update count
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Neznámá chyba";
+        toast.error(message);
+        console.error("Delete error:", err);
+        // fetchBooks(); // Optionally refetch even on error to get consistent state
       }
-      toast.success("Kniha smazána");
-      await fetchBooks(); // Refetch books to confirm deletion and update count
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Neznámá chyba";
-      toast.error(message);
-      console.error("Delete error:", err);
-      // fetchBooks(); // Optionally refetch even on error to get consistent state
-    }
-  };
+    },
+    [fetchBooks]
+  );
 
   // Render logic
-  if (authLoading || subLoading) {
+  const isLoading = authLoading || subLoading;
+
+  if (isLoading) {
     return <LoadingSpinner />;
   }
   if (!user) {
@@ -327,6 +335,7 @@ function HomeContent() {
               userId={user.id}
               onBookAdded={fetchBooks}
               onClose={() => setShowAddForm(false)}
+              currentBookCount={currentBookCount}
             />
           </motion.div>
         ) : (

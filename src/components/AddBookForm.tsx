@@ -17,11 +17,14 @@ import { useRouter } from "next/navigation";
 import { X, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
+import { SUBSCRIPTION_LIMITS } from "@/types/user";
 
 interface AddBookFormProps {
   userId: string;
   onBookAdded: () => Promise<void> | void;
   onClose: () => void;
+  currentBookCount: number;
 }
 
 // Animation variants for sliding steps
@@ -52,6 +55,7 @@ export default function AddBookForm({
   userId,
   onBookAdded,
   onClose,
+  currentBookCount,
 }: AddBookFormProps) {
   const [[step, direction], setStep] = useState([1, 0]); // [currentStep, animationDirection]
   const [newBookTitle, setNewBookTitle] = useState("");
@@ -63,6 +67,7 @@ export default function AddBookForm({
   const router = useRouter();
   const titleInputRef = useRef<HTMLInputElement>(null);
   const authorInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
   // Autofocus logic based on step
   useEffect(() => {
@@ -121,6 +126,34 @@ export default function AddBookForm({
   const handleFinalSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setFormError("");
+
+    if (user && user.subscription) {
+      const tier = user.subscription.tier;
+      const maxBooks = SUBSCRIPTION_LIMITS[tier].maxBooks;
+
+      if (maxBooks !== Infinity && currentBookCount >= maxBooks) {
+        toast.error(
+          `Dosáhli jste limitu ${maxBooks} knih pro váš tarif (${tier}).`,
+          {
+            description:
+              "Odstraňte některé knihy nebo upgradujte své předplatné.",
+            action: {
+              label: "Předplatné",
+              onClick: () => router.push("/subscription"),
+            },
+            duration: 8000,
+          }
+        );
+        setFormError("Dosáhli jste limitu knih pro váš tarif.");
+        return;
+      }
+    } else {
+      console.warn(
+        "Nemohu ověřit limit knih: Chybí data uživatele nebo předplatného."
+      );
+      toast.error("Nepodařilo se ověřit limit knih. Zkuste to prosím znovu.");
+      return;
+    }
 
     if (!validateStep1() || !validateStep2()) {
       // Should ideally not happen if step validation works, but good failsafe
