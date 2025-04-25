@@ -1134,9 +1134,11 @@ export default function BookComponent({
     completion: bookCompletion,
   } = useCompletion({
     api: "/api/generate-summary",
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onFinish: async (_prompt, _completionText) => {
-      console.log("bookCompletion: onFinish triggered.");
+    onFinish: async (_prompt, completionText) => {
+      console.log(
+        "bookCompletion: onFinish triggered with text:",
+        completionText
+      );
       const prefs = bookPreferencesRef.current; // Use bookPreferencesRef
       if (!prefs) {
         console.error(
@@ -1148,16 +1150,75 @@ export default function BookComponent({
         bookPreferencesRef.current = null; // Clear correct ref
         return;
       }
-      // ... rest of onFinish using completionText and prefs ...
-      bookPreferencesRef.current = null; // Clear correct ref on success
+
+      // --- Add logic to save the completed summary ---
+      try {
+        // Create a new Note object for the AI summary
+        const newAiNote: Note = {
+          // Generate a temporary client-side ID until backend confirms
+          id: `ai-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
+          bookId: book.id,
+          content: completionText,
+          createdAt: new Date().toISOString(),
+          isAISummary: true,
+          // Add preferences used for generation if needed, e.g., for display
+          // preferences: prefs,
+        };
+
+        // Add the new note to the beginning of the list for immediate visibility
+        const updatedNotes = [newAiNote, ...notes];
+        setNotes(updatedNotes);
+
+        // Update the book state as well if necessary
+        setBook((prevBook) => ({
+          ...prevBook,
+          notes: updatedNotes,
+          updatedAt: new Date().toISOString(),
+        }));
+
+        // Show success toast
+        toast.success("AI shrnutí bylo úspěšně vygenerováno!");
+
+        // Trigger credit refresh in UI
+        window.dispatchEvent(new CustomEvent("refresh-credits"));
+
+        // Optionally, scroll to the new note
+        scrollToNewlyAddedNote(newAiNote.id);
+
+        // Set filter to show AI notes if not already visible
+        if (activeNoteFilter === "manual") {
+          setActiveNoteFilter("ai");
+        } else if (activeNoteFilter === "all") {
+          // Keep 'all' filter
+        } else {
+          setActiveNoteFilter("ai"); // Default to AI filter if current is 'ai'
+        }
+      } catch (saveError) {
+        console.error("Error processing completion in onFinish:", saveError);
+        toast.error("Nepodařilo se zpracovat vygenerované shrnutí.");
+      } finally {
+        // --- End logic ---
+        bookPreferencesRef.current = null; // Clear correct ref on success/error
+      }
     },
     onError: (_err) => {
       console.error("bookCompletion: onError triggered:", _err);
-      bookPreferencesRef.current = null; // Clear correct ref on error
       const message =
         _err.message || "Nastala chyba při generování shrnutí knihy";
       toast.error(message);
-      // ... credit modal logic ...
+
+      // Check if error is related to credits
+      if (
+        message.includes("403") ||
+        message.toLowerCase().includes("credit") ||
+        message.toLowerCase().includes("insufficient")
+      ) {
+        // Dispatch event or show modal directly
+        setShowCreditExhaustedModal(true);
+        console.log("Showing credit exhausted modal due to error:", message);
+      }
+
+      bookPreferencesRef.current = null; // Clear correct ref on error
     },
   });
 
@@ -1722,7 +1783,7 @@ export default function BookComponent({
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Render streaming completion text FIRST when loading */}
-                {isBookLoading && bookCompletion && (
+                {isBookLoading && ( // Use isBookLoading from the correct hook
                   <motion.div
                     ref={streamingCompletionRef} // Assign the ref
                     initial={{ opacity: 0.5, y: 10 }}
@@ -1747,23 +1808,25 @@ export default function BookComponent({
                         rehypePlugins={[rehypeRaw, rehypeSanitize]}
                         remarkPlugins={[remarkGfm]}
                       >
-                        {bookCompletion}
+                        {bookCompletion || ""}
                       </ReactMarkdown>
                     </div>
                   </motion.div>
                 )}
 
                 {/* Render existing notes (now uses reversed list internally) */}
-                <NotesList
-                  notes={notes}
-                  activeNoteFilter={activeNoteFilter}
-                  activeNoteId={activeNoteId}
-                  handleDeleteNote={handleDeleteNote}
-                  handleCopyNote={handleCopyNote}
-                  handleViewSummary={handleViewSummary}
-                  handleCloseSummary={handleCloseSummary}
-                  bookTitle={book.title}
-                />
+                {(!isBookLoading || !bookCompletion) && (
+                  <NotesList
+                    notes={notes}
+                    activeNoteFilter={activeNoteFilter}
+                    activeNoteId={activeNoteId}
+                    handleDeleteNote={handleDeleteNote}
+                    handleCopyNote={handleCopyNote}
+                    handleViewSummary={handleViewSummary}
+                    handleCloseSummary={handleCloseSummary}
+                    bookTitle={book.title}
+                  />
+                )}
               </div>
             )}
 
