@@ -1280,26 +1280,45 @@ export default function BookComponent({
   } = useCompletion({
     api: "/api/author-summary",
     onFinish: (_prompt, completionText) => {
-      console.log("authorCompletion: onFinish triggered.");
-      authorPreferencesRef.current = null; // Clear correct ref on success
+      console.log(
+        "authorCompletion: onFinish triggered. API should have saved to DB."
+      );
+      authorPreferencesRef.current = null; // Clear ref
+
+      // Update local state for immediate UI feedback
+      // The API handles the actual database persistence
       setBook((prevBook) => ({
         ...prevBook,
         authorSummary: completionText,
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(), // Reflect update time locally
       }));
-      setIsAuthorInfoVisible(true);
-      setAuthorSummaryModal(false);
+
+      // Update UI state
+      setIsAuthorInfoVisible(true); // Keep author info panel open
+      setAuthorSummaryModal(false); // Close the preferences modal
+
+      // Trigger credit refresh in UI
       window.dispatchEvent(new CustomEvent("refresh-credits"));
-      toast.success("Informace o autorovi byly úspěšně vygenerovány!");
+
+      // Show success toast
+      toast.success(
+        "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
+      );
     },
-    onError: (_err) => {
-      console.error("authorCompletion: onError triggered:", _err);
-      authorPreferencesRef.current = null; // Clear correct ref on error
+    onError: (err: Error) => {
+      // Add type for err
+      console.error("authorCompletion: onError triggered:", err);
+      authorPreferencesRef.current = null; // Clear ref on error
       const message =
-        _err.message || "Nastala chyba při generování informací o autorovi";
+        err.message || "Nastala chyba při generování informací o autorovi";
       toast.error(message);
       setAuthorSummaryModal(false);
-      if (message.includes("403") || message.toLowerCase().includes("credit")) {
+      // Keep credit check logic
+      if (
+        message.includes("403") ||
+        message.toLowerCase().includes("credit") ||
+        message.toLowerCase().includes("insufficient")
+      ) {
         setShowCreditExhaustedModal(true);
       }
     },
