@@ -1157,7 +1157,6 @@ export default function BookComponent({
         const newAiNote: Note = {
           // Generate a temporary client-side ID until backend confirms
           id: `ai-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`,
-          bookId: book.id,
           content: completionText,
           createdAt: new Date().toISOString(),
           isAISummary: true,
