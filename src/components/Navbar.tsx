@@ -185,7 +185,7 @@ export default function Navbar({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="sticky top-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
+      className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm"
     >
       {/* Amber accent line at bottom of navbar */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500/80 to-amber-500/40 w-full"></div>
