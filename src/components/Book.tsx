@@ -1615,6 +1615,12 @@ export default function BookComponent({
   };
 
   // Main rendering with the optimized structure
+  console.log(
+    "[Book.tsx Render] Rendering BookComponent for:",
+    initialBook?.title,
+    "Current book state:",
+    book
+  );
   return (
     <div
       ref={bookRef}
@@ -1658,6 +1664,20 @@ export default function BookComponent({
 
       {/* Author Info Panel - Updated Rendering Logic */}
       <AnimatePresence mode="wait" onExitComplete={handleAnimationComplete}>
+        {
+          /* Log using IIFE */
+          (() => {
+            console.log(
+              "[Book.tsx Render] Checking author panel condition: isVisible:",
+              isAuthorInfoVisible,
+              "hasSummary:",
+              !!book.authorSummary,
+              "isLoading:",
+              isAuthorLoading
+            );
+            return null; // Return null for React
+          })()
+        }
         {isAuthorInfoVisible && (book.authorSummary || isAuthorLoading) && (
           <motion.div
             id={`author-${book.id}`}
@@ -1719,6 +1739,16 @@ export default function BookComponent({
                     transition={{ delay: 0.1, duration: 0.3 }}
                   >
                     {/* Render final summary */}
+                    {
+                      /* Log using IIFE */
+                      (() => {
+                        console.log(
+                          "[Book.tsx Render] Rendering author summary content:",
+                          book.authorSummary
+                        );
+                        return null; // Return null for React
+                      })()
+                    }
                     <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200 prose-p:text-blue-100">
                       <StudyContent content={book.authorSummary} />
                     </div>
