@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // --- Check Author Cache in DB ---
-    let authorDoc = await Author.findOne({ name: author });
+    const authorDoc = await Author.findOne({ name: author });
     if (authorDoc && authorDoc.summary) {
       console.log(`Cache hit in DB for author: ${author}`);
       // Return cached summary as a single stream chunk
