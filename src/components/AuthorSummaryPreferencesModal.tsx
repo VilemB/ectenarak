@@ -160,24 +160,24 @@ export function AuthorSummaryPreferencesModal({
       preferences.style === "academic"
         ? "akademickém"
         : preferences.style === "casual"
-        ? "neformálním"
-        : "kreativním";
+          ? "neformálním"
+          : "kreativním";
 
     const length =
       preferences.length === "short"
         ? "krátké"
         : preferences.length === "medium"
-        ? "středně dlouhé"
-        : "dlouhé";
+          ? "středně dlouhé"
+          : "dlouhé";
 
     const focus =
       preferences.focus === "life"
         ? "život autora"
         : preferences.focus === "works"
-        ? "díla autora"
-        : preferences.focus === "impact"
-        ? "vliv a význam autora"
-        : "vyvážený obsah";
+          ? "díla autora"
+          : preferences.focus === "impact"
+            ? "vliv a význam autora"
+            : "vyvážený obsah";
 
     const language = preferences.language === "cs" ? "češtině" : "angličtině";
 
@@ -422,8 +422,8 @@ export function AuthorSummaryPreferencesModal({
                           {style === "academic"
                             ? "Akademický"
                             : style === "casual"
-                            ? "Neformální"
-                            : "Kreativní"}
+                              ? "Neformální"
+                              : "Kreativní"}
                         </Button>
                       </motion.div>
                     )
@@ -508,8 +508,8 @@ export function AuthorSummaryPreferencesModal({
                         {length === "short"
                           ? "Krátké"
                           : length === "medium"
-                          ? "Střední"
-                          : "Dlouhé"}
+                            ? "Střední"
+                            : "Dlouhé"}
                       </Button>
                     </motion.div>
                   ))}
@@ -596,10 +596,10 @@ export function AuthorSummaryPreferencesModal({
                           {focus === "life"
                             ? "Život"
                             : focus === "works"
-                            ? "Díla"
-                            : focus === "impact"
-                            ? "Vliv"
-                            : "Vyvážené"}
+                              ? "Díla"
+                              : focus === "impact"
+                                ? "Vliv"
+                                : "Vyvážené"}
                         </Button>
                       </motion.div>
                     )
@@ -779,16 +779,10 @@ export function AuthorSummaryPreferencesModal({
             </div>
             <div className="flex items-center w-full sm:w-auto">
               <Button
-                type="submit"
+                type="button"
                 variant="outline"
                 size="sm"
                 disabled={isGenerating}
-                onClick={(e) => {
-                  console.log("Generate button clicked directly");
-                  if (!isGenerating) {
-                    handleSubmit(e);
-                  }
-                }}
                 className={`
                   flex items-center gap-2 w-full sm:w-auto justify-center 
                   bg-blue-500/10 text-blue-500 border border-blue-500/20 
