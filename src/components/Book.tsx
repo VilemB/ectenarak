@@ -1281,50 +1281,100 @@ export default function BookComponent({
     api: "/api/author-summary",
     onFinish: (_prompt, completionText) => {
       console.log(
-        "authorCompletion: onFinish triggered. API should have saved to DB."
+        "[Book.tsx:AuthorOnFinish] START. Text length:",
+        completionText?.length ?? 0
       );
       authorPreferencesRef.current = null; // Clear ref
+      try {
+        console.log("[Book.tsx:AuthorOnFinish] Updating local book state...");
+        setBook((prevBook) => {
+          const newState = {
+            ...prevBook,
+            authorSummary: completionText,
+            updatedAt: new Date().toISOString(),
+          };
+          console.log(
+            "[Book.tsx:AuthorOnFinish] New local book state prepared:",
+            newState
+          );
+          return newState;
+        });
+        console.log(
+          "[Book.tsx:AuthorOnFinish] Local book state update requested."
+        );
 
-      // Update local state for immediate UI feedback
-      // The API handles the actual database persistence
-      setBook((prevBook) => ({
-        ...prevBook,
-        authorSummary: completionText,
-        updatedAt: new Date().toISOString(), // Reflect update time locally
-      }));
+        console.log(
+          "[Book.tsx:AuthorOnFinish] Updating UI state (visibility, modal)..."
+        );
+        setIsAuthorInfoVisible(true); // Keep author info panel open
+        setAuthorSummaryModal(false); // Close the preferences modal
+        console.log("[Book.tsx:AuthorOnFinish] UI state updated.");
 
-      // Update UI state
-      setIsAuthorInfoVisible(true); // Keep author info panel open
-      setAuthorSummaryModal(false); // Close the preferences modal
+        console.log(
+          "[Book.tsx:AuthorOnFinish] Dispatching credit refresh event..."
+        );
+        window.dispatchEvent(new CustomEvent("refresh-credits"));
+        console.log(
+          "[Book.tsx:AuthorOnFinish] Credit refresh event dispatched."
+        );
 
-      // Trigger credit refresh in UI
-      window.dispatchEvent(new CustomEvent("refresh-credits"));
+        console.log("[Book.tsx:AuthorOnFinish] Showing success toast...");
+        toast.success(
+          "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
+        );
+        console.log("[Book.tsx:AuthorOnFinish] Success toast shown.");
 
-      // Show success toast
-      toast.success(
-        "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
-      );
-
-      // Dispatch event to notify parent list to refetch
-      window.dispatchEvent(new CustomEvent("author-summary-updated"));
-      console.log("Dispatched author-summary-updated event");
+        console.log(
+          "[Book.tsx:AuthorOnFinish] Dispatching author-summary-updated event..."
+        );
+        window.dispatchEvent(new CustomEvent("author-summary-updated"));
+        console.log(
+          "[Book.tsx:AuthorOnFinish] author-summary-updated event dispatched."
+        );
+      } catch (error) {
+        console.error(
+          "[Book.tsx:AuthorOnFinish] !!! Error within onFinish callback:",
+          error
+        );
+        // Use a different variable name here
+        const finishErrorMsg =
+          error instanceof Error ? error.message : "Neznámá chyba";
+        toast.error(`Chyba při zpracování (onFinish): ${finishErrorMsg}`);
+      }
+      console.log("[Book.tsx:AuthorOnFinish] END.");
     },
     onError: (err: Error) => {
-      // Add type for err
-      console.error("authorCompletion: onError triggered:", err);
+      console.error("[Book.tsx:AuthorOnError] START Error triggered:", err);
       authorPreferencesRef.current = null; // Clear ref on error
-      const message =
-        err.message || "Nastala chyba při generování informací o autorovi";
-      toast.error(message);
-      setAuthorSummaryModal(false);
-      // Keep credit check logic
-      if (
-        message.includes("403") ||
-        message.toLowerCase().includes("credit") ||
-        message.toLowerCase().includes("insufficient")
-      ) {
-        setShowCreditExhaustedModal(true);
+      try {
+        const message =
+          err.message || "Nastala chyba při generování informací o autorovi";
+        console.log("[Book.tsx:AuthorOnError] Showing error toast:", message);
+        toast.error(message);
+        console.log("[Book.tsx:AuthorOnError] Closing modal...");
+        setAuthorSummaryModal(false);
+        console.log("[Book.tsx:AuthorOnError] Checking for credit issue...");
+        if (
+          message.includes("403") ||
+          message.toLowerCase().includes("credit") ||
+          message.toLowerCase().includes("insufficient")
+        ) {
+          console.log(
+            "[Book.tsx:AuthorOnError] Credit issue detected, showing modal."
+          );
+          setShowCreditExhaustedModal(true);
+        }
+      } catch (error) {
+        console.error(
+          "[Book.tsx:AuthorOnError] !!! Error within onError callback:",
+          error
+        );
+        // Use a different variable name here
+        const onErrorErrorMsg =
+          error instanceof Error ? error.message : "Neznámá chyba";
+        toast.error(`Chyba při zpracování chyby (onError): ${onErrorErrorMsg}`);
       }
+      console.log("[Book.tsx:AuthorOnError] END.");
     },
   });
 
