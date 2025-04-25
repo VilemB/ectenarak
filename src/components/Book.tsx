@@ -1304,6 +1304,10 @@ export default function BookComponent({
       toast.success(
         "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
       );
+
+      // Dispatch event to notify parent list to refetch
+      window.dispatchEvent(new CustomEvent("author-summary-updated"));
+      console.log("Dispatched author-summary-updated event");
     },
     onError: (err: Error) => {
       // Add type for err

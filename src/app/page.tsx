@@ -172,6 +172,10 @@ function HomeContent() {
   // Function to fetch books
   const fetchBooks = useCallback(async () => {
     if (!user?.id) return;
+    // Added console log for debugging fetch trigger
+    console.log(
+      `[${new Date().toISOString()}] Fetching books for user: ${user.id}`
+    );
     setIsLoadingBooks(true);
     setBooksError(null);
     try {
@@ -180,7 +184,6 @@ function HomeContent() {
         throw new Error("Nepodařilo se načíst knihy.");
       }
       const data = await response.json();
-      // Use the RawBookData type for the incoming items
       const mappedBooks: Book[] = data.books.map((book: RawBookData) => ({
         id: book._id, // Map _id to id
         _id: book._id, // Assume Book type might also use _id
@@ -196,6 +199,7 @@ function HomeContent() {
       }));
       setBooks(mappedBooks);
       setPagination(data.pagination);
+      console.log(`[${new Date().toISOString()}] Books fetched successfully.`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Neznámá chyba";
       setBooksError(message);
@@ -203,12 +207,37 @@ function HomeContent() {
     } finally {
       setIsLoadingBooks(false);
     }
-  }, [user?.id, debouncedSearchQuery]);
+  }, [user?.id]);
 
   // Fetch books on mount or when user changes
   useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
+    if (user?.id) {
+      // Only fetch if user ID exists
+      fetchBooks();
+    }
+  }, [user?.id, fetchBooks]); // Depend on user.id and fetchBooks itself
+
+  // --- Add Effect for Refetching on Author Summary Update ---
+  useEffect(() => {
+    const handleAuthorSummaryUpdate = () => {
+      console.log("Author summary update event received, refetching books...");
+      fetchBooks();
+    };
+
+    window.addEventListener(
+      "author-summary-updated",
+      handleAuthorSummaryUpdate
+    );
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener(
+        "author-summary-updated",
+        handleAuthorSummaryUpdate
+      );
+    };
+  }, [fetchBooks]); // Depend on fetchBooks callback
+  // --- End Effect ---
 
   // Filtered books based on debounced search query
   const filteredBooks = useMemo(() => {
