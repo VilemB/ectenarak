@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -55,6 +56,11 @@ export async function POST(request: Request) {
     });
 
     await user.save();
+
+    // Send welcome email - Fire and forget (don't block registration if email fails)
+    sendWelcomeEmail(user.email, user.name).catch((error) => {
+      console.error("Failed to send welcome email asynchronously:", error);
+    });
 
     // Return success but don't include password
     return NextResponse.json(

@@ -8,9 +8,9 @@ export async function POST(request: Request) {
     const { name, email, subject, message } = await request.json();
 
     const data = await resend.emails.send({
-      from: "Ctenarsky Denik <noreply@ectenarak.cz>",
+      from: "eČtenářák <noreply@ectenarak.cz>",
       to: "barnetv7@gmail.com",
-      subject: `[Ctenarsky Denik] ${subject}`,
+      subject: `[eČtenářák] ${subject}`,
       html: `
         <h2>Nová zpráva z kontaktního formuláře</h2>
         <p><strong>Jméno:</strong> ${name}</p>
