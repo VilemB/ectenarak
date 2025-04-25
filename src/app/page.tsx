@@ -6,6 +6,7 @@ import React, {
   useCallback,
   Suspense,
   useMemo,
+  useRef,
 } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -108,6 +109,7 @@ function HomeContent() {
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Memoize the current book count - Moved to top level
   const currentBookCount = useMemo(() => books.length, [books]);
@@ -123,6 +125,49 @@ function HomeContent() {
       clearTimeout(handler);
     };
   }, [searchQuery]);
+
+  // --- START Keyboard Shortcut Listener ---
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+
+      // General Esc for closing AddBookForm
+      if (event.key === "Escape" && showAddForm) {
+        // Check if the focus is NOT inside the AddBookForm itself before closing
+        // (Let internal inputs/buttons handle Esc if needed)
+        // This part might need refinement depending on AddBookForm's internal structure
+        const formElement = document.querySelector(
+          '[data-component="add-book-form"]'
+        ); // Add a data attribute to AddBookForm root
+        if (!formElement || !formElement.contains(target)) {
+          setShowAddForm(false);
+          return; // Stop further processing if Esc closed the form
+        }
+      }
+
+      // Specific Ctrl shortcuts - check if focus is NOT in input/textarea
+      if (
+        !(
+          target &&
+          (target.tagName === "INPUT" || target.tagName === "TEXTAREA")
+        )
+      ) {
+        if (event.ctrlKey && event.key === "/") {
+          event.preventDefault();
+          searchInputRef.current?.focus();
+        } else if (event.ctrlKey && event.key === "b") {
+          event.preventDefault();
+          setShowAddForm((prev) => !prev); // Toggle the add form
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showAddForm]); // Dependency on showAddForm for Esc logic
+  // --- END Keyboard Shortcut Listener ---
 
   // Function to fetch books
   const fetchBooks = useCallback(async () => {
@@ -252,6 +297,7 @@ function HomeContent() {
           <div className="relative w-full sm:w-auto sm:flex-1 md:flex-none md:w-64">
             <Search className="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground search-icon" />
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Hledat knihy..."
               value={searchQuery}
