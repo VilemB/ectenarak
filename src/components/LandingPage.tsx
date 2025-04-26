@@ -2,13 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  BookText,
-  Sparkles,
-  PenLine,
-  ImageIcon,
-} from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, BookText, Sparkles, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import LandingNavbar from "@/components/LandingNavbar";
@@ -141,20 +136,48 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Image placeholder */}
-                <div className="relative w-full h-[250px] sm:h-[400px] rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-card/60 to-card border border-border hover:shadow-xl transition-all duration-500 group flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <ImageIcon className="h-16 w-16 mb-4 text-muted-foreground/50 mx-auto" />
-                    <p className="text-muted-foreground text-lg">
-                      Obrázek bude přidán později
-                    </p>
-                    <p className="text-muted-foreground/70 text-sm mt-2">
-                      Vlastní ilustrace čtenářských zápisků
-                    </p>
-                  </div>
-                  {/* Gradient overlay for aesthetic */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-60 pointer-events-none"></div>
+                {/* Responsive Image Showcase - Revised & Proportional */}
+                <div className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 mt-8 lg:mt-0 group">
+                  {/* Laptop Image */}
+                  <motion.div
+                    className="relative z-0 w-full lg:w-3/4 rounded-xl overflow-hidden shadow-lg border border-border/50 transition-all duration-500 group-hover:shadow-xl lg:origin-right lg:group-hover:scale-[1.02]"
+                    initial={{ opacity: 0, x: -50, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+                  >
+                    <Image
+                      src="/images/laptop-homepage.png"
+                      alt="eČtenářák na notebooku"
+                      width={1000} // Provide base width
+                      height={667} // Provide base height based on aspect ratio
+                      layout="responsive"
+                      priority
+                    />
+                  </motion.div>
+
+                  {/* Phone Image - Overlapping slightly */}
+                  <motion.div
+                    className="relative z-10 w-2/5 max-w-[160px] sm:max-w-[180px] lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:translate-x-1/4 shadow-2xl rounded-lg overflow-hidden border-2 border-border/60 transition-transform duration-500 group-hover:scale-105 lg:origin-bottom-left"
+                    initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{
+                      duration: 0.6,
+                      delay: 0.4,
+                      type: "spring",
+                      stiffness: 100,
+                    }}
+                  >
+                    <Image
+                      src="/images/phone-homepage.png"
+                      alt="eČtenářák na mobilu"
+                      width={300} // Provide base width
+                      height={650} // Provide base height based on aspect ratio
+                      layout="responsive"
+                      quality={90}
+                    />
+                  </motion.div>
                 </div>
+                {/* End Responsive Image Showcase */}
               </div>
             </section>
 
