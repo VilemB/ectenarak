@@ -136,12 +136,11 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Responsive Image Showcase - Refined */}
-                {/* Add perspective for 3D hover effect */}
-                <motion.div className="relative w-full flex flex-col lg:flex-row lg:items-start justify-center gap-4 lg:gap-0 mt-8 lg:mt-0 group">
-                  {/* Laptop Image - Simplified */}
+                {/* Responsive Image Showcase - Simplified */}
+                <motion.div className="relative w-full flex flex-col items-center justify-center mt-8 lg:mt-0">
+                  {/* Laptop Image - Large Screens Only */}
                   <motion.div
-                    className="relative z-0 w-full lg:w-[85%] rounded-xl overflow-hidden shadow-lg border border-border/50 transition-shadow duration-500 group-hover:shadow-xl lg:origin-right"
+                    className="relative z-0 w-full hidden lg:block rounded-xl overflow-hidden shadow-lg border border-border/50 transition-shadow duration-300 hover:shadow-xl"
                     initial={{ opacity: 0, x: -50, scale: 0.95 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     transition={{
@@ -160,18 +159,16 @@ export default function LandingPage() {
                     />
                   </motion.div>
 
-                  {/* Phone Image - Alignment Adjusted */}
+                  {/* Phone Image - Small/Medium Screens Only */}
                   <motion.div
-                    className="relative z-10 w-2/5 max-w-[180px] sm:max-w-[210px] 
-                               md:-mt-12 md:ml-auto md:mr-4 
-                               lg:w-auto lg:absolute lg:right-0 lg:top-8 lg:translate-x-8 
+                    className="relative z-10 w-full block lg:hidden max-w-[180px] sm:max-w-[210px] mx-auto 
                                shadow-2xl rounded-lg overflow-hidden border-2 border-border/60 
-                               transition-transform duration-500 group-hover:scale-105 lg:origin-bottom-left"
+                               transition-transform duration-500 hover:scale-105"
                     initial={{ opacity: 0, y: 30, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{
                       duration: 0.6,
-                      delay: 0.5,
+                      delay: 0.2, // Adjusted delay slightly for quicker appearance
                       type: "spring",
                       stiffness: 100,
                     }}
