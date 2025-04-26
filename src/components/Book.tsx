@@ -1287,6 +1287,9 @@ export default function BookComponent({
       authorPreferencesRef.current = null; // Clear ref
       try {
         console.log("[Book.tsx:AuthorOnFinish] Updating local book state...");
+
+        // Update state in multiple stages to ensure reactivity
+        // First update the local state
         setBook((prevBook) => {
           const newState = {
             ...prevBook,
@@ -1299,38 +1302,65 @@ export default function BookComponent({
           );
           return newState;
         });
+
         console.log(
           "[Book.tsx:AuthorOnFinish] Local book state update requested."
         );
 
-        console.log(
-          "[Book.tsx:AuthorOnFinish] Updating UI state (visibility, modal)..."
-        );
-        setIsAuthorInfoVisible(true); // Keep author info panel open
-        setAuthorSummaryModal(false); // Close the preferences modal
-        console.log("[Book.tsx:AuthorOnFinish] UI state updated.");
+        // Ensure this change is reflected before updating the UI
+        setTimeout(() => {
+          console.log(
+            "[Book.tsx:AuthorOnFinish] Updating UI state (visibility, modal)..."
+          );
+          setIsAuthorInfoVisible(true); // Keep author info panel open
+          setAuthorSummaryModal(false); // Close the preferences modal
+          console.log("[Book.tsx:AuthorOnFinish] UI state updated.");
 
-        console.log(
-          "[Book.tsx:AuthorOnFinish] Dispatching credit refresh event..."
-        );
-        window.dispatchEvent(new CustomEvent("refresh-credits"));
-        console.log(
-          "[Book.tsx:AuthorOnFinish] Credit refresh event dispatched."
-        );
+          console.log(
+            "[Book.tsx:AuthorOnFinish] Dispatching credit refresh event..."
+          );
+          window.dispatchEvent(new CustomEvent("refresh-credits"));
+          console.log(
+            "[Book.tsx:AuthorOnFinish] Credit refresh event dispatched."
+          );
 
-        console.log("[Book.tsx:AuthorOnFinish] Showing success toast...");
-        toast.success(
-          "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
-        );
-        console.log("[Book.tsx:AuthorOnFinish] Success toast shown.");
+          console.log("[Book.tsx:AuthorOnFinish] Showing success toast...");
+          toast.success(
+            "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
+          );
+          console.log("[Book.tsx:AuthorOnFinish] Success toast shown.");
 
-        console.log(
-          "[Book.tsx:AuthorOnFinish] Dispatching author-summary-updated event..."
-        );
-        window.dispatchEvent(new CustomEvent("author-summary-updated"));
-        console.log(
-          "[Book.tsx:AuthorOnFinish] author-summary-updated event dispatched."
-        );
+          // Force refresh of author data from server
+          fetch(`/api/authors/${encodeURIComponent(book.author)}`)
+            .then((res) => res.json())
+            .then((authorData) => {
+              if (authorData.summary) {
+                console.log(
+                  "[Book.tsx:AuthorOnFinish] Retrieved author data from API, updating local state with fresh data."
+                );
+                setBook((prevBook) => ({
+                  ...prevBook,
+                  authorSummary: authorData.summary,
+                }));
+              }
+              // Dispatch the update event to refresh the parent component
+              console.log(
+                "[Book.tsx:AuthorOnFinish] Dispatching author-summary-updated event..."
+              );
+              window.dispatchEvent(new CustomEvent("author-summary-updated"));
+              console.log(
+                "[Book.tsx:AuthorOnFinish] author-summary-updated event dispatched."
+              );
+            })
+            .catch((err) => {
+              console.error(
+                "[Book.tsx:AuthorOnFinish] Error fetching fresh author data:",
+                err
+              );
+              // Still dispatch event to refresh parent component
+              window.dispatchEvent(new CustomEvent("author-summary-updated"));
+            });
+        }, 100);
       } catch (error) {
         console.error(
           "[Book.tsx:AuthorOnFinish] !!! Error within onFinish callback:",
@@ -1605,6 +1635,35 @@ export default function BookComponent({
       console.log(
         "handleGenerateAuthorSummary: authorComplete() call finished without throwing sync error."
       );
+
+      // After generation is complete, manually fetch and update the author summary from the database
+      try {
+        // Short delay to ensure the database has been updated
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Fetch the author data directly
+        const authorResponse = await fetch(
+          `/api/authors/${encodeURIComponent(book.author)}`
+        );
+        if (authorResponse.ok) {
+          const authorData = await authorResponse.json();
+          if (authorData.summary) {
+            console.log(
+              "Fetched updated author summary from API, length:",
+              authorData.summary.length
+            );
+
+            // Update the book data with the fetched summary
+            setBook((prevBook) => ({
+              ...prevBook,
+              authorSummary: authorData.summary,
+            }));
+          }
+        }
+      } catch (fetchError) {
+        console.error("Error fetching updated author summary:", fetchError);
+        // We don't show an error to the user here since the generation itself succeeded
+      }
     } catch (error) {
       console.error(
         "handleGenerateAuthorSummary: Error during setup or authorComplete() call:",
