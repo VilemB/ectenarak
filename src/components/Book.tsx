@@ -1273,140 +1273,55 @@ export default function BookComponent({
   });
 
   // Hook for Author Summary
-  const {
-    complete: authorComplete,
-    isLoading: isAuthorLoading,
-    completion: authorCompletion,
-  } = useCompletion({
-    api: "/api/author-summary",
-    onFinish: (_prompt, completionText) => {
-      console.log(
-        "[Book.tsx:AuthorOnFinish] START. Text length:",
-        completionText?.length ?? 0
-      );
-      authorPreferencesRef.current = null; // Clear ref
-      try {
-        console.log("[Book.tsx:AuthorOnFinish] Updating local book state...");
-
-        // Update state in multiple stages to ensure reactivity
-        // First update the local state
-        setBook((prevBook) => {
-          const newState = {
-            ...prevBook,
-            authorSummary: completionText,
-            updatedAt: new Date().toISOString(),
-          };
-          console.log(
-            "[Book.tsx:AuthorOnFinish] New local book state prepared:",
-            newState
-          );
-          return newState;
-        });
-
+  const { complete: authorComplete, isLoading: isAuthorLoading } =
+    useCompletion({
+      api: "/api/author-summary",
+      onFinish: async (completion: string) => {
         console.log(
-          "[Book.tsx:AuthorOnFinish] Local book state update requested."
+          "Author summary completion received, length:",
+          completion.length
         );
+        authorPreferencesRef.current = null; // Clear preferences
 
-        // Ensure this change is reflected before updating the UI
-        setTimeout(() => {
-          console.log(
-            "[Book.tsx:AuthorOnFinish] Updating UI state (visibility, modal)..."
-          );
-          setIsAuthorInfoVisible(true); // Keep author info panel open
-          setAuthorSummaryModal(false); // Close the preferences modal
-          console.log("[Book.tsx:AuthorOnFinish] UI state updated.");
+        // Update local state immediately
+        setBook((prevBook) => ({
+          ...prevBook,
+          authorSummary: completion,
+          updatedAt: new Date().toISOString(),
+        }));
 
-          console.log(
-            "[Book.tsx:AuthorOnFinish] Dispatching credit refresh event..."
-          );
-          window.dispatchEvent(new CustomEvent("refresh-credits"));
-          console.log(
-            "[Book.tsx:AuthorOnFinish] Credit refresh event dispatched."
-          );
-
-          console.log("[Book.tsx:AuthorOnFinish] Showing success toast...");
-          toast.success(
-            "Informace o autorovi byly úspěšně vygenerovány a uloženy!"
-          );
-          console.log("[Book.tsx:AuthorOnFinish] Success toast shown.");
-
-          // Force refresh of author data from server
-          fetch(`/api/authors/${encodeURIComponent(book.author)}`)
-            .then((res) => res.json())
-            .then((authorData) => {
-              if (authorData.summary) {
-                console.log(
-                  "[Book.tsx:AuthorOnFinish] Retrieved author data from API, updating local state with fresh data."
-                );
-                setBook((prevBook) => ({
-                  ...prevBook,
-                  authorSummary: authorData.summary,
-                }));
-              }
-              // Dispatch the update event to refresh the parent component
-              console.log(
-                "[Book.tsx:AuthorOnFinish] Dispatching author-summary-updated event..."
-              );
-              window.dispatchEvent(new CustomEvent("author-summary-updated"));
-              console.log(
-                "[Book.tsx:AuthorOnFinish] author-summary-updated event dispatched."
-              );
-            })
-            .catch((err) => {
-              console.error(
-                "[Book.tsx:AuthorOnFinish] Error fetching fresh author data:",
-                err
-              );
-              // Still dispatch event to refresh parent component
-              window.dispatchEvent(new CustomEvent("author-summary-updated"));
-            });
-        }, 100);
-      } catch (error) {
-        console.error(
-          "[Book.tsx:AuthorOnFinish] !!! Error within onFinish callback:",
-          error
-        );
-        // Use a different variable name here
-        const finishErrorMsg =
-          error instanceof Error ? error.message : "Neznámá chyba";
-        toast.error(`Chyba při zpracování (onFinish): ${finishErrorMsg}`);
-      }
-      console.log("[Book.tsx:AuthorOnFinish] END.");
-    },
-    onError: (err: Error) => {
-      console.error("[Book.tsx:AuthorOnError] START Error triggered:", err);
-      authorPreferencesRef.current = null; // Clear ref on error
-      try {
-        const message =
-          err.message || "Nastala chyba při generování informací o autorovi";
-        console.log("[Book.tsx:AuthorOnError] Showing error toast:", message);
-        toast.error(message);
-        console.log("[Book.tsx:AuthorOnError] Closing modal...");
+        // Make author info panel visible
+        setIsAuthorInfoVisible(true);
+        // Close the preferences modal
         setAuthorSummaryModal(false);
-        console.log("[Book.tsx:AuthorOnError] Checking for credit issue...");
-        if (
-          message.includes("403") ||
-          message.toLowerCase().includes("credit") ||
-          message.toLowerCase().includes("insufficient")
-        ) {
-          console.log(
-            "[Book.tsx:AuthorOnError] Credit issue detected, showing modal."
-          );
-          setShowCreditExhaustedModal(true);
-        }
-      } catch (error) {
-        console.error(
-          "[Book.tsx:AuthorOnError] !!! Error within onError callback:",
-          error
+
+        // Show success toast
+        toast.success(
+          "Informace o autorovi byly úspěšně vygenerovány a uloženy."
         );
-        // Use a different variable name here
-        const onErrorErrorMsg =
-          error instanceof Error ? error.message : "Neznámá chyba";
-        toast.error(`Chyba při zpracování chyby (onError): ${onErrorErrorMsg}`);
-      }
-      console.log("[Book.tsx:AuthorOnError] END.");
-    },
-  });
+
+        // Dispatch event to refresh credits
+        window.dispatchEvent(new CustomEvent("refresh-credits"));
+      },
+      onError: (error: Error) => {
+        console.error("Error in author summary completion:", error);
+        authorPreferencesRef.current = null;
+        setAuthorSummaryModal(false);
+
+        // Check if error is related to credits
+        if (
+          error.message?.includes("403") ||
+          error.message?.toLowerCase().includes("credit") ||
+          error.message?.toLowerCase().includes("insufficient")
+        ) {
+          setShowCreditExhaustedModal(true);
+        } else {
+          toast.error(
+            error.message || "Nepodařilo se vygenerovat informace o autorovi."
+          );
+        }
+      },
+    });
 
   // Update handleGenerateSummary to use the hook
   const handleGenerateSummary = async (preferences: SummaryPreferences) => {
@@ -1786,7 +1701,7 @@ export default function BookComponent({
                       rehypePlugins={[rehypeRaw]}
                       remarkPlugins={[remarkGfm]}
                     >
-                      {authorCompletion || ""}
+                      {authorComplete || ""}
                     </ReactMarkdown>
                   </div>
                 </motion.div>
