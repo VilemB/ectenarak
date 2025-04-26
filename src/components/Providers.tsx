@@ -3,7 +3,7 @@
 import React from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SummaryPreferencesProvider } from "@/contexts/SummaryPreferencesContext";
-import { SessionProvider } from "@/components/SessionProvider";
+import SessionProvider from "@/components/SessionProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { Toaster } from "sonner";
