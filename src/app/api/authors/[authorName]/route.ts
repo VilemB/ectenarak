@@ -8,17 +8,19 @@ import Author from "@/models/Author";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { authorName: string } }
+  context: { params: Promise<{ authorName: string }> }
 ) {
   try {
     // Connect to database
     await dbConnect();
 
     // Get the author name from the URL parameter and decode it
-    const authorName = decodeURIComponent(params.authorName);
+    const { authorName } = await context.params;
 
     // Find the author in the database
-    const author = await Author.findOne({ name: authorName });
+    const author = await Author.findOne({
+      name: decodeURIComponent(authorName),
+    });
 
     if (!author) {
       return NextResponse.json({ error: "Author not found" }, { status: 404 });
