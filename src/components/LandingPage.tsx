@@ -71,7 +71,7 @@ export default function LandingPage() {
 
           <main className="flex-grow">
             <section className="py-12 md:py-24 lg:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:items-start">
                 <div className="text-center lg:text-left flex flex-col gap-6">
                   {/* Replace LandingAnimations with direct content since we now have 3D animations */}
                   <div>
@@ -136,14 +136,19 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Responsive Image Showcase - Revised & Proportional */}
-                <div className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-0 mt-8 lg:mt-0 group">
-                  {/* Laptop Image */}
+                {/* Responsive Image Showcase - Refined */}
+                {/* Add perspective for 3D hover effect */}
+                <motion.div className="relative w-full flex flex-col lg:flex-row lg:items-start justify-center gap-4 lg:gap-0 mt-8 lg:mt-0 group">
+                  {/* Laptop Image - Simplified */}
                   <motion.div
-                    className="relative z-0 w-full lg:w-3/4 rounded-xl overflow-hidden shadow-lg border border-border/50 transition-all duration-500 group-hover:shadow-xl lg:origin-right lg:group-hover:scale-[1.02]"
+                    className="relative z-0 w-full lg:w-[85%] rounded-xl overflow-hidden shadow-lg border border-border/50 transition-shadow duration-500 group-hover:shadow-xl lg:origin-right"
                     initial={{ opacity: 0, x: -50, scale: 0.95 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
-                    transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+                    transition={{
+                      duration: 0.7,
+                      delay: 0.2,
+                      ease: "easeInOut",
+                    }}
                   >
                     <Image
                       src="/images/laptop-homepage.png"
@@ -155,14 +160,18 @@ export default function LandingPage() {
                     />
                   </motion.div>
 
-                  {/* Phone Image - Overlapping slightly */}
+                  {/* Phone Image - Alignment Adjusted */}
                   <motion.div
-                    className="relative z-10 w-2/5 max-w-[160px] sm:max-w-[180px] lg:w-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:translate-x-1/4 shadow-2xl rounded-lg overflow-hidden border-2 border-border/60 transition-transform duration-500 group-hover:scale-105 lg:origin-bottom-left"
+                    className="relative z-10 w-2/5 max-w-[180px] sm:max-w-[210px] 
+                               md:-mt-12 md:ml-auto md:mr-4 
+                               lg:w-auto lg:absolute lg:right-0 lg:top-8 lg:translate-x-8 
+                               shadow-2xl rounded-lg overflow-hidden border-2 border-border/60 
+                               transition-transform duration-500 group-hover:scale-105 lg:origin-bottom-left"
                     initial={{ opacity: 0, y: 30, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{
                       duration: 0.6,
-                      delay: 0.4,
+                      delay: 0.5,
                       type: "spring",
                       stiffness: 100,
                     }}
@@ -176,7 +185,7 @@ export default function LandingPage() {
                       quality={90}
                     />
                   </motion.div>
-                </div>
+                </motion.div>
                 {/* End Responsive Image Showcase */}
               </div>
             </section>
