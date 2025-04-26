@@ -16,6 +16,7 @@ import { checkSubscription } from "@/middleware/subscriptionMiddleware";
  * - preferences: AuthorSummaryPreferences (optional) - Customization preferences
  * - bookId: string (optional) - If provided, associates the summary with this book
  * - clientSideDeduction: boolean (optional) - Indicates if credits have already been deducted on the client side
+ * - forceRefresh: boolean (optional) - If true, regenerates the summary even if cached
  */
 export async function POST(req: NextRequest) {
   console.log("=== STREAMING AUTHOR SUMMARY API ROUTE START ===");
@@ -40,12 +41,14 @@ export async function POST(req: NextRequest) {
       author,
       preferences = DEFAULT_AUTHOR_PREFERENCES,
       clientSideDeduction = false,
+      forceRefresh = false, // New parameter to force refresh
     } = body;
 
     console.log("Request parameters:", {
       author,
       hasPreferences: !!preferences,
       clientSideDeduction,
+      forceRefresh,
     });
 
     if (!author) {
@@ -57,15 +60,20 @@ export async function POST(req: NextRequest) {
 
     // --- Check Author Cache in DB ---
     const authorDoc = await Author.findOne({ name: author });
-    if (authorDoc && authorDoc.summary) {
+    if (authorDoc && authorDoc.summary && !forceRefresh) {
       console.log(`Cache hit in DB for author: ${author}`);
       // Return cached summary as a single stream chunk
       return new Response(formatDataStreamPart("text", authorDoc.summary), {
         status: 200,
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store, must-revalidate",
+        },
       });
     }
-    console.log(`Cache miss in DB for author: ${author}. Generating...`);
+    console.log(
+      `${forceRefresh ? "Force refreshing" : "Cache miss in DB for"} author: ${author}. Generating...`
+    );
     // --- End Cache Check ---
 
     // Prepare for generation
@@ -174,8 +182,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Return the stream
-    return result.toDataStreamResponse();
+    // Return the stream with cache control headers
+    const response = result.toDataStreamResponse();
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
+    return response;
   } catch (error) {
     console.error("Error in streaming author summary API:", error);
     // Handle potential credit errors specifically if possible

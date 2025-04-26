@@ -1599,6 +1599,7 @@ export default function BookComponent({
         body: {
           author: book.author,
           preferences: preferencesToUse, // Pass the parameter here
+          forceRefresh: true, // Always force refresh to ensure new generation
         },
       });
       console.log(
