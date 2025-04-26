@@ -38,6 +38,8 @@ import AiCreditsExhaustedPrompt from "./AiCreditsExhaustedPrompt";
 import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
 import { useCompletion } from "@ai-sdk/react";
+import { useSession } from "next-auth/react";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface BookProps {
   book: Book;
@@ -608,6 +610,93 @@ export default function BookComponent({
   book: initialBook,
   onDelete,
 }: BookProps) {
+  // Hooks moved higher up, ensure correct usage
+  const { status: sessionStatus } = useSession(); // Use only status
+  const {
+    // subscription, // Commented out: unused
+    // loading: subscriptionLoading, // Commented out: unused
+    // hasAccess, // Commented out: unused
+  } = useSubscription(); // Destructure needed properties
+  const authContext = useAuth(); // Assuming useAuth provides necessary context
+
+  // --- REMOVE Duplicate State Declarations --- Delete this block
+  // const [book, setBook] = useState<Book>(initialBook); // REMOVE
+  // const [isEditing, setIsEditing] = useState(false); // REMOVE
+  // const [showModal, setShowModal] = useState(false); // REMOVE
+  // const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // REMOVE
+  // const [showCreditExhaustedModal, setShowCreditExhaustedModal] = // REMOVE
+  //   useState(false); // REMOVE
+  // const [summaryPreferencesModal, setSummaryPreferencesModal] = useState(false); // REMOVE
+  // const [authorSummaryModal, setAuthorSummaryModal] = useState(false); // REMOVE
+  // const [isLoading, setIsLoading] = useState(false); // REMOVE
+  // const [isDeleting, setIsDeleting] = useState(false); // REMOVE
+  // const [isCollapsed, setIsCollapsed] = useState(true); // REMOVE
+  // --- End REMOVE Duplicate State Declarations ---
+
+  // --- REMOVE Duplicate Ref Declaration --- Delete this line
+  // const authorPreferencesRef = useRef<AuthorSummaryPreferences | null>(null); // REMOVE
+
+  // --- New useEffect Hook to fetch author summary --- (Keep this hook)
+  useEffect(() => {
+    // Check if the session is loaded and authenticated before fetching
+    if (
+      sessionStatus === "authenticated" &&
+      initialBook.author &&
+      !initialBook.authorSummary // Only fetch if we don't have one already in state
+    ) {
+      const fetchAuthorSummary = async () => {
+        try {
+          console.log(
+            `Fetching author summary for ${initialBook.author} on mount...`
+          );
+          const response = await fetch(
+            `/api/authors/${encodeURIComponent(initialBook.author)}`
+          );
+          console.log(
+            `Fetch response status for ${initialBook.author}: ${response.status}`
+          );
+
+          if (response.ok) {
+            const authorData = await response.json();
+            if (authorData.summary) {
+              console.log(
+                `Fetched existing author summary for ${initialBook.author} on mount. Length: ${authorData.summary.length}`
+              );
+              setBook((prevBook) => ({
+                ...prevBook,
+                authorSummary: authorData.summary,
+              }));
+            } else {
+              console.log(
+                `No summary found in DB for ${initialBook.author} on mount.`
+              );
+            }
+          } else if (response.status === 404) {
+            console.log(
+              `Author ${initialBook.author} not found in DB on mount (404).`
+            );
+          } else {
+            console.error(
+              `Error fetching author summary for ${initialBook.author} on mount:`,
+              response.status,
+              response.statusText
+            );
+          }
+        } catch (error) {
+          console.error(
+            `Network or other error fetching author summary for ${initialBook.author} on mount:`,
+            error
+          );
+        }
+      };
+
+      fetchAuthorSummary();
+    }
+    // Dependencies: initialBook.author and sessionStatus to refetch if auth state changes or author changes
+    // initialBook.authorSummary is added to prevent refetching if summary is already loaded into state
+  }, [initialBook.author, sessionStatus, initialBook.authorSummary]);
+  // --- End New useEffect Hook ---
+
   // Only import what we actually use from useSubscription
   // const { refreshSubscription } = useSubscription();
   // const { refreshSubscriptionData } = useSubscriptionContext();
@@ -615,7 +704,6 @@ export default function BookComponent({
   const { canAccess, hasAiCredits } = useFeatureAccess();
 
   // Get the auth context properly
-  const authContext = useAuth();
   const useAiCreditRef = useRef(authContext.useAiCredit);
 
   // Add global styles for notes
@@ -671,18 +759,13 @@ export default function BookComponent({
   const [summaryModal, setSummaryModal] = useState(false);
   const [authorSummaryModal, setAuthorSummaryModal] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  // REMOVE isAuthorInfoVisible state
-  // const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
-  // ADD state for integrated sections
   const [isAuthorSectionVisible, setIsAuthorSectionVisible] = useState(false);
-  // const [isBookSummarySectionVisible, setIsBookSummarySectionVisible] = useState(false); // Comment out for now
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note" | "authorSummary";
     noteId?: string;
     isLoading: boolean;
   }>({ isOpen: false, type: "book", isLoading: false });
-  // const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(null); // Remove saved scroll state
   const [activeNoteFilter, setActiveNoteFilter] = useState<
     "all" | "manual" | "ai"
   >("all");
@@ -694,7 +777,7 @@ export default function BookComponent({
     Array<{ id: string; message: string }>
   >([]);
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
-    useState(false);
+    useState(false); // Ensure this is declared here
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
 
   // Add a function to show error messages
