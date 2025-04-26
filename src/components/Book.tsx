@@ -1323,87 +1323,102 @@ export default function BookComponent({
     isLoading: isAuthorLoading,
     completion: authorCompletion,
   } = useCompletion({
-    api: "/api/author-summary",
-    onFinish: async (completion: string) => {
+    api: "/api/author-summary", // Keep this for streaming generation
+    onFinish: async (prompt?: string, completion?: string) => {
+      // Add prompt/completion args if needed by AISDK
       console.log(
-        "Author summary completion received, length:",
-        completion.length
+        "Author summary stream finished, final length:",
+        completion?.length ?? 0
       );
       authorPreferencesRef.current = null; // Clear preferences
 
-      // Update local state immediately
+      // Ensure completion text exists
+      if (!completion) {
+        console.error("Author summary onFinish: Completion text is missing.");
+        toast.error("Chyba: Generování autora selhalo (prázdná odpověď).");
+        setActiveSection("notes"); // Revert to notes if failed
+        return;
+      }
+
+      // Update local state immediately with the final text
       setBook((prevBook) => ({
         ...prevBook,
         authorSummary: completion,
         updatedAt: new Date().toISOString(),
       }));
 
-      // Make author info panel visible
-      setActiveSection("author"); // SET active section
-      // Close the preferences modal
+      setActiveSection("author");
       setAuthorSummaryModal(false);
 
-      // Show success toast
-      toast.success(
-        "Informace o autorovi byly úspěšně vygenerovány a uloženy."
-      );
+      // Show initial success toast (generation finished)
+      toast.success("Informace o autorovi byly úspěšně vygenerovány.");
 
-      // Dispatch event to refresh credits
-      window.dispatchEvent(new CustomEvent("refresh-credits"));
-
-      // 2. Fetch the definitive author data from the DB to ensure consistency
+      // --- Call the new API route to save and deduct credit --- START
       try {
-        // Optional short delay
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        const authorResponse = await fetch(
-          `/api/authors/${encodeURIComponent(book.author)}`
-        );
-        if (authorResponse.ok) {
-          const authorData = await authorResponse.json();
-          if (authorData.summary) {
-            console.log(
-              "Fetched definitive author summary from API, length:",
-              authorData.summary.length
-            );
-            // Update local state again with data confirmed from DB
-            setBook((prevBook) => ({
-              ...prevBook,
-              authorSummary: authorData.summary,
-              // Optionally update authorId if it's returned and different
-              // authorId: authorData.id || prevBook.authorId,
-            }));
-          }
-        } else {
-          console.warn(
-            `Failed to fetch definitive author data: ${authorResponse.status}`
+        console.log(`Calling /api/save-author-summary for ${book.author}...`);
+        const saveResponse = await fetch("/api/save-author-summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            authorName: book.author,
+            summary: completion,
+            // preferences: authorPreferencesRef.current // Send prefs if needed by save API
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          // Log error and potentially show a different toast
+          const errorData = await saveResponse.json();
+          console.error(
+            "Error saving author summary or deducting credit:",
+            errorData
           );
+          toast.error(
+            `Chyba při ukládání / odečtu kreditu: ${errorData.error || "Neznámá chyba"}`
+          );
+        } else {
+          console.log("Author summary saved and credit deducted successfully.");
+          // Optionally show a second success toast or update UI further
+          window.dispatchEvent(new CustomEvent("refresh-credits")); // Refresh credits display
         }
-      } catch (fetchError) {
-        console.error("Error fetching definitive author summary:", fetchError);
-        // Don't show another error to the user, the generation succeeded.
+      } catch (saveError) {
+        console.error("Failed to call save-author-summary API:", saveError);
+        toast.error("Nepodařilo se kontaktovat server pro uložení shrnutí.");
       }
+      // --- Call the new API route to save and deduct credit --- END
+
+      // Remove the old direct fetch logic here
+      /*
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        const authorResponse = await fetch(...);
+        // ... update state ...
+      } catch (fetchError) { ... }
+      */
     },
     onError: (error: Error) => {
-      console.error("Error in author summary completion:", error);
+      // Put the error parameter back
+      console.error("Error in author summary completion:", error); // Log the error directly
       authorPreferencesRef.current = null;
       setAuthorSummaryModal(false);
 
+      const errorMessage = error?.message || "Unknown error";
+
       // Check if error is related to credits
       if (
-        error.message?.includes("403") ||
-        error.message?.toLowerCase().includes("credit") ||
-        error.message?.toLowerCase().includes("insufficient")
+        errorMessage.includes("403") ||
+        errorMessage.toLowerCase().includes("credit") ||
+        errorMessage.toLowerCase().includes("insufficient")
       ) {
         setShowCreditExhaustedModal(true);
       } else {
         toast.error(
-          error.message || "Nepodařilo se vygenerovat informace o autorovi."
+          errorMessage || "Nepodařilo se vygenerovat informace o autorovi."
         );
       }
       // Ensure author section is NOT active if generation failed
-      // (It likely wouldn't be active anyway, but good practice)
       if (activeSection === "author") {
-        setActiveSection("notes"); // Revert to notes if generation fails while author tab is active
+        setActiveSection("notes");
       }
     },
   });
