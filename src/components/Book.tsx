@@ -1601,12 +1601,49 @@ export default function BookComponent({
 
   // Handle confirming the deletion of the author summary
   const handleConfirmDeleteAuthorSummary = async () => {
-    // ... (existing logic to clear local book state) ...
+    // Keep optimistic UI update for responsiveness
+    const originalSummary = book.authorSummary;
     setBook((prev) => ({ ...prev, authorSummary: undefined }));
-    setActiveSection("notes"); // Hide the section too
-    toast.success("Shrnutí autora bylo úspěšně smazáno.");
-    setDeleteModal({ isOpen: false, type: "authorSummary", isLoading: false });
-    // TODO: Optionally call a DELETE endpoint if you want to clear the Author model cache
+    setActiveSection("notes"); // Switch section
+    setDeleteModal({ isOpen: false, type: "authorSummary", isLoading: true }); // Close modal, set loading
+
+    try {
+      console.log(`Sending DELETE request for author summary: ${book.author}`);
+      const response = await fetch(
+        `/api/authors/${encodeURIComponent(book.author)}/summary`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        // API call failed, revert optimistic update and show error
+        setBook((prev) => ({ ...prev, authorSummary: originalSummary })); // Revert state
+        setActiveSection("author"); // Switch back if needed
+        const errorData = await response.json().catch(() => ({})); // Try to get error details
+        toast.error(
+          `Nepodařilo se smazat shrnutí autora: ${errorData.error || response.statusText}`
+        );
+        console.error("Error deleting author summary from DB:", errorData);
+      } else {
+        // API call succeeded
+        toast.success("Shrnutí autora bylo úspěšně smazáno."); // Remove "(lokálně)"
+        console.log("Author summary successfully deleted from DB.");
+        // No need to refetch Author data, local state is cleared
+      }
+    } catch (error) {
+      // Network or other fetch error
+      setBook((prev) => ({ ...prev, authorSummary: originalSummary })); // Revert state
+      setActiveSection("author"); // Switch back if needed
+      toast.error(
+        "Chyba při komunikaci se serverem při mazání shrnutí autora."
+      );
+      console.error("Error calling delete author summary API:", error);
+    } finally {
+      // Clear loading state regardless of success/failure
+      setDeleteModal((prev) => ({ ...prev, isLoading: false }));
+    }
+    // Remove the old TODO comment
   };
 
   // Scroll to streaming container when loading starts
