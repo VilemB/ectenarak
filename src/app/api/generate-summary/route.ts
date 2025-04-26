@@ -253,7 +253,9 @@ ${
 
 Formátuj pomocí markdown. Používej **tučné** pro důležité pojmy, *kurzívu* pro názvy děl.
 
-DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní. Pokud se blížíš k limitu tokenů, raději zkrať obsah v každé sekci, ale zachovej všechny sekce a zajisti, že shrnutí má jasný závěr. Nikdy neukončuj text uprostřed věty nebo myšlenky.`;
+DŮLEŽITÉ: Vždy dokončuj své myšlenky a zajisti, že text je kompletní. Pokud se blížíš k limitu tokenů, raději zkrať obsah v každé sekci, ale zachovej všechny sekce a zajisti, že shrnutí má jasný závěr. Nikdy neukončuj text uprostřed věty nebo myšlenky.
+
+NA KONCI TEXTU NESMÍ BÝT ŽÁDNÝ DODATEČNÝ KOMENTÁŘ NEBO META-SHRNUTÍ. Striktně dodržuj styl: ${styleMap[preferences.style].label}.`;
 
   // Add notes if available (after all instructions to prioritize them)
   if (notes && notes.trim()) {
@@ -263,7 +265,7 @@ Poznámky čtenáře:
 ${notes}`;
   }
 
-  return prompt;
+  return prompt.trim(); // Ensure prompt is trimmed
 }
 
 // Remove checkIfSummaryIsCutOff function
@@ -560,10 +562,11 @@ export async function POST(request: Request) {
     const result = await streamText({
       model: openaiProvider(model),
       messages: [{ role: "system", content: prompt }],
-      temperature: preferences.style === "creative" ? 0.8 : 0.6,
+      // Adjust Temperature and Penalties based on style
+      temperature: preferences.style === "creative" ? 0.8 : 0.3, // Lower temp for non-creative
       maxTokens: maxTokens,
-      frequencyPenalty: 0.1,
-      presencePenalty: 0.1,
+      frequencyPenalty: preferences.style === "creative" ? 0.5 : 0.1, // Higher penalty for creative
+      presencePenalty: preferences.style === "creative" ? 0.5 : 0.1, // Higher penalty for creative
     });
 
     console.log(`[${Date.now()}] AI SDK stream initiated, returning response.`);
