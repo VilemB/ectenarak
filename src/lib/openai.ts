@@ -140,8 +140,8 @@ function selectOptimalAuthorModel(
     preferences.style === "academic"
       ? 2
       : preferences.style === "creative"
-      ? 1
-      : 0;
+        ? 1
+        : 0;
 
   // Length-based complexity
   complexityScore +=
@@ -254,15 +254,15 @@ export async function generateAuthorSummary(
           preferences.style === "academic"
             ? "literární vědec a akademik"
             : preferences.style === "casual"
-            ? "zkušený literární publicista"
-            : "kreativní spisovatel a vypravěč"
+              ? "zkušený literární publicista"
+              : "kreativní spisovatel a vypravěč"
         } specializující se na informace o autorech.`
       : `You are ${
           preferences.style === "academic"
             ? "a literary scholar and academic"
             : preferences.style === "casual"
-            ? "an experienced literary journalist"
-            : "a creative writer and storyteller"
+              ? "an experienced literary journalist"
+              : "a creative writer and storyteller"
         } specializing in author information.`;
 
   try {
@@ -276,10 +276,10 @@ export async function generateAuthorSummary(
       temperature: preferences.style === "creative" ? 0.8 : 0.3,
       max_tokens:
         preferences.length === "long"
-          ? 2000
+          ? 4000
           : preferences.length === "medium"
-          ? 1200
-          : 800,
+            ? 2500
+            : 1500,
       presence_penalty: preferences.style === "creative" ? 0.6 : 0.2,
       frequency_penalty: preferences.style === "creative" ? 0.6 : 0.3,
     });

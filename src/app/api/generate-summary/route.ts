@@ -380,24 +380,24 @@ function selectOptimalModel(
 
   let maxTokens: number;
 
-  // Select maxTokens based on desired length, slightly reduced
+  // Increase maxTokens based on desired length
   switch (preferences.length) {
     case "long":
-      maxTokens = Math.min(3300, MAX_TOKENS_LIMIT); // Reduced from 3500
+      maxTokens = Math.min(4000, MAX_TOKENS_LIMIT); // Increased from 3300, respecting overall limit
       break;
     case "medium":
-      maxTokens = Math.min(2300, SAFE_TOKENS_LIMIT); // Reduced from 2500
+      maxTokens = Math.min(2500, SAFE_TOKENS_LIMIT); // Increased from 2300, respecting safe limit
       break;
     case "short":
     default:
-      maxTokens = Math.min(1350, SAFE_TOKENS_LIMIT); // Reduced from 1500
+      maxTokens = Math.min(1500, SAFE_TOKENS_LIMIT); // Increased from 1350, respecting safe limit
       break;
   }
 
   // Apply a small boost if significant notes are present
   const hasSignificantNotes = notesLength > 1000;
   const costAdjustedLimit = hasSignificantNotes
-    ? Math.min(maxTokens + 200, MAX_TOKENS_LIMIT) // Slightly smaller boost
+    ? Math.min(maxTokens + 300, MAX_TOKENS_LIMIT) // Increased boost slightly to 300
     : maxTokens;
 
   // Removed complexity score logic as we force gpt-4o-mini
