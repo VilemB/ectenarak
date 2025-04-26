@@ -1273,55 +1273,58 @@ export default function BookComponent({
   });
 
   // Hook for Author Summary
-  const { complete: authorComplete, isLoading: isAuthorLoading } =
-    useCompletion({
-      api: "/api/author-summary",
-      onFinish: async (completion: string) => {
-        console.log(
-          "Author summary completion received, length:",
-          completion.length
+  const {
+    complete: authorComplete,
+    isLoading: isAuthorLoading,
+    completion: authorCompletion,
+  } = useCompletion({
+    api: "/api/author-summary",
+    onFinish: async (completion: string) => {
+      console.log(
+        "Author summary completion received, length:",
+        completion.length
+      );
+      authorPreferencesRef.current = null; // Clear preferences
+
+      // Update local state immediately
+      setBook((prevBook) => ({
+        ...prevBook,
+        authorSummary: completion,
+        updatedAt: new Date().toISOString(),
+      }));
+
+      // Make author info panel visible
+      setIsAuthorInfoVisible(true);
+      // Close the preferences modal
+      setAuthorSummaryModal(false);
+
+      // Show success toast
+      toast.success(
+        "Informace o autorovi byly úspěšně vygenerovány a uloženy."
+      );
+
+      // Dispatch event to refresh credits
+      window.dispatchEvent(new CustomEvent("refresh-credits"));
+    },
+    onError: (error: Error) => {
+      console.error("Error in author summary completion:", error);
+      authorPreferencesRef.current = null;
+      setAuthorSummaryModal(false);
+
+      // Check if error is related to credits
+      if (
+        error.message?.includes("403") ||
+        error.message?.toLowerCase().includes("credit") ||
+        error.message?.toLowerCase().includes("insufficient")
+      ) {
+        setShowCreditExhaustedModal(true);
+      } else {
+        toast.error(
+          error.message || "Nepodařilo se vygenerovat informace o autorovi."
         );
-        authorPreferencesRef.current = null; // Clear preferences
-
-        // Update local state immediately
-        setBook((prevBook) => ({
-          ...prevBook,
-          authorSummary: completion,
-          updatedAt: new Date().toISOString(),
-        }));
-
-        // Make author info panel visible
-        setIsAuthorInfoVisible(true);
-        // Close the preferences modal
-        setAuthorSummaryModal(false);
-
-        // Show success toast
-        toast.success(
-          "Informace o autorovi byly úspěšně vygenerovány a uloženy."
-        );
-
-        // Dispatch event to refresh credits
-        window.dispatchEvent(new CustomEvent("refresh-credits"));
-      },
-      onError: (error: Error) => {
-        console.error("Error in author summary completion:", error);
-        authorPreferencesRef.current = null;
-        setAuthorSummaryModal(false);
-
-        // Check if error is related to credits
-        if (
-          error.message?.includes("403") ||
-          error.message?.toLowerCase().includes("credit") ||
-          error.message?.toLowerCase().includes("insufficient")
-        ) {
-          setShowCreditExhaustedModal(true);
-        } else {
-          toast.error(
-            error.message || "Nepodařilo se vygenerovat informace o autorovi."
-          );
-        }
-      },
-    });
+      }
+    },
+  });
 
   // Update handleGenerateSummary to use the hook
   const handleGenerateSummary = async (preferences: SummaryPreferences) => {
@@ -1701,7 +1704,7 @@ export default function BookComponent({
                       rehypePlugins={[rehypeRaw]}
                       remarkPlugins={[remarkGfm]}
                     >
-                      {authorComplete || ""}
+                      {authorCompletion || ""}
                     </ReactMarkdown>
                   </div>
                 </motion.div>
