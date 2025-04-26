@@ -411,8 +411,7 @@ const BookHeader = ({
   setAuthorSummaryModal, // Pass the modal setter
   handleDeleteAuthorSummary,
   isGeneratingAuthorSummary,
-  handleAuthorSectionToggle, // New prop for toggling the section
-  isAuthorSectionVisible, // New prop
+  onAuthorClick, // New prop for clicking author name
   showPremiumFeatureLock,
 }: {
   book: Book;
@@ -422,20 +421,15 @@ const BookHeader = ({
   setAuthorSummaryModal: (open: boolean) => void; // Prop for modal
   handleDeleteAuthorSummary: () => void;
   isGeneratingAuthorSummary: boolean;
-  handleAuthorSectionToggle: (e: React.MouseEvent) => void; // New prop type
-  isAuthorSectionVisible: boolean; // New prop type
+  onAuthorClick: (e: React.MouseEvent) => void; // New prop type
   showPremiumFeatureLock: boolean;
 }) => {
+  // Simplified className logic
+  const headerClasses = `relative cursor-pointer group hover:bg-blue-950/90 ${isExpanded ? "bg-blue-950 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5 border-b border-blue-900/60" : "bg-blue-950 p-3 sm:p-4"}`;
+
   return (
     <div
-      className={`relative cursor-pointer
-                  ${
-                    isExpanded
-                      ? "bg-blue-950 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
-                      : "bg-blue-950 p-3 sm:p-4"
-                  }
-                  ${isExpanded ? "border-b border-blue-900/60" : ""}
-                  group hover:bg-blue-950/90`}
+      className={headerClasses}
       onClick={toggleExpanded}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -482,7 +476,7 @@ const BookHeader = ({
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
               className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 text-blue-200 group-hover:text-blue-100 transition-colors relative"
-              onClick={handleAuthorSectionToggle} // Use the new handler
+              onClick={onAuthorClick} // Use the new handler
               data-no-toggle="true" // Prevent book expand/collapse
             >
               {book.author}
@@ -490,21 +484,19 @@ const BookHeader = ({
                 <span
                   className="relative flex h-2 w-2 items-center justify-center ml-1.5"
                   aria-label={
-                    isAuthorSectionVisible // Use new state
-                      ? "Skrýt informace o autorovi"
-                      : "Zobrazit informace o autorovi"
+                    // Use new state
+                    "Zobrazit informace o autorovi"
                   }
                 >
                   <span
                     className={`relative inline-flex rounded-full h-2 w-2 bg-blue-500
                                ${
-                                 isAuthorSectionVisible // Use new state
-                                   ? "opacity-100"
-                                   : "opacity-70"
+                                 // Use new state
+                                 "opacity-100"
                                }
                                transition-all duration-300`}
                   />
-                  {isAuthorSectionVisible && ( // Use new state
+                  {isExpanded && ( // Use new state
                     <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-blue-700 animate-pulse" />
                   )}
                 </span>
@@ -759,7 +751,6 @@ export default function BookComponent({
   const [summaryModal, setSummaryModal] = useState(false);
   const [authorSummaryModal, setAuthorSummaryModal] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [isAuthorSectionVisible, setIsAuthorSectionVisible] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note" | "authorSummary";
@@ -779,6 +770,9 @@ export default function BookComponent({
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
     useState(false); // Ensure this is declared here
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  const [activeSection, setActiveSection] = useState<"notes" | "author">(
+    "notes"
+  ); // NEW: State for active section
 
   // Add a function to show error messages
   const showErrorMessage = useCallback((message: string) => {
@@ -841,18 +835,18 @@ export default function BookComponent({
     [showErrorMessage]
   );
 
-  // ADD new handler for the integrated author section toggle
-  const handleAuthorSectionToggle = useCallback(
+  // NEW Handler for clicking author name in header
+  const handleAuthorHeaderClick = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent the book from expanding/collapsing
-      if (book.authorSummary) {
-        setIsAuthorSectionVisible((prev) => !prev);
-      } else {
-        // If no summary exists, open the generation modal
-        setAuthorSummaryModal(true);
+      e.stopPropagation(); // Prevent the book from toggling expansion state unnecessarily
+      if (!isExpanded) {
+        setIsExpanded(true); // Expand if collapsed
       }
+      setActiveSection("author"); // Switch to author section
+      // If no summary exists and user clicks, they land on the author tab.
+      // The generate button will be visible there if needed.
     },
-    [book.authorSummary]
+    [isExpanded] // Dependency on isExpanded
   );
 
   // Memoize access checks for better performance
@@ -1363,7 +1357,7 @@ export default function BookComponent({
       }));
 
       // Make author info panel visible
-      setIsAuthorSectionVisible(true);
+      setActiveSection("author"); // SET active section
       // Close the preferences modal
       setAuthorSummaryModal(false);
 
@@ -1424,8 +1418,11 @@ export default function BookComponent({
           error.message || "Nepodařilo se vygenerovat informace o autorovi."
         );
       }
-      // Ensure author section is hidden if generation failed
-      setIsAuthorSectionVisible(false);
+      // Ensure author section is NOT active if generation failed
+      // (It likely wouldn't be active anyway, but good practice)
+      if (activeSection === "author") {
+        setActiveSection("notes"); // Revert to notes if generation fails while author tab is active
+      }
     },
   });
 
@@ -1608,7 +1605,7 @@ export default function BookComponent({
   const handleConfirmDeleteAuthorSummary = async () => {
     // ... (existing logic to clear local book state) ...
     setBook((prev) => ({ ...prev, authorSummary: undefined }));
-    setIsAuthorSectionVisible(false); // Hide the section too
+    setActiveSection("notes"); // Hide the section too
     toast.success("Shrnutí autora bylo úspěšně smazáno (lokálně).");
     setDeleteModal({ isOpen: false, type: "authorSummary", isLoading: false });
     // TODO: Optionally call a DELETE endpoint if you want to clear the Author model cache
@@ -1720,7 +1717,6 @@ export default function BookComponent({
       {!isExpanded && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-600/50 opacity-70"></div>
       )}
-
       {/* Book corner fold effect only when not expanded */}
       {!isExpanded && (
         <div className="absolute right-0 top-0 w-8 h-8 pointer-events-none overflow-hidden">
@@ -1728,7 +1724,6 @@ export default function BookComponent({
           <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-br from-transparent to-blue-800/20 transform rotate-45 translate-x-4 -translate-y-4"></div>
         </div>
       )}
-
       {/* Book Header - now using the BookHeader component */}
       <BookHeader
         book={book}
@@ -1738,294 +1733,325 @@ export default function BookComponent({
         setAuthorSummaryModal={setAuthorSummaryModal} // Pass modal setter
         handleDeleteAuthorSummary={handleDeleteAuthorSummary}
         isGeneratingAuthorSummary={isAuthorLoading}
-        handleAuthorSectionToggle={handleAuthorSectionToggle} // New prop for toggling the section
-        isAuthorSectionVisible={isAuthorSectionVisible} // New prop
+        onAuthorClick={handleAuthorHeaderClick} // NEW: Pass new handler
         showPremiumFeatureLock={!hasAuthorSummarySubscription}
       />
-
-      {/* Expanded Content (Notes, Author Summary, Book Summary) */}
+      {/* Expanded Content (Section Switcher + Conditional Content) */}
       <div
         id={`book-content-${book.id}`}
         className={`transition-all overflow-hidden
-                   ${
-                     isExpanded
-                       ? "opacity-100 max-h-[5000px] p-3 sm:p-4 lg:p-5 space-y-4"
-                       : "opacity-0 max-h-0 p-0 space-y-0"
-                   }`}
+                   ${isExpanded ? "opacity-100 max-h-[5000px]" : "opacity-0 max-h-0"}
+                 `}
         style={{
           transitionProperty: "max-height, opacity, padding",
           transitionTimingFunction: "ease",
           transitionDuration: isExpanded ? "350ms" : "200ms",
         }}
       >
-        {/* Notes Section Header - Ensure vertical stacking on smallest screens */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2 pt-4 pb-3 border-b border-blue-800/50">
-          <h3 className="text-base font-medium text-blue-100">
-            Poznámky a shrnutí
-          </h3>
-          {/* Container for buttons - Stacks vertically by default */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            {/* Note Filter Buttons */}
-            <div
-              className="flex items-center bg-blue-950/40 rounded-md p-0.5 border border-blue-900/30"
-              data-no-toggle="true"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  activeNoteFilter === "all"
-                    ? "bg-blue-800/40 text-blue-100 shadow-sm"
-                    : "text-blue-300"
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveNoteFilter("all");
-                }}
-              >
-                Vše
-              </button>
-              <button
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  activeNoteFilter === "manual"
-                    ? "bg-blue-800/40 text-blue-100 shadow-sm"
-                    : "text-blue-300"
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveNoteFilter("manual");
-                }}
-              >
-                Moje
-              </button>
-              <button
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  activeNoteFilter === "ai"
-                    ? "bg-orange-800/40 text-orange-100 shadow-sm"
-                    : "text-blue-300"
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveNoteFilter("ai");
-                }}
-              >
-                <span className="flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-orange-400" />
-                  AI
-                </span>
-              </button>
-            </div>
-
-            {/* Generate Summary Button */}
-            <div
-              className="relative"
-              data-no-toggle="true"
-              onClick={(e) => e.stopPropagation()}
-            >
+        {/* --- Section Switcher --- */}
+        {isExpanded && (
+          <div
+            className="px-3 sm:px-4 lg:px-5 pt-4 pb-3 border-b border-blue-900/40 flex justify-center"
+            data-no-toggle="true" // Prevent toggling expansion
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center bg-blue-950/60 rounded-lg p-1 border border-blue-800/60 shadow-sm">
               <Button
-                variant="outline"
+                variant={activeSection === "notes" ? "secondary" : "ghost"}
                 size="sm"
-                className="w-full sm:w-auto bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
-                disabled={isBookLoading} // Use isLoading from the hook
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleFeatureAction(
-                    "aiCustomization",
-                    hasAiCustomizationSubscription,
-                    () => setSummaryModal(true),
-                    isBookLoading // Pass isLoading state
-                  );
-                }}
+                onClick={() => setActiveSection("notes")}
+                className={`px-4 py-1 h-8 text-xs rounded-md transition-all duration-200 ${
+                  activeSection === "notes"
+                    ? "bg-blue-700/50 text-blue-50 shadow-sm"
+                    : "text-blue-300 hover:bg-blue-800/40 hover:text-blue-100"
+                }`}
               >
-                {isBookLoading ? ( // Use isLoading from the hook
-                  <>
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                    <span>Generuji...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
-                    <span>Generovat shrnutí</span>
-                  </>
-                )}
+                Poznámky a shrnutí
               </Button>
-              {/* Lock indicator for AI Summary */}
-              {(!hasAiCustomizationSubscription ||
-                (hasAiCustomizationSubscription && !userHasAiCredits)) &&
-                !isBookLoading && (
-                  <span>{/* Lock removed - Placeholder */}</span>
-                )}
+              <Button
+                variant={activeSection === "author" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setActiveSection("author")}
+                className={`px-4 py-1 h-8 text-xs rounded-md transition-all duration-200 ${
+                  activeSection === "author"
+                    ? "bg-orange-700/50 text-orange-50 shadow-sm"
+                    : "text-blue-300 hover:bg-blue-800/40 hover:text-blue-100"
+                }`}
+                disabled={!book.author && !book.authorSummary} // Disable if no author info at all
+              >
+                Informace o autorovi
+              </Button>
             </div>
           </div>
-        </div>
-
-        {isExpanded && (
-          <>
-            {isLoadingNotes ? (
-              <div className="flex flex-col items-center justify-center py-10 px-4">
-                <div className="relative mb-3">
-                  <div className="w-8 h-8 border-2 border-blue-500/30 border-t-orange-500 rounded-full animate-spin"></div>
-                </div>
-                <p className="text-sm text-blue-300 font-medium">
-                  Načítání poznámek...
-                </p>
-              </div>
-            ) : (
-              <div
-                className="space-y-4"
-                data-no-toggle="true"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Render streaming BOOK completion text FIRST when loading */}
-                {isBookLoading && (
-                  <motion.div
-                    ref={streamingCompletionRef} // Assign the ref
-                    initial={{ opacity: 0.5, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-background rounded-lg p-3 sm:p-4 border border-orange-800/50 shadow-sm opacity-90"
+        )}
+        {/* --- Conditional Content Area --- */}
+        <div
+          className={`${isExpanded ? "p-3 sm:p-4 lg:p-5" : "p-0"} space-y-4`}
+        >
+          {/* --- Notes Section --- */}
+          {isExpanded && activeSection === "notes" && (
+            <div className="space-y-4">
+              {/* Notes Section Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2 pt-1 pb-3 border-b border-blue-800/50">
+                {/* Removed h3 title as it's redundant with the button */}
+                {/* Note Filter Buttons */}
+                <div
+                  className="flex items-center bg-blue-950/40 rounded-md p-0.5 border border-blue-900/30"
+                  data-no-toggle="true"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Filter buttons remain the same */}
+                  <button
+                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                      activeNoteFilter === "all"
+                        ? "bg-blue-800/40 text-blue-100 shadow-sm"
+                        : "text-blue-300"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveNoteFilter("all");
+                    }}
                   >
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
-                      <span className="text-xs text-orange-400">
-                        Generuji AI Shrnutí...
-                      </span>
-                      <div className="w-full h-1 bg-orange-900/30 rounded-full overflow-hidden mt-1">
-                        <div
-                          className="h-full bg-orange-500 animate-pulse rounded-full"
-                          style={{ width: "50%" }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="prose prose-sm dark:prose-invert max-w-none note-content text-blue-100/80">
-                      <ReactMarkdown
-                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
-                        remarkPlugins={[remarkGfm]}
-                      >
-                        {bookCompletion || ""}
-                      </ReactMarkdown>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Render existing notes (now uses reversed list internally) */}
-                {(!isBookLoading || !bookCompletion) && (
-                  <NotesList
-                    notes={notes}
-                    activeNoteFilter={activeNoteFilter}
-                    activeNoteId={activeNoteId}
-                    handleDeleteNote={handleDeleteNote}
-                    handleCopyNote={handleCopyNote}
-                    handleViewSummary={handleViewSummary}
-                    handleCloseSummary={handleCloseSummary}
-                    bookTitle={book.title}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Integrated Author Summary Section - Corrected Structure */}
-            {isAuthorSectionVisible && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: "auto", marginTop: "1.5rem" }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="bg-blue-950/40 rounded-xl shadow-lg overflow-hidden border border-blue-900/30"
-                data-no-toggle="true"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="px-5 py-4">
-                  <h4 className="text-base font-medium text-orange-300 mb-3">
-                    Informace o autorovi
-                  </h4>
-                  {isAuthorLoading ? (
-                    <div className="min-h-[100px] flex flex-col justify-center">
-                      <div className="flex items-center gap-2 mb-2 text-orange-400">
-                        <Sparkles className="h-4 w-4 animate-pulse" />
-                        <span className="text-xs font-medium">Generuji...</span>
-                      </div>
-                      <div className="prose prose-sm prose-invert max-w-none note-content text-blue-100/80">
-                        <ReactMarkdown
-                          rehypePlugins={[rehypeRaw]}
-                          remarkPlugins={[remarkGfm]}
-                        >
-                          {authorCompletion || ""}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200 prose-p:text-blue-100">
-                      {book.authorSummary ? (
-                        <StudyContent content={book.authorSummary} />
-                      ) : (
-                        <p className="text-sm text-blue-300">
-                          Informace o autorovi nejsou k dispozici.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    Vše
+                  </button>
+                  <button
+                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                      activeNoteFilter === "manual"
+                        ? "bg-blue-800/40 text-blue-100 shadow-sm"
+                        : "text-blue-300"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveNoteFilter("manual");
+                    }}
+                  >
+                    Moje
+                  </button>
+                  <button
+                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                      activeNoteFilter === "ai"
+                        ? "bg-orange-800/40 text-orange-100 shadow-sm"
+                        : "text-blue-300"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveNoteFilter("ai");
+                    }}
+                  >
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-orange-400" />
+                      AI
+                    </span>
+                  </button>
                 </div>
-                {/* Footer with Update Button */}
-                <div className="border-t border-blue-900/30 bg-blue-950/80 px-5 py-3 flex justify-end items-center">
+                {/* Generate Summary Button */}
+                <div
+                  className="relative"
+                  data-no-toggle="true"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto bg-orange-950/30 border-orange-800/50 transition-all duration-200 text-xs py-1 rounded-md text-orange-400 hover:bg-orange-900/30 hover:text-orange-400 cursor-pointer"
+                    disabled={isBookLoading} // Use isLoading from the hook
                     onClick={(e) => {
                       e.stopPropagation();
                       handleFeatureAction(
-                        "aiAuthorSummary",
-                        hasAuthorSummarySubscription,
-                        () => setAuthorSummaryModal(true),
-                        isAuthorLoading
+                        "aiCustomization",
+                        hasAiCustomizationSubscription,
+                        () => setSummaryModal(true),
+                        isBookLoading // Pass isLoading state
                       );
                     }}
-                    disabled={isAuthorLoading}
-                    className="h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 rounded-md"
                   >
-                    {isAuthorLoading ? (
+                    {isBookLoading ? ( // Use isLoading from the hook
                       <>
-                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                        <span>Aktualizuji...</span>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                        <span>Generuji...</span>
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
-                        <span>
-                          {book.authorSummary ? "Aktualizovat" : "Generovat"}
-                        </span>
+                        <span>Generovat shrnutí</span>
                       </>
                     )}
                   </Button>
+                  {/* Lock indicator for AI Summary */}
+                  {(!hasAiCustomizationSubscription ||
+                    (hasAiCustomizationSubscription && !userHasAiCredits)) &&
+                    !isBookLoading && (
+                      <span>{/* Lock removed - Placeholder */}</span>
+                    )}
                 </div>
-              </motion.div>
-            )}
+              </div>
 
-            {/* Add Note Form */}
-            <div
-              className="pt-4 border-t border-blue-900/30 mt-6"
+              {/* Notes Loading / List */}
+              {isLoadingNotes ? (
+                <div className="flex flex-col items-center justify-center py-10 px-4">
+                  <div className="relative mb-3">
+                    <div className="w-8 h-8 border-2 border-blue-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-sm text-blue-300 font-medium">
+                    Načítání poznámek...
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="space-y-4"
+                  data-no-toggle="true"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Render streaming BOOK completion text FIRST when loading */}
+                  {isBookLoading && (
+                    <motion.div
+                      ref={streamingCompletionRef} // Assign the ref
+                      initial={{ opacity: 0.5, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-background rounded-lg p-3 sm:p-4 border border-orange-800/50 shadow-sm opacity-90"
+                    >
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+                        <span className="text-xs text-orange-400">
+                          Generuji AI Shrnutí...
+                        </span>
+                        <div className="w-full h-1 bg-orange-900/30 rounded-full overflow-hidden mt-1">
+                          <div
+                            className="h-full bg-orange-500 animate-pulse rounded-full"
+                            style={{ width: "50%" }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="prose prose-sm dark:prose-invert max-w-none note-content text-blue-100/80">
+                        <ReactMarkdown
+                          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {bookCompletion || ""}
+                        </ReactMarkdown>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Render existing notes (now uses reversed list internally) */}
+                  {(!isBookLoading || !bookCompletion) && (
+                    <NotesList
+                      notes={notes}
+                      activeNoteFilter={activeNoteFilter}
+                      activeNoteId={activeNoteId}
+                      handleDeleteNote={handleDeleteNote}
+                      handleCopyNote={handleCopyNote}
+                      handleViewSummary={handleViewSummary}
+                      handleCloseSummary={handleCloseSummary}
+                      bookTitle={book.title}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Add Note Form */}
+              <div
+                className="pt-4 border-t border-blue-900/30 mt-6"
+                data-no-toggle="true"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-blue-950/40 rounded-lg p-4 shadow-sm border border-blue-900/30">
+                  <NoteEditor
+                    ref={textareaRef}
+                    value={newNote}
+                    onChange={setNewNote}
+                    onSubmit={handleAddNote}
+                    isSubmitting={isAddingNote}
+                    placeholder="Přidejte poznámku k této knize..."
+                    buttonText="Přidat poznámku"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* --- Author Summary Section --- */}
+          {isExpanded && activeSection === "author" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="bg-blue-950/40 rounded-xl shadow-lg overflow-hidden border border-blue-900/30"
               data-no-toggle="true"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-blue-950/40 rounded-lg p-4 shadow-sm border border-blue-900/30">
-                <NoteEditor
-                  ref={textareaRef}
-                  value={newNote}
-                  onChange={setNewNote}
-                  onSubmit={handleAddNote}
-                  isSubmitting={isAddingNote}
-                  placeholder="Přidejte poznámku k této knize..."
-                  buttonText="Přidat poznámku"
-                  className="w-full"
-                />
+              <div className="px-5 py-4">
+                {/* Title moved inside the section */}
+                <h4 className="text-base font-medium text-orange-300 mb-3">
+                  Informace o autorovi: {book.author || "Neznámý"}
+                </h4>
+                {isAuthorLoading ? (
+                  <div className="min-h-[100px] flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-2 text-orange-400">
+                      <Sparkles className="h-4 w-4 animate-pulse" />
+                      <span className="text-xs font-medium">Generuji...</span>
+                    </div>
+                    <div className="prose prose-sm prose-invert max-w-none note-content text-blue-100/80">
+                      <ReactMarkdown
+                        rehypePlugins={[rehypeRaw]}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {authorCompletion || ""}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200 prose-p:text-blue-100">
+                    {book.authorSummary ? (
+                      <StudyContent content={book.authorSummary} />
+                    ) : (
+                      <p className="text-sm text-blue-300 italic">
+                        Informace o autorovi ještě nebyly vygenerovány.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          </>
-        )}
-
-        {/* Reference point for scrolling to the end of notes */}
-        <div className="h-0 w-full" aria-hidden="true" />
-      </div>
-
+              {/* Footer with Generate/Update Button */}
+              <div className="border-t border-blue-900/30 bg-blue-950/80 px-5 py-3 flex justify-end items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFeatureAction(
+                      "aiAuthorSummary",
+                      hasAuthorSummarySubscription,
+                      () => setAuthorSummaryModal(true),
+                      isAuthorLoading
+                    );
+                  }}
+                  disabled={isAuthorLoading || !book.author} // Disable if no author name
+                  className="h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 rounded-md"
+                >
+                  {isAuthorLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                      <span>Aktualizuji...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
+                      <span>
+                        {book.authorSummary ? "Aktualizovat" : "Generovat"}
+                      </span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </div>{" "}
+        {/* End Conditional Content Area */}
+      </div>{" "}
+      {/* End Expanded Content Wrapper */}
       {/* Error and Success Messages */}
       <AnimatePresence>
         {errorMessages.length > 0 && (
@@ -2047,7 +2073,6 @@ export default function BookComponent({
           </div>
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {successMessages.length > 0 && (
           <div className="p-4 space-y-2">
@@ -2080,7 +2105,6 @@ export default function BookComponent({
           </div>
         )}
       </AnimatePresence>
-
       {/* Modals remain the same */}
       <ConfirmationDialog
         isOpen={deleteModal.isOpen}
@@ -2119,7 +2143,6 @@ export default function BookComponent({
         isLoading={deleteModal.isLoading}
         variant="destructive"
       />
-
       <SummaryPreferencesModal
         isOpen={summaryModal}
         onClose={() => setSummaryModal(false)}
@@ -2128,7 +2151,6 @@ export default function BookComponent({
         title="Generovat shrnutí knihy"
         description="Vyberte preferovaný styl a zaměření shrnutí knihy."
       />
-
       <AuthorSummaryPreferencesModal
         isOpen={authorSummaryModal}
         onClose={() => setAuthorSummaryModal(false)}
@@ -2142,7 +2164,6 @@ export default function BookComponent({
         description="Vyberte preferovaný styl a zaměření informací o autorovi."
         authorSummaryExists={!!book.authorSummary}
       />
-
       {/* AI Credits Exhausted Modal */}
       <Modal
         isOpen={showCreditExhaustedModal}
