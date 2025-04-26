@@ -313,7 +313,7 @@ function HomeContent() {
   }
 
   return (
-    <main className="container max-w-5xl mx-auto px-2 sm:px-4 pt-2 pb-16 sm:pt-4 sm:pb-20 md:pt-6 md:pb-24">
+    <main className="container max-w-5xl mx-auto px-2 sm:px-4 pt-1 sm:pt-2 md:pt-3 pb-16 sm:pb-20 md:pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground">
