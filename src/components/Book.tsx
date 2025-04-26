@@ -392,6 +392,7 @@ const NoteItem = ({
       >
         {note.isAISummary ? (
           <AISummaryContent
+            key={`aisummary-${note.id}`}
             note={note}
             isActive={isActive}
             onView={onView}
@@ -400,8 +401,10 @@ const NoteItem = ({
             onDelete={onDelete}
           />
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none note-content text-blue-100">
+          // Apply the same prose styling as AI summaries to manual notes
+          <div className="prose prose-invert prose-headings:text-orange-300 prose-strong:text-orange-200 prose-em:text-orange-300/90 max-w-none">
             <ReactMarkdown
+              key={`manual-${note.id}`}
               rehypePlugins={[rehypeRaw, rehypeSanitize]}
               remarkPlugins={[remarkGfm]}
             >
@@ -1930,7 +1933,8 @@ export default function BookComponent({
                           ></div>
                         </div>
                       </div>
-                      <div className="prose prose-sm dark:prose-invert max-w-none note-content text-blue-100/80">
+                      {/* Apply final AI summary styles to streaming content */}
+                      <div className="prose prose-invert prose-headings:text-orange-300 prose-strong:text-orange-200 prose-em:text-orange-300/90 max-w-none">
                         <ReactMarkdown
                           rehypePlugins={[rehypeRaw, rehypeSanitize]}
                           remarkPlugins={[remarkGfm]}
@@ -2000,9 +2004,10 @@ export default function BookComponent({
                       <Sparkles className="h-4 w-4 animate-pulse" />
                       <span className="text-xs font-medium">Generuji...</span>
                     </div>
-                    <div className="prose prose-sm prose-invert max-w-none note-content text-blue-100/80">
+                    {/* Apply final StudyContent styles to streaming content */}
+                    <div className="prose prose-amber prose-sm md:prose prose-invert prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-orange-300 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed prose-p:text-blue-100 prose-li:ml-4 prose-li:my-1 prose-li:text-blue-100 prose-strong:text-orange-300 prose-em:text-orange-200 max-w-none">
                       <ReactMarkdown
-                        rehypePlugins={[rehypeRaw]}
+                        rehypePlugins={[rehypeRaw]} // Keep sanitize out maybe for streaming?
                         remarkPlugins={[remarkGfm]}
                       >
                         {authorCompletion || ""}
