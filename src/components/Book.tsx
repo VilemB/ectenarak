@@ -6,7 +6,6 @@ import { Book, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  AlertCircle,
   Calendar,
   Copy,
   X,
@@ -20,7 +19,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   SummaryPreferencesModal,
   SummaryPreferences,
@@ -352,9 +351,10 @@ const NoteItem = ({
               size="sm"
               className="h-7 w-7 p-0 text-blue-300 hover:text-blue-200"
               onClick={() => onView(note.id)}
+              title="Zobrazit shrnutí"
             >
               <Copy className="h-3.5 w-3.5" />
-              <span className="sr-only">Zobrazit shrnutí</span>
+              <span className="sr-only">Zobrazit</span>
             </Button>
           </div>
           <div>
@@ -776,12 +776,6 @@ export default function BookComponent({
     "all" | "manual" | "ai"
   >("all");
   const [notes, setNotes] = useState<Note[]>(initialBook.notes || []);
-  const [errorMessages, setErrorMessages] = useState<
-    Array<{ id: string; message: string }>
-  >([]);
-  const [successMessages, setSuccessMessages] = useState<
-    Array<{ id: string; message: string }>
-  >([]);
   const [showCreditExhaustedModal, setShowCreditExhaustedModal] =
     useState(false); // Ensure this is declared here
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
@@ -789,29 +783,7 @@ export default function BookComponent({
     "notes"
   ); // NEW: State for active section
 
-  // Add a function to show error messages
-  const showErrorMessage = useCallback((message: string) => {
-    const id = Math.random().toString(36).substring(2, 11);
-    setErrorMessages((prev) => [...prev, { id, message }]);
-
-    // Auto-remove the error message after 5 seconds
-    setTimeout(() => {
-      setErrorMessages((prev) => prev.filter((msg) => msg.id !== id));
-    }, 5000);
-  }, []);
-
-  // Add a function to show success messages
-  const showSuccessMessage = useCallback((message: string) => {
-    const id = Math.random().toString(36).substring(2, 11);
-    setSuccessMessages((prev) => [...prev, { id, message }]);
-
-    // Auto-remove the success message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessages((prev) => prev.filter((msg) => msg.id !== id));
-    }, 3000);
-  }, []);
-
-  // Function to fetch notes
+  // Function to fetch notes - Update error handling
   const fetchNotes = useCallback(
     async (bookId: string) => {
       try {
@@ -840,14 +812,13 @@ export default function BookComponent({
         setBook((prevBook) => ({ ...prevBook, notes: formattedNotes }));
       } catch (error) {
         console.error("Error fetching notes:", error);
-        showErrorMessage(
-          "Nepodařilo se načíst poznámky. Zkuste to prosím znovu."
-        );
+        // Use toast.error instead
+        toast.error("Nepodařilo se načíst poznámky. Zkuste to prosím znovu.");
       } finally {
         setIsLoadingNotes(false);
       }
     },
-    [showErrorMessage]
+    [] // Removed showErrorMessage dependency
   );
 
   // NEW Handler for clicking author name in header
@@ -962,7 +933,7 @@ export default function BookComponent({
     }, 100);
   }, []);
 
-  // Function to handle adding a new note
+  // Function to handle adding a new note - Update messaging
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
@@ -1007,8 +978,8 @@ export default function BookComponent({
       // Clear the textarea
       setNewNote("");
 
-      // Show success message
-      showSuccessMessage("Poznámka byla úspěšně přidána");
+      // Show success toast
+      toast.success("Poznámka byla úspěšně přidána");
 
       // Set filter to show all notes or regular notes if we're currently on AI filter
       if (activeNoteFilter === "ai") {
@@ -1022,7 +993,8 @@ export default function BookComponent({
       }
     } catch (error) {
       console.error("Error adding note:", error);
-      showErrorMessage("Nepodařilo se přidat poznámku");
+      // Use toast.error
+      toast.error("Nepodařilo se přidat poznámku");
     } finally {
       setIsAddingNote(false);
     }
@@ -1196,7 +1168,7 @@ export default function BookComponent({
     } else {
       // Close the modal if the required IDs are missing
       setDeleteModal({ isOpen: false, type: "book", isLoading: false });
-      showErrorMessage("Chybí ID poznámky nebo knihy");
+      toast.error("Chyba: Chybí ID poznámky nebo knihy pro smazání.");
     }
   };
 
@@ -1477,12 +1449,12 @@ export default function BookComponent({
     }
   };
 
-  // Update the handleBookDelete function
+  // Update the handleBookDelete function - Update error handling
   const handleBookDelete = () => {
     // Check if the book has a valid ID (not a temporary one)
     if (!book.id || book.id.startsWith("temp-")) {
       console.error("Cannot delete book without a valid ID:", book);
-      showErrorMessage(
+      toast.error(
         "Nelze smazat knihu bez platného ID. Zkuste obnovit stránku."
       );
       return;
@@ -1502,34 +1474,35 @@ export default function BookComponent({
     setActiveNoteId(null);
   }, []);
 
-  // Add a function to handle copying note content
+  // handleCopyNote - Update messaging
   const handleCopyNote = (content: string, e?: React.MouseEvent) => {
-    // Ensure event doesn't propagate
+    // If 'e' is truly unused after other logic, you might add:
+    // // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // to satisfy the linter if needed, but keep the parameter for the call signature.
+
+    // Stop propagation if event exists
     if (e) {
       e.stopPropagation();
     }
 
-    // Remove markdown formatting for a cleaner copy
     const plainText = content
-      .replace(/#{1,6}\s+/g, "") // Remove headings
-      .replace(/\*\*/g, "") // Remove bold
-      .replace(/\*/g, "") // Remove italic
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"); // Replace links with just the text
+      .replace(/#{1,6}\s+/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
-    // Add haptic feedback if supported
     if (navigator.vibrate && window.innerWidth <= 768) {
-      navigator.vibrate(3); // Very subtle vibration for feedback
+      navigator.vibrate(3);
     }
 
     navigator.clipboard
       .writeText(plainText)
       .then(() => {
-        // Show success message
-        showSuccessMessage("Text poznámky byl zkopírován do schránky");
+        toast.success("Text poznámky byl zkopírován do schránky");
       })
       .catch((err) => {
         console.error("Failed to copy text: ", err);
-        showErrorMessage("Nepodařilo se zkopírovat text");
+        toast.error("Nepodařilo se zkopírovat text");
       });
   };
 
@@ -2064,59 +2037,6 @@ export default function BookComponent({
         {/* End Conditional Content Area */}
       </div>{" "}
       {/* End Expanded Content Wrapper */}
-      {/* Error and Success Messages */}
-      <AnimatePresence>
-        {errorMessages.length > 0 && (
-          <div className="p-4 space-y-2">
-            {errorMessages.map((error, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-3 bg-red-900/20 border border-red-800/30 rounded-md"
-              >
-                <div className="flex items-start sm:items-center">
-                  <AlertCircle className="h-4 w-4 text-red-500 mr-2 mt-0.5 sm:mt-0 flex-shrink-0" />
-                  <p className="text-sm text-red-400">{error.message}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {successMessages.length > 0 && (
-          <div className="p-4 space-y-2">
-            {successMessages.map((success, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-3 bg-green-900/20 border border-green-800/30 rounded-md"
-              >
-                <div className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-green-500 mr-2"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                  <p className="text-sm text-green-400">{success.message}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </AnimatePresence>
       {/* Modals remain the same */}
       <ConfirmationDialog
         isOpen={deleteModal.isOpen}
