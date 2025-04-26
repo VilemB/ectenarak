@@ -1604,7 +1604,7 @@ export default function BookComponent({
     // ... (existing logic to clear local book state) ...
     setBook((prev) => ({ ...prev, authorSummary: undefined }));
     setActiveSection("notes"); // Hide the section too
-    toast.success("Shrnutí autora bylo úspěšně smazáno (lokálně).");
+    toast.success("Shrnutí autora bylo úspěšně smazáno.");
     setDeleteModal({ isOpen: false, type: "authorSummary", isLoading: false });
     // TODO: Optionally call a DELETE endpoint if you want to clear the Author model cache
   };
