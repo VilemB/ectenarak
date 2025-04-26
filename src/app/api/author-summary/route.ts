@@ -95,10 +95,10 @@ export async function POST(req: NextRequest) {
       temperature: preferences.style === "creative" ? 0.8 : 0.3,
       maxTokens:
         preferences.length === "long"
-          ? 2000
+          ? 4000
           : preferences.length === "medium"
-            ? 1200
-            : 800,
+            ? 2500
+            : 1500,
       presencePenalty: preferences.style === "creative" ? 0.6 : 0.2,
       frequencyPenalty: preferences.style === "creative" ? 0.6 : 0.3,
     });

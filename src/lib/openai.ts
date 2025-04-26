@@ -489,7 +489,7 @@ Formátování:
 - *Kurzívu* pro názvy děl
 - Odrážky pro přehledné seznamy
 
-DŮLEŽITÉ: Text musí být kompletní a konzistentní se zvoleným stylem od začátku do konce. Při limitech tokenů zachovej všechny sekce, ale zkrať jejich obsah proporcionálně.`;
+DŮLEŽITÉ: Text musí být kompletní a konzistentní se zvoleným stylem od začátku do konce. Detailně rozepiš VŠECHNY požadované sekce (Základní informace, Život a vzdělání, Literární tvorba, Význam a odkaz, Studijní poznámky, Časová osa, Ocenění, Literární vlivy - pokud jsou požadovány). Při limitech tokenů zachovej všechny sekce, ale zkrať jejich obsah proporcionálně. NEUKONČUJ generování předčasně nebo uprostřed sekce. Vždy poskytni ucelený text.`;
 
   return prompt.trim();
 }
