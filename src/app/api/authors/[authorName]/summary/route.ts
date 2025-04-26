@@ -10,7 +10,7 @@ import { authOptions } from "@/lib/auth";
  */
 export async function DELETE(
   request: NextRequest,
-  context: { params: { authorName: string } } // Type context correctly
+  context: { params: Promise<{ authorName: string }> } // Wrap params in Promise
 ) {
   console.log("=== DELETE AUTHOR SUMMARY API START ===");
   try {
@@ -22,8 +22,8 @@ export async function DELETE(
     // Optional: Add role check if needed
     // if (session.user.role !== 'admin') { ... }
 
-    // 2. Get Author Name
-    const { authorName } = context.params; // Destructure params directly
+    // 2. Get Author Name - Await the promise
+    const { authorName } = await context.params; // Add await here
     if (!authorName) {
       return NextResponse.json(
         { error: "Author name parameter is missing" },
