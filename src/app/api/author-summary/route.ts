@@ -19,7 +19,8 @@ import { checkSubscription } from "@/middleware/subscriptionMiddleware";
  * - forceRefresh: boolean (optional) - If true, regenerates the summary even if cached
  */
 export async function POST(req: NextRequest) {
-  console.log("=== STREAMING AUTHOR SUMMARY API ROUTE START ===");
+  const startTime = Date.now();
+  console.log(`[${startTime}] === AUTHOR SUMMARY API ROUTE START ===`);
 
   try {
     // Check subscription requirements first
@@ -30,7 +31,6 @@ export async function POST(req: NextRequest) {
     if (!subscriptionCheck.allowed) {
       return subscriptionCheck.response as NextResponse;
     }
-    const user = subscriptionCheck.user; // User is guaranteed to exist if allowed
 
     // Connect to database
     await dbConnect();
@@ -84,11 +84,14 @@ export async function POST(req: NextRequest) {
 
     console.log(`Using OpenAI model: ${model}`);
 
-    // Call AI SDK streamText
+    // Use streamText from the AI SDK for author summary
+    console.log(`[${Date.now()}] Calling AI SDK streamText for author...`);
     const result = await streamText({
       model: openaiProvider(model),
-      system: systemPrompt,
-      prompt: prompt, // Use prompt for user message with streamText
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
       temperature: preferences.style === "creative" ? 0.8 : 0.3,
       maxTokens:
         preferences.length === "long"
@@ -98,96 +101,25 @@ export async function POST(req: NextRequest) {
             : 800,
       presencePenalty: preferences.style === "creative" ? 0.6 : 0.2,
       frequencyPenalty: preferences.style === "creative" ? 0.6 : 0.3,
-
-      // Save to DB on completion
-      async onFinish({ text }) {
-        console.log(
-          `[Author Summary API] onFinish triggered for author: ${author}, text length: ${text?.length ?? 0}`
-        );
-        try {
-          console.log(
-            `[Author Summary API] Attempting DB connection inside onFinish...`
-          );
-          await dbConnect(); // Ensure connection within this scope if needed
-          console.log(
-            `[Author Summary API] Finding author document for: ${author}`
-          );
-          let authorDoc = await Author.findOne({ name: author });
-
-          if (!authorDoc) {
-            console.log(
-              `[Author Summary API] Author '${author}' not found, creating new document.`
-            );
-            authorDoc = new Author({ name: author, summary: text });
-          } else {
-            console.log(
-              `[Author Summary API] Author '${author}' found (ID: ${authorDoc._id}), updating summary.`
-            );
-            authorDoc.summary = text;
-            authorDoc.updatedAt = new Date(); // Explicitly set updatedAt
-          }
-
-          console.log(
-            `[Author Summary API] Attempting to save author document (ID: ${authorDoc._id})...`
-          );
-          // Wrap save in its own try...catch for specific logging
-          try {
-            const savedDoc = await authorDoc.save();
-            console.log(
-              `[Author Summary API] Successfully saved author summary to DB for: ${author} (ID: ${savedDoc._id}). Summary length: ${savedDoc.summary?.length ?? 0}`
-            );
-          } catch (saveError) {
-            console.error(
-              `[Author Summary API] !!! Specific DB save error for author ${author}:`,
-              saveError
-            );
-            // Re-throw or handle as needed, but log specifically
-            throw saveError; // Rethrow to be caught by the outer catch
-          }
-
-          // Deduct credit server-side ONLY if not deducted on client
-          if (!clientSideDeduction && user) {
-            console.log(
-              `[Author Summary API] Attempting async credit deduction for user ${user.id}...`
-            );
-            // Fire and forget credit deduction
-            user
-              .useAiCredit()
-              .then((remaining) =>
-                console.log(
-                  `[Author Summary API] Async credit deducted for author summary. Remaining: ${remaining}`
-                )
-              )
-              .catch((err) =>
-                console.error(
-                  "[Author Summary API] Async credit deduction error:",
-                  err
-                )
-              );
-          } else {
-            console.log(
-              `[Author Summary API] Skipping server-side credit deduction (clientSide: ${clientSideDeduction}, user: ${!!user})`
-            );
-          }
-        } catch (dbError) {
-          // This catches errors from findOne, save, or the connection
-          console.error(
-            `[Author Summary API] !!! Error during DB operations in onFinish for ${author}:`,
-            dbError
-          );
-          // Don't throw error to client, just log it. Generation succeeded.
-          // We might reconsider this - perhaps the client *should* know saving failed?
-          // For now, keeping original behavior: log error but don't fail the response.
-        }
-      },
     });
 
-    // Return the stream with cache control headers
-    const response = result.toDataStreamResponse();
-    response.headers.set("Cache-Control", "no-store, must-revalidate");
-    return response;
+    console.log(
+      `[${Date.now()}] Author AI SDK stream initiated, returning response.`
+    );
+    const streamResponse = result.toDataStreamResponse();
+    const finalEndTime = Date.now();
+    console.log(
+      `[${finalEndTime}] Author API Route Total Time (Stream Response): ${finalEndTime - startTime}ms`
+    );
+    return streamResponse;
   } catch (error) {
-    console.error("Error in streaming author summary API:", error);
+    const errorTime = Date.now();
+    console.error(
+      `[${errorTime}] Error in streaming author summary API:`,
+      error
+    );
+    const totalTime = errorTime - startTime;
+    console.log(`[${errorTime}] API Route Total Time (Error): ${totalTime}ms`);
     // Handle potential credit errors specifically if possible
     if (error instanceof Error && error.message.includes("credit")) {
       return NextResponse.json(

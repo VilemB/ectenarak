@@ -32,7 +32,7 @@ if (kvUrl && kvToken) {
 }
 
 // Cache expiration time (e.g., 24 hours in seconds)
-const CACHE_EXPIRATION_SECONDS = 24 * 60 * 60;
+// const CACHE_EXPIRATION_SECONDS = 24 * 60 * 60;
 
 // Re-introduce cache key generation function
 function generateCacheKey(
@@ -435,7 +435,6 @@ export async function POST(request: Request) {
         literaryContext: false,
         studyGuide: false,
       },
-      clientSideDeduction = false,
     } = body;
 
     // Validate inputs
@@ -559,64 +558,12 @@ export async function POST(request: Request) {
     console.log(`[${Date.now()}] Calling AI SDK streamText...`);
     // Use streamText from the AI SDK
     const result = await streamText({
-      // Use the imported provider. It should pick up the API key from process.env.OPENAI_API_KEY
       model: openaiProvider(model),
       messages: [{ role: "system", content: prompt }],
       temperature: preferences.style === "creative" ? 0.8 : 0.6,
       maxTokens: maxTokens,
       frequencyPenalty: 0.1,
       presencePenalty: 0.1,
-      // --- Cache Saving --- (Add onFinish callback)
-      async onFinish({ text }) {
-        const finishTime = Date.now();
-        console.log(
-          `[${finishTime}] AI stream finished. Total stream time: ${finishTime - startTime}ms`
-        ); // Log time when stream finishes
-        // Only cache if cacheKey was generated and Redis is configured
-        if (cacheKey && redis) {
-          // Check redis again
-          console.log(
-            `[${finishTime}] Attempting to cache result for key: ${cacheKey}`
-          );
-          try {
-            await redis.set(cacheKey, text, {
-              ex: CACHE_EXPIRATION_SECONDS,
-            });
-            console.log(`[${Date.now()}] Summary cached successfully.`);
-          } catch (cacheError) {
-            console.error(
-              `[${Date.now()}] Redis cache write error:`,
-              cacheError
-            );
-          }
-        } else {
-          console.log(
-            `[${finishTime}] Caching skipped (no cache key or Redis unavailable).`
-          );
-        }
-        // --- Add Credit Deduction within onFinish for reliability ---
-        console.log(
-          `[${Date.now()}] Attempting credit deduction post-generation...`
-        );
-        try {
-          if (!clientSideDeduction && user) {
-            await user.useAiCredit(); // Await the deduction here
-            console.log(`[${Date.now()}] AI credit deducted successfully.`);
-            // Optionally log remaining credits if the method returns it
-          } else {
-            console.log(
-              `[${Date.now()}] Credit deduction skipped (client-side or no user).`
-            );
-          }
-        } catch (creditError) {
-          console.error(
-            `[${Date.now()}] Error during AI credit deduction in onFinish:`,
-            creditError
-          );
-        }
-        // --- End Credit Deduction in onFinish ---
-      },
-      // --- End Cache Saving ---
     });
 
     console.log(`[${Date.now()}] AI SDK stream initiated, returning response.`);
