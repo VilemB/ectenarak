@@ -165,7 +165,19 @@ const NotesList = ({
     return false;
   });
 
-  if (filteredNotes.length === 0) {
+  // --- Safeguard against missing/invalid keys --- START
+  // Filter out notes with missing or non-string/non-number IDs before rendering
+  // This prevents the React key warning. If notes are disappearing unexpectedly,
+  // investigate the data source (fetchNotes) to ensure valid IDs are always provided.
+  const notesWithValidKeys = filteredNotes.filter(
+    (note) =>
+      note &&
+      note.id &&
+      (typeof note.id === "string" || typeof note.id === "number")
+  );
+  // --- Safeguard against missing/invalid keys --- END
+
+  if (notesWithValidKeys.length === 0) {
     return (
       <div className="text-center py-6 text-blue-200 bg-blue-950/40 rounded-lg border border-blue-900/40">
         <p>Žádné poznámky odpovídající vybranému filtru.</p>
@@ -184,10 +196,10 @@ const NotesList = ({
       data-no-toggle="true"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Map over the filtered and reversed notes */}
-      {filteredNotes.map((note) => (
+      {/* Map over notes that have valid keys */}
+      {notesWithValidKeys.map((note) => (
         <NoteItem
-          key={note.id}
+          key={note.id} // Use the validated note.id
           note={note}
           isActive={activeNoteId === note.id}
           onDelete={handleDeleteNote}
@@ -1046,42 +1058,37 @@ export default function BookComponent({
         }
       }
 
-      // Save the current scroll position
       const scrollPosition = window.scrollY;
-
-      // Get the book element's position before toggle
       const bookPosition = bookRef.current?.getBoundingClientRect()?.top;
       const bookTopRelativeToPage =
         bookPosition !== undefined ? bookPosition + window.scrollY : null;
 
-      // Toggle the expanded state
-      setIsExpanded(!isExpanded);
+      const nextIsExpanded = !isExpanded;
+      setIsExpanded(nextIsExpanded);
 
-      // If we're expanding and don't have notes yet, fetch them
-      if (!isExpanded && notes.length === 0 && book.id) {
-        fetchNotes(book.id);
+      if (nextIsExpanded && !isLoadingNotes && book.id) {
+        fetchNotes(book.id); // This call looks correct, assuming definition is ok
       }
 
-      // Maintain the book's position in the viewport after toggling
-      // This prevents unwanted scrolling when expanding or collapsing
+      // Maintain the book's position in the viewport (keep this logic)
       if (bookTopRelativeToPage !== null && bookPosition !== undefined) {
-        // Use requestAnimationFrame to apply this after the DOM has updated
         requestAnimationFrame(() => {
+          // --- Restore Scroll Adjustment Logic START ---
           const newBookPosition = bookRef.current?.getBoundingClientRect()?.top;
           if (newBookPosition !== undefined) {
             // Calculate the difference after expanding/collapsing
             const positionDiff = newBookPosition - bookPosition;
-
             // Adjust scroll position to keep the book header in same relative position
             window.scrollTo({
               top: scrollPosition + positionDiff,
-              behavior: "auto", // Use 'auto' instead of 'smooth' to prevent visible jumping
+              behavior: "auto", // Use 'auto' for immediate adjustment
             });
           }
+          // --- Restore Scroll Adjustment Logic END ---
         });
       }
     },
-    [isExpanded, notes.length, book.id, fetchNotes]
+    [isExpanded, isLoadingNotes, book.id, fetchNotes]
   );
 
   // Update the handleViewSummary function to improve the animation timing
