@@ -39,31 +39,6 @@ import { Modal } from "@/components/ui/modal";
 import BookActionButtons from "./BookActionButtons";
 import { useCompletion } from "@ai-sdk/react";
 
-// Study-friendly content formatter component
-const StudyContent = ({ content }: { content: string }) => {
-  return (
-    <div className="study-summary">
-      <div
-        className="prose prose-amber prose-sm md:prose prose-invert 
-                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-orange-300 
-                   prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-                   prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed prose-p:text-blue-100
-                   prose-li:ml-4 prose-li:my-1 prose-li:text-blue-100
-                   prose-strong:text-orange-300
-                   prose-em:text-orange-200
-                   max-w-none"
-      >
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {content}
-        </ReactMarkdown>
-      </div>
-    </div>
-  );
-};
-
 interface BookProps {
   book: Book;
   onDelete: (bookId: string) => void;
@@ -431,22 +406,22 @@ const BookHeader = ({
   isExpanded,
   toggleExpanded,
   handleBookDelete,
-  isAuthorInfoVisible,
-  setAuthorSummaryModal,
+  setAuthorSummaryModal, // Pass the modal setter
   handleDeleteAuthorSummary,
   isGeneratingAuthorSummary,
-  handleAuthorSummaryToggle,
+  handleAuthorSectionToggle, // New prop for toggling the section
+  isAuthorSectionVisible, // New prop
   showPremiumFeatureLock,
 }: {
   book: Book;
   isExpanded: boolean;
   toggleExpanded: (e?: React.MouseEvent | React.KeyboardEvent) => void;
   handleBookDelete: () => void;
-  isAuthorInfoVisible: boolean;
-  setAuthorSummaryModal: (open: boolean) => void;
+  setAuthorSummaryModal: (open: boolean) => void; // Prop for modal
   handleDeleteAuthorSummary: () => void;
   isGeneratingAuthorSummary: boolean;
-  handleAuthorSummaryToggle: (e: React.MouseEvent) => void;
+  handleAuthorSectionToggle: (e: React.MouseEvent) => void; // New prop type
+  isAuthorSectionVisible: boolean; // New prop type
   showPremiumFeatureLock: boolean;
 }) => {
   return (
@@ -456,8 +431,8 @@ const BookHeader = ({
                     isExpanded
                       ? "bg-blue-950 pt-5 pb-4 px-4 sm:pt-6 sm:pb-5 sm:px-5"
                       : "bg-blue-950 p-3 sm:p-4"
-                  } 
-                  ${isExpanded ? "border-b border-blue-900/60" : ""} 
+                  }
+                  ${isExpanded ? "border-b border-blue-900/60" : ""}
                   group hover:bg-blue-950/90`}
       onClick={toggleExpanded}
       onKeyDown={(e) => {
@@ -505,28 +480,29 @@ const BookHeader = ({
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
               className="text-sm font-medium cursor-pointer inline-flex items-center gap-1 text-blue-200 group-hover:text-blue-100 transition-colors relative"
-              onClick={handleAuthorSummaryToggle}
+              onClick={handleAuthorSectionToggle} // Use the new handler
+              data-no-toggle="true" // Prevent book expand/collapse
             >
               {book.author}
               {book.authorSummary ? (
                 <span
-                  className="relative flex h-2 w-2 items-center justify-center"
+                  className="relative flex h-2 w-2 items-center justify-center ml-1.5"
                   aria-label={
-                    isAuthorInfoVisible
-                      ? "Zavřít informace o autorovi"
+                    isAuthorSectionVisible // Use new state
+                      ? "Skrýt informace o autorovi"
                       : "Zobrazit informace o autorovi"
                   }
                 >
                   <span
-                    className={`relative inline-flex rounded-full h-2 w-2 bg-blue-500 
+                    className={`relative inline-flex rounded-full h-2 w-2 bg-blue-500
                                ${
-                                 isAuthorInfoVisible
+                                 isAuthorSectionVisible // Use new state
                                    ? "opacity-100"
                                    : "opacity-70"
-                               } 
+                               }
                                transition-all duration-300`}
                   />
-                  {isAuthorInfoVisible && (
+                  {isAuthorSectionVisible && ( // Use new state
                     <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-blue-700 animate-pulse" />
                   )}
                 </span>
@@ -543,8 +519,9 @@ const BookHeader = ({
 
         {/* Improved metadata and action buttons layout */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          {/* Book Metadata with improved wrapping */}
+          {/* Book Metadata */}
           <div className="flex flex-wrap gap-2 sm:gap-3 text-xs text-blue-300/90">
+            {/* ... (metadata items remain the same) ... */}
             <div className="flex items-center">
               <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-400" />
               <span>{formatDate(book.createdAt)}</span>
@@ -562,7 +539,6 @@ const BookHeader = ({
                 </span>
               </div>
             )}
-
             {/* Toggle indicator */}
             <div className="flex items-center ml-1">
               <div className="text-xs flex items-center gap-1.5 text-blue-400">
@@ -574,8 +550,6 @@ const BookHeader = ({
                 <span className="hidden sm:inline text-xs">
                   {isExpanded ? "Zavřít" : "Rozbalit"}
                 </span>
-
-                {/* Hide keyboard hint on smaller screens */}
                 <span className="hidden sm:inline-flex text-xs ml-1 items-center text-zinc-400">
                   <kbd className="px-1 py-0.5 text-[10px] font-mono bg-blue-900/40 rounded border border-blue-800/50">
                     {isExpanded ? "ESC" : "Enter"}
@@ -584,10 +558,9 @@ const BookHeader = ({
               </div>
             </div>
           </div>
-
-          {/* Container for BookActionButtons - ensure it handles mobile correctly */}
+          {/* Container for BookActionButtons */}
           <div
-            className="flex justify-start sm:justify-end mt-2 sm:mt-0 w-full sm:w-auto" // Added w-full sm:w-auto
+            className="flex justify-start sm:justify-end mt-2 sm:mt-0 w-full sm:w-auto"
             data-no-toggle="true"
             onClick={(e) => e.stopPropagation()}
           >
@@ -597,9 +570,35 @@ const BookHeader = ({
               handleDeleteAuthorSummary={handleDeleteAuthorSummary}
               isGeneratingAuthorSummary={isGeneratingAuthorSummary}
               handleBookDelete={handleBookDelete}
+              // handleGenerateSummary prop might be needed here if used by BookActionButtons
             />
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Define StudyContent again (or import if moved to separate file later)
+const StudyContent = ({ content }: { content: string }) => {
+  return (
+    <div className="study-summary">
+      <div
+        className="prose prose-amber prose-sm md:prose prose-invert 
+                   prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-bold prose-headings:text-orange-300 
+                   prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                   prose-p:my-3 prose-p:text-sm md:prose-p:text-base prose-p:leading-relaxed prose-p:text-blue-100
+                   prose-li:ml-4 prose-li:my-1 prose-li:text-blue-100
+                   prose-strong:text-orange-300
+                   prose-em:text-orange-200
+                   max-w-none"
+      >
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
     </div>
   );
@@ -672,20 +671,22 @@ export default function BookComponent({
   const [summaryModal, setSummaryModal] = useState(false);
   const [authorSummaryModal, setAuthorSummaryModal] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
+  // REMOVE isAuthorInfoVisible state
+  // const [isAuthorInfoVisible, setIsAuthorInfoVisible] = useState(false);
+  // ADD state for integrated sections
+  const [isAuthorSectionVisible, setIsAuthorSectionVisible] = useState(false);
+  // const [isBookSummarySectionVisible, setIsBookSummarySectionVisible] = useState(false); // Comment out for now
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     type: "book" | "note" | "authorSummary";
     noteId?: string;
     isLoading: boolean;
   }>({ isOpen: false, type: "book", isLoading: false });
-  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
-    null
-  );
+  // const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(null); // Remove saved scroll state
   const [activeNoteFilter, setActiveNoteFilter] = useState<
     "all" | "manual" | "ai"
   >("all");
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[]>(initialBook.notes || []);
   const [errorMessages, setErrorMessages] = useState<
     Array<{ id: string; message: string }>
   >([]);
@@ -728,8 +729,6 @@ export default function BookComponent({
           throw new Error("Failed to fetch notes");
         }
         const data = await response.json();
-
-        // Format the notes from the response
         const formattedNotes = data.notes.map(
           (note: {
             _id: string;
@@ -744,8 +743,9 @@ export default function BookComponent({
             isAISummary: note.isAISummary || false,
           })
         );
-
         setNotes(formattedNotes);
+        // Also update the book state to keep it in sync
+        setBook((prevBook) => ({ ...prevBook, notes: formattedNotes }));
       } catch (error) {
         console.error("Error fetching notes:", error);
         showErrorMessage(
@@ -758,18 +758,18 @@ export default function BookComponent({
     [showErrorMessage]
   );
 
-  // Create a more robust function for handling author summary toggling
-  const handleAuthorSummaryToggle = useCallback(
+  // ADD new handler for the integrated author section toggle
+  const handleAuthorSectionToggle = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation();
+      e.stopPropagation(); // Prevent the book from expanding/collapsing
       if (book.authorSummary) {
-        setIsAuthorInfoVisible(!isAuthorInfoVisible);
+        setIsAuthorSectionVisible((prev) => !prev);
       } else {
-        // If no summary, open the modal to trigger generation
+        // If no summary exists, open the generation modal
         setAuthorSummaryModal(true);
       }
     },
-    [book.authorSummary, isAuthorInfoVisible]
+    [book.authorSummary]
   );
 
   // Memoize access checks for better performance
@@ -869,20 +869,6 @@ export default function BookComponent({
       }
     }, 100);
   }, []);
-
-  // Handle animation completion after closing author summary
-  const handleAnimationComplete = useCallback(() => {
-    if (savedScrollPosition !== null) {
-      // Scroll to the book element instead of restoring previous position
-      if (bookRef.current) {
-        bookRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-      setSavedScrollPosition(null);
-    }
-  }, [savedScrollPosition]);
 
   // Function to handle adding a new note
   const handleAddNote = async (e: React.FormEvent) => {
@@ -1272,7 +1258,7 @@ export default function BookComponent({
     },
   });
 
-  // Hook for Author Summary
+  // Hook for Author Summary - Put authorCompletion back
   const {
     complete: authorComplete,
     isLoading: isAuthorLoading,
@@ -1294,7 +1280,7 @@ export default function BookComponent({
       }));
 
       // Make author info panel visible
-      setIsAuthorInfoVisible(true);
+      setIsAuthorSectionVisible(true);
       // Close the preferences modal
       setAuthorSummaryModal(false);
 
@@ -1305,6 +1291,38 @@ export default function BookComponent({
 
       // Dispatch event to refresh credits
       window.dispatchEvent(new CustomEvent("refresh-credits"));
+
+      // 2. Fetch the definitive author data from the DB to ensure consistency
+      try {
+        // Optional short delay
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        const authorResponse = await fetch(
+          `/api/authors/${encodeURIComponent(book.author)}`
+        );
+        if (authorResponse.ok) {
+          const authorData = await authorResponse.json();
+          if (authorData.summary) {
+            console.log(
+              "Fetched definitive author summary from API, length:",
+              authorData.summary.length
+            );
+            // Update local state again with data confirmed from DB
+            setBook((prevBook) => ({
+              ...prevBook,
+              authorSummary: authorData.summary,
+              // Optionally update authorId if it's returned and different
+              // authorId: authorData.id || prevBook.authorId,
+            }));
+          }
+        } else {
+          console.warn(
+            `Failed to fetch definitive author data: ${authorResponse.status}`
+          );
+        }
+      } catch (fetchError) {
+        console.error("Error fetching definitive author summary:", fetchError);
+        // Don't show another error to the user, the generation succeeded.
+      }
     },
     onError: (error: Error) => {
       console.error("Error in author summary completion:", error);
@@ -1323,6 +1341,8 @@ export default function BookComponent({
           error.message || "Nepodařilo se vygenerovat informace o autorovi."
         );
       }
+      // Ensure author section is hidden if generation failed
+      setIsAuthorSectionVisible(false);
     },
   });
 
@@ -1505,7 +1525,7 @@ export default function BookComponent({
   const handleConfirmDeleteAuthorSummary = async () => {
     // ... (existing logic to clear local book state) ...
     setBook((prev) => ({ ...prev, authorSummary: undefined }));
-    setIsAuthorInfoVisible(false);
+    setIsAuthorSectionVisible(false); // Hide the section too
     toast.success("Shrnutí autora bylo úspěšně smazáno (lokálně).");
     setDeleteModal({ isOpen: false, type: "authorSummary", isLoading: false });
     // TODO: Optionally call a DELETE endpoint if you want to clear the Author model cache
@@ -1632,158 +1652,15 @@ export default function BookComponent({
         isExpanded={isExpanded}
         toggleExpanded={toggleExpanded}
         handleBookDelete={handleBookDelete}
-        isAuthorInfoVisible={isAuthorInfoVisible}
-        setAuthorSummaryModal={setAuthorSummaryModal}
+        setAuthorSummaryModal={setAuthorSummaryModal} // Pass modal setter
         handleDeleteAuthorSummary={handleDeleteAuthorSummary}
         isGeneratingAuthorSummary={isAuthorLoading}
-        handleAuthorSummaryToggle={handleAuthorSummaryToggle}
+        handleAuthorSectionToggle={handleAuthorSectionToggle} // New prop for toggling the section
+        isAuthorSectionVisible={isAuthorSectionVisible} // New prop
         showPremiumFeatureLock={!hasAuthorSummarySubscription}
       />
 
-      {/* Author Info Panel - Updated Rendering Logic */}
-      <AnimatePresence mode="wait" onExitComplete={handleAnimationComplete}>
-        {
-          /* Log using IIFE */
-          (() => {
-            console.log(
-              "[Book.tsx Render] Checking author panel condition: isVisible:",
-              isAuthorInfoVisible,
-              "hasSummary:",
-              !!book.authorSummary,
-              "isLoading:",
-              isAuthorLoading
-            );
-            return null; // Return null for React
-          })()
-        }
-        {isAuthorInfoVisible && (book.authorSummary || isAuthorLoading) && (
-          <motion.div
-            id={`author-${book.id}`}
-            initial={{
-              opacity: 0,
-              height: 0,
-              overflow: "hidden",
-            }}
-            animate={{
-              opacity: 1,
-              height: "auto",
-              overflow: "visible",
-            }}
-            exit={{
-              opacity: 0,
-              height: 0,
-              overflow: "hidden",
-            }}
-            transition={{
-              duration: 0.3,
-              ease: "easeInOut",
-            }}
-            className="relative w-full max-w-[800px] z-10 mx-auto my-4 overflow-hidden"
-          >
-            <div className="bg-blue-950/40 rounded-xl shadow-lg overflow-hidden border border-blue-900/30">
-              {/* ... Top accent line ... */}
-              {/* ... Author header (User icon, name) ... */}
-
-              {/* Conditional Content Area */}
-              {isAuthorLoading ? (
-                <motion.div
-                  className="px-5 py-4 border-t border-blue-900/30 min-h-[150px] flex flex-col justify-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                >
-                  {/* Loading state with streaming text */}
-                  <div className="flex items-center gap-2 mb-3 text-orange-400">
-                    <Sparkles className="h-4 w-4 animate-pulse" />
-                    <span className="text-xs font-medium">
-                      Generuji informace o autorovi...
-                    </span>
-                  </div>
-                  <div className="prose prose-sm prose-invert max-w-none note-content text-blue-100/80">
-                    <ReactMarkdown
-                      rehypePlugins={[rehypeRaw]}
-                      remarkPlugins={[remarkGfm]}
-                    >
-                      {authorCompletion || ""}
-                    </ReactMarkdown>
-                  </div>
-                </motion.div>
-              ) : (
-                book.authorSummary && (
-                  <motion.div
-                    className="px-5 py-4 border-t border-blue-900/30"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1, duration: 0.3 }}
-                  >
-                    {/* Render final summary */}
-                    {
-                      /* Log using IIFE */
-                      (() => {
-                        console.log(
-                          "[Book.tsx Render] Rendering author summary content:",
-                          book.authorSummary
-                        );
-                        return null; // Return null for React
-                      })()
-                    }
-                    <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200 prose-p:text-blue-100">
-                      <StudyContent content={book.authorSummary} />
-                    </div>
-                  </motion.div>
-                )
-              )}
-
-              {/* Footer area with utilities */}
-              {/* Only show footer when not loading or if summary exists */}
-              {(!isAuthorLoading || book.authorSummary) && (
-                <motion.div
-                  className="border-t border-blue-900/30 bg-blue-950/80 px-5 py-4 flex justify-between items-center"
-                  // ... animation props ...
-                >
-                  {/* ... Copy, Delete buttons ... */}
-                  <div className="flex items-center gap-2">
-                    {/* Update Button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFeatureAction(
-                          "aiAuthorSummary",
-                          hasAuthorSummarySubscription,
-                          () => setAuthorSummaryModal(true), // Open modal to confirm/set prefs
-                          isAuthorLoading
-                        );
-                      }}
-                      disabled={isAuthorLoading} // Use correct loading state
-                      className="h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 rounded-md"
-                    >
-                      {isAuthorLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
-                          <span>Aktualizuji...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
-                          <span>
-                            {book.authorSummary ? "Aktualizovat" : "Generovat"}
-                          </span>
-                        </>
-                      )}
-                    </Button>
-                    {/* ... Lock indicator ... */}
-                    {/* ... Close Button ... */}
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Expanded Content (Notes) */}
+      {/* Expanded Content (Notes, Author Summary, Book Summary) */}
       <div
         id={`book-content-${book.id}`}
         className={`transition-all overflow-hidden
@@ -1905,7 +1782,9 @@ export default function BookComponent({
                 <div className="relative mb-3">
                   <div className="w-8 h-8 border-2 border-blue-500/30 border-t-orange-500 rounded-full animate-spin"></div>
                 </div>
-                <p className="text-sm text-blue-300 font-medium">Načítání...</p>
+                <p className="text-sm text-blue-300 font-medium">
+                  Načítání poznámek...
+                </p>
               </div>
             ) : (
               <div
@@ -1913,8 +1792,8 @@ export default function BookComponent({
                 data-no-toggle="true"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Render streaming completion text FIRST when loading */}
-                {isBookLoading && ( // Use isBookLoading from the correct hook
+                {/* Render streaming BOOK completion text FIRST when loading */}
+                {isBookLoading && (
                   <motion.div
                     ref={streamingCompletionRef} // Assign the ref
                     initial={{ opacity: 0.5, y: 10 }}
@@ -1959,6 +1838,83 @@ export default function BookComponent({
                   />
                 )}
               </div>
+            )}
+
+            {/* Integrated Author Summary Section - Corrected Structure */}
+            {isAuthorSectionVisible && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: "auto", marginTop: "1.5rem" }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="bg-blue-950/40 rounded-xl shadow-lg overflow-hidden border border-blue-900/30"
+                data-no-toggle="true"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-5 py-4">
+                  <h4 className="text-base font-medium text-orange-300 mb-3">
+                    Informace o autorovi
+                  </h4>
+                  {isAuthorLoading ? (
+                    <div className="min-h-[100px] flex flex-col justify-center">
+                      <div className="flex items-center gap-2 mb-2 text-orange-400">
+                        <Sparkles className="h-4 w-4 animate-pulse" />
+                        <span className="text-xs font-medium">Generuji...</span>
+                      </div>
+                      <div className="prose prose-sm prose-invert max-w-none note-content text-blue-100/80">
+                        <ReactMarkdown
+                          rehypePlugins={[rehypeRaw]}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {authorCompletion || ""}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="prose prose-invert max-w-none w-full prose-headings:text-orange-300 prose-headings:font-medium prose-strong:text-orange-200 prose-p:text-blue-100">
+                      {book.authorSummary ? (
+                        <StudyContent content={book.authorSummary} />
+                      ) : (
+                        <p className="text-sm text-blue-300">
+                          Informace o autorovi nejsou k dispozici.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Footer with Update Button */}
+                <div className="border-t border-blue-900/30 bg-blue-950/80 px-5 py-3 flex justify-end items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFeatureAction(
+                        "aiAuthorSummary",
+                        hasAuthorSummarySubscription,
+                        () => setAuthorSummaryModal(true),
+                        isAuthorLoading
+                      );
+                    }}
+                    disabled={isAuthorLoading}
+                    className="h-8 text-xs bg-orange-900/30 border-orange-800/50 hover:bg-orange-900/50 text-orange-400 rounded-md"
+                  >
+                    {isAuthorLoading ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5"></div>
+                        <span>Aktualizuji...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5 text-orange-400" />
+                        <span>
+                          {book.authorSummary ? "Aktualizovat" : "Generovat"}
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </motion.div>
             )}
 
             {/* Add Note Form */}
