@@ -7,7 +7,7 @@ import Author from "@/models/Author";
  * Retrieves author information including summary
  */
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { authorName: string } }
 ) {
   try {
@@ -18,36 +18,25 @@ export async function GET(
     const authorName = decodeURIComponent(params.authorName);
 
     // Find the author in the database
-    const authorDoc = await Author.findOne({ name: authorName });
+    const author = await Author.findOne({ name: authorName });
 
-    if (!authorDoc) {
+    if (!author) {
       return NextResponse.json({ error: "Author not found" }, { status: 404 });
     }
 
     // Return author data with cache control headers to prevent browser caching
-    return NextResponse.json(
-      {
-        id: authorDoc._id,
-        name: authorDoc.name,
-        summary: authorDoc.summary,
-        updatedAt: authorDoc.updatedAt,
+    return NextResponse.json(author, {
+      headers: {
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store, must-revalidate",
-        },
-      }
-    );
+    });
   } catch (error) {
-    console.error("Error fetching author data:", error);
+    console.error("Error fetching author:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch author data",
-      },
+      { error: "Failed to fetch author information" },
       { status: 500 }
     );
   }
