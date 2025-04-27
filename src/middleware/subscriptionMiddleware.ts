@@ -10,8 +10,9 @@ type SubscriptionRequirement = {
   requireAiCredits?: boolean;
 };
 
-// Define the user document type from mongoose
-type UserDocument = mongoose.Document & {
+// Define AND EXPORT the user document type from mongoose
+export type UserDocument = mongoose.Document & {
+  _id: mongoose.Types.ObjectId; // Ensure _id is part of the type
   subscription?: {
     tier: string;
     aiCreditsRemaining: number;
@@ -20,6 +21,9 @@ type UserDocument = mongoose.Document & {
   hasAccess(feature: string): boolean;
   hasRemainingAiCredits(): boolean;
   useAiCredit(): Promise<number>;
+  // Add other user fields if necessary for type safety elsewhere
+  email?: string;
+  auth?: { providerId?: string };
 };
 
 /**

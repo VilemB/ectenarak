@@ -11,6 +11,7 @@ import { streamText, formatDataStreamPart } from "ai"; // Core function for stre
 import { openai as openaiProvider } from "@ai-sdk/openai"; // OpenAI provider
 import { Redis } from "@upstash/redis"; // Import Redis client
 import { createHash } from "crypto"; // Import crypto for cache key generation
+// import User from "@/models/User"; // Remove unused User model import
 
 // Instantiate Redis client using the correct environment variable names
 let redis: Redis | null = null;
@@ -569,7 +570,31 @@ export async function POST(request: Request) {
       presencePenalty: preferences.style === "creative" ? 0.5 : 0.1, // Higher penalty for creative
     });
 
-    console.log(`[${Date.now()}] AI SDK stream initiated, returning response.`);
+    console.log(`[${Date.now()}] AI SDK stream initiated.`);
+
+    // --- CREDIT DEDUCTION --- //
+    // Deduct credit *after* successfully initiating the stream, before returning it.
+    // This mirrors the author-summary approach where deduction happens post-generation.
+    let remainingCredits = user.subscription?.aiCreditsRemaining;
+    try {
+      console.log(
+        `[${Date.now()}] Attempting to deduct credit for user ${user._id}...`
+      );
+      // Use the useAiCredit method from the user object obtained via middleware
+      remainingCredits = await user.useAiCredit();
+      console.log(
+        `[${Date.now()}] Credit deducted via user.useAiCredit(). Remaining: ${remainingCredits}`
+      );
+    } catch (creditError) {
+      console.error(
+        `[${Date.now()}] CRITICAL: Failed to deduct credit for user ${user._id} AFTER successful AI stream initiation:`,
+        creditError
+      );
+      // Log critically, but still return the stream as generation was initiated.
+      // Optionally, you could try to cancel the stream or return an error here,
+      // but that might be complex and contradict the goal of getting the summary.
+    }
+    // --- END CREDIT DEDUCTION --- //
 
     // Respond with the stream using the AI SDK helper
     const streamResponse = result.toDataStreamResponse();
