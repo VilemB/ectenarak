@@ -19,6 +19,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { loadStripe } from "@stripe/stripe-js";
+
+// Initialize Stripe outside of the component render cycle
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
 
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -131,24 +137,39 @@ export default function SubscriptionPage() {
     );
     setIsChangingPlan(true);
     try {
-      sessionStorage.setItem("intendedSubscription", tierForCheckout);
-      sessionStorage.setItem(
-        "yearlyBilling",
-        billingCycle === "yearly" ? "true" : "false"
-      );
-
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId }),
       });
 
+      const sessionData = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to create checkout session");
+        throw new Error(
+          sessionData.error || "Failed to create checkout session"
+        );
       }
-      const { url } = await response.json();
-      window.location.href = url;
+
+      if (!sessionData.id) {
+        throw new Error("Received invalid session data from server.");
+      }
+
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error("Stripe.js has not loaded yet.");
+      }
+
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: sessionData.id,
+      });
+
+      if (error) {
+        console.error("Stripe redirectToCheckout error:", error);
+        toast.error(error.message || "Přesměrování na platbu selhalo.");
+        setIsChangingPlan(false);
+        setSelectedTierForAction(null);
+      }
     } catch (error: unknown) {
       console.error("Checkout error:", error);
       const message =
@@ -160,6 +181,7 @@ export default function SubscriptionPage() {
       setSelectedTierForAction(null);
       sessionStorage.removeItem("intendedSubscription");
       sessionStorage.removeItem("yearlyBilling");
+    } finally {
     }
   };
 
