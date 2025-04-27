@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
   // Check for authentication token
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.AUTH_SECRET,
   });
 
   // If user is not authenticated

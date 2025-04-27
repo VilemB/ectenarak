@@ -14,13 +14,19 @@ import "@/styles/animations.css";
 import TextReveal from "@/components/TextReveal";
 import ScrollIndicator from "@/components/ScrollIndicator";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import { toast } from "sonner";
+
+// Initialize Stripe outside of the component render cycle
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [yearlyBilling, setYearlyBilling] = useState(false);
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,8 +44,13 @@ export default function LandingPage() {
     }
   };
 
-  // Function to handle subscription selection
-  const handleSubscriptionSelect = (tier: "free" | "basic" | "premium") => {
+  // Updated function to handle subscription selection
+  const handleSubscriptionSelect = async (
+    tier: "free" | "basic" | "premium"
+  ) => {
+    const planKey = `${tier}-${yearlyBilling ? "yearly" : "monthly"}`;
+    setIsLoading((prev) => ({ ...prev, [planKey]: true }));
+
     if (!isAuthenticated) {
       // If not logged in, scroll to signup section
       scrollToSection("signup-section");
@@ -48,16 +59,82 @@ export default function LandingPage() {
         sessionStorage.setItem("intendedSubscription", tier);
         sessionStorage.setItem("yearlyBilling", yearlyBilling.toString());
       }
+      setIsLoading((prev) => ({ ...prev, [planKey]: false }));
       return;
     }
 
-    // If logged in, redirect to subscription page
+    // If logged in and selecting a paid tier, create checkout session
     if (tier !== "free") {
-      // Store intended subscription in sessionStorage and redirect
-      sessionStorage.setItem("intendedSubscription", tier);
-      sessionStorage.setItem("yearlyBilling", yearlyBilling.toString());
+      try {
+        // Determine the price ID based on selection
+        let priceId;
+        if (tier === "basic") {
+          priceId = yearlyBilling
+            ? process.env.NEXT_PUBLIC_STRIPE_BASIC_YEARLY_PRICE_ID
+            : process.env.NEXT_PUBLIC_STRIPE_BASIC_MONTHLY_PRICE_ID;
+        } else if (tier === "premium") {
+          priceId = yearlyBilling
+            ? process.env.NEXT_PUBLIC_STRIPE_PREMIUM_YEARLY_PRICE_ID
+            : process.env.NEXT_PUBLIC_STRIPE_PREMIUM_MONTHLY_PRICE_ID;
+        }
 
-      router.push("/subscription");
+        if (!priceId) {
+          throw new Error("Could not determine Price ID.");
+        }
+
+        // Call the API route to create a checkout session
+        const response = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ priceId }),
+        });
+
+        const sessionData = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            sessionData.error || "Failed to create checkout session."
+          );
+        }
+
+        if (!sessionData.id) {
+          throw new Error("Received invalid session data from server.");
+        }
+
+        // Get Stripe.js instance
+        const stripe = await stripePromise;
+        if (!stripe) {
+          throw new Error("Stripe.js has not loaded yet.");
+        }
+
+        // Redirect to Stripe Checkout
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: sessionData.id,
+        });
+
+        if (error) {
+          // If `redirectToCheckout` fails due to a browser or network
+          // error, display the localized error message to your customer.
+          console.error("Stripe redirectToCheckout error:", error);
+          toast.error(error.message || "Přesměrování na platbu selhalo.");
+        }
+      } catch (error) {
+        console.error("Subscription selection error:", error);
+        const message =
+          error instanceof Error ? error.message : "Neznámá chyba";
+        toast.error(
+          message ||
+            "Nastala chyba při vytváření platební relace. Zkuste to prosím znovu."
+        );
+      } finally {
+        setIsLoading((prev) => ({ ...prev, [planKey]: false }));
+      }
+    } else {
+      // Handle free tier selection if necessary (e.g., redirect to dashboard)
+      // For now, just reset loading state if it's the free tier
+      setIsLoading((prev) => ({ ...prev, [planKey]: false }));
     }
   };
 
@@ -394,7 +471,7 @@ export default function LandingPage() {
                         color: "bg-[#2a3548] text-muted-foreground",
                       }}
                       isCurrentPlan={false}
-                      isLoading={false}
+                      isLoading={isLoading["free-false"]}
                       isSelected={false}
                       buttonText="Začít zdarma"
                       onSelect={() => handleSubscriptionSelect("free")}
@@ -433,7 +510,7 @@ export default function LandingPage() {
                         color: "bg-[#2a3548] text-[#3b82f6]",
                       }}
                       isCurrentPlan={false}
-                      isLoading={false}
+                      isLoading={isLoading[`basic-${yearlyBilling}`]}
                       isSelected={false}
                       buttonText={
                         isAuthenticated ? "Vybrat Basic" : "Začít s Basic"
@@ -473,7 +550,7 @@ export default function LandingPage() {
                         color: "bg-[#3b82f6] text-white",
                       }}
                       isCurrentPlan={false}
-                      isLoading={false}
+                      isLoading={isLoading[`premium-${yearlyBilling}`]}
                       isSelected={false}
                       buttonText={
                         isAuthenticated ? "Vybrat Premium" : "Začít s Premium"
@@ -490,7 +567,7 @@ export default function LandingPage() {
                           included: true,
                         },
                         {
-                          name: "Přizpůsobění AI shrnutí",
+                          name: "Přizpůsobení AI shrnutí",
                           description: "Zaměření, detailnost, styl",
                           included: true,
                         },
