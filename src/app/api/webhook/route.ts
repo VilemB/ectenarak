@@ -15,13 +15,16 @@ import Stripe from "stripe"; // Import the official Stripe type
 // };
 
 // Price ID to Tier mapping (Ensure these match your Stripe Price IDs)
+// USER ACTION: Verify these EXACTLY match your LIVE Stripe Price IDs!
 const PRICE_ID_TO_TIER: Record<string, SubscriptionTier> = {
-  // Basic
-  price_1R2vAHCHqJNxgUwRPpfqCHJF: "basic", // Monthly
-  price_1R2vIpCHqJNxgUwRW12zahkB: "basic", // Yearly
-  // Premium
-  price_1RDOWACHqJNxgUwR1lZD7Ap3: "premium", // Monthly
-  price_1RDOWLCHqJNxgUwRjnZbthf9: "premium", // Yearly
+  // Basic Monthly - Replace with your actual LIVE ID
+  price_REPLACE_WITH_LIVE_BASIC_MONTHLY_ID: "basic",
+  // Basic Yearly - Replace with your actual LIVE ID
+  price_REPLACE_WITH_LIVE_BASIC_YEARLY_ID: "basic",
+  // Premium Monthly - Replace with your actual LIVE ID
+  price_REPLACE_WITH_LIVE_PREMIUM_MONTHLY_ID: "premium",
+  // Premium Yearly - Replace with your actual LIVE ID
+  price_REPLACE_WITH_LIVE_PREMIUM_YEARLY_ID: "premium",
 };
 
 const getUserCollection = async () => {
