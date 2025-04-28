@@ -17,13 +17,13 @@ import Stripe from "stripe"; // Import the official Stripe type
 // Price ID to Tier mapping using provided LIVE IDs
 const PRICE_ID_TO_TIER: Record<string, SubscriptionTier> = {
   // Basic Monthly
-  price_1RIQfHCHqJNxgUwRrAFVFsGZ: "basic",
+  [process.env.NEXT_PUBLIC_STRIPE_BASIC_MONTHLY_PRICE_ID!]: "basic",
   // Basic Yearly
-  price_1RIQfHCHqJNxgUwRv3cVS0CN: "basic",
+  [process.env.NEXT_PUBLIC_STRIPE_BASIC_YEARLY_PRICE_ID!]: "basic",
   // Premium Monthly
-  price_1RIQfHCHqJNxgUwRTFms4m6j: "premium",
+  [process.env.NEXT_PUBLIC_STRIPE_PREMIUM_MONTHLY_PRICE_ID!]: "premium",
   // Premium Yearly
-  price_1RIQfHCHqJNxgUwR1uXDh7kF: "premium",
+  [process.env.NEXT_PUBLIC_STRIPE_PREMIUM_YEARLY_PRICE_ID!]: "premium",
 };
 
 const getUserCollection = async () => {
