@@ -7,7 +7,6 @@ import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
-import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -114,7 +113,6 @@ export default function RootLayout({
             <main className="flex-1 flex flex-col w-full">{children}</main>
             <Footer />
             <Analytics />
-            <Toaster />
           </div>
         </Providers>
       </body>
