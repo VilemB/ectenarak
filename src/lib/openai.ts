@@ -143,9 +143,9 @@ function selectOptimalAuthorModel(
         ? 1
         : 0;
 
-  // Length-based complexity
+  // Length-based complexity - Give 'long' a higher weight
   complexityScore +=
-    preferences.length === "long" ? 2 : preferences.length === "medium" ? 1 : 0;
+    preferences.length === "long" ? 4 : preferences.length === "medium" ? 1 : 0; // Use gpt-4o for long requests
 
   // Additional features complexity
   if (preferences.studyGuide) complexityScore += 2;
@@ -153,11 +153,12 @@ function selectOptimalAuthorModel(
   if (preferences.includeAwards) complexityScore += 1;
   if (preferences.includeInfluences) complexityScore += 1;
 
-  // Select model based on complexity and subscription tier
-  if (complexityScore >= 6) {
-    return "gpt-4o"; // Use full GPT-4o for very complex requests
+  // Select model based on complexity
+  // Lowered threshold slightly to ensure 'long' preference hits gpt-4o
+  if (complexityScore >= 5) {
+    return "gpt-4o"; // Use full GPT-4o for complex or long requests
   } else {
-    return "gpt-4o-mini"; // Use cost-optimized mini model for moderate complexity
+    return "gpt-4o-mini"; // Use cost-optimized mini model for standard requests
   }
 }
 
@@ -299,201 +300,126 @@ export async function generateAuthorSummary(
 }
 
 /**
- * Build a detailed prompt for author summary generation
+ * Builds the prompt for generating an author summary based on preferences.
+ * Focuses on information relevant for Czech 'maturita' exam when language is Czech.
  * @param author Author name
- * @param preferences Customization preferences
- * @returns Optimized prompt string
+ * @param preferences Summary preferences
+ * @returns The constructed prompt string
  */
 function buildAuthorSummaryPrompt(
   author: string,
   preferences: AuthorSummaryPreferences
 ): string {
-  const language = preferences.language === "cs" ? "českém" : "anglickém";
+  const {
+    style,
+    length,
+    focus,
+    language,
+    includeTimeline,
+    includeAwards,
+    includeInfluences,
+    studyGuide,
+  } = preferences;
 
-  // Enhanced style characteristics with more specific instructions
-  const styleMap = {
-    academic: {
-      label: "formální, odborný",
-      instruction: `Používej:
-- Odbornou literárněvědnou terminologii
-- Citace z odborných zdrojů a kritických prací
-- Formální, objektivní jazyk
-- Analytický a kritický přístup
-- Přesné datace a bibliografické údaje
-- Odkazy na literární teorie a koncepty
-Vyhýbej se:
-- Subjektivním hodnocením
-- Neformálnímu jazyku
-- Anekdotám a osobním příběhům`,
-    },
-    casual: {
-      label: "přístupný, konverzační",
-      instruction: `Používej:
-- Srozumitelný, každodenní jazyk
-- Přátelský, konverzační tón
-- Praktické příklady a přirovnání
-- Osobní perspektivu a přímé oslovení
-- Zajímavé detaily ze života autora
-- Propojení s dnešní dobou
-Vyhýbej se:
-- Odborné terminologii
-- Složitým souvětím
-- Suchým faktům bez kontextu`,
-    },
-    creative: {
-      label: "živý, poutavý",
-      instruction: `Používej:
-- Barvitý, expresivní jazyk
-- Metafory a přirovnání
-- Dramatické prvky a napětí
-- Osobní příběhy a anekdoty
-- Emocionální prvky
-- Neotřelé úhly pohledu
-Vyhýbej se:
-- Suchému akademickému stylu
-- Strohému výčtu faktů
-- Přílišné formálnosti`,
-    },
-  };
+  const isCzech = language === "cs";
+  let prompt = isCzech
+    ? `Vytvoř podrobný přehled o autorovi ${author} se zaměřením na informace relevantní pro českou maturitní zkoušku. `
+    : `Write a comprehensive overview of the author ${author}. `;
 
-  // Enhanced focus areas with specific content ratios
-  const focusMap = {
-    life: {
-      label: "život autora",
-      instruction: `Rozložení obsahu:
-- 70% životní příběh a osobní vývoj
-- 20% vliv života na dílo
-- 10% literární kontext
-Zaměř se na:
-- Klíčové životní události
-- Vzdělání a formativní zkušenosti
-- Osobní vztahy a vlivy
-- Společenský a historický kontext`,
-    },
-    works: {
-      label: "díla autora",
-      instruction: `Rozložení obsahu:
-- 70% analýza děl a tvůrčího procesu
-- 20% vývoj autorského stylu
-- 10% biografický kontext
-Zaměř se na:
-- Hlavní díla a jejich témata
-- Vývoj autorského stylu
-- Inovace v tvorbě
-- Literární techniky`,
-    },
-    impact: {
-      label: "vliv a odkaz",
-      instruction: `Rozložení obsahu:
-- 70% vliv na literaturu a společnost
-- 20% současná relevance
-- 10% historický kontext
-Zaměř se na:
-- Literární odkaz
-- Společenský dopad
-- Vliv na další autory
-- Aktuální význam`,
-    },
-    balanced: {
-      label: "vyvážený obsah",
-      instruction: `Rozložení obsahu:
-- 33% život a osobnost
-- 33% literární dílo
-- 33% význam a vliv
-Zaměř se na:
-- Propojení života a díla
-- Kontext doby
-- Odkaz pro současnost`,
-    },
-  };
-
-  // Word count targets with token optimization
-  const lengthMap = {
-    short: {
-      words: "150-200 slov",
-      structure: "3-4 stručné odstavce",
-    },
-    medium: {
-      words: "300-400 slov",
-      structure: "5-6 rozvinutých odstavců",
-    },
-    long: {
-      words: "500-700 slov",
-      structure: "7-8 detailních odstavců",
-    },
-  };
-
-  // Build the main prompt
-  let prompt = `Vytvoř ${
-    styleMap[preferences.style].label
-  } text o autorovi "${author}" v ${language} jazyce.
-
-${focusMap[preferences.focus].instruction}
-
-Délka: ${lengthMap[preferences.length].words} (${
-    lengthMap[preferences.length].structure
-  }).`;
-
-  // Add study guide structure if enabled
-  if (preferences.studyGuide) {
-    prompt += `
-
-Strukturuj text pro studijní účely:
-
-# ${author}
-
-## Základní informace
-[stručný přehled klíčových faktů]
-
-## Život a vzdělání
-[podle zvoleného zaměření]
-
-## Literární tvorba
-[podle zvoleného zaměření]
-
-## Význam a odkaz
-[podle zvoleného zaměření]
-
-## Studijní poznámky
-[klíčové body pro studium]`;
+  // Style
+  switch (style) {
+    case "academic":
+      prompt += isCzech
+        ? `Použij akademický a objektivní tón. `
+        : `Use an academic and objective tone. `;
+      break;
+    case "casual":
+      prompt += isCzech
+        ? `Použij neformální, přístupný a srozumitelný jazyk. `
+        : `Use a casual, approachable, and understandable language. `;
+      break;
+    case "creative":
+      prompt += isCzech
+        ? `Buď v shrnutí kreativnější a interpretativnější. `
+        : `Be more creative and interpretative in the summary. `;
+      break;
   }
 
-  // Add additional sections based on preferences
-  if (preferences.includeTimeline) {
-    prompt += `
-
-## Časová osa
-[chronologický přehled uspořádaný podle zvoleného stylu]`;
+  // Length
+  switch (length) {
+    case "short":
+      prompt += isCzech
+        ? `Shrnutí by mělo být stručné, přibližně 150-250 slov. Zaměř se na nejdůležitější fakta. `
+        : `Keep the summary concise, around 150-250 words. Focus on the most essential facts. `;
+      break;
+    case "medium":
+      prompt += isCzech
+        ? `Shrnutí by mělo být podrobné, ale ne příliš dlouhé, přibližně 400-600 slov. Poskytni vyvážený přehled. `
+        : `The summary should be detailed but not overly long, around 400-600 words. Provide a balanced overview. `;
+      break;
+    case "long":
+      prompt += isCzech
+        ? `Poskytni komplexní a hloubkové shrnutí. Neboj se překročit 800 slov, pokud je to nutné k důkladnému pokrytí tématu. Struktura by měla být jasná a logická (např. život, dílo, význam). `
+        : `Provide a comprehensive and in-depth summary. Feel free to exceed 800 words if necessary to cover the topic thoroughly. Ensure a clear and logical structure (e.g., life, works, significance). `;
+      break;
   }
 
-  if (preferences.includeAwards) {
-    prompt += `
+  // Focus
+  const maturitaFocus = isCzech
+    ? "Zaměř se především na klíčová díla, literární období, styl, hlavní témata a význam autora v kontextu české a světové literatury, jak je relevantní pro maturitu. "
+    : "Focus primarily on key works, literary period, style, major themes, and the author's significance in the context of relevant literature, as relevant for final exams. ";
 
-## Ocenění
-[seznam ocenění prezentovaný podle zvoleného stylu]`;
+  switch (focus) {
+    case "life":
+      prompt += isCzech
+        ? `Zaměř se primárně na autorovu biografii, životní události a osobní zkušenosti. ${maturitaFocus}`
+        : `Focus primarily on the author's biography, life events, and personal experiences. ${maturitaFocus}`;
+      break;
+    case "works":
+      prompt += isCzech
+        ? `Zaměř se primárně na hlavní díla autora, literární styl, témata a přínos pro literaturu. ${maturitaFocus}`
+        : `Focus primarily on the author's major works, literary style, themes, and contributions to literature. ${maturitaFocus}`;
+      break;
+    case "impact":
+      prompt += isCzech
+        ? `Zdůrazni význam autora, jeho odkaz a vliv na další generace nebo společnost. ${maturitaFocus}`
+        : `Emphasize the author's significance, legacy, and impact on subsequent generations or society. ${maturitaFocus}`;
+      break;
+    case "balanced":
+      prompt += isCzech
+        ? `Poskytni vyvážený přehled o životě, díle a významu autora. ${maturitaFocus}`
+        : `Provide a balanced overview of the author's life, works, and impact. ${maturitaFocus}`;
+      break;
   }
 
-  if (preferences.includeInfluences) {
-    prompt += `
+  // Includes
+  if (includeTimeline)
+    prompt += isCzech
+      ? `Zahrň časovou osu klíčových životních událostí a dat vydání děl. `
+      : `Include a timeline of key life events and publication dates. `;
+  if (includeAwards)
+    prompt += isCzech
+      ? `Zmiň významná ocenění a pocty, které autor obdržel. `
+      : `Mention notable awards and honors received by the author. `;
+  if (includeInfluences)
+    prompt += isCzech
+      ? `Diskutuj o klíčových vlivech na autora a jeho vlivu na ostatní. `
+      : `Discuss key influences on the author and their influence on others. `;
 
-## Literární vlivy
-[literární kontext podle zvoleného stylu]`;
-  }
+  // Study Guide Format
+  if (studyGuide)
+    prompt += isCzech
+      ? `Formátuj shrnutí jako studijní příručku, případně s použitím nadpisů, odrážek a klíčových bodů pro snazší učení. Zdůrazni aspekty relevantní pro maturitu. `
+      : `Format the summary as a study guide, possibly using headings, bullet points, and key takeaways for easier learning. Emphasize aspects relevant for final exams. `;
 
-  // Add formatting instructions
-  prompt += `
+  // Language
+  prompt += isCzech
+    ? `Celé shrnutí musí být napsáno v češtině. Použij vhodnou terminologii.`
+    : `The entire summary must be written in English. Use appropriate terminology.`;
 
-Formátování:
-- Používej markdown pro strukturování
-- **Tučně** pro klíčové pojmy
-- *Kurzívu* pro názvy děl
-- Odrážky pro přehledné seznamy
-
-DŮLEŽITÉ: Text musí být kompletní a konzistentní se zvoleným stylem od začátku do konce. Detailně rozepiš VŠECHNY požadované sekce (Základní informace, Život a vzdělání, Literární tvorba, Význam a odkaz, Studijní poznámky, Časová osa, Ocenění, Literární vlivy - pokud jsou požadovány). Při limitech tokenů zachovej všechny sekce, ale zkrať jejich obsah proporcionálně. NEUKONČUJ generování předčasně nebo uprostřed sekce.
-
-NA KONCI TEXTU NESMÍ BÝT ŽÁDNÝ DODATEČNÝ KOMENTÁŘ, META-SHRNUTÍ NEBO VĚTA TYPU "Tento text poskytuje...". Poskytni pouze požadovaný obsah.
-
-Pamatuj, že celý text musí striktně dodržovat zvolený styl: ${styleMap[preferences.style].label}.`;
+  prompt += isCzech
+    ? ` Výstup formátuj pomocí Markdownu (nadpisy, seznamy atd.).`
+    : ` Output the summary in Markdown format (headings, lists, etc.).`;
 
   return prompt.trim();
 }
