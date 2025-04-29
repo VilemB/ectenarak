@@ -277,10 +277,10 @@ export async function generateAuthorSummary(
       temperature: preferences.style === "creative" ? 0.8 : 0.3,
       max_tokens:
         preferences.length === "long"
-          ? 4000
+          ? 8000
           : preferences.length === "medium"
-            ? 2500
-            : 1500,
+            ? 4000
+            : 2000,
       presence_penalty: preferences.style === "creative" ? 0.6 : 0.2,
       frequency_penalty: preferences.style === "creative" ? 0.6 : 0.3,
     });
