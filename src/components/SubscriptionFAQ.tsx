@@ -13,7 +13,7 @@ const subscriptionFaqs = [
   {
     question: "Jak mohu změnit své předplatné?",
     answer:
-      "V současné době není možné přímo přejít mezi tarify. Pokud chcete změnit svůj tarif (např. z Basic na Premium nebo naopak), musíte nejprve zrušit své stávající předplatné ve správě účtu a poté si zakoupit nový požadovaný tarif. Nové předplatné začne platit ihned po zakoupení.",
+      "V současné době není možné přímo přejít mezi tarify. Pokud chcete změnit svůj tarif (např. z Basic na Premium nebo naopak), musíte nejprve zrušit své stávající předplatné ve správě účtu. Po vypršení stávajícího období si budete moci zakoupit nový požadovaný tarif.",
   },
   {
     question: "Kdy se obnoví moje AI kredity?",
