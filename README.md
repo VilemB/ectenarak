@@ -1,48 +1,27 @@
-# eČtenářák
+# eČtenářák (Digital Reading Journal)
 
-Moderní webová aplikace pro správu čtenářského deníku a sledování vaší četby. Umožňuje uživatelům zaznamenávat přečtené knihy, psát poznámky a snadněji si pamatovat obsah a myšlenky z četby.
+A modern web application for managing your reading journal and tracking your reading progress. It allows users to record read books, write notes, and easily remember content and ideas from their reading.
 
-## Nové funkce
+## Features
 
-### MongoDB integrace
+- **MongoDB Integration**: User accounts, book libraries, author information, and notes are stored in MongoDB.
+  - User-specific libraries.
+  - Books linked to users.
+  - Shared author information database.
+  - Notes stored as part of book entries.
+- **OpenAI API Integration**:
+  - Generate AI-powered summaries of your book notes.
+  - Generate summaries for authors (checks database for existing summaries to optimize API usage).
+- **Token Usage Optimization**:
+  - **Shared Author Summaries**: Reuses existing author summaries from the database instead of generating new ones.
+  - **Caching**: Generated summaries are cached in MongoDB for future use.
+- Add books to your reading list.
+- Take notes for each book.
+- Clean and modern UI built with Tailwind CSS.
 
-Aplikace nyní používá MongoDB pro ukládání dat:
+## Technologies Used
 
-- **Uživatelé**: Každý uživatel má svůj vlastní účet a knihovnu knih
-- **Knihy**: Knihy jsou uloženy v MongoDB a propojeny s uživatelem
-- **Autoři**: Informace o autorech jsou sdíleny mezi uživateli
-- **Poznámky**: Poznámky jsou uloženy jako součást knih
-
-### Optimalizace využití tokenů
-
-Pro snížení nákladů na API volání OpenAI jsme implementovali následující optimalizace:
-
-1. **Sdílení shrnutí autorů**: Když uživatel požádá o shrnutí autora, systém nejprve zkontroluje, zda již existuje shrnutí tohoto autora v databázi. Pokud ano, použije se existující shrnutí místo generování nového.
-
-2. **Cachování výsledků**: Všechna vygenerovaná shrnutí jsou uložena v MongoDB pro budoucí použití.
-
-## Instalace
-
-1. Naklonujte repozitář
-2. Nainstalujte závislosti: `npm install`
-3. Vytvořte soubor `.env.local` s následujícími proměnnými:
-   ```
-   MONGODB_URI=mongodb://localhost:27017/ctenarsky-denik
-   OPENAI_API_KEY=your_openai_api_key_here
-   ```
-4. Spusťte vývojový server: `npm run dev`
-
-## Použití
-
-1. Přihlaste se pomocí e-mailu a jména
-2. Přidejte knihy do své knihovny
-3. Volitelně nechte vygenerovat shrnutí o autorovi
-4. Přidávejte poznámky ke knihám
-5. Generujte AI shrnutí vašich poznámek
-
-## Technologie
-
-- Next.js
+- Next.js 14
 - React
 - TypeScript
 - MongoDB
@@ -50,51 +29,62 @@ Pro snížení nákladů na API volání OpenAI jsme implementovali následujíc
 - OpenAI API
 - Tailwind CSS
 
-## Features
+## Getting Started
 
-- Add books to your reading list
-- Take notes for each book
-- Generate AI-powered summaries of your notes using OpenAI
-- Clean and modern UI with Tailwind CSS
+### Prerequisites
 
-## Setup
+- Node.js (Check `.nvmrc` or `package.json` for specific version if available)
+- npm or yarn
+- MongoDB instance (local or remote)
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Copy `.env` file and add your OpenAI API key:
+### Installation
 
-   ```bash
-   cp .env.example .env
-   ```
+1.  Clone the repository:
+    ```bash
+    git clone <repository-url>
+    cd ctenarsky-denik
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    # or
+    # yarn install
+    ```
+3.  Create a `.env.local` file in the root directory and add your environment variables. You can copy the example file if one exists (`cp .env.example .env.local`) or create it manually:
+    ```dotenv
+    MONGODB_URI=your_mongodb_connection_string # e.g., mongodb://localhost:27017/ctenarsky-denik
+    OPENAI_API_KEY=your_openai_api_key_here
+    ```
+    Replace the placeholder values with your actual MongoDB connection string and OpenAI API key.
 
-   Then edit `.env` and add your OpenAI API key
+### Running the Development Server
 
-4. Run the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+1.  Start the development server:
+    ```bash
+    npm run dev
+    # or
+    # yarn dev
+    ```
+2.  Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Usage
 
-1. Add a new book by entering its title in the input field at the top of the page
-2. Click on a book to expand it and view its notes
-3. Add notes about the book using the note input field
-4. Once you have added some notes, you can generate an AI summary by clicking the "Generate Summary" button
+1.  Log in using your email and name (or follow the application's specific authentication flow).
+2.  Add books to your library using the title input.
+3.  Click on a book to expand it.
+4.  Add notes about the book.
+5.  Optionally, request an AI-generated summary for the author.
+6.  Generate an AI summary of your notes by clicking the "Generate Summary" button (or similar).
 
-## Technologies Used
+## Contributing
 
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- OpenAI API
+Contributions are welcome! Please feel free to open an issue or submit a pull request. (Consider adding more specific contribution guidelines).
 
-## Learn More
+## License
+
+(Specify the license for your project here, e.g., MIT License).
+
+## Learn More (Next.js)
 
 To learn more about Next.js, take a look at the following resources:
 
