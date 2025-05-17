@@ -370,7 +370,7 @@ export async function POST(request: Request) {
     }
 
     // Get the tier, default to free
-    const userTierValue = user.subscription?.tier || "free";
+    const userTierValue = user.subscription?.tier;
     // Cast the value to SubscriptionTier before using it as an index
     const userTier = userTierValue as SubscriptionTier;
 
