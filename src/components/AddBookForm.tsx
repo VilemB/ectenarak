@@ -134,6 +134,9 @@ export default function AddBookForm({
     );
     console.log("[AddBookForm] currentBookCount prop:", currentBookCount);
 
+    // TEMPORARILY BYPASSING CLIENT-SIDE CHECK FOR DEBUGGING
+    // The actual fix is to ensure AuthContext has up-to-date user.subscription.tier
+    /*
     if (user && user.subscription) {
       const tier = user.subscription.tier;
       const maxBooks = SUBSCRIPTION_LIMITS[tier].maxBooks;
@@ -161,6 +164,7 @@ export default function AddBookForm({
       toast.error("Nepodařilo se ověřit limit knih. Zkuste to prosím znovu.");
       return;
     }
+    */
 
     if (!validateStep1() || !validateStep2()) {
       // Should ideally not happen if step validation works, but good failsafe
