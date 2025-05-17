@@ -18,7 +18,7 @@ import { X, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
-import { SUBSCRIPTION_LIMITS } from "@/types/user";
+// import { SUBSCRIPTION_LIMITS } from "@/types/user"; // Commented out as it's unused due to bypassed check
 
 interface AddBookFormProps {
   userId: string;
