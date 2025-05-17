@@ -127,6 +127,13 @@ export default function AddBookForm({
     if (e) e.preventDefault();
     setFormError("");
 
+    // Log user and currentBookCount from AuthContext/props
+    console.log(
+      "[AddBookForm] User from AuthContext:",
+      JSON.stringify(user, null, 2)
+    );
+    console.log("[AddBookForm] currentBookCount prop:", currentBookCount);
+
     if (user && user.subscription) {
       const tier = user.subscription.tier;
       const maxBooks = SUBSCRIPTION_LIMITS[tier].maxBooks;
