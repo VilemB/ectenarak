@@ -159,8 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkAuth();
   }, [refreshCurrentUser]);
 
-  const login = async (email: string /*, password?: string */) => {
-    // Added password for realism if needed by your backend
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const login = async (_email: string /*, _password?: string */) => {
     setIsLoading(true);
     try {
       // === Step 1: Call your actual backend login endpoint ===
@@ -168,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // const loginResponse = await fetch("/api/auth/login", {
       //   method: "POST",
       //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email, password }),
+      //   body: JSON.stringify({ email: _email, password: _password }),
       // });
       // if (!loginResponse.ok) {
       //   const errorData = await loginResponse.json();
@@ -209,7 +209,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const signup = async (email: string, password?: string, name?: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const signup = async (_email: string, _password?: string, _name?: string) => {
     setIsLoading(true);
     try {
       // === Step 1: Call your actual backend signup endpoint ===
@@ -217,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // const signupResponse = await fetch("/api/auth/signup", {
       //   method: "POST",
       //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email, password, name }),
+      //   body: JSON.stringify({ email: _email, password: _password, name: _name }),
       // });
       // if (!signupResponse.ok) {
       //   const errorData = await signupResponse.json();
