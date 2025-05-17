@@ -11,7 +11,7 @@ import AiCreditsDisplay from "./AiCreditsDisplay";
 import LoginForm from "./LoginForm";
 
 export default function SubscriptionManager() {
-  const { user, updateSubscription, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   // Initialize state variables at the top level, outside any conditionals
   const [isYearly, setIsYearly] = useState<boolean>(false);
@@ -52,18 +52,61 @@ export default function SubscriptionManager() {
   }
 
   const handleSubscriptionChange = async () => {
+    if (!user || !user.subscription) {
+      console.error("User or user subscription data is not available.");
+      // Optionally, show a toast error to the user
+      return;
+    }
+
     if (
       selectedTier === user.subscription.tier &&
       isYearly === user.subscription.isYearly
     ) {
+      console.log("No change in subscription.");
       return; // No change
     }
 
     setIsProcessing(true);
     try {
-      await updateSubscription(selectedTier, isYearly);
+      // Step 1: Call your backend to create a Stripe Checkout session
+      console.log(
+        `Requesting Stripe checkout for tier: ${selectedTier}, yearly: ${isYearly}`
+      );
+      const response = await fetch("/api/create-checkout-session", {
+        // Example endpoint
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier: selectedTier, isYearly }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Failed to create checkout session"
+        );
+      }
+
+      const { sessionId, url } = await response.json();
+      // Step 2: Redirect to Stripe Checkout (if a URL is returned)
+      // Or handle Stripe Elements if sessionId is for that.
+      if (url) {
+        window.location.href = url;
+      } else if (sessionId) {
+        // Handle Stripe Elements redirection or mounting if you use that
+        console.log("Received Stripe session ID for Elements:", sessionId);
+        // For now, just log. You'd integrate Stripe.js here.
+        // Example: const stripe = await getStripe(); await stripe.redirectToCheckout({ sessionId });
+      } else {
+        throw new Error("No checkout session URL or ID received from backend.");
+      }
+
+      // After successful payment, Stripe webhook updates DB.
+      // User is redirected to a success_url.
+      // That success_url page should call refreshCurrentUser() from useAuth().
     } catch (error) {
-      console.error("Failed to update subscription:", error);
+      console.error("Failed to initiate subscription change:", error);
+      // Show error to user, e.g., using a toast notification
+      // toast.error(`Chyba: ${error.message}`);
     } finally {
       setIsProcessing(false);
     }
@@ -97,8 +140,8 @@ export default function SubscriptionManager() {
               {user.subscription.tier === "free"
                 ? "Zdarma"
                 : user.subscription.tier === "basic"
-                ? "Základní"
-                : "Premium"}
+                  ? "Základní"
+                  : "Premium"}
             </p>
           </div>
           <div>
