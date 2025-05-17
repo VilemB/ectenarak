@@ -109,11 +109,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
+      let userLoadedFromStorage = false;
       try {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser) as User;
-          // Basic validation of stored user structure
           if (parsedUser && parsedUser.id && parsedUser.subscription) {
             // Convert string dates back to Date objects
             parsedUser.createdAt = new Date(parsedUser.createdAt);
@@ -137,18 +137,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               );
             }
             setUser(parsedUser);
-            // Optionally, trigger a background refresh to ensure data is not too stale
-            // refreshCurrentUser(); // Consider the implications of calling this on every mount
-          } else {
-            // Stored user is invalid, try to refresh from server
-            await refreshCurrentUser();
+            userLoadedFromStorage = true;
+            console.log(
+              "[AuthContext] User loaded from localStorage initially."
+            );
           }
+        }
+
+        // Always attempt to refresh from server to ensure data isn't stale,
+        // regardless of localStorage success, unless it was an invalid parse.
+        // If localStorage was empty or invalid, refreshCurrentUser was already called implicitly by falling through.
+        // If localStorage was valid, we explicitly call it here to get latest.
+        console.log(
+          "[AuthContext] Attempting to refresh user session from server..."
+        );
+        const freshUser = await refreshCurrentUser();
+        if (freshUser) {
+          console.log(
+            "[AuthContext] User session successfully refreshed from server.",
+            freshUser
+          );
+        } else if (userLoadedFromStorage) {
+          // Refresh failed, but we had a user from storage. Log this, but keep the stored user for now.
+          console.warn(
+            "[AuthContext] Failed to refresh user from server, keeping user from localStorage."
+          );
         } else {
-          // No user in localStorage, try to get from server (e.g. if httpOnly cookie session exists)
-          await refreshCurrentUser();
+          // Refresh failed and no valid user in storage. User remains null.
+          console.log(
+            "[AuthContext] Failed to refresh user from server, no valid user in localStorage."
+          );
         }
       } catch (error) {
-        console.error("Initial authentication error:", error);
+        console.error("[AuthContext] Initial authentication error:", error);
         setUser(null); // Ensure user is null if auth check fails
         localStorage.removeItem("user");
       } finally {
