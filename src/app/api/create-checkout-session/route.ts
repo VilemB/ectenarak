@@ -1,41 +1,77 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { headers } from "next/headers";
+import Stripe from "stripe";
 
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+// Initialize Stripe with your secret key (load from .env in a real app)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-03-31.basil", // User mentioned this was a workaround, seems string is an acceptable type
+  typescript: true,
+});
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+// Define a mapping from your app's tier/billing cycle to Stripe Price IDs
+// Replace these with your actual Stripe Price IDs from your Stripe Dashboard
+const STRIPE_PRICE_IDS: Record<string, Record<string, string>> = {
+  basic: {
+    monthly: "price_YOUR_BASIC_MONTHLY_ID", // EXAMPLE: replace with actual ID
+    yearly: "price_YOUR_BASIC_YEARLY_ID", // EXAMPLE: replace with actual ID
+  },
+  premium: {
+    monthly: "price_YOUR_PREMIUM_MONTHLY_ID", // EXAMPLE: replace with actual ID
+    yearly: "price_YOUR_PREMIUM_YEARLY_ID", // EXAMPLE: replace with actual ID
+  },
+};
 
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    console.log("Received body in /api/create-checkout-session:", body);
-    const { priceId } = body;
-
-    if (!priceId) {
-      console.error(
-        "Error creating checkout session: Price ID is required but was missing."
-      );
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id || !session.user.email) {
       return NextResponse.json(
-        { error: "Price ID is required" },
+        { error: "Unauthorized or missing user email" },
+        { status: 401 }
+      );
+    }
+
+    const { tier, isYearly } = await request.json();
+
+    if (tier === "free") {
+      return NextResponse.json(
+        { error: "Cannot create checkout session for free tier" },
         { status: 400 }
       );
     }
 
-    // Get base URL from request headers
-    const origin =
-      (await headers()).get("origin") ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.VERCEL_URL ||
-      "http://localhost:3000";
+    if (
+      !tier ||
+      typeof isYearly !== "boolean" ||
+      !STRIPE_PRICE_IDS[tier as string]
+    ) {
+      return NextResponse.json(
+        { error: "Missing or invalid tier or isYearly parameter" },
+        { status: 400 }
+      );
+    }
 
-    // Create the checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "subscription",
+    const priceTier = STRIPE_PRICE_IDS[tier as string];
+    const priceId = isYearly ? priceTier.yearly : priceTier.monthly;
+
+    if (!priceId || !priceId.startsWith("price_")) {
+      console.error(
+        `Configured Stripe Price ID "${priceId}" is a placeholder or invalid. Please replace it with a real Price ID from your Stripe Dashboard.`
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Stripe Price ID is not configured correctly. Placeholder or invalid ID detected.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Get base URL for success/cancel URLs
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    const stripeSessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ["card"],
       line_items: [
         {
@@ -43,21 +79,31 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/subscription?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/subscription`,
-      customer_email: session.user.email || undefined,
+      mode: "subscription",
+      success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/subscription/cancel`,
+      customer_email: session.user.email,
       metadata: {
         userId: session.user.id,
+        newTier: tier,
+        newIsYearly: String(isYearly),
       },
-    });
+    };
 
-    // Return the session ID instead of the full URL
-    return NextResponse.json({ id: checkoutSession.id });
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    return NextResponse.json(
-      { error: "Failed to create checkout session" },
-      { status: 500 }
-    );
+    const stripeSession =
+      await stripe.checkout.sessions.create(stripeSessionParams);
+
+    // Return either the redirect URL (for Stripe Hosted Checkout) or just the session ID (if using custom flow/Elements)
+    return NextResponse.json({
+      sessionId: stripeSession.id,
+      url: stripeSession.url,
+    });
+  } catch (error: unknown) {
+    console.error("Error creating Stripe checkout session:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to create checkout session";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

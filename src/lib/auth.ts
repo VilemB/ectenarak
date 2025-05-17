@@ -7,18 +7,19 @@ import dbConnect from "./mongodb";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { sendWelcomeEmail } from "./email";
+import User, { IUser } from "@/models/User";
+import type { UserSubscription, SubscriptionTier } from "@/types/user";
 
 // Extend the Session type to include userId
 declare module "next-auth" {
   interface Session {
-    userId?: string;
     user: {
       id: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      subscription?: UserSubscription;
     };
-    userEmail?: string;
   }
 }
 
@@ -90,19 +91,50 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (account && user) {
         token.id = user.id;
-        token.userId = user.id;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        // Make sure ID is available in multiple formats for compatibility
-        session.user.id = (token.id as string) || token.sub!;
-        session.userId = (token.id as string) || token.sub!;
+      if (token && session.user && token.id) {
+        session.user.id = token.id as string;
 
-        // Store the email in the session as well as a fallback ID
-        if (session.user.email) {
-          session.userEmail = session.user.email;
+        try {
+          await dbConnect();
+          const dbUser = await User.findById(token.id).lean<IUser>();
+
+          if (dbUser) {
+            session.user.name = dbUser.name;
+            session.user.email = dbUser.email;
+            session.user.image = dbUser.image;
+
+            if (dbUser.subscription) {
+              const subscriptionPlain: UserSubscription = {
+                tier: dbUser.subscription.tier as SubscriptionTier,
+                startDate: new Date(dbUser.subscription.startDate),
+                endDate: dbUser.subscription.endDate
+                  ? new Date(dbUser.subscription.endDate)
+                  : undefined,
+                isYearly: dbUser.subscription.isYearly,
+                aiCreditsRemaining: dbUser.subscription.aiCreditsRemaining,
+                aiCreditsTotal: dbUser.subscription.aiCreditsTotal,
+                autoRenew: dbUser.subscription.autoRenew,
+                lastRenewalDate: new Date(dbUser.subscription.lastRenewalDate),
+                nextRenewalDate: new Date(dbUser.subscription.nextRenewalDate),
+                stripePriceId: dbUser.subscription.stripeCustomerId,
+                stripeSubscriptionId: dbUser.subscription.stripeSubscriptionId,
+                cancelAtPeriodEnd: dbUser.subscription.cancelAtPeriodEnd,
+              };
+              session.user.subscription = subscriptionPlain;
+            } else {
+              session.user.subscription = undefined;
+            }
+          } else {
+            console.error(
+              `Session callback: User not found in DB with id: ${token.id}`
+            );
+          }
+        } catch (error) {
+          console.error("Error in session callback fetching user data:", error);
         }
       }
       return session;

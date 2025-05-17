@@ -270,9 +270,11 @@ UserSchema.set("toJSON", {
 });
 
 // Define interface for TypeScript type checking
-interface IUser {
+export interface IUser {
+  _id?: mongoose.Types.ObjectId | string;
   email: string;
   name: string;
+  image?: string | null;
   password?: string;
   books?: mongoose.Types.ObjectId[]; // Add the real books array to the interface
   auth?: {

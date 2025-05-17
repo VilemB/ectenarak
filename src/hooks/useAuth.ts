@@ -9,99 +9,45 @@ import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "@/contexts/AuthContext";
 
 export function useAuth() {
-  const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(true);
+  const { status } = useSession();
   const authContext = useContext(AuthContext);
 
+  const [localLoading, setLocalLoading] = useState(true);
+
   useEffect(() => {
-    // Update loading state based on session status
-    if (status === "loading") {
-      setLoading(true);
+    if (status === "loading" || authContext?.isLoading) {
+      setLocalLoading(true);
     } else {
-      setLoading(false);
+      setLocalLoading(false);
     }
+  }, [status, authContext?.isLoading]);
 
-    // If we have a session but no user in our context, update the context
-    if (session?.user && !authContext?.user) {
-      authContext?.setUser({
-        id: session.user.id,
-        email: session.user.email || "",
-        name: session.user.name || session.user.email?.split("@")[0] || "",
-        subscription: {
-          tier: "free",
-          startDate: new Date(),
-          isYearly: false,
-          aiCreditsRemaining: 3,
-          aiCreditsTotal: 3,
-          autoRenew: false,
-          lastRenewalDate: new Date(),
-          nextRenewalDate: new Date(
-            new Date().setMonth(new Date().getMonth() + 1)
-          ),
-        },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      // Check if there's a saved callback URL and redirect if needed
-      if (typeof window !== "undefined") {
-        const savedCallbackUrl = localStorage.getItem("authCallbackUrl");
-        if (savedCallbackUrl) {
-          localStorage.removeItem("authCallbackUrl");
-          window.location.href = savedCallbackUrl.startsWith("/")
-            ? savedCallbackUrl
-            : `/${savedCallbackUrl}`;
-        }
-      }
-    }
-  }, [session, status, authContext]);
-
-  // Create a wrapper for signOut that can handle parameters or no parameters
   const handleSignOut = async (
     options?: Parameters<typeof nextAuthSignOut>[0]
   ) => {
-    // Clear our auth context first
-    await authContext?.logout();
-    // Then sign out of NextAuth
+    if (authContext?.logout) {
+      await authContext.logout();
+    }
     return await nextAuthSignOut({
       ...options,
       callbackUrl: "/",
     });
   };
 
-  // Use our auth context user if available, otherwise fall back to session user
-  const user =
-    authContext?.user ||
-    (session?.user
-      ? {
-          id: session.user.id,
-          email: session.user.email || "",
-          name: session.user.name || session.user.email?.split("@")[0] || "",
-          subscription: {
-            tier: "free",
-            startDate: new Date(),
-            isYearly: false,
-            aiCreditsRemaining: 3,
-            aiCreditsTotal: 3,
-            autoRenew: false,
-            lastRenewalDate: new Date(),
-            nextRenewalDate: new Date(
-              new Date().setMonth(new Date().getMonth() + 1)
-            ),
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-      : null);
+  const user = authContext?.user || null;
 
   return {
-    user,
-    loading: loading || authContext?.isLoading,
+    user: user,
+    loading: authContext?.isLoading ?? localLoading,
+    isAuthenticated:
+      authContext?.isAuthenticated ?? (status === "authenticated" && !!user),
     signIn,
     signOut: handleSignOut,
-    isAuthenticated: !!user,
     sessionStatus: status,
-    // Include any additional methods from our auth context
-    ...authContext,
+    login: authContext?.login,
+    logout: authContext?.logout,
+    signup: authContext?.signup,
+    refreshCurrentUser: authContext?.refreshCurrentUser,
+    useAiCredit: authContext?.useAiCredit,
   };
 }
