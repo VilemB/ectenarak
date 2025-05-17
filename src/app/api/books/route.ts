@@ -374,6 +374,10 @@ export async function POST(request: Request) {
     // Cast the value to SubscriptionTier before using it as an index
     const userTier = userTierValue as SubscriptionTier;
 
+    console.log(
+      `[Add Book] User ID: ${userId}, Fetched Tier: ${userTier}, Max Books from SUBSCRIPTION_LIMITS: ${SUBSCRIPTION_LIMITS[userTier]?.maxBooks}`
+    ); // Added for debugging
+
     const maxBooks = SUBSCRIPTION_LIMITS[userTier].maxBooks;
     // console.log(`[Add Book] User tier: ${userTier}, Max books: ${maxBooks}`); // Remove log
 
