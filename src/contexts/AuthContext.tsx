@@ -159,36 +159,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkAuth();
   }, [refreshCurrentUser]);
 
-  const login = async (email: string) => {
+  const login = async (email: string /*, password?: string */) => {
+    // Added password for realism if needed by your backend
     setIsLoading(true);
     try {
-      // THIS IS MOCK - REPLACE WITH ACTUAL LOGIN TO YOUR BACKEND
-      // Your backend login should set a session (e.g., httpOnly cookie)
-      // and then you should call refreshCurrentUser()
-      const mockUser: User = {
-        id: "user_" + Math.random().toString(36).substr(2, 9),
-        email,
-        name: email.split("@")[0],
-        subscription: {
-          tier: "free",
-          startDate: new Date(),
-          isYearly: false,
-          aiCreditsRemaining: 3,
-          aiCreditsTotal: 3,
-          autoRenew: false,
-          lastRenewalDate: new Date(),
-          nextRenewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      await mockApiCall(mockUser);
-      // After successful backend login & session establishment:
-      // await refreshCurrentUser(); // This would get the real user data
-      setUser(mockUser); // For mock: setting directly
-      localStorage.setItem("user", JSON.stringify(mockUser)); // For mock
+      // === Step 1: Call your actual backend login endpoint ===
+      // Example:
+      // const loginResponse = await fetch("/api/auth/login", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ email, password }),
+      // });
+      // if (!loginResponse.ok) {
+      //   const errorData = await loginResponse.json();
+      //   throw new Error(errorData.message || "Login failed");
+      // }
+      // Your backend should have set a session cookie upon successful login.
+
+      // === Step 2: Refresh current user data from the session ===
+      const freshUser = await refreshCurrentUser();
+      if (!freshUser) {
+        // This case implies session wasn't established correctly or /api/auth/session/me failed
+        throw new Error(
+          "Login successful, but failed to retrieve user session."
+        );
+      }
+      // If refreshCurrentUser is successful, user state and localStorage are updated internally by it.
+      console.log("User logged in and session refreshed:", freshUser);
     } catch (error) {
       console.error("Login error:", error);
+      // Ensure user state is cleared on login failure that's not handled by refreshCurrentUser
+      setUser(null);
+      localStorage.removeItem("user");
       throw error;
     } finally {
       setIsLoading(false);
@@ -207,35 +209,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const signup = async (email: string, _password: string, name?: string) => {
+  const signup = async (email: string, password?: string, name?: string) => {
     setIsLoading(true);
     try {
-      // THIS IS MOCK - REPLACE WITH ACTUAL SIGNUP TO YOUR BACKEND
-      // Your backend signup should create user, set session, then call refreshCurrentUser()
-      const mockUser: User = {
-        id: "user_" + Math.random().toString(36).substr(2, 9),
-        email,
-        name: name || email.split("@")[0],
-        subscription: {
-          tier: "free",
-          startDate: new Date(),
-          isYearly: false,
-          aiCreditsRemaining: 3,
-          aiCreditsTotal: 3,
-          autoRenew: false,
-          lastRenewalDate: new Date(),
-          nextRenewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      await mockApiCall(mockUser);
-      // After successful backend signup & session establishment:
-      // await refreshCurrentUser();
-      setUser(mockUser); // For mock
-      localStorage.setItem("user", JSON.stringify(mockUser)); // For mock
+      // === Step 1: Call your actual backend signup endpoint ===
+      // Example:
+      // const signupResponse = await fetch("/api/auth/signup", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ email, password, name }),
+      // });
+      // if (!signupResponse.ok) {
+      //   const errorData = await signupResponse.json();
+      //   throw new Error(errorData.message || "Signup failed");
+      // }
+      // Your backend should have created the user and set a session cookie.
+
+      // === Step 2: Refresh current user data from the session ===
+      const freshUser = await refreshCurrentUser();
+      if (!freshUser) {
+        throw new Error(
+          "Signup successful, but failed to retrieve user session."
+        );
+      }
+      console.log("User signed up and session refreshed:", freshUser);
     } catch (error) {
       console.error("Signup error:", error);
+      setUser(null);
+      localStorage.removeItem("user");
       throw error;
     } finally {
       setIsLoading(false);
@@ -243,8 +244,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updateSubscription = async (
-    // This function should ideally be called AFTER backend confirms subscription
-    // Then it should call refreshCurrentUser() to get the true state
     tier: SubscriptionTier,
     isYearly: boolean
   ) => {
