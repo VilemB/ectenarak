@@ -47,26 +47,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const queryClient = useQueryClient();
 
   const refreshCurrentUser = useCallback(async (): Promise<User | null> => {
+    console.log("[AuthContext] refreshCurrentUser CALLED");
     setIsLoading(true);
     try {
-      // Replace with your actual API endpoint to get the current user
-      const response = await fetch("/api/auth/session/me"); // Example endpoint
+      const response = await fetch("/api/auth/session/me");
+      console.log(
+        "[AuthContext] /api/auth/session/me response status:",
+        response.status
+      );
+
       if (!response.ok) {
         if (response.status === 401) {
-          // Unauthorized, clear user
+          console.log(
+            "[AuthContext] refreshCurrentUser: Unauthorized (401). Clearing user."
+          );
           setUser(null);
           localStorage.removeItem("user");
           return null;
         }
-        throw new Error("Failed to fetch current user");
+        throw new Error(
+          `Failed to fetch current user, status: ${response.status}`
+        );
       }
       const freshUserData: User = await response.json();
+      console.log(
+        "[AuthContext] freshUserData FROM API:",
+        JSON.stringify(freshUserData, null, 2)
+      );
 
       if (freshUserData && freshUserData.id) {
+        console.log(
+          "[AuthContext] freshUserData IS VALID. Preparing to set user."
+        );
         // Ensure dates are Date objects
         freshUserData.createdAt = new Date(freshUserData.createdAt);
         freshUserData.updatedAt = new Date(freshUserData.updatedAt);
         if (freshUserData.subscription) {
+          console.log(
+            "[AuthContext] Parsing subscription dates for tier:",
+            freshUserData.subscription.tier
+          );
           freshUserData.subscription.startDate = new Date(
             freshUserData.subscription.startDate
           );
@@ -85,23 +105,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               freshUserData.subscription.nextRenewalDate
             );
           }
+        } else {
+          console.warn(
+            "[AuthContext] freshUserData has no subscription object."
+          );
         }
+
+        console.log(
+          "[AuthContext] CALLING setUser with freshUserData (tier:",
+          freshUserData.subscription?.tier,
+          ")"
+        );
         setUser(freshUserData);
+        console.log(
+          "[AuthContext] CALLING localStorage.setItem with freshUserData"
+        );
         localStorage.setItem("user", JSON.stringify(freshUserData));
         return freshUserData;
       } else {
+        console.log(
+          "[AuthContext] freshUserData FROM API is invalid or no id. Clearing user."
+        );
         setUser(null);
         localStorage.removeItem("user");
         return null;
       }
     } catch (error) {
-      console.error("Error refreshing current user:", error);
-      // Optionally handle by clearing user or leaving stale
-      setUser(null); // Example: clear user on error
+      console.error("[AuthContext] Error in refreshCurrentUser:", error);
+      setUser(null);
       localStorage.removeItem("user");
       return null;
     } finally {
       setIsLoading(false);
+      console.log("[AuthContext] refreshCurrentUser FINISHED");
     }
   }, []);
 
