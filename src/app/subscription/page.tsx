@@ -117,30 +117,20 @@ export default function SubscriptionPage() {
     return priceId || null;
   };
 
+  // Initiates Stripe Checkout by passing the selected tier and billing cycle
   const handleCheckout = async (
-    priceId: string | null,
     tierForCheckout: "basic" | "premium"
   ) => {
-    if (!priceId || priceId.trim() === "" || priceId === "price_free") {
-      console.error(
-        "handleCheckout Error: Invalid Price ID provided:",
-        priceId
-      );
-      toast.error("Nelze zpracovat platbu: Chybí nebo je neplatné ID ceny.");
-      setIsChangingPlan(false);
-      setSelectedTierForAction(null);
-      return;
-    }
-
-    console.log(
-      `Attempting checkout with Price ID: ${priceId} for tier: ${tierForCheckout}`
-    );
     setIsChangingPlan(true);
+
     try {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({
+          tier: tierForCheckout,
+          isYearly: billingCycle === "yearly",
+        }),
       });
 
       const sessionData = await response.json();
@@ -151,17 +141,19 @@ export default function SubscriptionPage() {
         );
       }
 
-      if (!sessionData.id) {
-        throw new Error("Received invalid session data from server.");
-      }
-
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error("Stripe.js has not loaded yet.");
       }
 
+      // If backend returns a direct URL (Stripe Hosted Checkout), prefer that
+      if (sessionData.url) {
+        window.location.href = sessionData.url as string;
+        return;
+      }
+
       const { error } = await stripe.redirectToCheckout({
-        sessionId: sessionData.id,
+        sessionId: sessionData.sessionId || sessionData.id,
       });
 
       if (error) {
@@ -181,7 +173,6 @@ export default function SubscriptionPage() {
       setSelectedTierForAction(null);
       sessionStorage.removeItem("intendedSubscription");
       sessionStorage.removeItem("yearlyBilling");
-    } finally {
     }
   };
 
@@ -195,13 +186,6 @@ export default function SubscriptionPage() {
 
     setSelectedTierForAction(selectedTier);
 
-    const targetPriceId = getPriceIdForTier(selectedTier, billingCycle);
-    if (!targetPriceId) {
-      toast.error("Konfigurace ceny pro tento plán nebyla nalezena.");
-      setSelectedTierForAction(null);
-      return;
-    }
-
     const currentTierValue = getSubscriptionTier();
 
     const isNewCheckout = currentTierValue === "free";
@@ -212,7 +196,7 @@ export default function SubscriptionPage() {
       console.log(
         `[handlePlanSelect] Starting checkout for ${selectedTier}. Current: ${currentTierValue}`
       );
-      handleCheckout(targetPriceId, selectedTier);
+      handleCheckout(selectedTier);
     } else {
       console.log(
         `[handlePlanSelect] User already on paid plan (${currentTierValue}). Direct change via UI currently disabled for this scenario.`
