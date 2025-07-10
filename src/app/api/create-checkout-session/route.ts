@@ -13,12 +13,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Replace these with your actual Stripe Price IDs from your Stripe Dashboard
 const STRIPE_PRICE_IDS: Record<string, Record<string, string>> = {
   basic: {
-    monthly: "price_YOUR_BASIC_MONTHLY_ID", // EXAMPLE: replace with actual ID
-    yearly: "price_YOUR_BASIC_YEARLY_ID", // EXAMPLE: replace with actual ID
+    monthly: process.env.NEXT_PUBLIC_STRIPE_BASIC_MONTHLY_PRICE_ID || "",
+    yearly: process.env.NEXT_PUBLIC_STRIPE_BASIC_YEARLY_PRICE_ID || "",
   },
   premium: {
-    monthly: "price_YOUR_PREMIUM_MONTHLY_ID", // EXAMPLE: replace with actual ID
-    yearly: "price_YOUR_PREMIUM_YEARLY_ID", // EXAMPLE: replace with actual ID
+    monthly: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_MONTHLY_PRICE_ID || "",
+    yearly: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_YEARLY_PRICE_ID || "",
   },
 };
 
