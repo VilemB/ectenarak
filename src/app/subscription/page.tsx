@@ -97,25 +97,6 @@ export default function SubscriptionPage() {
 
   const currentTier = getSubscriptionTier();
 
-  const getPriceIdForTier = (
-    tier: "basic" | "premium",
-    cycle: "monthly" | "yearly"
-  ): string | null => {
-    let priceId: string | undefined;
-    if (tier === "basic") {
-      priceId =
-        cycle === "yearly"
-          ? process.env.NEXT_PUBLIC_STRIPE_BASIC_YEARLY_PRICE_ID
-          : process.env.NEXT_PUBLIC_STRIPE_BASIC_MONTHLY_PRICE_ID;
-    }
-    if (tier === "premium") {
-      priceId =
-        cycle === "yearly"
-          ? process.env.NEXT_PUBLIC_STRIPE_PREMIUM_YEARLY_PRICE_ID
-          : process.env.NEXT_PUBLIC_STRIPE_PREMIUM_MONTHLY_PRICE_ID;
-    }
-    return priceId || null;
-  };
 
   // Initiates Stripe Checkout by passing the selected tier and billing cycle
   const handleCheckout = async (
